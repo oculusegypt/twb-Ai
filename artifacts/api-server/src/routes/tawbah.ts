@@ -4,8 +4,10 @@ import {
   userProgressTable,
   habitsTable,
   dhikrCountTable,
+  kaffarahStepsTable,
+  journalEntriesTable,
 } from "@workspace/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import {
   GetUserProgressResponse,
   UpdateUserProgressBody,
@@ -332,6 +334,113 @@ router.post("/dhikr/increment", async (req, res) => {
     tasbih: updated.tasbih,
     sayyid: updated.sayyid,
   });
+});
+
+// ==================== KAFFARAH ROUTES ====================
+
+router.get("/kaffarah", async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+
+  const steps = await db.query.kaffarahStepsTable.findMany({
+    where: eq(kaffarahStepsTable.sessionId, sessionId),
+  });
+
+  res.json(steps.map((s) => ({
+    id: s.id,
+    sessionId: s.sessionId,
+    stepKey: s.stepKey,
+    completed: s.completed,
+    completedAt: s.completedAt ? s.completedAt.toISOString() : null,
+  })));
+});
+
+router.post("/kaffarah/complete", async (req, res) => {
+  const { sessionId, stepKey, completed } = req.body as { sessionId: string; stepKey: string; completed: boolean };
+  if (!sessionId || !stepKey) return res.status(400).json({ error: "sessionId and stepKey required" });
+
+  const existing = await db.query.kaffarahStepsTable.findFirst({
+    where: and(
+      eq(kaffarahStepsTable.sessionId, sessionId),
+      eq(kaffarahStepsTable.stepKey, stepKey)
+    ),
+  });
+
+  if (existing) {
+    const [updated] = await db
+      .update(kaffarahStepsTable)
+      .set({ completed, completedAt: completed ? new Date() : null })
+      .where(and(
+        eq(kaffarahStepsTable.sessionId, sessionId),
+        eq(kaffarahStepsTable.stepKey, stepKey)
+      ))
+      .returning();
+    return res.json({ id: updated.id, sessionId: updated.sessionId, stepKey: updated.stepKey, completed: updated.completed, completedAt: updated.completedAt ? updated.completedAt.toISOString() : null });
+  }
+
+  const [created] = await db
+    .insert(kaffarahStepsTable)
+    .values({ sessionId, stepKey, completed, completedAt: completed ? new Date() : null })
+    .returning();
+
+  res.json({ id: created.id, sessionId: created.sessionId, stepKey: created.stepKey, completed: created.completed, completedAt: created.completedAt ? created.completedAt.toISOString() : null });
+});
+
+// ==================== JOURNAL ROUTES ====================
+
+router.get("/journal", async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+
+  const entries = await db.query.journalEntriesTable.findMany({
+    where: eq(journalEntriesTable.sessionId, sessionId),
+    orderBy: [desc(journalEntriesTable.createdAt)],
+  });
+
+  res.json(entries.map((e) => ({
+    id: e.id,
+    sessionId: e.sessionId,
+    content: e.content,
+    mood: e.mood,
+    date: e.date,
+    createdAt: e.createdAt ? e.createdAt.toISOString() : null,
+  })));
+});
+
+router.post("/journal", async (req, res) => {
+  const { sessionId, content, mood } = req.body as { sessionId: string; content: string; mood: string };
+  if (!sessionId || !content) return res.status(400).json({ error: "sessionId and content required" });
+
+  const dateStr = todayStr();
+  const [entry] = await db
+    .insert(journalEntriesTable)
+    .values({ sessionId, content, mood: mood || "neutral", date: dateStr })
+    .returning();
+
+  res.json({
+    id: entry.id,
+    sessionId: entry.sessionId,
+    content: entry.content,
+    mood: entry.mood,
+    date: entry.date,
+    createdAt: entry.createdAt ? entry.createdAt.toISOString() : null,
+  });
+});
+
+router.delete("/journal/:id", async (req, res) => {
+  const { sessionId } = req.body as { sessionId: string };
+  const id = parseInt(req.params.id);
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+
+  await db.query.journalEntriesTable.findFirst({
+    where: and(eq(journalEntriesTable.id, id), eq(journalEntriesTable.sessionId, sessionId)),
+  });
+
+  await db
+    .delete(journalEntriesTable)
+    .where(and(eq(journalEntriesTable.id, id), eq(journalEntriesTable.sessionId, sessionId)));
+
+  res.json({ success: true });
 });
 
 export default router;

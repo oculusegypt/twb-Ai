@@ -13,6 +13,11 @@ import Dhikr from "@/pages/dhikr";
 import Sos from "@/pages/sos";
 import Signs from "@/pages/signs";
 import Relapse from "@/pages/relapse";
+import Kaffarah from "@/pages/kaffarah";
+import Rajaa from "@/pages/rajaa";
+import Journal from "@/pages/journal";
+import ProgressChart from "@/pages/progress-chart";
+import DangerTimes from "@/pages/danger-times";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -36,6 +41,11 @@ function Router() {
         <Route path="/sos" component={Sos} />
         <Route path="/signs" component={Signs} />
         <Route path="/relapse" component={Relapse} />
+        <Route path="/kaffarah" component={Kaffarah} />
+        <Route path="/rajaa" component={Rajaa} />
+        <Route path="/journal" component={Journal} />
+        <Route path="/progress" component={ProgressChart} />
+        <Route path="/danger-times" component={DangerTimes} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

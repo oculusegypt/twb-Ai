@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, CircleDot, ShieldAlert, HeartHandshake, Moon, Sun, Languages } from "lucide-react";
+import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, Moon, Sun, Languages } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
@@ -13,7 +13,7 @@ export function Layout({ children }: { children: ReactNode }) {
     { href: "/", label: t.nav.home, icon: Home },
     { href: "/plan", label: t.nav.plan, icon: Calendar },
     { href: "/dhikr", label: t.nav.dhikr, icon: CircleDot },
-    { href: "/signs", label: t.nav.signs, icon: HeartHandshake },
+    { href: "/progress", label: "تقدمي", icon: BarChart2 },
   ];
 
   const isSos = location === "/sos";

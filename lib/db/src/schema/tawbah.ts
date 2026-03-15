@@ -45,3 +45,29 @@ export const dhikrCountTable = pgTable("dhikr_count", {
 export const insertDhikrCountSchema = createInsertSchema(dhikrCountTable).omit({ id: true });
 export type InsertDhikrCount = z.infer<typeof insertDhikrCountSchema>;
 export type DhikrCount = typeof dhikrCountTable.$inferSelect;
+
+export const kaffarahStepsTable = pgTable("kaffarah_steps", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  stepKey: text("step_key").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertKaffarahStepSchema = createInsertSchema(kaffarahStepsTable).omit({ id: true, createdAt: true });
+export type InsertKaffarahStep = z.infer<typeof insertKaffarahStepSchema>;
+export type KaffarahStep = typeof kaffarahStepsTable.$inferSelect;
+
+export const journalEntriesTable = pgTable("journal_entries", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  content: text("content").notNull(),
+  mood: text("mood").notNull().default("neutral"),
+  date: date("date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertJournalEntrySchema = createInsertSchema(journalEntriesTable).omit({ id: true, createdAt: true });
+export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
+export type JournalEntry = typeof journalEntriesTable.$inferSelect;
