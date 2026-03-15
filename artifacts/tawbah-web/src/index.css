@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&display=swap');
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+
+  --font-sans: 'Cairo', sans-serif;
+  --font-display: 'Amiri', serif;
+}
+
+:root {
+  /* Soft warm cream background */
+  --background: 45 20% 98%;
+  --foreground: 153 30% 15%;
+
+  /* White cards with warm tint */
+  --card: 0 0% 100%;
+  --card-foreground: 153 30% 15%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 153 30% 15%;
+
+  /* Deep Forest Green */
+  --primary: 153 60% 20%;
+  --primary-foreground: 43 74% 90%;
+
+  /* Gold/Sand */
+  --secondary: 43 60% 50%;
+  --secondary-foreground: 153 60% 15%;
+
+  /* Muted greens */
+  --muted: 150 15% 90%;
+  --muted-foreground: 153 15% 45%;
+
+  /* Golden Accent */
+  --accent: 43 74% 49%;
+  --accent-foreground: 0 0% 100%;
+
+  /* Destructive (Red/Rose) */
+  --destructive: 350 70% 45%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 150 20% 85%;
+  --input: 150 20% 85%;
+  --ring: 153 60% 20%;
+
+  --radius: 1rem;
+}
+
+.dark {
+  /* Deep Night Green */
+  --background: 153 50% 8%;
+  --foreground: 45 20% 90%;
+
+  --card: 153 45% 12%;
+  --card-foreground: 45 20% 90%;
+
+  --popover: 153 45% 12%;
+  --popover-foreground: 45 20% 90%;
+
+  /* Gold */
+  --primary: 43 74% 49%;
+  --primary-foreground: 153 60% 10%;
+
+  /* Muted Gold */
+  --secondary: 43 30% 30%;
+  --secondary-foreground: 45 20% 90%;
+
+  /* Very dark muted */
+  --muted: 153 30% 15%;
+  --muted-foreground: 153 15% 65%;
+
+  --accent: 43 74% 49%;
+  --accent-foreground: 153 60% 10%;
+
+  --destructive: 350 60% 40%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 153 30% 20%;
+  --input: 153 30% 20%;
+  --ring: 43 74% 49%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    direction: rtl;
+    -webkit-tap-highlight-color: transparent;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+  }
+}
+
+.glass-effect {
+  @apply bg-white/70 dark:bg-black/50 backdrop-blur-md border border-white/20 dark:border-white/10;
+}
+
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-l from-primary to-accent dark:from-accent dark:to-white;
+}
+
+/* Custom scrollbar for web */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/20 rounded-full;
+}

@@ -1,22 +1,26 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: دليل التوبة النصوح API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: user
+    description: User progress and data
+  - name: habits
+    description: Daily habits tracking
+  - name: dhikr
+    description: Dhikr counter
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +28,120 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /user/progress:
+    get:
+      operationId: getUserProgress
+      tags: [user]
+      summary: Get user progress data
+      responses:
+        "200":
+          description: User progress
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProgress"
+    put:
+      operationId: updateUserProgress
+      tags: [user]
+      summary: Update user progress
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserProgressRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProgress"
+
+  /user/covenant:
+    post:
+      operationId: createCovenant
+      tags: [user]
+      summary: Sign the covenant of repentance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCovenantRequest"
+      responses:
+        "200":
+          description: Covenant created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProgress"
+
+  /habits:
+    get:
+      operationId: getHabits
+      tags: [habits]
+      summary: Get today's habits
+      responses:
+        "200":
+          description: List of habits
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HabitEntry"
+    post:
+      operationId: completeHabit
+      tags: [habits]
+      summary: Mark a habit as complete
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CompleteHabitRequest"
+      responses:
+        "200":
+          description: Habit updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HabitEntry"
+
+  /dhikr/increment:
+    post:
+      operationId: incrementDhikr
+      tags: [dhikr]
+      summary: Increment dhikr counter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncrementDhikrRequest"
+      responses:
+        "200":
+          description: Updated dhikr count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DhikrCount"
+
+  /dhikr/count:
+    get:
+      operationId: getDhikrCount
+      tags: [dhikr]
+      summary: Get today's dhikr count
+      responses:
+        "200":
+          description: Today's dhikr count
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DhikrCount"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +152,140 @@ components:
       required:
         - status
 
+    UserProgress:
+      type: object
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: string
+        sinCategory:
+          type: string
+          enum: [khilwat, mali, huquq_nas, taqsir_faraid, other]
+        covenantSigned:
+          type: boolean
+        covenantDate:
+          type: string
+          nullable: true
+        currentPhase:
+          type: integer
+        day40Progress:
+          type: integer
+        firstDayTasksCompleted:
+          type: boolean
+        streakDays:
+          type: integer
+        lastActiveDate:
+          type: string
+          nullable: true
+      required:
+        - id
+        - sessionId
+        - sinCategory
+        - covenantSigned
+        - covenantDate
+        - currentPhase
+        - day40Progress
+        - firstDayTasksCompleted
+        - streakDays
+        - lastActiveDate
+
+    UpdateUserProgressRequest:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        currentPhase:
+          type: integer
+        day40Progress:
+          type: integer
+        firstDayTasksCompleted:
+          type: boolean
+        streakDays:
+          type: integer
+      required:
+        - sessionId
+
+    CreateCovenantRequest:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        sinCategory:
+          type: string
+          enum: [khilwat, mali, huquq_nas, taqsir_faraid, other]
+      required:
+        - sessionId
+        - sinCategory
+
+    HabitEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        sessionId:
+          type: string
+        habitKey:
+          type: string
+        habitNameAr:
+          type: string
+        completed:
+          type: boolean
+        date:
+          type: string
+      required:
+        - id
+        - sessionId
+        - habitKey
+        - habitNameAr
+        - completed
+        - date
+
+    CompleteHabitRequest:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        habitKey:
+          type: string
+        completed:
+          type: boolean
+      required:
+        - sessionId
+        - habitKey
+        - completed
+
+    IncrementDhikrRequest:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        dhikrType:
+          type: string
+          enum: [istighfar, tasbih, sayyid]
+        amount:
+          type: integer
+      required:
+        - sessionId
+        - dhikrType
+        - amount
+
+    DhikrCount:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        date:
+          type: string
+        istighfar:
+          type: integer
+        tasbih:
+          type: integer
+        sayyid:
+          type: integer
+      required:
+        - sessionId
+        - date
+        - istighfar
+        - tasbih
+        - sayyid

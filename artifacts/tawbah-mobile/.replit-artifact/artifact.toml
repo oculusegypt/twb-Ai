@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "دليل التوبة - موبايل"
+version = "1.0.0"
+id = "artifacts/tawbah-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+localPort = 24800
+name = "expo"
+paths = ["/mobile/"]
+
+[services.development]
+run = "pnpm --filter @workspace/tawbah-mobile run dev"
+
+[services.env]
+PORT = "24800"
+BASE_PATH = "/mobile/"
+
+[services.production]
+build = ["pnpm", "--filter", "@workspace/tawbah-mobile", "run", "build"]
+run = ["pnpm", "--filter", "@workspace/tawbah-mobile", "run", "serve"]
