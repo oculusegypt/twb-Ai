@@ -1,26 +1,46 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, CircleDot, ShieldAlert, HeartHandshake } from "lucide-react";
+import { Home, Calendar, CircleDot, ShieldAlert, HeartHandshake, Moon, Sun, Languages } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/context/SettingsContext";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  const { t, lang, theme, toggleLang, toggleTheme } = useSettings();
 
   const navItems = [
-    { href: "/", label: "الرئيسية", icon: Home },
-    { href: "/plan", label: "الخطة", icon: Calendar },
-    { href: "/dhikr", label: "الذكر", icon: CircleDot },
-    { href: "/signs", label: "التباشير", icon: HeartHandshake },
+    { href: "/", label: t.nav.home, icon: Home },
+    { href: "/plan", label: t.nav.plan, icon: Calendar },
+    { href: "/dhikr", label: t.nav.dhikr, icon: CircleDot },
+    { href: "/signs", label: t.nav.signs, icon: HeartHandshake },
   ];
 
-  // Don't show bottom nav on SOS page to maintain immersion
   const isSos = location === "/sos";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background relative pb-[80px] max-w-md mx-auto shadow-2xl shadow-black/5 overflow-hidden ring-1 ring-border/50">
-      {/* Dynamic Header Pattern */}
       <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none -z-10" />
+
+      {!isSos && (
+        <div className="flex items-center justify-between px-4 pt-3 pb-1 z-50">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button
+            onClick={toggleLang}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-bold transition-all"
+            aria-label="Toggle language"
+          >
+            <Languages size={15} />
+            {lang === "ar" ? "EN" : "عر"}
+          </button>
+        </div>
+      )}
 
       <main className="flex-1 flex flex-col relative z-0">
         <AnimatePresence mode="wait">
@@ -39,23 +59,21 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {!isSos && (
         <>
-          {/* Floating SOS Button */}
-          <Link 
+          <Link
             href="/sos"
             className="fixed bottom-[90px] left-4 z-50 p-4 bg-destructive text-destructive-foreground rounded-full shadow-lg shadow-destructive/30 hover:scale-105 active:scale-95 transition-all"
-            title="زر الطوارئ"
+            title={lang === "ar" ? "زر الطوارئ" : "SOS Button"}
           >
             <ShieldAlert size={28} strokeWidth={2.5} />
           </Link>
 
-          {/* Bottom Navigation */}
           <nav className="fixed bottom-0 inset-x-0 bg-card/80 backdrop-blur-xl border-t border-border/50 pb-safe z-40 max-w-md mx-auto">
             <div className="flex justify-between items-center px-6 h-[72px]">
               {navItems.map((item) => {
                 const isActive = location === item.href;
                 return (
-                  <Link 
-                    key={item.href} 
+                  <Link
+                    key={item.href}
                     href={item.href}
                     className="relative flex flex-col items-center justify-center w-16 h-full gap-1 tap-highlight-transparent"
                   >
@@ -72,7 +90,7 @@ export function Layout({ children }: { children: ReactNode }) {
                       {item.label}
                     </span>
                     {isActive && (
-                      <motion.div 
+                      <motion.div
                         layoutId="nav-indicator"
                         className="absolute -bottom-[2px] w-8 h-1 bg-primary rounded-t-full"
                         transition={{ type: "spring", stiffness: 400, damping: 30 }}
