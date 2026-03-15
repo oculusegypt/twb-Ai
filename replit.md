@@ -24,9 +24,15 @@
 2. **مهام اليوم الأول (First Day Tasks)** - Mandatory checklist of 4 immediate actions
 3. **خطة الـ 40 يوماً (40-Day Plan)** - Daily habit tracker with 5 recurring habits
 4. **عداد الذكر (Dhikr Counter)** - Three counters (Istighfar/100, Tasbih/33, Sayyid al-Istighfar)
-5. **زر الطوارئ SOS** - Emergency button with Quran verses, action items, covenant reminder
+5. **زر الطوارئ SOS المطور** - 3-phase emergency: Alert → Breathing exercise (animated) → Emergency duas
 6. **علامات قبول التوبة (Signs of Accepted Repentance)** - 5 spiritual signs
 7. **التعامل مع الانتكاسات (Handling Relapse)** - Guidance and encouragement
+8. **الكفارات الشرعية (Kaffarah System)** - Sin-category-specific expiation steps with completion tracking
+9. **مكتبة الرجاء (Library of Hope)** - Quran verses + Hadiths + Historical repentance stories with tabs
+10. **يوميات التوبة السرية (Private Journal)** - Encrypted personal diary with mood tracking
+11. **خريطة التقدم الروحي (Spiritual Progress Chart)** - 40-day grid + weekly bar charts for habits & dhikr
+12. **أوقات الخطر الذكية (Smart Danger Times)** - User-configurable danger time alerts with local notifications
+13. **تنبيهات المواسم (Seasonal Banners)** - Auto-detected Islamic season banners (Ramadan, Dhul Hijja, etc.)
 
 ## Structure
 
@@ -50,6 +56,8 @@ artifacts-monorepo/
 - `user_progress` - Tracks each session's repentance journey
 - `habits` - Daily habit completion tracking
 - `dhikr_count` - Daily dhikr counters per session
+- `kaffarah_steps` - Tracks completion of each expiation step per session
+- `journal_entries` - Private repentance journal entries with mood field
 
 ## TypeScript & Composite Projects
 
