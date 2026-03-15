@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowLeft, CheckCircle2, Heart, Activity } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 
