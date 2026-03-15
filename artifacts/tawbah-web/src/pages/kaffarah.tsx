@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { CheckCircle2, Circle, ChevronDown, ChevronUp, AlertTriangle, Info } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle2, Circle, ChevronDown, ChevronUp, AlertTriangle, Info, Plus, X } from "lucide-react";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { getSessionId } from "@/lib/session";
 
 type SinCategory = "khilwat" | "mali" | "huquq_nas" | "taqsir_faraid" | "other";
+type TabType = "main" | "specific";
 
 interface KaffarahStep {
   key: string;
@@ -21,6 +22,15 @@ interface KaffarahInfo {
   steps: KaffarahStep[];
 }
 
+interface SpecificKaffarah {
+  id: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  color: string;
+  steps: KaffarahStep[];
+}
+
 const KAFFARAH_DATA: Record<SinCategory, KaffarahInfo> = {
   khilwat: {
     title: "كفارة ذنوب الخلوات والنظر",
@@ -30,6 +40,8 @@ const KAFFARAH_DATA: Record<SinCategory, KaffarahInfo> = {
       { key: "khilwat_block", title: "سد الذرائع", desc: "حذف كل ما يُعين على الذنب من تطبيقات وروابط ومتابعات. لا توبة بدون هذه الخطوة.", obligatory: true },
       { key: "khilwat_ghusl", title: "الاغتسال من الجنابة", desc: "إن كان الذنب يستوجب الغسل فليُبادر به فوراً.", obligatory: true },
       { key: "khilwat_salat", title: "صلاة ركعتين للتوبة", desc: "صلِّ ركعتين بنية التوبة، واسجد وابكِ بين يدي الله.", obligatory: true },
+      { key: "khilwat_naseeha", title: "مراجعة الاختلاط وتصحيحه", desc: "راجع علاقاتك بالجنس الآخر وأصلح ما يمكن إصلاحه من مواقف غير شرعية.", obligatory: true },
+      { key: "khilwat_nikah", title: "التفكير الجاد في الزواج", desc: "إن كانت الشهوة سبب الذنب فالزواج هو الحل الشرعي، استشر أهلك.", obligatory: false },
       { key: "khilwat_sadaqa", title: "الصدقة", desc: "تصدّق بما تيسّر، فالصدقة تطفئ الخطيئة كما يطفئ الماء النار.", obligatory: false },
       { key: "khilwat_sawm", title: "الصيام التطوعي", desc: "صم أياماً تطوعاً، فالصوم يكسر الشهوات ويقوي الإرادة.", obligatory: false },
       { key: "khilwat_quran", title: "ختم أو قراءة القرآن", desc: "أكثر من قراءة القرآن فهو شفاء وتطهير للقلب.", obligatory: false },
@@ -44,6 +56,8 @@ const KAFFARAH_DATA: Record<SinCategory, KaffarahInfo> = {
       { key: "mali_rad", title: "رد المال إلى صاحبه", desc: "أعد الحقوق المالية كاملة لأصحابها. هذا الركن الأساسي ولا تسقط التوبة بدونه.", obligatory: true },
       { key: "mali_tahallul", title: "طلب التحلل إن تعذّر الرد", desc: "إن تعذّر الرد (مات صاحبه أو جُهل) فتصدّق بالقدر المماثل بنية أن يصل الأجر إليه.", obligatory: true },
       { key: "mali_halal", title: "التزام مصادر الرزق الحلال", desc: "راجع مصادر دخلك كلها واستبعد كل شبهة.", obligatory: true },
+      { key: "mali_dawim", title: "التوقف الفوري عن الكسب الحرام", desc: "لا تستمر في مصدر دخل حرام ولو لساعة واحدة بعد التوبة.", obligatory: true },
+      { key: "mali_zakat_check", title: "مراجعة الزكاة المتراكمة", desc: "تأكد من إخراج كل الزكوات المتراكمة عن الأموال التي ملكتها.", obligatory: false },
       { key: "mali_sadaqa", title: "الصدقة الزائدة", desc: "تصدّق بما يزيد على المبلغ الأصلي طُهرةً لمالك وقلبك.", obligatory: false },
       { key: "mali_kafara_yamin", title: "كفارة اليمين إن كان ثمة حلف", desc: "إن حلفت يميناً على أمر مالي وحنثت: أطعم عشرة مساكين أو اكسُهم أو صم ثلاثة أيام.", obligatory: false },
     ],
@@ -57,7 +71,9 @@ const KAFFARAH_DATA: Record<SinCategory, KaffarahInfo> = {
       { key: "huquq_rad_mal", title: "رد الأموال والحقوق المادية", desc: "أعد كل مال أخذته بغير حق أو بظلم أو غش.", obligatory: true },
       { key: "huquq_ithar", title: "الاعتذار وطلب العفو", desc: "تواصل مع من آذيتهم واعتذر بصدق وتواضع واطلب عفوهم.", obligatory: true },
       { key: "huquq_ghiba", title: "إصلاح ما تكلمت به من غيبة أو نميمة", desc: "إن كنت اغتبت شخصاً فأثنِ عليه في المجالس ذاتها التي ذكرته فيها بسوء.", obligatory: true },
+      { key: "huquq_kaff", title: "الكف عن أذى الناس نهائياً", desc: "اعزم عزماً قاطعاً ألا تعود لأذى أحد بأي نوع من الأذى.", obligatory: true },
       { key: "huquq_dua", title: "الدعاء لمن ظلمته", desc: "ادع لمن آذيتهم بالخير في ظهر الغيب، فهذا من أعظم أسباب رد المظالم.", obligatory: false },
+      { key: "huquq_ihsan", title: "الإحسان إلى من أسأت إليه", desc: "إن أمكنك اصنع معروفاً لمن آذيته دون أن تُعلمه بالسبب.", obligatory: false },
       { key: "huquq_sadaqa", title: "الصدقة بنية رد الأذى", desc: "تصدّق بنية رفع الحيف عن من أسأت إليهم وإن لم تتمكن من إيصالهم.", obligatory: false },
     ],
   },
@@ -67,10 +83,12 @@ const KAFFARAH_DATA: Record<SinCategory, KaffarahInfo> = {
     steps: [
       { key: "faraid_tawba", title: "التوبة الصادقة فوراً", desc: "لا تؤخر التوبة لحظة، فالتأخير ذنب على ذنب.", obligatory: true },
       { key: "faraid_salat_qada", title: "قضاء الصلوات الفائتة", desc: "ابدأ فوراً بقضاء الصلوات التي تركتها بترتيب. العلماء يختلفون لكن القضاء أحوط وأبرأ للذمة.", obligatory: true },
-      { key: "faraid_sawm_qada", title: "قضاء الصيام الفائت", desc: "اقضِ ما أفطرته من رمضان بغير عذر قبل رمضان القادم، ومن أفطر عمداً فعليه الإمساك والقضاء مع الكفارة.", obligatory: true },
+      { key: "faraid_sawm_qada", title: "قضاء الصيام الفائت", desc: "اقضِ ما أفطرته من رمضان بغير عذر قبل رمضان القادم.", obligatory: true },
       { key: "faraid_zakat", title: "إخراج الزكاة المتراكمة", desc: "احسب ما فاتك من زكوات وأخرجها كاملة وإن كانت كثيرة.", obligatory: true },
       { key: "faraid_kafara_ramadan", title: "كفارة الإفطار العمد في رمضان", desc: "الترتيب: عتق رقبة، أو صيام شهرين متتابعين، أو إطعام ستين مسكيناً.", obligatory: true, order: ["عتق رقبة", "صيام شهرين متتابعين", "إطعام 60 مسكيناً"] },
+      { key: "faraid_muwazaba", title: "المواظبة على الصلوات الخمس في وقتها", desc: "اجعل المواظبة على الصلوات أولويتك الأولى من الآن.", obligatory: true },
       { key: "faraid_nafl", title: "التطوع والنوافل لجبر الفرائض", desc: "أكثر من النوافل، فقد ورد أن النوافل تجبر نقص الفرائض يوم القيامة.", obligatory: false },
+      { key: "faraid_ilm", title: "تعلّم أحكام الفرائض", desc: "تعلّم شروط الصلاة والصيام والزكاة لتؤديها على الوجه الصحيح.", obligatory: false },
     ],
   },
   other: {
@@ -87,14 +105,145 @@ const KAFFARAH_DATA: Record<SinCategory, KaffarahInfo> = {
   },
 };
 
+const SPECIFIC_KAFFARAHS: SpecificKaffarah[] = [
+  {
+    id: "yamin",
+    title: "كفارة اليمين",
+    subtitle: "حنث في يمين أو قسم",
+    icon: "🤝",
+    color: "bg-blue-500/10 border-blue-400/30 text-blue-600",
+    steps: [
+      { key: "yamin_confirm", title: "تأكيد الحنث في اليمين", desc: "تأكد أنك حلفت على شيء ثم فعلت خلافه، فإن كنت مكرهاً أو ناسياً فلا كفارة.", obligatory: true },
+      { key: "yamin_itam", title: "إطعام عشرة مساكين", desc: "أطعم عشرة مساكين من أوسط ما تطعم أهلك، لكل مسكين وجبة كاملة (نصف صاع تقريباً).", obligatory: true, order: ["الخيار الأول"] },
+      { key: "yamin_kiswa", title: "كسوة عشرة مساكين", desc: "البديل: اكسُ عشرة مساكين، كل واحد ما يصلي فيه كالثوب أو العباءة.", obligatory: true, order: ["الخيار الثاني"] },
+      { key: "yamin_itq", title: "تحرير رقبة", desc: "البديل الثالث لمن يستطيع (نادر في زماننا).", obligatory: false },
+      { key: "yamin_sawm", title: "صيام ثلاثة أيام", desc: "إن لم تستطع الإطعام ولا الكسوة: صم ثلاثة أيام متتالية أو متفرقة.", obligatory: false },
+    ],
+  },
+  {
+    id: "dhihar",
+    title: "كفارة الظهار",
+    subtitle: "قال لزوجته: أنتِ كظهر أمي",
+    icon: "🏠",
+    color: "bg-purple-500/10 border-purple-400/30 text-purple-600",
+    steps: [
+      { key: "dhihar_tawba", title: "التوبة الفورية وعدم الإعادة", desc: "الظهار من المنكر والزور، فتب إلى الله فوراً.", obligatory: true },
+      { key: "dhihar_itq", title: "تحرير رقبة قبل المسيس", desc: "الكفارة الأولى: تحرير رقبة مؤمنة قبل إتيان الزوجة.", obligatory: true, order: ["الخيار الأول"] },
+      { key: "dhihar_sawm", title: "صيام شهرين متتابعين", desc: "إن لم يجد الرقبة: صيام شهرين متتابعين قبل المسيس. لا يجوز الفطر إلا لعذر شرعي.", obligatory: true, order: ["الخيار الثاني"] },
+      { key: "dhihar_itam", title: "إطعام ستين مسكيناً", desc: "إن لم يستطع الصيام لمرض مزمن: إطعام ستين مسكيناً.", obligatory: true, order: ["الخيار الثالث"] },
+    ],
+  },
+  {
+    id: "iftar_ramadan",
+    title: "كفارة الإفطار العمد في رمضان",
+    subtitle: "أكل أو شرب عمداً في نهار رمضان",
+    icon: "🌙",
+    color: "bg-emerald-500/10 border-emerald-400/30 text-emerald-600",
+    steps: [
+      { key: "iftar_tawba", title: "التوبة الفورية والإمساك", desc: "أمسك فوراً حتى غروب الشمس ولو كانت الكفارة لم تُنجز بعد.", obligatory: true },
+      { key: "iftar_qada", title: "قضاء اليوم", desc: "اقضِ اليوم الذي أفطرت فيه بعد رمضان.", obligatory: true },
+      { key: "iftar_itq", title: "تحرير رقبة", desc: "الكفارة الأولى بالترتيب: عتق رقبة مؤمنة.", obligatory: true, order: ["الخيار الأول"] },
+      { key: "iftar_sawm2", title: "صيام شهرين متتابعين", desc: "إن عجز عن الرقبة: صيام شهرين متتابعين بلا انقطاع.", obligatory: true, order: ["الخيار الثاني"] },
+      { key: "iftar_itam60", title: "إطعام ستين مسكيناً", desc: "إن عجز عن الصيام لمرض مزمن: إطعام ستين مسكيناً.", obligatory: true, order: ["الخيار الثالث"] },
+    ],
+  },
+  {
+    id: "qatl",
+    title: "كفارة القتل الخطأ",
+    subtitle: "قتل نفساً بغير قصد",
+    icon: "⚖️",
+    color: "bg-red-500/10 border-red-400/30 text-red-600",
+    steps: [
+      { key: "qatl_tawba", title: "التوبة الصادقة والحزن", desc: "ابكِ على من قتلته وادعُ له بالرحمة والمغفرة كثيراً.", obligatory: true },
+      { key: "qatl_diya", title: "الدية لأهل الضحية", desc: "دية القتل الخطأ تُؤدى إلى أهل المقتول من مال القاتل أو عاقلته.", obligatory: true },
+      { key: "qatl_itq", title: "تحرير رقبة مؤمنة", desc: "الكفارة الأولى: عتق رقبة مؤمنة.", obligatory: true, order: ["الخيار الأول"] },
+      { key: "qatl_sawm2", title: "صيام شهرين متتابعين", desc: "إن عجز عن الرقبة: صيام شهرين متتابعين.", obligatory: true, order: ["الخيار الثاني"] },
+      { key: "qatl_dua", title: "الدعاء المستمر للمقتول", desc: "أكثر من الدعاء للمقتول بالرحمة والمغفرة ما دمت حياً.", obligatory: false },
+    ],
+  },
+  {
+    id: "haj_itha",
+    title: "كفارة الأذى في الإحرام",
+    subtitle: "حلق الشعر أو لبس المخيط أو نحوه",
+    icon: "🕋",
+    color: "bg-amber-500/10 border-amber-400/30 text-amber-600",
+    steps: [
+      { key: "haj_tawba", title: "التوبة والاستغفار", desc: "استغفر الله على ما حصل، سواء كان عمداً أو خطأً.", obligatory: true },
+      { key: "haj_sawm3", title: "صيام ثلاثة أيام", desc: "الخيار الأول: صيام ثلاثة أيام.", obligatory: true, order: ["الخيار الأول"] },
+      { key: "haj_itam6", title: "إطعام ستة مساكين", desc: "الخيار الثاني: إطعام ستة مساكين (لكل مسكين نصف صاع).", obligatory: true, order: ["الخيار الثاني"] },
+      { key: "haj_shaah", title: "ذبح شاة", desc: "الخيار الثالث: نسك (ذبح شاة) وتوزيع لحمها على الفقراء.", obligatory: true, order: ["الخيار الثالث"] },
+    ],
+  },
+  {
+    id: "ghadr",
+    title: "كفارة نقض العهد والغدر",
+    subtitle: "نقض عهداً أو وعداً قطعه",
+    icon: "📜",
+    color: "bg-orange-500/10 border-orange-400/30 text-orange-600",
+    steps: [
+      { key: "ghadr_tawba", title: "التوبة الصادقة", desc: "الوفاء بالعهد واجب، والغدر من صفات المنافق، فتب إلى الله.", obligatory: true },
+      { key: "ghadr_wafa", title: "الوفاء بالعهد إن أمكن", desc: "إن كان بإمكانك الوفاء بما وعدت به فأوفِ به الآن.", obligatory: true },
+      { key: "ghadr_ithar", title: "الاعتذار الصادق", desc: "اعتذر لمن أعطيته العهد بصدق وتواضع.", obligatory: true },
+      { key: "ghadr_kafara_yamin", title: "كفارة اليمين إن حلفت", desc: "إن كان العهد مصحوباً بيمين بالله فأخرج كفارة يمين.", obligatory: false },
+      { key: "ghadr_sadaqa", title: "الصدقة", desc: "تصدّق طلباً لمغفرة الله على ما فرّط.", obligatory: false },
+    ],
+  },
+];
+
+function StepItem({
+  step, done, expanded, onToggle, onExpand, colorClass
+}: {
+  step: KaffarahStep;
+  done: boolean;
+  expanded: boolean;
+  onToggle: () => void;
+  onExpand: () => void;
+  colorClass: string;
+}) {
+  return (
+    <div className={`bg-card rounded-xl border transition-all ${done ? `${colorClass} bg-opacity-5` : "border-border"}`}>
+      <div className="flex items-center gap-3 p-4">
+        <button onClick={onToggle} className="shrink-0 w-7 h-7 flex items-center justify-center">
+          {done
+            ? <CheckCircle2 size={26} className="text-primary" />
+            : <Circle size={26} className="text-muted-foreground/40" />
+          }
+        </button>
+        <div className="flex-1 text-right">
+          <p className={`font-bold text-sm ${done ? "line-through text-muted-foreground" : ""}`}>{step.title}</p>
+          {step.order && (
+            <p className="text-[10px] text-muted-foreground mt-0.5 bg-muted/50 px-1.5 py-0.5 rounded inline-block">
+              {step.order[0]}
+            </p>
+          )}
+        </div>
+        <button onClick={onExpand} className="shrink-0 text-muted-foreground p-1">
+          {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+        </button>
+      </div>
+      {expanded && (
+        <div className="px-4 pb-4 pt-0">
+          <div className="flex items-start gap-2 bg-muted/50 rounded-lg p-3">
+            <Info size={14} className="text-muted-foreground mt-0.5 shrink-0" />
+            <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Kaffarah() {
   const { data: progress } = useAppUserProgress();
   const sinCategory = (progress?.sinCategory || "other") as SinCategory;
   const kaffarah = KAFFARAH_DATA[sinCategory];
 
+  const [activeTab, setActiveTab] = useState<TabType>("main");
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedSpecific, setSelectedSpecific] = useState<string[]>([]);
+  const [showSelector, setShowSelector] = useState(false);
 
   useEffect(() => {
     const sessionId = getSessionId();
@@ -107,17 +256,33 @@ export default function Kaffarah() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    const saved = localStorage.getItem("selected_kaffarahs");
+    if (saved) setSelectedSpecific(JSON.parse(saved));
   }, []);
 
-  const toggleStep = async (stepKey: string, current: boolean) => {
+  const toggleStep = async (stepKey: string) => {
     const sessionId = getSessionId();
-    const newVal = !current;
+    const newVal = !completedSteps[stepKey];
     setCompletedSteps((prev) => ({ ...prev, [stepKey]: newVal }));
     await fetch("/api/kaffarah/complete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId, stepKey, completed: newVal }),
     });
+  };
+
+  const addSpecific = (id: string) => {
+    const updated = [...selectedSpecific, id];
+    setSelectedSpecific(updated);
+    localStorage.setItem("selected_kaffarahs", JSON.stringify(updated));
+    setShowSelector(false);
+  };
+
+  const removeSpecific = (id: string) => {
+    const updated = selectedSpecific.filter((s) => s !== id);
+    setSelectedSpecific(updated);
+    localStorage.setItem("selected_kaffarahs", JSON.stringify(updated));
   };
 
   const obligatorySteps = kaffarah.steps.filter((s) => s.obligatory);
@@ -134,132 +299,192 @@ export default function Kaffarah() {
   }
 
   return (
-    <div className="flex flex-col flex-1 pb-8 px-5 pt-4">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-        <h1 className="text-2xl font-display font-bold mb-2">{kaffarah.title}</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">{kaffarah.intro}</p>
+    <div className="flex flex-col flex-1 pb-8">
+      <div className="px-5 pt-4 mb-4">
+        <h1 className="text-2xl font-display font-bold mb-1">الكفارات الشرعية</h1>
+        <p className="text-sm text-muted-foreground">تتبّع خطوات الكفارة حتى تبرأ الذمة</p>
+      </div>
 
-        {kaffarah.warning && (
-          <div className="mt-3 flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
-            <AlertTriangle size={16} className="text-destructive mt-0.5 shrink-0" />
-            <p className="text-xs text-destructive leading-relaxed">{kaffarah.warning}</p>
-          </div>
-        )}
-
-        <div className="mt-4 bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-bold">الواجبات المكتملة</span>
-            <span className="text-sm font-bold text-primary">{completedObl}/{obligatorySteps.length}</span>
-          </div>
-          <div className="h-2.5 bg-muted rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPct}%` }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="h-full bg-primary rounded-full"
-            />
-          </div>
+      <div className="px-5 mb-4">
+        <div className="flex gap-2 bg-muted/50 p-1 rounded-xl">
+          <button
+            onClick={() => setActiveTab("main")}
+            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === "main" ? "bg-card text-primary shadow-sm border border-border/50" : "text-muted-foreground"}`}
+          >
+            كفارة ذنبك الأساسية
+          </button>
+          <button
+            onClick={() => setActiveTab("specific")}
+            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === "specific" ? "bg-card text-primary shadow-sm border border-border/50" : "text-muted-foreground"}`}
+          >
+            كفارات نوعية أخرى
+          </button>
         </div>
-      </motion.div>
+      </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center gap-2 mb-1">
-          <div className="w-2 h-2 rounded-full bg-destructive" />
-          <h2 className="text-sm font-bold text-foreground">الواجبات (لا تسقط)</h2>
-        </div>
+      <AnimatePresence mode="wait">
+        {activeTab === "main" ? (
+          <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 flex flex-col gap-3">
+            <div className="mb-2">
+              <h2 className="font-bold text-sm mb-1">{kaffarah.title}</h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">{kaffarah.intro}</p>
 
-        {obligatorySteps.map((step, i) => {
-          const done = !!completedSteps[step.key];
-          const expanded = expandedStep === step.key;
-          return (
-            <motion.div
-              key={step.key}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.07 }}
-              className={`bg-card rounded-xl border transition-all ${done ? "border-primary/30 bg-primary/5" : "border-border"}`}
-            >
-              <div className="flex items-center gap-3 p-4">
-                <button
-                  onClick={() => toggleStep(step.key, done)}
-                  className="shrink-0 w-7 h-7 flex items-center justify-center"
-                >
-                  {done
-                    ? <CheckCircle2 size={26} className="text-primary" />
-                    : <Circle size={26} className="text-muted-foreground/40" />
-                  }
-                </button>
-                <div className="flex-1 text-right">
-                  <p className={`font-bold text-sm ${done ? "line-through text-muted-foreground" : ""}`}>{step.title}</p>
-                  {step.order && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5">بالترتيب: {step.order.join(" ← ")}</p>
-                  )}
-                </div>
-                <button onClick={() => setExpandedStep(expanded ? null : step.key)} className="shrink-0 text-muted-foreground">
-                  {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                </button>
-              </div>
-              {expanded && (
-                <div className="px-4 pb-4 pt-0">
-                  <div className="flex items-start gap-2 bg-muted/50 rounded-lg p-3">
-                    <Info size={14} className="text-muted-foreground mt-0.5 shrink-0" />
-                    <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
-                  </div>
+              {kaffarah.warning && (
+                <div className="mt-2 flex items-start gap-2 bg-destructive/10 border border-destructive/20 rounded-xl p-3">
+                  <AlertTriangle size={15} className="text-destructive mt-0.5 shrink-0" />
+                  <p className="text-xs text-destructive leading-relaxed">{kaffarah.warning}</p>
                 </div>
               )}
-            </motion.div>
-          );
-        })}
 
-        {recommendedSteps.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 mt-4 mb-1">
-              <div className="w-2 h-2 rounded-full bg-secondary" />
-              <h2 className="text-sm font-bold text-foreground">المستحبات (تزيد الأجر)</h2>
+              <div className="mt-3 bg-card rounded-xl border border-border p-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-bold">الواجبات المكتملة</span>
+                  <span className="text-xs font-bold text-primary">{completedObl}/{obligatorySteps.length}</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${progressPct}%` }} transition={{ duration: 0.8 }} className="h-full bg-primary rounded-full" />
+                </div>
+              </div>
             </div>
 
-            {recommendedSteps.map((step, i) => {
-              const done = !!completedSteps[step.key];
-              const expanded = expandedStep === step.key;
-              return (
-                <motion.div
-                  key={step.key}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: (obligatorySteps.length + i) * 0.07 }}
-                  className={`bg-card rounded-xl border transition-all ${done ? "border-secondary/30 bg-secondary/5" : "border-border border-dashed"}`}
-                >
-                  <div className="flex items-center gap-3 p-4">
-                    <button
-                      onClick={() => toggleStep(step.key, done)}
-                      className="shrink-0 w-7 h-7 flex items-center justify-center"
-                    >
-                      {done
-                        ? <CheckCircle2 size={26} className="text-secondary" />
-                        : <Circle size={26} className="text-muted-foreground/30" />
-                      }
-                    </button>
-                    <div className="flex-1 text-right">
-                      <p className={`font-bold text-sm ${done ? "line-through text-muted-foreground" : ""}`}>{step.title}</p>
-                    </div>
-                    <button onClick={() => setExpandedStep(expanded ? null : step.key)} className="shrink-0 text-muted-foreground">
-                      {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                    </button>
-                  </div>
-                  {expanded && (
-                    <div className="px-4 pb-4 pt-0">
-                      <div className="flex items-start gap-2 bg-muted/50 rounded-lg p-3">
-                        <Info size={14} className="text-muted-foreground mt-0.5 shrink-0" />
-                        <p className="text-xs text-muted-foreground leading-relaxed">{step.desc}</p>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 rounded-full bg-destructive" />
+              <h3 className="text-xs font-bold text-foreground">الواجبات (لا تسقط)</h3>
+            </div>
+
+            {obligatorySteps.map((step, i) => (
+              <motion.div key={step.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
+                <StepItem
+                  step={step}
+                  done={!!completedSteps[step.key]}
+                  expanded={expandedStep === step.key}
+                  onToggle={() => toggleStep(step.key)}
+                  onExpand={() => setExpandedStep(expandedStep === step.key ? null : step.key)}
+                  colorClass="border-primary/30"
+                />
+              </motion.div>
+            ))}
+
+            {recommendedSteps.length > 0 && (
+              <>
+                <div className="flex items-center gap-2 mt-3 mb-1">
+                  <div className="w-2 h-2 rounded-full bg-secondary" />
+                  <h3 className="text-xs font-bold text-foreground">المستحبات (تزيد الأجر)</h3>
+                </div>
+                {recommendedSteps.map((step, i) => (
+                  <motion.div key={step.key} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (obligatorySteps.length + i) * 0.06 }}>
+                    <StepItem
+                      step={step}
+                      done={!!completedSteps[step.key]}
+                      expanded={expandedStep === step.key}
+                      onToggle={() => toggleStep(step.key)}
+                      onExpand={() => setExpandedStep(expandedStep === step.key ? null : step.key)}
+                      colorClass="border-secondary/30"
+                    />
+                  </motion.div>
+                ))}
+              </>
+            )}
+          </motion.div>
+        ) : (
+          <motion.div key="specific" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 flex flex-col gap-4">
+            <div className="bg-muted/30 rounded-xl p-3">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                إن كان عليك كفارة نوعية محددة (كحنث في يمين، أو إفطار رمضان، أو غيرها) فأضفها هنا وتتبع خطواتها.
+              </p>
+            </div>
+
+            {selectedSpecific.length > 0 && (
+              <div className="flex flex-col gap-4">
+                {selectedSpecific.map((id) => {
+                  const kaf = SPECIFIC_KAFFARAHS.find((k) => k.id === id);
+                  if (!kaf) return null;
+                  const totalObl = kaf.steps.filter(s => s.obligatory).length;
+                  const doneObl = kaf.steps.filter(s => s.obligatory && completedSteps[`${id}_${s.key}`]).length;
+                  const pct = totalObl > 0 ? Math.round((doneObl / totalObl) * 100) : 0;
+                  return (
+                    <div key={id} className="bg-card rounded-xl border border-border overflow-hidden">
+                      <div className={`flex items-center justify-between p-4 border-b border-border ${kaf.color} bg-opacity-30`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xl">{kaf.icon}</span>
+                          <div>
+                            <p className="font-bold text-sm">{kaf.title}</p>
+                            <p className="text-[11px] text-muted-foreground">{kaf.subtitle}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-primary">{doneObl}/{totalObl}</span>
+                          <button onClick={() => removeSpecific(id)} className="p-1 text-muted-foreground/50 hover:text-destructive transition-colors">
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="px-4 pt-1 pb-0">
+                        <div className="h-1.5 bg-muted rounded-full overflow-hidden my-2">
+                          <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }} className="h-full bg-primary rounded-full" />
+                        </div>
+                      </div>
+                      <div className="px-4 pb-4 flex flex-col gap-2">
+                        {kaf.steps.map((step) => {
+                          const compositeKey = `${id}_${step.key}`;
+                          return (
+                            <StepItem
+                              key={compositeKey}
+                              step={step}
+                              done={!!completedSteps[compositeKey]}
+                              expanded={expandedStep === compositeKey}
+                              onToggle={() => toggleStep(compositeKey)}
+                              onExpand={() => setExpandedStep(expandedStep === compositeKey ? null : compositeKey)}
+                              colorClass="border-primary/30"
+                            />
+                          );
+                        })}
                       </div>
                     </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {showSelector ? (
+              <div className="bg-card rounded-xl border border-primary/20 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="font-bold text-sm">اختر نوع الكفارة</p>
+                  <button onClick={() => setShowSelector(false)} className="text-muted-foreground hover:text-foreground">
+                    <X size={18} />
+                  </button>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {SPECIFIC_KAFFARAHS.filter(k => !selectedSpecific.includes(k.id)).map((kaf) => (
+                    <button
+                      key={kaf.id}
+                      onClick={() => addSpecific(kaf.id)}
+                      className={`flex items-center gap-3 p-3 rounded-xl border text-right transition-all hover:shadow-sm active:scale-[0.98] ${kaf.color}`}
+                    >
+                      <span className="text-2xl shrink-0">{kaf.icon}</span>
+                      <div>
+                        <p className="font-bold text-sm">{kaf.title}</p>
+                        <p className="text-[11px] text-muted-foreground">{kaf.subtitle}</p>
+                      </div>
+                    </button>
+                  ))}
+                  {SPECIFIC_KAFFARAHS.filter(k => !selectedSpecific.includes(k.id)).length === 0 && (
+                    <p className="text-center text-sm text-muted-foreground py-3">أضفت جميع أنواع الكفارات المتاحة</p>
                   )}
-                </motion.div>
-              );
-            })}
-          </>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowSelector(true)}
+                className="w-full flex items-center justify-center gap-2 p-3.5 rounded-xl border border-dashed border-primary/40 text-primary hover:bg-primary/5 transition-all"
+              >
+                <Plus size={18} />
+                <span className="font-bold text-sm">إضافة كفارة نوعية</span>
+              </button>
+            )}
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
