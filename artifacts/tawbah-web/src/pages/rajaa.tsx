@@ -1,6 +1,6 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Sparkles, Clock, Search, Heart, X, Play, Pause, Loader2 } from "lucide-react";
+import { BookOpen, Sparkles, Clock, Search, Heart, X, Play } from "lucide-react";
 
 type VerseCategory = "رجاء" | "ترغيب" | "نعيم" | "طمأنينة";
 
@@ -292,55 +292,52 @@ const STORIES = [
 type TabType = "quran" | "hadith" | "stories";
 
 function VerseAudioPlayer({ url }: { url: string }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [playing, setPlaying] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-    };
-  }, []);
-
-  const toggle = () => {
-    if (!audioRef.current) {
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audio.onended = () => setPlaying(false);
-      audio.oncanplay = () => setLoading(false);
-      audio.onerror = () => { setPlaying(false); setLoading(false); };
-    }
-    if (playing) {
-      audioRef.current.pause();
-      setPlaying(false);
-    } else {
-      setLoading(true);
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => { setPlaying(false); setLoading(false); });
-    }
+  const handleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOpen(true);
   };
 
-  return (
-    <button
-      onClick={(e) => { e.stopPropagation(); toggle(); }}
-      title="استمع بصوت مشاري راشد العفاسي"
-      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border ${
-        playing
-          ? "bg-green-500/15 border-green-500/40 text-green-600"
-          : "bg-muted/60 border-border text-muted-foreground hover:text-primary hover:border-primary/40"
-      }`}
-    >
-      {loading ? (
-        <Loader2 size={12} className="animate-spin" />
-      ) : playing ? (
-        <Pause size={12} />
-      ) : (
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    audioRef.current?.pause();
+    setOpen(false);
+  };
+
+  if (!open) {
+    return (
+      <button
+        onClick={handleOpen}
+        title="استمع بصوت مشاري راشد العفاسي"
+        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border bg-muted/60 border-border text-muted-foreground hover:text-primary hover:border-primary/40"
+      >
         <Play size={12} />
-      )}
-      <span>{playing ? "إيقاف" : "استمع"}</span>
-    </button>
+        <span>استمع</span>
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      <audio
+        ref={audioRef}
+        src={url}
+        controls
+        autoPlay
+        preload="auto"
+        className="h-7"
+        style={{ minWidth: 140, maxWidth: 180 }}
+      />
+      <button
+        onClick={handleClose}
+        className="p-1 rounded-md text-muted-foreground hover:text-foreground"
+        title="إغلاق"
+      >
+        <X size={12} />
+      </button>
+    </div>
   );
 }
 
