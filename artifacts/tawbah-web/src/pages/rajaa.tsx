@@ -341,7 +341,11 @@ function VerseAudioPlayer({ url }: { url: string }) {
   );
 }
 
-function HadithAudioPlayer({ hadith, note }: { hadith: string; note: string }) {
+type AudioPayload =
+  | { type: "hadith"; hadith: string; note: string }
+  | { type: "story"; story: string; lesson: string };
+
+function AudioPlayer({ payload, accentClass = "hover:text-secondary hover:border-secondary/40" }: { payload: AudioPayload; accentClass?: string }) {
   const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -354,10 +358,15 @@ function HadithAudioPlayer({ hadith, note }: { hadith: string; note: string }) {
     }
     setStatus("loading");
     try {
+      const body =
+        payload.type === "story"
+          ? { type: "story", story: payload.story, lesson: payload.lesson }
+          : { type: "hadith", hadith: payload.hadith, note: payload.note };
+
       const res = await fetch("/api/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ hadith, note }),
+        body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error("Failed");
       const blob = await res.blob();
@@ -405,8 +414,8 @@ function HadithAudioPlayer({ hadith, note }: { hadith: string; note: string }) {
     <button
       onClick={handlePlay}
       disabled={status === "loading"}
-      title="استمع بصوت دافئ"
-      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border bg-muted/60 border-border text-muted-foreground hover:text-secondary hover:border-secondary/40 disabled:opacity-60"
+      title="استمع"
+      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border bg-muted/60 border-border text-muted-foreground disabled:opacity-60 ${accentClass}`}
     >
       {status === "loading" ? (
         <Loader2 size={12} className="animate-spin" />
@@ -416,6 +425,10 @@ function HadithAudioPlayer({ hadith, note }: { hadith: string; note: string }) {
       <span>{status === "loading" ? "جاري التحميل..." : status === "error" ? "حاول مجدداً" : "استمع"}</span>
     </button>
   );
+}
+
+function HadithAudioPlayer({ hadith, note }: { hadith: string; note: string }) {
+  return <AudioPlayer payload={{ type: "hadith", hadith, note }} />;
 }
 
 export default function Rajaa() {
@@ -660,12 +673,18 @@ export default function Rajaa() {
                           {isOpen ? s.story : s.story.slice(0, 130) + "..."}
                         </p>
 
-                        <button
-                          onClick={() => setExpanded(isOpen ? null : key)}
-                          className="mt-2 text-xs text-amber-600 font-bold"
-                        >
-                          {isOpen ? "إخفاء ▴" : "اقرأ القصة كاملة ▾"}
-                        </button>
+                        <div className="flex items-center justify-between mt-2">
+                          <button
+                            onClick={() => setExpanded(isOpen ? null : key)}
+                            className="text-xs text-amber-600 font-bold"
+                          >
+                            {isOpen ? "إخفاء ▴" : "اقرأ القصة كاملة ▾"}
+                          </button>
+                          <AudioPlayer
+                            payload={{ type: "story", story: s.story, lesson: s.lesson }}
+                            accentClass="hover:text-amber-600 hover:border-amber-400/40"
+                          />
+                        </div>
 
                         <AnimatePresence>
                           {isOpen && (
