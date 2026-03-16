@@ -25,7 +25,7 @@ router.post("/tts", async (req, res) => {
     const response = await openai.chat.completions.create({
       model: "gpt-audio",
       modalities: ["text", "audio"],
-      audio: { voice: "shimmer", format: "mp3" },
+      audio: { voice: "onyx", format: "mp3" },
       messages: [
         { role: "system", content: ARABIC_VOICE_SYSTEM_PROMPT },
         { role: "user", content: userText },
