@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Sparkles, Clock, Search, Heart, X, Play } from "lucide-react";
+import { BookOpen, Sparkles, Clock, Search, Heart, X, Play, Loader2 } from "lucide-react";
 
 type VerseCategory = "رجاء" | "ترغيب" | "نعيم" | "طمأنينة";
 
@@ -341,6 +341,83 @@ function VerseAudioPlayer({ url }: { url: string }) {
   );
 }
 
+function HadithAudioPlayer({ hadith, note }: { hadith: string; note: string }) {
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const handlePlay = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (audioUrl) {
+      audioRef.current?.play();
+      return;
+    }
+    setStatus("loading");
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ hadith, note }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setAudioUrl(url);
+      setStatus("ready");
+    } catch {
+      setStatus("error");
+    }
+  };
+
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    audioRef.current?.pause();
+    setStatus("idle");
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+  };
+
+  if (status === "ready" && audioUrl) {
+    return (
+      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          controls
+          autoPlay
+          className="h-7"
+          style={{ minWidth: 140, maxWidth: 180 }}
+        />
+        <button
+          onClick={handleClose}
+          className="p-1 rounded-md text-muted-foreground hover:text-foreground"
+          title="إغلاق"
+        >
+          <X size={12} />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={handlePlay}
+      disabled={status === "loading"}
+      title="استمع بصوت دافئ"
+      className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border bg-muted/60 border-border text-muted-foreground hover:text-secondary hover:border-secondary/40 disabled:opacity-60"
+    >
+      {status === "loading" ? (
+        <Loader2 size={12} className="animate-spin" />
+      ) : (
+        <Play size={12} />
+      )}
+      <span>{status === "loading" ? "جاري التحميل..." : status === "error" ? "حاول مجدداً" : "استمع"}</span>
+    </button>
+  );
+}
+
 export default function Rajaa() {
   const [activeTab, setActiveTab] = useState<TabType>("quran");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -522,9 +599,12 @@ export default function Rajaa() {
                         <p className="font-display text-[14px] leading-loose text-foreground mb-3 text-center">{h.arabic}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-secondary font-bold">{h.source}</span>
-                          <button onClick={() => setExpanded(isOpen ? null : key)} className="text-xs text-muted-foreground hover:text-secondary transition-colors font-medium">
-                            {isOpen ? "إغلاق" : "تأمل ▾"}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <HadithAudioPlayer hadith={h.arabic} note={h.note} />
+                            <button onClick={() => setExpanded(isOpen ? null : key)} className="text-xs text-muted-foreground hover:text-secondary transition-colors font-medium">
+                              {isOpen ? "إغلاق" : "تأمل ▾"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <AnimatePresence>
