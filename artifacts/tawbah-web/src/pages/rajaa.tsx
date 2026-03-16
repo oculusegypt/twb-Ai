@@ -4,7 +4,7 @@ import { BookOpen, Sparkles, Clock, Search, Heart, X, Play } from "lucide-react"
 
 type VerseCategory = "رجاء" | "ترغيب" | "نعيم" | "طمأنينة";
 
-const AFASY_BASE = "https://everyayah.com/data/Mishari_Rashid_al-Afasy_128kbps/";
+const AFASY_BASE = "https://quran.ksu.edu.sa/ayat/mp3/Alafasy_64kbps/";
 function ayahUrl(surah: number, ayah: number) {
   return `${AFASY_BASE}${String(surah).padStart(3, "0")}${String(ayah).padStart(3, "0")}.mp3`;
 }
