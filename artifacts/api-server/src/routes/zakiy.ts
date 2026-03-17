@@ -39,7 +39,8 @@ function getIslamicDateContext(): string {
     hour < 22 ? "وقت العشاء" :
     "الليل";
 
-  const hijriEstimate = estimateHijriDate(now);
+  const hijri = getHijriDate(now);
+  const occasionContext = buildOccasionContext(hijri.monthNum, hijri.dayNum, hijri.year);
 
   return `
 ╔══════════════════════════════╗
@@ -47,64 +48,42 @@ function getIslamicDateContext(): string {
 ╚══════════════════════════════╝
 
 📅 التاريخ الميلادي: ${gregorianDate}
-🕌 التاريخ الهجري التقريبي: ${hijriEstimate.dayNum} ${hijriEstimate.monthName} ${hijriEstimate.year}هـ
+🕌 التاريخ الهجري: ${hijri.dayNum} ${hijri.monthName} ${hijri.year}هـ
 ⏰ وقت اليوم: ${timeOfDay} (${timeStr} بتوقيت مصر)
 📆 الإنجليزي: ${gregorianDateEn}
 
-${hijriEstimate.context}
+${occasionContext}
 ${getDayOfWeekFadhail(now)}
 `;
 }
 
-function estimateHijriDate(date: Date): {
-  dayNum: number;
-  monthName: string;
-  year: number;
-  monthNum: number;
-  context: string;
-} {
-  const HIJRI_EPOCH = new Date("622-07-16");
-  const HIJRI_MONTHS = [
+function getHijriDate(date: Date): { dayNum: number; monthNum: number; monthName: string; year: number } {
+  const HIJRI_MONTHS_AR = [
     "محرم", "صفر", "ربيع الأول", "ربيع الثاني",
     "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
-    "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
+    "رمضان", "شوال", "ذو القعدة", "ذو الحجة",
   ];
 
-  const msPerDay = 86400000;
-  const daysSinceEpoch = Math.floor((date.getTime() - HIJRI_EPOCH.getTime()) / msPerDay);
-  const hijriCycle = 30 * 354 + 11;
-  const cycleNum = Math.floor(daysSinceEpoch / hijriCycle);
-  let remainingDays = daysSinceEpoch % hijriCycle;
+  const parts = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+    timeZone: "Africa/Cairo",
+  }).formatToParts(date);
 
-  let hijriYear = cycleNum * 30 + 1;
-  const yearLengths = [354, 354, 355, 354, 354, 355, 354, 355, 354, 354,
-    355, 354, 354, 355, 354, 354, 355, 354, 355, 354,
-    354, 355, 354, 354, 355, 354, 355, 354, 354, 355];
-
-  for (let i = 0; i < 30; i++) {
-    if (remainingDays < yearLengths[i]!) {
-      break;
-    }
-    remainingDays -= yearLengths[i]!;
-    hijriYear++;
+  let day = 1, month = 1, year = 1447;
+  for (const p of parts) {
+    if (p.type === "day") day = parseInt(p.value);
+    if (p.type === "month") month = parseInt(p.value);
+    if (p.type === "year") year = parseInt(p.value);
   }
 
-  const monthLengths = [30, 29, 30, 29, 30, 29, 30, 29, 30, 29, 30, 29];
-  let hijriMonth = 0;
-  for (let m = 0; m < 12; m++) {
-    const mLen = monthLengths[m]!;
-    if (remainingDays < mLen) {
-      hijriMonth = m;
-      break;
-    }
-    remainingDays -= mLen;
-  }
-
-  const hijriDay = remainingDays + 1;
-  const monthName = HIJRI_MONTHS[hijriMonth]!;
-  const context = buildOccasionContext(hijriMonth + 1, hijriDay, hijriYear);
-
-  return { dayNum: hijriDay, monthName, year: hijriYear, monthNum: hijriMonth + 1, context };
+  return {
+    dayNum: day,
+    monthNum: month,
+    monthName: HIJRI_MONTHS_AR[month - 1] ?? "رمضان",
+    year,
+  };
 }
 
 function buildOccasionContext(month: number, day: number, year: number): string {
