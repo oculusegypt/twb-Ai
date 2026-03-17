@@ -75,9 +75,8 @@ const GREETING: Message = {
   timestamp: new Date(),
 };
 
-function QuranCard({ seg, autoPlay = false }: { seg: QuranSegment; autoPlay?: boolean }) {
+function QuranCard({ seg, shouldAutoPlay }: { seg: QuranSegment; shouldAutoPlay?: boolean }) {
   const [playing, setPlaying] = useState(false);
-  const [loaded, setLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -85,21 +84,16 @@ function QuranCard({ seg, autoPlay = false }: { seg: QuranSegment; autoPlay?: bo
     const audio = new Audio(url);
     audioRef.current = audio;
     audio.onended = () => setPlaying(false);
-    audio.oncanplaythrough = () => setLoaded(true);
-
-    if (autoPlay) {
-      const timer = setTimeout(() => {
-        audio.play()
-          .then(() => setPlaying(true))
-          .catch(() => {});
-      }, 800);
-      return () => {
-        clearTimeout(timer);
-        audio.pause();
-      };
-    }
     return () => { audio.pause(); };
-  }, [seg.surah, seg.ayah, autoPlay]);
+  }, [seg.surah, seg.ayah]);
+
+  useEffect(() => {
+    if (shouldAutoPlay && audioRef.current) {
+      audioRef.current.play()
+        .then(() => setPlaying(true))
+        .catch(() => {});
+    }
+  }, [shouldAutoPlay]);
 
   function toggle() {
     const audio = audioRef.current;
@@ -150,13 +144,13 @@ function QuranCard({ seg, autoPlay = false }: { seg: QuranSegment; autoPlay?: bo
   );
 }
 
-function BotMessageBody({ text, audioBase64, msgId, playingId, onPlay, isNew }: {
+function BotMessageBody({ text, audioBase64, msgId, playingId, onPlay, quranReady }: {
   text: string;
   audioBase64?: string;
   msgId: string;
   playingId: string | null;
   onPlay: (id: string, b64: string) => void;
-  isNew?: boolean;
+  quranReady?: boolean;
 }) {
   const segments = parseSegments(text);
 
@@ -164,7 +158,7 @@ function BotMessageBody({ text, audioBase64, msgId, playingId, onPlay, isNew }: 
     <div>
       {segments.map((seg, i) =>
         seg.type === "quran" ? (
-          <QuranCard key={i} seg={seg} autoPlay={isNew} />
+          <QuranCard key={i} seg={seg} shouldAutoPlay={quranReady} />
         ) : (
           <p key={i} className="text-sm leading-relaxed whitespace-pre-wrap">{seg.text}</p>
         )
@@ -193,7 +187,7 @@ export default function ZakiyPage() {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
-  const [newestBotId, setNewestBotId] = useState<string | null>(null);
+  const [quranReadyId, setQuranReadyId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -225,7 +219,6 @@ export default function ZakiyPage() {
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, msg]);
-    setNewestBotId(msg.id);
     if (audioBase64) {
       setTimeout(() => playAudio(msg.id, audioBase64), 600);
     }
@@ -322,7 +315,10 @@ export default function ZakiyPage() {
       const url = URL.createObjectURL(new Blob([bytes], { type: "audio/mp3" }));
       audio = new Audio(url);
       audioRefs.current[id] = audio;
-      audio.onended = () => setPlayingId(null);
+      audio.onended = () => {
+        setPlayingId(null);
+        setQuranReadyId(id);
+      };
     }
 
     if (playingId === id && !audio.paused) {
@@ -381,7 +377,7 @@ export default function ZakiyPage() {
                     msgId={msg.id}
                     playingId={playingId}
                     onPlay={playAudio}
-                    isNew={msg.id === newestBotId}
+                    quranReady={msg.id === quranReadyId}
                   />
                 ) : (
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
