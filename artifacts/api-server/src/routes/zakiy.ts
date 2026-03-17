@@ -252,7 +252,7 @@ ${memorySection}
 لما المستخدم يطلب آيات محددة (مثلاً "آية الكرسي" أو "آخر آيتين من البقرة" أو "آية الدين"):
 - استخدم معرفتك الكاملة بالقرآن الكريم
 - اكتب كل آية بمارك منفصل: {{quran:رقم_السورة:رقم_الآية|نص_الآية_كاملاً}}
-- لو طلب أكثر من آية: اكتب كل آية في مارك منفصل بالتسلسل
+- لو طلب أكثر من آية: اكتب كل آية في مارك منفصل بالتسلسل — بدون ترقيم قبل الآية (لا تكتب 1 أو ١ قبل كل مارك)
 - لو الآية طويلة جداً (زي آية الدين 2:282): اكتبها كاملة في المارك
 - أرقام مهمة للحفظ: آية الكرسي=2:255، آية الدين=2:282-283، سورة الفاتحة=1:1-7، آخر البقرة=2:285-286
 
@@ -376,10 +376,13 @@ function parseRawSegments(raw: string): ServerResponseSegment[] {
   const re = /\{\{quran:(\d+):(\d+)\|([^}]*)\}\}|\{\{fatwa:([^|]*)\|([^|]*)\|([^}]*)\}\}/g;
   let last = 0;
   let m: RegExpExecArray | null;
+  const isBareLabel = (t: string) =>
+    /^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)‌]?\s*$/.test(t);
+
   while ((m = re.exec(raw)) !== null) {
     if (m.index > last) {
       const t = raw.slice(last, m.index).trim();
-      if (t) segments.push({ type: "text", text: t });
+      if (t && !isBareLabel(t)) segments.push({ type: "text", text: t });
     }
     if (m[1] !== undefined) {
       segments.push({ type: "quran", surah: Number(m[1]), ayah: Number(m[2]), text: m[3]! });
@@ -390,7 +393,7 @@ function parseRawSegments(raw: string): ServerResponseSegment[] {
   }
   if (last < raw.length) {
     const t = raw.slice(last).trim();
-    if (t) segments.push({ type: "text", text: t });
+    if (t && !isBareLabel(t)) segments.push({ type: "text", text: t });
   }
   return segments.length ? segments : [{ type: "text", text: raw }];
 }

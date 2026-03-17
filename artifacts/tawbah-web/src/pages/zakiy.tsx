@@ -565,12 +565,14 @@ function BotMessageBody({
 
     function tick() {
       const a = textAudioRefs.current[playIdx];
-      if (a && !a.paused && !a.ended && a.duration > 0 && wordCount > 0) {
-        const adjusted = Math.min(a.currentTime + LOOKAHEAD, a.duration);
-        const idx = Math.min(Math.floor((adjusted / a.duration) * wordCount), wordCount - 1);
+      if (!a || a.paused || a.ended) return;
+      const dur = a.duration;
+      if (dur > 0 && !isNaN(dur) && wordCount > 0) {
+        const adjusted = Math.min(a.currentTime + LOOKAHEAD, dur);
+        const idx = Math.min(Math.floor((adjusted / dur) * wordCount), wordCount - 1);
         if (idx !== lastIdx) { lastIdx = idx; setActiveWordIdx(idx); }
-        rafId = requestAnimationFrame(tick);
       }
+      rafId = requestAnimationFrame(tick);
     }
 
     audio.onended = () => {
