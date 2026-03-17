@@ -30,7 +30,9 @@ interface TextSegment { type: "text"; text: string; }
 type Segment = QuranSegment | FatwaSegment | TextSegment;
 
 function stripStageDirections(text: string): string {
-  return text.replace(/\(بنبرة [^)]+\)/g, "").replace(/\(ب[^)]+\)/g, "").replace(/\s{2,}/g, " ").trim();
+  // Removes tone markers like (بنبرة هامسة) (بجدية تامة) (بحماس وفرحة) etc.
+  // \s* handles optional spaces after opening paren
+  return text.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
 }
 
 function parseSegments(raw: string): Segment[] {
