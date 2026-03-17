@@ -74,6 +74,120 @@ function parseSegments(raw: string): Segment[] {
 }
 
 // ══════════════════════════════════════════
+// FORMATTED TEXT RENDERER
+// ══════════════════════════════════════════
+
+function FormattedText({ text }: { text: string }) {
+  const lines = text.split("\n");
+  const elements: React.ReactNode[] = [];
+
+  const BULLET_EMOJI_PATTERN = /^([✅⚠️💡🎯✨📌🔹🔸➡️⭐🌟💎🕌📿🌙❤️🤲🌿🎉🎊])/;
+  const NUMBERED_AR = /^([١٢٣٤٥٦٧٨٩٠]+)[.\-\)]/;
+  const NUMBERED_EN = /^(\d+)[.\-\)]/;
+  const SECTION_HEADER = /^〔(.+)〕$/;
+  const SEPARATOR = /^[═─━─]+$/;
+
+  function renderInline(raw: string): React.ReactNode[] {
+    const parts: React.ReactNode[] = [];
+    const boldRe = /\*\*([^*]+)\*\*/g;
+    let cursor = 0;
+    let m: RegExpExecArray | null;
+    while ((m = boldRe.exec(raw)) !== null) {
+      if (m.index > cursor) parts.push(raw.slice(cursor, m.index));
+      parts.push(<strong key={m.index} className="font-bold text-foreground">{m[1]}</strong>);
+      cursor = m.index + m[0].length;
+    }
+    if (cursor < raw.length) parts.push(raw.slice(cursor));
+    return parts;
+  }
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i]!.trim();
+
+    if (!line) { elements.push(<div key={i} className="h-1.5" />); i++; continue; }
+
+    if (SEPARATOR.test(line)) { i++; continue; }
+
+    const sectionMatch = SECTION_HEADER.exec(line);
+    if (sectionMatch) {
+      elements.push(
+        <div key={i} className="flex items-center gap-2 my-2">
+          <div className="flex-1 h-px bg-border/60" />
+          <span className="text-[11px] font-bold text-muted-foreground tracking-widest px-2">{sectionMatch[1]}</span>
+          <div className="flex-1 h-px bg-border/60" />
+        </div>
+      );
+      i++; continue;
+    }
+
+    if (NUMBERED_AR.test(line) || NUMBERED_EN.test(line)) {
+      const listItems: string[] = [];
+      while (i < lines.length && (NUMBERED_AR.test(lines[i]!.trim()) || NUMBERED_EN.test(lines[i]!.trim()))) {
+        const l = lines[i]!.trim();
+        const content = l.replace(/^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)]\s*/, "");
+        listItems.push(content);
+        i++;
+      }
+      elements.push(
+        <ol key={`list-${i}`} className="space-y-1.5 my-2 pr-1">
+          {listItems.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed">
+              <span className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
+                {idx + 1}
+              </span>
+              <span className="flex-1">{renderInline(item)}</span>
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    if (line.startsWith("•") || line.startsWith("·") || BULLET_EMOJI_PATTERN.test(line)) {
+      const listItems: string[] = [];
+      while (i < lines.length) {
+        const l = lines[i]!.trim();
+        if (l.startsWith("•") || l.startsWith("·") || BULLET_EMOJI_PATTERN.test(l)) {
+          const emojiMatch = BULLET_EMOJI_PATTERN.exec(l);
+          const icon = emojiMatch ? emojiMatch[1] : "•";
+          const content = l.replace(/^[•·]\s*/, "").replace(/^[✅⚠️💡🎯✨📌🔹🔸➡️⭐🌟💎🕌📿🌙❤️🤲🌿🎉🎊]\s*/, "");
+          listItems.push(`${icon}|||${content}`);
+          i++;
+        } else break;
+      }
+      elements.push(
+        <ul key={`ul-${i}`} className="space-y-1.5 my-2">
+          {listItems.map((item, idx) => {
+            const [icon, ...rest] = item.split("|||");
+            const content = rest.join("|||");
+            const isBullet = icon === "•" || icon === "·";
+            return (
+              <li key={idx} className="flex items-start gap-2 text-sm leading-relaxed">
+                <span className="flex-shrink-0 mt-0.5 text-base">
+                  {isBullet ? <span className="text-teal-500 font-bold">•</span> : icon}
+                </span>
+                <span className="flex-1">{renderInline(content!)}</span>
+              </li>
+            );
+          })}
+        </ul>
+      );
+      continue;
+    }
+
+    elements.push(
+      <p key={i} className="text-sm leading-relaxed">
+        {renderInline(line)}
+      </p>
+    );
+    i++;
+  }
+
+  return <div className="space-y-0.5">{elements}</div>;
+}
+
+// ══════════════════════════════════════════
 // AUDIO HELPERS
 // ══════════════════════════════════════════
 
@@ -88,88 +202,141 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 // ══════════════════════════════════════════
-// CARDS
+// QURAN CARD — sequential playback
 // ══════════════════════════════════════════
 
-function QuranCard({ seg, shouldAutoPlay }: { seg: QuranSegment; shouldAutoPlay?: boolean }) {
-  const [playing, setPlaying] = useState(false);
+function QuranCard({
+  seg, isActive, onEnded, onManualToggle, isPlaying,
+}: {
+  seg: QuranSegment;
+  isActive: boolean;
+  isPlaying: boolean;
+  onEnded: () => void;
+  onManualToggle: () => void;
+}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const url = misharyUrl(seg.surah, seg.ayah);
     const audio = new Audio(url);
     audioRef.current = audio;
-    audio.onended = () => setPlaying(false);
-    return () => { audio.pause(); };
+    audio.onended = () => onEnded();
+    return () => { audio.pause(); audioRef.current = null; };
   }, [seg.surah, seg.ayah]);
 
   useEffect(() => {
-    if (shouldAutoPlay && audioRef.current) {
-      audioRef.current.play().then(() => setPlaying(true)).catch(() => {});
-    }
-  }, [shouldAutoPlay]);
-
-  function toggle() {
     const audio = audioRef.current;
     if (!audio) return;
-    if (playing) { audio.pause(); setPlaying(false); }
-    else { audio.play().catch(() => {}); setPlaying(true); }
-  }
+    if (isActive && isPlaying) {
+      audio.play().catch(() => {});
+    } else if (!isPlaying) {
+      audio.pause();
+      if (!isActive) audio.currentTime = 0;
+    }
+  }, [isActive, isPlaying]);
+
+  const surahName = getSurahName(seg.surah);
 
   return (
-    <div className="my-2 rounded-xl border border-amber-400/60 bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-3 shadow-sm">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
-          <BookOpen size={13} />
-          <span className="text-[10px] font-bold tracking-wide">آية قرآنية</span>
+    <div className="my-2 rounded-2xl border border-amber-400/50 overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-l from-amber-800 to-amber-900 dark:from-amber-950 dark:to-yellow-950 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BookOpen size={13} className="text-amber-300" />
+          <span className="text-[11px] font-bold text-amber-200 tracking-wide">سورة {surahName} — آية {seg.ayah}</span>
         </div>
         <button
-          onClick={toggle}
+          onClick={onManualToggle}
           className={cn(
-            "flex items-center gap-1 text-[10px] px-2 py-1 rounded-full transition-all font-medium",
-            playing ? "bg-amber-500 text-white" : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 hover:bg-amber-200"
+            "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full transition-all font-medium",
+            isActive && isPlaying
+              ? "bg-amber-400 text-amber-900"
+              : "bg-amber-900/60 text-amber-300 hover:bg-amber-800/60"
           )}
         >
-          {playing ? <><Pause size={10} /> إيقاف</> : <><Play size={10} /> مشاري</>}
+          {isActive && isPlaying ? <><Pause size={10} /> إيقاف</> : <><Play size={10} /> مشاري</>}
         </button>
       </div>
-      <p className="text-base leading-loose text-right text-amber-900 dark:text-amber-200">﴿{seg.text}﴾</p>
-      {playing && (
-        <div className="flex gap-0.5 items-end justify-center mt-2 h-3">
-          {[1,2,3,4,5].map((i) => (
-            <span key={i} className="w-0.5 bg-amber-500 rounded-full animate-bounce" style={{ height: `${4 + (i % 3) * 3}px`, animationDelay: `${i * 80}ms` }} />
-          ))}
-        </div>
-      )}
+      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
+        <p className="quran-text text-right text-amber-950 dark:text-amber-100 leading-[2.4]">
+          ﴿{seg.text}﴾
+        </p>
+        {isActive && isPlaying && (
+          <div className="flex gap-0.5 items-end justify-center mt-2 h-4">
+            {[1,2,3,4,5,6,7].map((k) => (
+              <span
+                key={k}
+                className="w-0.5 bg-amber-500 rounded-full animate-bounce"
+                style={{ height: `${3 + (k % 4) * 3}px`, animationDelay: `${k * 60}ms` }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+function getSurahName(num: number): string {
+  const names: Record<number, string> = {
+    1:"الفاتحة",2:"البقرة",3:"آل عمران",4:"النساء",5:"المائدة",
+    6:"الأنعام",7:"الأعراف",8:"الأنفال",9:"التوبة",10:"يونس",
+    11:"هود",12:"يوسف",13:"الرعد",14:"إبراهيم",15:"الحجر",
+    16:"النحل",17:"الإسراء",18:"الكهف",19:"مريم",20:"طه",
+    21:"الأنبياء",22:"الحج",23:"المؤمنون",24:"النور",25:"الفرقان",
+    26:"الشعراء",27:"النمل",28:"القصص",29:"العنكبوت",30:"الروم",
+    31:"لقمان",32:"السجدة",33:"الأحزاب",34:"سبأ",35:"فاطر",
+    36:"يس",37:"الصافات",38:"ص",39:"الزمر",40:"غافر",
+    41:"فصلت",42:"الشورى",43:"الزخرف",44:"الدخان",45:"الجاثية",
+    46:"الأحقاف",47:"محمد",48:"الفتح",49:"الحجرات",50:"ق",
+    51:"الذاريات",52:"الطور",53:"النجم",54:"القمر",55:"الرحمن",
+    56:"الواقعة",57:"الحديد",58:"المجادلة",59:"الحشر",60:"الممتحنة",
+    61:"الصف",62:"الجمعة",63:"المنافقون",64:"التغابن",65:"الطلاق",
+    66:"التحريم",67:"الملك",68:"القلم",69:"الحاقة",70:"المعارج",
+    71:"نوح",72:"الجن",73:"المزمل",74:"المدثر",75:"القيامة",
+    76:"الإنسان",77:"المرسلات",78:"النبأ",79:"النازعات",80:"عبس",
+    81:"التكوير",82:"الانفطار",83:"المطففين",84:"الانشقاق",85:"البروج",
+    86:"الطارق",87:"الأعلى",88:"الغاشية",89:"الفجر",90:"البلد",
+    91:"الشمس",92:"الليل",93:"الضحى",94:"الشرح",95:"التين",
+    96:"العلق",97:"القدر",98:"البينة",99:"الزلزلة",100:"العاديات",
+    101:"القارعة",102:"التكاثر",103:"العصر",104:"الهمزة",105:"الفيل",
+    106:"قريش",107:"الماعون",108:"الكوثر",109:"الكافرون",110:"النصر",
+    111:"المسد",112:"الإخلاص",113:"الفلق",114:"الناس",
+  };
+  return names[num] ?? `السورة ${num}`;
+}
+
+// ══════════════════════════════════════════
+// FATWA CARD
+// ══════════════════════════════════════════
 
 function FatwaCard({ seg }: { seg: FatwaSegment }) {
   const [expanded, setExpanded] = useState(false);
   const preview = seg.text.length > 120 ? seg.text.slice(0, 120) + "..." : seg.text;
 
   return (
-    <div className="my-2 rounded-xl border border-emerald-400/60 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3 shadow-sm">
-      <div className="flex items-center gap-1.5 mb-2">
-        <Scale size={13} className="text-emerald-700 dark:text-emerald-400" />
-        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 tracking-wide">حكم شرعي</span>
-        <span className="mr-auto text-[10px] text-emerald-600/70 dark:text-emerald-500/70">📚 {seg.source}</span>
+    <div className="my-2 rounded-2xl border border-emerald-400/50 overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-l from-emerald-800 to-teal-900 dark:from-emerald-950 dark:to-teal-950 px-4 py-2 flex items-center gap-2">
+        <Scale size={13} className="text-emerald-300" />
+        <span className="text-[11px] font-bold text-emerald-200 tracking-wide">حكم شرعي</span>
+        <span className="mr-auto text-[10px] text-emerald-400/80">📚 {seg.source}</span>
       </div>
-      <p className="text-sm leading-relaxed text-emerald-900 dark:text-emerald-200 text-right">
-        {expanded ? seg.text : preview}
-      </p>
-      <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
-        {seg.text.length > 120 && (
-          <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
-            {expanded ? "إخفاء" : "عرض الكامل"}
-          </button>
-        )}
-        {seg.url && (
-          <a href={seg.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium mr-auto">
-            <ExternalLink size={10} /> المصدر
-          </a>
-        )}
+      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
+        <p className="text-sm leading-relaxed text-emerald-900 dark:text-emerald-200 text-right">
+          {expanded ? seg.text : preview}
+        </p>
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200/50 dark:border-emerald-800/30">
+          {seg.text.length > 120 && (
+            <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
+              {expanded ? "إخفاء" : "عرض الكامل"}
+            </button>
+          )}
+          {seg.url && (
+            <a href={seg.url} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium mr-auto">
+              <ExternalLink size={10} /> المصدر
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -186,21 +353,22 @@ function ImpressionPanel({ impression, onClose }: { impression: string; onClose:
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 8, scale: 0.97 }}
       transition={{ duration: 0.25 }}
-      className="mt-2 rounded-2xl border border-rose-300/60 bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50 dark:from-rose-950/30 dark:via-pink-950/20 dark:to-fuchsia-950/20 px-4 py-3 shadow-md relative"
+      className="mt-2 rounded-2xl border border-rose-300/50 overflow-hidden shadow-md"
     >
-      <button
-        onClick={onClose}
-        className="absolute top-2 left-2 text-rose-400 hover:text-rose-600 transition-colors"
-      >
-        <X size={14} />
-      </button>
-      <div className="flex items-center gap-1.5 mb-2">
-        <Heart size={13} className="text-rose-500 fill-rose-400" />
-        <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 tracking-wide">انطباعي عنك</span>
+      <div className="bg-gradient-to-l from-rose-700 to-pink-800 px-4 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Heart size={13} className="text-rose-200 fill-rose-300" />
+          <span className="text-[11px] font-bold text-rose-100 tracking-wide">انطباعي عنك</span>
+        </div>
+        <button onClick={onClose} className="text-rose-300 hover:text-rose-100 transition-colors">
+          <X size={14} />
+        </button>
       </div>
-      <p className="text-sm leading-relaxed text-rose-900 dark:text-rose-200 text-right whitespace-pre-wrap">
-        {impression}
-      </p>
+      <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 px-4 py-3">
+        <p className="text-sm leading-relaxed text-rose-900 dark:text-rose-200 text-right whitespace-pre-wrap">
+          {impression}
+        </p>
+      </div>
     </motion.div>
   );
 }
@@ -210,7 +378,7 @@ function ImpressionPanel({ impression, onClose }: { impression: string; onClose:
 // ══════════════════════════════════════════
 
 function SuggestionChips({ suggestions, onSelect, loading }: { suggestions: string[]; onSelect: (q: string) => void; loading?: boolean }) {
-  if (!suggestions.length) return null;
+  if (!suggestions.length && !loading) return null;
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
@@ -283,10 +451,7 @@ interface Message {
   suggestionsLoading?: boolean;
 }
 
-interface ApiHistory {
-  role: "user" | "assistant";
-  content: string;
-}
+interface ApiHistory { role: "user" | "assistant"; content: string; }
 
 const GREETING: Message = {
   id: "greeting",
@@ -296,7 +461,7 @@ const GREETING: Message = {
 };
 
 // ══════════════════════════════════════════
-// BOT MESSAGE BODY
+// BOT MESSAGE BODY — with sequential Quran
 // ══════════════════════════════════════════
 
 function BotMessageBody({
@@ -313,19 +478,52 @@ function BotMessageBody({
   onToggleImpression: (id: string, impression?: string) => void;
 }) {
   const segments = parseSegments(msg.text);
+
+  // Sequential Quran playback state
+  const [quranPlayIdx, setQuranPlayIdx] = useState(-1);
+  const [quranIsPlaying, setQuranIsPlaying] = useState(false);
+  const quranSegments = segments.filter((s): s is QuranSegment => s.type === "quran");
+
+  // Map: quranSegment index within all quran segments of this message
+  const quranIndexMap = useRef<Map<QuranSegment, number>>(new Map());
+  quranSegments.forEach((s, idx) => quranIndexMap.current.set(s, idx));
+
+  // When bot audio finishes, start quran sequence
+  useEffect(() => {
+    if (quranReady && quranSegments.length > 0 && quranPlayIdx === -1) {
+      setQuranPlayIdx(0);
+      setQuranIsPlaying(true);
+    }
+  }, [quranReady]);
+
+  function handleQuranEnded(idx: number) {
+    const next = idx + 1;
+    if (next < quranSegments.length) {
+      setQuranPlayIdx(next);
+      setQuranIsPlaying(true);
+    } else {
+      setQuranPlayIdx(-1);
+      setQuranIsPlaying(false);
+    }
+  }
+
+  function handleManualToggle(idx: number) {
+    if (quranPlayIdx === idx && quranIsPlaying) {
+      setQuranIsPlaying(false);
+    } else {
+      setQuranPlayIdx(idx);
+      setQuranIsPlaying(true);
+    }
+  }
+
+  // Impression
   const [impressionText, setImpressionText] = useState<string | null>(null);
   const [impressionLoading, setImpressionLoading] = useState(false);
   const isShowingImpression = showImpressionFor === msg.id;
 
   async function handleImpressionClick() {
-    if (isShowingImpression) {
-      onToggleImpression(msg.id);
-      return;
-    }
-    if (impressionText) {
-      onToggleImpression(msg.id, impressionText);
-      return;
-    }
+    if (isShowingImpression) { onToggleImpression(msg.id); return; }
+    if (impressionText) { onToggleImpression(msg.id, impressionText); return; }
     setImpressionLoading(true);
     try {
       const res = await fetch("/api/zakiy/impression", {
@@ -346,12 +544,26 @@ function BotMessageBody({
     }
   }
 
+  let quranCounter = 0;
+
   return (
     <div>
       {segments.map((seg, i) => {
-        if (seg.type === "quran") return <QuranCard key={i} seg={seg} shouldAutoPlay={quranReady} />;
+        if (seg.type === "quran") {
+          const qIdx = quranCounter++;
+          return (
+            <QuranCard
+              key={i}
+              seg={seg}
+              isActive={quranPlayIdx === qIdx}
+              isPlaying={quranPlayIdx === qIdx && quranIsPlaying}
+              onEnded={() => handleQuranEnded(qIdx)}
+              onManualToggle={() => handleManualToggle(qIdx)}
+            />
+          );
+        }
         if (seg.type === "fatwa") return <FatwaCard key={i} seg={seg} />;
-        return <p key={i} className="text-sm leading-relaxed whitespace-pre-wrap">{seg.text}</p>;
+        return <FormattedText key={i} text={seg.text} />;
       })}
 
       <div className="flex items-center gap-2 mt-2 flex-wrap">
@@ -360,7 +572,9 @@ function BotMessageBody({
             onClick={() => onPlay(msg.id, msg.audioBase64!)}
             className={cn(
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all",
-              playingId === msg.id ? "bg-teal-600 text-white" : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 hover:bg-teal-100"
+              playingId === msg.id
+                ? "bg-teal-600 text-white"
+                : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 hover:bg-teal-100"
             )}
           >
             {playingId === msg.id ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
@@ -375,14 +589,13 @@ function BotMessageBody({
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
               isShowingImpression
                 ? "bg-rose-500 text-white border-rose-500"
-                : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-300/60 hover:bg-rose-100 dark:hover:bg-rose-900/30"
+                : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-300/60 hover:bg-rose-100"
             )}
           >
-            {impressionLoading ? (
-              <><Loader2 size={12} className="animate-spin" /> لحظة...</>
-            ) : (
-              <><Heart size={12} className={isShowingImpression ? "fill-white" : ""} /> انطباعي عنك</>
-            )}
+            {impressionLoading
+              ? <><Loader2 size={12} className="animate-spin" /> لحظة...</>
+              : <><Heart size={12} className={isShowingImpression ? "fill-white" : ""} /> انطباعي عنك</>
+            }
           </button>
         )}
       </div>
@@ -457,13 +670,11 @@ export default function ZakiyPage() {
       });
       const data = await res.json();
       setMessages((prev) =>
-        prev.map((m) =>
-          m.id === msgId ? { ...m, suggestions: data.suggestions ?? [], suggestionsLoading: false } : m
-        )
+        prev.map((m) => m.id === msgId ? { ...m, suggestions: data.suggestions ?? [], suggestionsLoading: false } : m)
       );
     } catch {
       setMessages((prev) =>
-        prev.map((m) => (m.id === msgId ? { ...m, suggestions: [], suggestionsLoading: false } : m))
+        prev.map((m) => m.id === msgId ? { ...m, suggestions: [], suggestionsLoading: false } : m)
       );
     }
   }
@@ -621,7 +832,7 @@ export default function ZakiyPage() {
                 </div>
               )}
               <div className={cn(
-                "max-w-[85%] rounded-2xl px-4 py-3 shadow-sm",
+                "max-w-[88%] rounded-2xl px-4 py-3 shadow-sm",
                 msg.role === "user"
                   ? "bg-primary text-primary-foreground rounded-tl-sm"
                   : "bg-card border border-border/60 text-foreground rounded-tr-sm"
