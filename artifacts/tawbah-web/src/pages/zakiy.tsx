@@ -75,21 +75,40 @@ const GREETING: Message = {
   timestamp: new Date(),
 };
 
-function QuranCard({ seg }: { seg: QuranSegment }) {
+function QuranCard({ seg, autoPlay = false }: { seg: QuranSegment; autoPlay?: boolean }) {
   const [playing, setPlaying] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  function toggle() {
+  useEffect(() => {
     const url = misharyUrl(seg.surah, seg.ayah);
-    if (!audioRef.current) {
-      audioRef.current = new Audio(url);
-      audioRef.current.onended = () => setPlaying(false);
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.onended = () => setPlaying(false);
+    audio.oncanplaythrough = () => setLoaded(true);
+
+    if (autoPlay) {
+      const timer = setTimeout(() => {
+        audio.play()
+          .then(() => setPlaying(true))
+          .catch(() => {});
+      }, 800);
+      return () => {
+        clearTimeout(timer);
+        audio.pause();
+      };
     }
+    return () => { audio.pause(); };
+  }, [seg.surah, seg.ayah, autoPlay]);
+
+  function toggle() {
+    const audio = audioRef.current;
+    if (!audio) return;
     if (playing) {
-      audioRef.current.pause();
+      audio.pause();
       setPlaying(false);
     } else {
-      audioRef.current.play().catch(() => {});
+      audio.play().catch(() => {});
       setPlaying(true);
     }
   }
@@ -113,19 +132,31 @@ function QuranCard({ seg }: { seg: QuranSegment }) {
           {playing ? <><Pause size={10} /> إيقاف</> : <><Play size={10} /> مشاري</>}
         </button>
       </div>
-      <p className="text-base leading-loose font-arabic text-right text-amber-900 dark:text-amber-200">
+      <p className="text-base leading-loose text-right text-amber-900 dark:text-amber-200">
         ﴿{seg.text}﴾
       </p>
+      {playing && (
+        <div className="flex gap-0.5 items-end justify-center mt-2 h-3">
+          {[1,2,3,4,5].map((i) => (
+            <span
+              key={i}
+              className="w-0.5 bg-amber-500 rounded-full animate-bounce"
+              style={{ height: `${4 + (i % 3) * 3}px`, animationDelay: `${i * 80}ms` }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function BotMessageBody({ text, audioBase64, msgId, playingId, onPlay }: {
+function BotMessageBody({ text, audioBase64, msgId, playingId, onPlay, isNew }: {
   text: string;
   audioBase64?: string;
   msgId: string;
   playingId: string | null;
   onPlay: (id: string, b64: string) => void;
+  isNew?: boolean;
 }) {
   const segments = parseSegments(text);
 
@@ -133,7 +164,7 @@ function BotMessageBody({ text, audioBase64, msgId, playingId, onPlay }: {
     <div>
       {segments.map((seg, i) =>
         seg.type === "quran" ? (
-          <QuranCard key={i} seg={seg} />
+          <QuranCard key={i} seg={seg} autoPlay={isNew} />
         ) : (
           <p key={i} className="text-sm leading-relaxed whitespace-pre-wrap">{seg.text}</p>
         )
@@ -162,6 +193,7 @@ export default function ZakiyPage() {
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [newestBotId, setNewestBotId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -193,6 +225,7 @@ export default function ZakiyPage() {
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, msg]);
+    setNewestBotId(msg.id);
     if (audioBase64) {
       setTimeout(() => playAudio(msg.id, audioBase64), 600);
     }
@@ -348,6 +381,7 @@ export default function ZakiyPage() {
                     msgId={msg.id}
                     playingId={playingId}
                     onPlay={playAudio}
+                    isNew={msg.id === newestBotId}
                   />
                 ) : (
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
