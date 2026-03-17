@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink } from "lucide-react";
+import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Sparkles, Heart, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
 
@@ -21,6 +21,19 @@ function misharyUrl(surah: number, ayah: number): string {
 }
 
 // ══════════════════════════════════════════
+// STARTER QUESTIONS
+// ══════════════════════════════════════════
+
+const STARTER_QUESTIONS = [
+  "إزاي أتوب توبة صادقة؟",
+  "أنا بعيد عن ربنا، من فين أبدأ؟",
+  "عملت ذنب كبير، ربنا هيسامحني؟",
+  "إزاي أثبت على الطاعة؟",
+  "أنا بحس بوحشة روحية، أعمل إيه؟",
+  "الاستغفار بيتقبل منين؟",
+];
+
+// ══════════════════════════════════════════
 // SEGMENT PARSING
 // ══════════════════════════════════════════
 
@@ -30,14 +43,11 @@ interface TextSegment { type: "text"; text: string; }
 type Segment = QuranSegment | FatwaSegment | TextSegment;
 
 function stripStageDirections(text: string): string {
-  // Removes tone markers like (بنبرة هامسة) (بجدية تامة) (بحماس وفرحة) etc.
-  // \s* handles optional spaces after opening paren
   return text.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
 }
 
 function parseSegments(raw: string): Segment[] {
   const segments: Segment[] = [];
-
   const combined = /\{\{quran:(\d+):(\d+)\|([^}]*)\}\}|\{\{fatwa:([^|]*)\|([^|]*)\|([^}]*)\}\}/g;
   let last = 0;
   let match: RegExpExecArray | null;
@@ -47,7 +57,6 @@ function parseSegments(raw: string): Segment[] {
       const t = stripStageDirections(raw.slice(last, match.index).trim());
       if (t) segments.push({ type: "text", text: t });
     }
-
     if (match[1] !== undefined) {
       segments.push({ type: "quran", surah: Number(match[1]), ayah: Number(match[2]), text: match[3]! });
     } else {
@@ -147,32 +156,116 @@ function FatwaCard({ seg }: { seg: FatwaSegment }) {
         <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 tracking-wide">حكم شرعي</span>
         <span className="mr-auto text-[10px] text-emerald-600/70 dark:text-emerald-500/70">📚 {seg.source}</span>
       </div>
-
       <p className="text-sm leading-relaxed text-emerald-900 dark:text-emerald-200 text-right">
         {expanded ? seg.text : preview}
       </p>
-
       <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
         {seg.text.length > 120 && (
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium"
-          >
+          <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
             {expanded ? "إخفاء" : "عرض الكامل"}
           </button>
         )}
         {seg.url && (
-          <a
-            href={seg.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium mr-auto"
-          >
+          <a href={seg.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium mr-auto">
             <ExternalLink size={10} /> المصدر
           </a>
         )}
       </div>
     </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// IMPRESSION PANEL
+// ══════════════════════════════════════════
+
+function ImpressionPanel({ impression, onClose }: { impression: string; onClose: () => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 8, scale: 0.97 }}
+      transition={{ duration: 0.25 }}
+      className="mt-2 rounded-2xl border border-rose-300/60 bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50 dark:from-rose-950/30 dark:via-pink-950/20 dark:to-fuchsia-950/20 px-4 py-3 shadow-md relative"
+    >
+      <button
+        onClick={onClose}
+        className="absolute top-2 left-2 text-rose-400 hover:text-rose-600 transition-colors"
+      >
+        <X size={14} />
+      </button>
+      <div className="flex items-center gap-1.5 mb-2">
+        <Heart size={13} className="text-rose-500 fill-rose-400" />
+        <span className="text-[10px] font-bold text-rose-600 dark:text-rose-400 tracking-wide">انطباعي عنك</span>
+      </div>
+      <p className="text-sm leading-relaxed text-rose-900 dark:text-rose-200 text-right whitespace-pre-wrap">
+        {impression}
+      </p>
+    </motion.div>
+  );
+}
+
+// ══════════════════════════════════════════
+// SUGGESTION CHIPS
+// ══════════════════════════════════════════
+
+function SuggestionChips({ suggestions, onSelect, loading }: { suggestions: string[]; onSelect: (q: string) => void; loading?: boolean }) {
+  if (!suggestions.length) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="flex flex-wrap gap-2 justify-end mt-2"
+    >
+      {loading ? (
+        <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> يفكر في أسئلة...</span>
+      ) : (
+        suggestions.map((q, i) => (
+          <button
+            key={i}
+            onClick={() => onSelect(q)}
+            className="text-[11px] px-3 py-1.5 rounded-full border border-teal-400/60 bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-all active:scale-95 font-medium shadow-sm"
+          >
+            {q}
+          </button>
+        ))
+      )}
+    </motion.div>
+  );
+}
+
+// ══════════════════════════════════════════
+// STARTER QUESTION CARDS
+// ══════════════════════════════════════════
+
+function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.2 }}
+      className="px-2 py-3"
+    >
+      <div className="flex items-center gap-1.5 mb-3">
+        <Sparkles size={13} className="text-teal-500" />
+        <span className="text-xs font-semibold text-muted-foreground">أسئلة شائعة — اضغط لتبدأ</span>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        {STARTER_QUESTIONS.map((q, i) => (
+          <motion.button
+            key={i}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 + i * 0.05 }}
+            onClick={() => onSelect(q)}
+            className="text-right text-xs px-3 py-2.5 rounded-xl border border-border/60 bg-card hover:bg-teal-50 dark:hover:bg-teal-950/20 hover:border-teal-400/50 text-foreground transition-all active:scale-95 shadow-sm leading-snug"
+          >
+            {q}
+          </motion.button>
+        ))}
+      </div>
+    </motion.div>
   );
 }
 
@@ -186,6 +279,8 @@ interface Message {
   text: string;
   audioBase64?: string;
   timestamp: Date;
+  suggestions?: string[];
+  suggestionsLoading?: boolean;
 }
 
 interface ApiHistory {
@@ -200,10 +295,56 @@ const GREETING: Message = {
   timestamp: new Date(),
 };
 
-function BotMessageBody({ text, audioBase64, msgId, playingId, onPlay, quranReady }: {
-  text: string; audioBase64?: string; msgId: string; playingId: string | null; onPlay: (id: string, b64: string) => void; quranReady?: boolean;
+// ══════════════════════════════════════════
+// BOT MESSAGE BODY
+// ══════════════════════════════════════════
+
+function BotMessageBody({
+  msg, playingId, onPlay, quranReady, onSuggestionSelect, sessionId, history, showImpressionFor, onToggleImpression,
+}: {
+  msg: Message;
+  playingId: string | null;
+  onPlay: (id: string, b64: string) => void;
+  quranReady?: boolean;
+  onSuggestionSelect: (q: string) => void;
+  sessionId: string;
+  history: ApiHistory[];
+  showImpressionFor: string | null;
+  onToggleImpression: (id: string, impression?: string) => void;
 }) {
-  const segments = parseSegments(text);
+  const segments = parseSegments(msg.text);
+  const [impressionText, setImpressionText] = useState<string | null>(null);
+  const [impressionLoading, setImpressionLoading] = useState(false);
+  const isShowingImpression = showImpressionFor === msg.id;
+
+  async function handleImpressionClick() {
+    if (isShowingImpression) {
+      onToggleImpression(msg.id);
+      return;
+    }
+    if (impressionText) {
+      onToggleImpression(msg.id, impressionText);
+      return;
+    }
+    setImpressionLoading(true);
+    try {
+      const res = await fetch("/api/zakiy/impression", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history, sessionId }),
+      });
+      const data = await res.json();
+      const text = data.impression ?? "لسه بتعرف بعضنا — كمّل الحديث وهشوفك أكتر!";
+      setImpressionText(text);
+      onToggleImpression(msg.id, text);
+    } catch {
+      const fallback = "مش قدرت أوصلك الانطباع دلوقتي — جرّب تاني بعد شوية.";
+      setImpressionText(fallback);
+      onToggleImpression(msg.id, fallback);
+    } finally {
+      setImpressionLoading(false);
+    }
+  }
 
   return (
     <div>
@@ -213,16 +354,51 @@ function BotMessageBody({ text, audioBase64, msgId, playingId, onPlay, quranRead
         return <p key={i} className="text-sm leading-relaxed whitespace-pre-wrap">{seg.text}</p>;
       })}
 
-      {audioBase64 && (
-        <button
-          onClick={() => onPlay(msgId, audioBase64)}
-          className={cn(
-            "mt-2 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all",
-            playingId === msgId ? "bg-teal-600 text-white" : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 hover:bg-teal-100"
-          )}
-        >
-          {playingId === msgId ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
-        </button>
+      <div className="flex items-center gap-2 mt-2 flex-wrap">
+        {msg.audioBase64 && (
+          <button
+            onClick={() => onPlay(msg.id, msg.audioBase64!)}
+            className={cn(
+              "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all",
+              playingId === msg.id ? "bg-teal-600 text-white" : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 hover:bg-teal-100"
+            )}
+          >
+            {playingId === msg.id ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
+          </button>
+        )}
+
+        {msg.id !== "greeting" && (
+          <button
+            onClick={handleImpressionClick}
+            disabled={impressionLoading}
+            className={cn(
+              "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
+              isShowingImpression
+                ? "bg-rose-500 text-white border-rose-500"
+                : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-300/60 hover:bg-rose-100 dark:hover:bg-rose-900/30"
+            )}
+          >
+            {impressionLoading ? (
+              <><Loader2 size={12} className="animate-spin" /> لحظة...</>
+            ) : (
+              <><Heart size={12} className={isShowingImpression ? "fill-white" : ""} /> انطباعي عنك</>
+            )}
+          </button>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {isShowingImpression && impressionText && (
+          <ImpressionPanel impression={impressionText} onClose={() => onToggleImpression(msg.id)} />
+        )}
+      </AnimatePresence>
+
+      {msg.id !== "greeting" && (
+        <SuggestionChips
+          suggestions={msg.suggestions ?? []}
+          onSelect={onSuggestionSelect}
+          loading={msg.suggestionsLoading}
+        />
       )}
     </div>
   );
@@ -239,6 +415,8 @@ export default function ZakiyPage() {
   const [recording, setRecording] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [quranReadyId, setQuranReadyId] = useState<string | null>(null);
+  const [impressionOpenId, setImpressionOpenId] = useState<string | null>(null);
+  const [impressionTexts, setImpressionTexts] = useState<Record<string, string>>({});
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -247,6 +425,7 @@ export default function ZakiyPage() {
   const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
 
   const sessionId = getSessionId();
+  const hasUserMessages = messages.some((m) => m.role === "user");
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -260,10 +439,49 @@ export default function ZakiyPage() {
       .map((m) => ({ role: m.role === "user" ? "user" as const : "assistant" as const, content: m.text }));
   }
 
+  function handleToggleImpression(id: string, text?: string) {
+    if (impressionOpenId === id) {
+      setImpressionOpenId(null);
+    } else {
+      if (text) setImpressionTexts((prev) => ({ ...prev, [id]: text }));
+      setImpressionOpenId(id);
+    }
+  }
+
+  async function fetchSuggestions(history: ApiHistory[], msgId: string) {
+    try {
+      const res = await fetch("/api/zakiy/suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ history, sessionId }),
+      });
+      const data = await res.json();
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId ? { ...m, suggestions: data.suggestions ?? [], suggestionsLoading: false } : m
+        )
+      );
+    } catch {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === msgId ? { ...m, suggestions: [], suggestionsLoading: false } : m))
+      );
+    }
+  }
+
   function addBotMessage(text: string, audioBase64?: string) {
-    const msg: Message = { id: Date.now().toString(), role: "bot", text, audioBase64, timestamp: new Date() };
+    const msg: Message = {
+      id: Date.now().toString(),
+      role: "bot",
+      text,
+      audioBase64,
+      timestamp: new Date(),
+      suggestions: [],
+      suggestionsLoading: true,
+    };
     setMessages((prev) => [...prev, msg]);
     if (audioBase64) setTimeout(() => playAudio(msg.id, audioBase64), 600);
+    const currentHistory = buildHistory();
+    fetchSuggestions([...currentHistory, { role: "assistant", content: text }], msg.id);
   }
 
   function addUserMessage(text: string) {
@@ -410,12 +628,15 @@ export default function ZakiyPage() {
               )}>
                 {msg.role === "bot" ? (
                   <BotMessageBody
-                    text={msg.text}
-                    audioBase64={msg.audioBase64}
-                    msgId={msg.id}
+                    msg={msg}
                     playingId={playingId}
                     onPlay={playAudio}
                     quranReady={msg.id === quranReadyId}
+                    onSuggestionSelect={(q) => sendMessage(q)}
+                    sessionId={sessionId}
+                    history={buildHistory()}
+                    showImpressionFor={impressionOpenId}
+                    onToggleImpression={handleToggleImpression}
                   />
                 ) : (
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
@@ -427,6 +648,10 @@ export default function ZakiyPage() {
             </motion.div>
           ))}
         </AnimatePresence>
+
+        {!hasUserMessages && !loading && (
+          <StarterCards onSelect={(q) => sendMessage(q)} />
+        )}
 
         {loading && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-end gap-2">
