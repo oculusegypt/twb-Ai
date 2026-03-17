@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, Moon, Sun, Languages } from "lucide-react";
+import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, Moon, Sun, Languages, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
@@ -14,6 +14,7 @@ export function Layout({ children }: { children: ReactNode }) {
     { href: "/plan", label: t.nav.plan, icon: Calendar },
     { href: "/dhikr", label: t.nav.dhikr, icon: CircleDot },
     { href: "/progress", label: "تقدمي", icon: BarChart2 },
+    { href: "/zakiy", label: "الزكي", icon: Sparkles },
   ];
 
   const isSos = location === "/sos";
@@ -68,14 +69,14 @@ export function Layout({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="fixed bottom-0 inset-x-0 bg-card/80 backdrop-blur-xl border-t border-border/50 pb-safe z-40 max-w-md mx-auto">
-            <div className="flex justify-between items-center px-6 h-[72px]">
+            <div className="flex justify-between items-center px-3 h-[72px]">
               {navItems.map((item) => {
                 const isActive = location === item.href;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="relative flex flex-col items-center justify-center w-16 h-full gap-1 tap-highlight-transparent"
+                    className="relative flex flex-col items-center justify-center w-14 h-full gap-1 tap-highlight-transparent"
                   >
                     <div className={cn(
                       "p-2 rounded-full transition-all duration-300",

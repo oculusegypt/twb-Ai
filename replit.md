@@ -4,6 +4,11 @@
 
 **دليل التوبة النصوح** - A comprehensive Arabic Islamic app guiding users through sincere repentance (Tawbah). Available as both a web app and mobile app.
 
+### Key Features
+- **البوت الزكي** (`/zakiy`): AI-powered Arabic spiritual chatbot for venting and repentance guidance. Supports text and voice input, TTS responses (onyx voice), full chat history.
+- **مكتبة الرجاء** (`/rajaa`): Hadiths and stories with AI-generated Arabic TTS audio (onyx/echo voices).
+- All AI features use OpenAI via Replit proxy (no API key needed).
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces

@@ -15,6 +15,7 @@ import Signs from "@/pages/signs";
 import Relapse from "@/pages/relapse";
 import Kaffarah from "@/pages/kaffarah";
 import Rajaa from "@/pages/rajaa";
+import Zakiy from "@/pages/zakiy";
 import Journal from "@/pages/journal";
 import ProgressChart from "@/pages/progress-chart";
 import DangerTimes from "@/pages/danger-times";
@@ -43,6 +44,7 @@ function Router() {
         <Route path="/relapse" component={Relapse} />
         <Route path="/kaffarah" component={Kaffarah} />
         <Route path="/rajaa" component={Rajaa} />
+        <Route path="/zakiy" component={Zakiy} />
         <Route path="/journal" component={Journal} />
         <Route path="/progress" component={ProgressChart} />
         <Route path="/danger-times" component={DangerTimes} />
