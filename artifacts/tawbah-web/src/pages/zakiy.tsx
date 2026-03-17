@@ -209,8 +209,10 @@ function FormattedText({ text }: { text: string }) {
 
     if (NUMBERED_AR.test(line) || NUMBERED_EN.test(line)) {
       const listItems: string[] = [];
-      while (i < lines.length && (NUMBERED_AR.test(lines[i]!.trim()) || NUMBERED_EN.test(lines[i]!.trim()))) {
+      while (i < lines.length) {
         const l = lines[i]!.trim();
+        if (!l) { i++; continue; }
+        if (!NUMBERED_AR.test(l) && !NUMBERED_EN.test(l)) break;
         listItems.push(l.replace(/^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)]\s*/, ""));
         i++;
       }
@@ -505,7 +507,6 @@ function BotMessageBody({
   // isPlaying: whether we are currently playing (vs paused)
   const [playIdx, setPlayIdx] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activeWordIdx, setActiveWordIdx] = useState<number | null>(null);
 
   const textAudioRefs = useRef<Record<number, HTMLAudioElement>>({});
 
@@ -530,10 +531,7 @@ function BotMessageBody({
 
   // Text segment audio effect
   useEffect(() => {
-    if (playIdx === -1 || !isPlaying) {
-      setActiveWordIdx(null);
-      return;
-    }
+    if (playIdx === -1 || !isPlaying) return;
     const seg = segments[playIdx];
     if (!seg || seg.type !== "text") return;
     if (!seg.audioBase64) { handleSegmentEnd(playIdx); return; }
@@ -548,45 +546,10 @@ function BotMessageBody({
       textAudioRefs.current[playIdx] = audio;
     }
 
-    // Compute word list for timing estimation
-    const cleanText = seg.text.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
-    const words = cleanText.split(/\s+/).filter(Boolean);
-    const wordCount = words.length;
+    audio.onended = () => { handleSegmentEnd(playIdx); };
+    audio.play().catch(() => handleSegmentEnd(playIdx));
 
-    // Use requestAnimationFrame for low-latency word tracking (60fps vs timeupdate's 4fps)
-    let rafId = 0;
-    let lastWordIdx = -1;
-    const LOOKAHEAD = 0.25; // seconds ahead to compensate for rendering delay
-
-    function tick() {
-      const a = textAudioRefs.current[playIdx];
-      if (a && !a.paused && !a.ended && a.duration > 0 && wordCount > 0) {
-        const adjusted = Math.min(a.currentTime + LOOKAHEAD, a.duration);
-        const idx = Math.min(
-          Math.floor((adjusted / a.duration) * wordCount),
-          wordCount - 1
-        );
-        if (idx !== lastWordIdx) {
-          lastWordIdx = idx;
-          setActiveWordIdx(idx);
-        }
-        rafId = requestAnimationFrame(tick);
-      }
-    }
-
-    audio.onended = () => {
-      cancelAnimationFrame(rafId);
-      setActiveWordIdx(null);
-      handleSegmentEnd(playIdx);
-    };
-    audio.play().then(() => {
-      rafId = requestAnimationFrame(tick);
-    }).catch(() => handleSegmentEnd(playIdx));
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      audio?.pause();
-    };
+    return () => { audio?.pause(); };
   }, [playIdx, isPlaying]);
 
   // Manual play/pause toggle for entire message
@@ -663,10 +626,6 @@ function BotMessageBody({
           );
         }
         if (seg.type === "fatwa") return <FatwaCard key={i} seg={seg} />;
-        // Use PlayableText with word highlighting when this segment is actively playing
-        if (playIdx === i && isPlaying) {
-          return <PlayableText key={i} text={seg.text} activeWordIdx={activeWordIdx} />;
-        }
         return <FormattedText key={i} text={seg.text} />;
       })}
 
