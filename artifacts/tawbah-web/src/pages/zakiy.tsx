@@ -553,27 +553,39 @@ function BotMessageBody({
     const words = cleanText.split(/\s+/).filter(Boolean);
     const wordCount = words.length;
 
-    function handleTimeUpdate() {
+    // Use requestAnimationFrame for low-latency word tracking (60fps vs timeupdate's 4fps)
+    let rafId = 0;
+    let lastWordIdx = -1;
+    const LOOKAHEAD = 0.25; // seconds ahead to compensate for rendering delay
+
+    function tick() {
       const a = textAudioRefs.current[playIdx];
-      if (a && a.duration && a.duration > 0 && wordCount > 0) {
+      if (a && !a.paused && !a.ended && a.duration > 0 && wordCount > 0) {
+        const adjusted = Math.min(a.currentTime + LOOKAHEAD, a.duration);
         const idx = Math.min(
-          Math.floor((a.currentTime / a.duration) * wordCount),
+          Math.floor((adjusted / a.duration) * wordCount),
           wordCount - 1
         );
-        setActiveWordIdx(idx);
+        if (idx !== lastWordIdx) {
+          lastWordIdx = idx;
+          setActiveWordIdx(idx);
+        }
+        rafId = requestAnimationFrame(tick);
       }
     }
 
-    audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.onended = () => {
+      cancelAnimationFrame(rafId);
       setActiveWordIdx(null);
       handleSegmentEnd(playIdx);
     };
-    audio.play().catch(() => handleSegmentEnd(playIdx));
+    audio.play().then(() => {
+      rafId = requestAnimationFrame(tick);
+    }).catch(() => handleSegmentEnd(playIdx));
 
     return () => {
+      cancelAnimationFrame(rafId);
       audio?.pause();
-      audio?.removeEventListener("timeupdate", handleTimeUpdate);
     };
   }, [playIdx, isPlaying]);
 
