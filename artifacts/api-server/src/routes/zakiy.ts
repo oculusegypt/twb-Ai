@@ -299,16 +299,16 @@ ${memorySection}
 لا تكتب شرح بعد الآية.`;
 }
 
-const ZAKIY_TTS_SYSTEM = `أنت مؤدي صوتي محترف مصري — ممثل يعيش الكلام، مش قارئ رسمي.
+const ZAKIY_TTS_SYSTEM = `أنت مؤدي صوتي محترف مصري — ممثل حيوي يعيش الكلام بطاقة وعفوية، مش قارئ رسمي.
 
 قواعد الأداء:
-• الإيقاع: نشيط ومتدفق بشكل طبيعي — مش بطيء ممل
-• عش المشاعر من السياق: لو الكلام فيه فرح، افرح. لو حزن، تأثر. لو تحذير، اشدد
+• الإيقاع: سريع وحيوي وطبيعي — مش بطيء مثبّط، الكلام يجري باندفاع وحيوية
+• عش المشاعر بقوة من السياق: فرح → افرح بوضوح، حزن → تأثر، تحذير → اشدد
 • لو الكلام عن ذنب أو اعتراف: اخفض صوتك وتكلم بهدوء ورقة
-• لو الكلام فيه تشجيع وأمل: ارفع طاقتك وخليها واضحة
-• لو الكلام فيه جدية: صوت رزين واضح
-• لو فيه حنان وتعاطف: صوت دافئ ناعم
-• الأحاديث النبوية: بوقار ونبرة أعمق قليلاً
+• لو الكلام فيه تشجيع وأمل: ارفع طاقتك وخليها واضحة بنار وحماس
+• لو الكلام فيه جدية: صوت رزين واضح ومقنع
+• لو فيه حنان وتعاطف: صوت دافئ ناعم يلمس القلب
+• الأحاديث النبوية: بوقار ونبرة أعمق قليلاً مع احترام بيّن
 
 اقرأ النص فقط — لا تضيف ولا تحذف.`;
 
@@ -348,6 +348,69 @@ async function generateZakiyAudio(text: string): Promise<string> {
     ],
   });
   return (ttsResponse.choices[0]?.message as any)?.audio?.data ?? "";
+}
+
+// ══════════════════════════════════════════
+// SEGMENT-BASED AUDIO GENERATION
+// ══════════════════════════════════════════
+
+export interface ServerResponseSegment {
+  type: "text" | "quran" | "fatwa";
+  text: string;
+  audioBase64?: string;
+  surah?: number;
+  ayah?: number;
+  source?: string;
+  url?: string;
+}
+
+function parseRawSegments(raw: string): ServerResponseSegment[] {
+  const segments: ServerResponseSegment[] = [];
+  const re = /\{\{quran:(\d+):(\d+)\|([^}]*)\}\}|\{\{fatwa:([^|]*)\|([^|]*)\|([^}]*)\}\}/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(raw)) !== null) {
+    if (m.index > last) {
+      const t = raw.slice(last, m.index).trim();
+      if (t) segments.push({ type: "text", text: t });
+    }
+    if (m[1] !== undefined) {
+      segments.push({ type: "quran", surah: Number(m[1]), ayah: Number(m[2]), text: m[3]! });
+    } else {
+      segments.push({ type: "fatwa", source: m[4]!, url: m[5]!, text: m[6]! });
+    }
+    last = m.index + m[0].length;
+  }
+  if (last < raw.length) {
+    const t = raw.slice(last).trim();
+    if (t) segments.push({ type: "text", text: t });
+  }
+  return segments.length ? segments : [{ type: "text", text: raw }];
+}
+
+async function generateSegmentedAudio(responseText: string): Promise<ServerResponseSegment[]> {
+  const segments = parseRawSegments(responseText);
+
+  // Collect text segments that need audio, generate in parallel
+  const textIndices: number[] = [];
+  segments.forEach((seg, i) => {
+    if (seg.type === "text") textIndices.push(i);
+  });
+
+  const audioResults = await Promise.all(
+    textIndices.map(async (segIdx) => {
+      const seg = segments[segIdx]!;
+      const cleanText = stripStageDirections(stripFatwaMarkers(seg.text));
+      const audio = cleanText.trim() ? await generateZakiyAudio(seg.text) : "";
+      return { segIdx, audio };
+    })
+  );
+
+  audioResults.forEach(({ segIdx, audio }) => {
+    segments[segIdx]!.audioBase64 = audio;
+  });
+
+  return segments;
 }
 
 async function generateZakiyResponse(
