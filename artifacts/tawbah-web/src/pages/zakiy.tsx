@@ -100,6 +100,75 @@ const GREETING: Message = {
 };
 
 // ══════════════════════════════════════════
+// TONE BADGE
+// ══════════════════════════════════════════
+
+const TONE_STYLES: Array<{ keywords: string[]; emoji: string; className: string }> = [
+  { keywords: ["همس", "هامس", "سر"], emoji: "🤫", className: "bg-violet-100 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border-violet-300/50" },
+  { keywords: ["جدية", "جاد", "خطير"], emoji: "🎯", className: "bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 border-slate-300/50" },
+  { keywords: ["حماس", "فرحة", "فرح", "نار"], emoji: "🔥", className: "bg-orange-100 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border-orange-300/50" },
+  { keywords: ["ضحكة", "هزار", "تريق"], emoji: "😄", className: "bg-yellow-100 dark:bg-yellow-950/40 text-yellow-700 dark:text-yellow-300 border-yellow-300/50" },
+  { keywords: ["دفء", "حنان", "دافئ"], emoji: "💙", className: "bg-blue-100 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-300/50" },
+  { keywords: ["تأمل", "هدوء", "هادئ"], emoji: "🌙", className: "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border-indigo-300/50" },
+];
+
+function getToneStyle(text: string) {
+  for (const style of TONE_STYLES) {
+    if (style.keywords.some((k) => text.includes(k))) return style;
+  }
+  return { emoji: "💬", className: "bg-teal-100 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border-teal-300/50" };
+}
+
+function ToneBadge({ text }: { text: string }) {
+  const style = getToneStyle(text);
+  return (
+    <span className={cn(
+      "inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border mx-0.5 align-middle",
+      style.className
+    )}>
+      <span>{style.emoji}</span>
+      <span className="font-sans">{text}</span>
+    </span>
+  );
+}
+
+// ══════════════════════════════════════════
+// PLAYABLE TEXT — word-by-word highlighting
+// ══════════════════════════════════════════
+
+function PlayableText({ text, activeWordIdx }: { text: string; activeWordIdx: number | null }) {
+  const stripped = text.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
+  const words = stripped.split(/\s+/).filter(Boolean);
+
+  const toneMarkers = Array.from(text.matchAll(/\(\s*(ب[^)]+)\)/g)).map((m) => m[1]!.trim());
+
+  return (
+    <div className="space-y-1">
+      {toneMarkers.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-1">
+          {toneMarkers.map((t, i) => <ToneBadge key={i} text={t} />)}
+        </div>
+      )}
+      <p dir="rtl" className="text-sm leading-loose font-sans">
+        {words.map((word, i) => (
+          <span key={i}>
+            <span className={cn(
+              "transition-colors duration-100 rounded px-0.5",
+              activeWordIdx === i
+                ? "bg-teal-300/70 dark:bg-teal-700/70 text-teal-950 dark:text-teal-50 font-semibold"
+                : ""
+            )}>
+              {word}
+            </span>
+            {i < words.length - 1 && " "}
+          </span>
+        ))}
+      </p>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
 // FORMATTED TEXT RENDERER
 // ══════════════════════════════════════════
 
@@ -115,12 +184,16 @@ function FormattedText({ text }: { text: string }) {
 
   function renderInline(raw: string): React.ReactNode[] {
     const parts: React.ReactNode[] = [];
-    const boldRe = /\*\*([^*]+)\*\*/g;
+    const combinedRe = /\*\*([^*]+)\*\*|\(\s*(ب[^)]+)\)/g;
     let cursor = 0;
     let m: RegExpExecArray | null;
-    while ((m = boldRe.exec(raw)) !== null) {
+    while ((m = combinedRe.exec(raw)) !== null) {
       if (m.index > cursor) parts.push(raw.slice(cursor, m.index));
-      parts.push(<strong key={m.index} className="font-bold text-foreground">{m[1]}</strong>);
+      if (m[1] !== undefined) {
+        parts.push(<strong key={m.index} className="font-bold text-foreground">{m[1]}</strong>);
+      } else if (m[2] !== undefined) {
+        parts.push(<ToneBadge key={m.index} text={m[2].trim()} />);
+      }
       cursor = m.index + m[0].length;
     }
     if (cursor < raw.length) parts.push(raw.slice(cursor));
@@ -444,6 +517,7 @@ function BotMessageBody({
   // isPlaying: whether we are currently playing (vs paused)
   const [playIdx, setPlayIdx] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [activeWordIdx, setActiveWordIdx] = useState<number | null>(null);
 
   const textAudioRefs = useRef<Record<number, HTMLAudioElement>>({});
 
@@ -468,7 +542,10 @@ function BotMessageBody({
 
   // Text segment audio effect
   useEffect(() => {
-    if (playIdx === -1 || !isPlaying) return;
+    if (playIdx === -1 || !isPlaying) {
+      setActiveWordIdx(null);
+      return;
+    }
     const seg = segments[playIdx];
     if (!seg || seg.type !== "text") return;
     if (!seg.audioBase64) { handleSegmentEnd(playIdx); return; }
@@ -482,10 +559,34 @@ function BotMessageBody({
       audio = new Audio(url);
       textAudioRefs.current[playIdx] = audio;
     }
-    audio.onended = () => handleSegmentEnd(playIdx);
+
+    // Compute word list for timing estimation
+    const cleanText = seg.text.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
+    const words = cleanText.split(/\s+/).filter(Boolean);
+    const wordCount = words.length;
+
+    function handleTimeUpdate() {
+      const a = textAudioRefs.current[playIdx];
+      if (a && a.duration && a.duration > 0 && wordCount > 0) {
+        const idx = Math.min(
+          Math.floor((a.currentTime / a.duration) * wordCount),
+          wordCount - 1
+        );
+        setActiveWordIdx(idx);
+      }
+    }
+
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.onended = () => {
+      setActiveWordIdx(null);
+      handleSegmentEnd(playIdx);
+    };
     audio.play().catch(() => handleSegmentEnd(playIdx));
 
-    return () => { audio?.pause(); };
+    return () => {
+      audio?.pause();
+      audio?.removeEventListener("timeupdate", handleTimeUpdate);
+    };
   }, [playIdx, isPlaying]);
 
   // Manual play/pause toggle for entire message
@@ -562,6 +663,10 @@ function BotMessageBody({
           );
         }
         if (seg.type === "fatwa") return <FatwaCard key={i} seg={seg} />;
+        // Use PlayableText with word highlighting when this segment is actively playing
+        if (playIdx === i && isPlaying) {
+          return <PlayableText key={i} text={seg.text} activeWordIdx={activeWordIdx} />;
+        }
         return <FormattedText key={i} text={seg.text} />;
       })}
 
