@@ -71,3 +71,12 @@ export const journalEntriesTable = pgTable("journal_entries", {
 export const insertJournalEntrySchema = createInsertSchema(journalEntriesTable).omit({ id: true, createdAt: true });
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
 export type JournalEntry = typeof journalEntriesTable.$inferSelect;
+
+export const zakiyMemoryTable = pgTable("zakiy_memory", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  memoryJson: text("memory_json").notNull().default("{}"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type ZakiyMemory = typeof zakiyMemoryTable.$inferSelect;
