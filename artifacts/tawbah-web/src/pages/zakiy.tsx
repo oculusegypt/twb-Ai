@@ -1,8 +1,34 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Sparkles, Heart, X } from "lucide-react";
+import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
+
+// ══════════════════════════════════════════
+// TYPES
+// ══════════════════════════════════════════
+
+interface MessageSegment {
+  type: "text" | "quran" | "fatwa";
+  text: string;
+  audioBase64?: string;
+  surah?: number;
+  ayah?: number;
+  source?: string;
+  url?: string;
+}
+
+interface Message {
+  id: string;
+  role: "user" | "bot";
+  text: string;
+  segments?: MessageSegment[];
+  timestamp: Date;
+  suggestions?: string[];
+  suggestionsLoading?: boolean;
+}
+
+interface ApiHistory { role: "user" | "assistant"; content: string; }
 
 // ══════════════════════════════════════════
 // QURAN HELPERS
@@ -20,6 +46,35 @@ function misharyUrl(surah: number, ayah: number): string {
   return `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${toGlobalAyah(surah, ayah)}.mp3`;
 }
 
+function getSurahName(num: number): string {
+  const names: Record<number, string> = {
+    1:"الفاتحة",2:"البقرة",3:"آل عمران",4:"النساء",5:"المائدة",
+    6:"الأنعام",7:"الأعراف",8:"الأنفال",9:"التوبة",10:"يونس",
+    11:"هود",12:"يوسف",13:"الرعد",14:"إبراهيم",15:"الحجر",
+    16:"النحل",17:"الإسراء",18:"الكهف",19:"مريم",20:"طه",
+    21:"الأنبياء",22:"الحج",23:"المؤمنون",24:"النور",25:"الفرقان",
+    26:"الشعراء",27:"النمل",28:"القصص",29:"العنكبوت",30:"الروم",
+    31:"لقمان",32:"السجدة",33:"الأحزاب",34:"سبأ",35:"فاطر",
+    36:"يس",37:"الصافات",38:"ص",39:"الزمر",40:"غافر",
+    41:"فصلت",42:"الشورى",43:"الزخرف",44:"الدخان",45:"الجاثية",
+    46:"الأحقاف",47:"محمد",48:"الفتح",49:"الحجرات",50:"ق",
+    51:"الذاريات",52:"الطور",53:"النجم",54:"القمر",55:"الرحمن",
+    56:"الواقعة",57:"الحديد",58:"المجادلة",59:"الحشر",60:"الممتحنة",
+    61:"الصف",62:"الجمعة",63:"المنافقون",64:"التغابن",65:"الطلاق",
+    66:"التحريم",67:"الملك",68:"القلم",69:"الحاقة",70:"المعارج",
+    71:"نوح",72:"الجن",73:"المزمل",74:"المدثر",75:"القيامة",
+    76:"الإنسان",77:"المرسلات",78:"النبأ",79:"النازعات",80:"عبس",
+    81:"التكوير",82:"الانفطار",83:"المطففين",84:"الانشقاق",85:"البروج",
+    86:"الطارق",87:"الأعلى",88:"الغاشية",89:"الفجر",90:"البلد",
+    91:"الشمس",92:"الليل",93:"الضحى",94:"الشرح",95:"التين",
+    96:"العلق",97:"القدر",98:"البينة",99:"الزلزلة",100:"العاديات",
+    101:"القارعة",102:"التكاثر",103:"العصر",104:"الهمزة",105:"الفيل",
+    106:"قريش",107:"الماعون",108:"الكوثر",109:"الكافرون",110:"النصر",
+    111:"المسد",112:"الإخلاص",113:"الفلق",114:"الناس",
+  };
+  return names[num] ?? `السورة ${num}`;
+}
+
 // ══════════════════════════════════════════
 // STARTER QUESTIONS
 // ══════════════════════════════════════════
@@ -34,44 +89,15 @@ const STARTER_QUESTIONS = [
 ];
 
 // ══════════════════════════════════════════
-// SEGMENT PARSING
+// GREETING
 // ══════════════════════════════════════════
 
-interface QuranSegment { type: "quran"; surah: number; ayah: number; text: string; }
-interface FatwaSegment { type: "fatwa"; source: string; url: string; text: string; }
-interface TextSegment { type: "text"; text: string; }
-type Segment = QuranSegment | FatwaSegment | TextSegment;
-
-function stripStageDirections(text: string): string {
-  return text.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
-}
-
-function parseSegments(raw: string): Segment[] {
-  const segments: Segment[] = [];
-  const combined = /\{\{quran:(\d+):(\d+)\|([^}]*)\}\}|\{\{fatwa:([^|]*)\|([^|]*)\|([^}]*)\}\}/g;
-  let last = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = combined.exec(raw)) !== null) {
-    if (match.index > last) {
-      const t = stripStageDirections(raw.slice(last, match.index).trim());
-      if (t) segments.push({ type: "text", text: t });
-    }
-    if (match[1] !== undefined) {
-      segments.push({ type: "quran", surah: Number(match[1]), ayah: Number(match[2]), text: match[3]! });
-    } else {
-      segments.push({ type: "fatwa", source: match[4]!, url: match[5]!, text: match[6]! });
-    }
-    last = match.index + match[0].length;
-  }
-
-  if (last < raw.length) {
-    const t = stripStageDirections(raw.slice(last).trim());
-    if (t) segments.push({ type: "text", text: t });
-  }
-
-  return segments.length ? segments : [{ type: "text", text: stripStageDirections(raw) }];
-}
+const GREETING: Message = {
+  id: "greeting",
+  role: "bot",
+  text: "أهلاً يا صاحبي! 🌿 أنا الزكي — مش بوت رسمي، أنا صاحبك اللي بيعرف دينه.\n\nابعت صوتك أو اكتب — أنا هنا أسمعك بكل قلبي.\nوالكلام اللي بيننا يفضل بيننا.",
+  timestamp: new Date(),
+};
 
 // ══════════════════════════════════════════
 // FORMATTED TEXT RENDERER
@@ -106,7 +132,6 @@ function FormattedText({ text }: { text: string }) {
     const line = lines[i]!.trim();
 
     if (!line) { elements.push(<div key={i} className="h-1.5" />); i++; continue; }
-
     if (SEPARATOR.test(line)) { i++; continue; }
 
     const sectionMatch = SECTION_HEADER.exec(line);
@@ -125,8 +150,7 @@ function FormattedText({ text }: { text: string }) {
       const listItems: string[] = [];
       while (i < lines.length && (NUMBERED_AR.test(lines[i]!.trim()) || NUMBERED_EN.test(lines[i]!.trim()))) {
         const l = lines[i]!.trim();
-        const content = l.replace(/^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)]\s*/, "");
-        listItems.push(content);
+        listItems.push(l.replace(/^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)]\s*/, ""));
         i++;
       }
       elements.push(
@@ -177,9 +201,7 @@ function FormattedText({ text }: { text: string }) {
     }
 
     elements.push(
-      <p key={i} className="text-sm leading-relaxed">
-        {renderInline(line)}
-      </p>
+      <p key={i} className="text-sm leading-relaxed">{renderInline(line)}</p>
     );
     i++;
   }
@@ -188,27 +210,13 @@ function FormattedText({ text }: { text: string }) {
 }
 
 // ══════════════════════════════════════════
-// AUDIO HELPERS
-// ══════════════════════════════════════════
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
-
-// ══════════════════════════════════════════
-// QURAN CARD — sequential playback
+// QURAN CARD
 // ══════════════════════════════════════════
 
 function QuranCard({
-  seg, isActive, onEnded, onManualToggle, isPlaying,
+  seg, isActive, isPlaying, onEnded, onManualToggle,
 }: {
-  seg: QuranSegment;
+  seg: MessageSegment;
   isActive: boolean;
   isPlaying: boolean;
   onEnded: () => void;
@@ -217,7 +225,7 @@ function QuranCard({
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const url = misharyUrl(seg.surah, seg.ayah);
+    const url = misharyUrl(seg.surah!, seg.ayah!);
     const audio = new Audio(url);
     audioRef.current = audio;
     audio.onended = () => onEnded();
@@ -229,20 +237,20 @@ function QuranCard({
     if (!audio) return;
     if (isActive && isPlaying) {
       audio.play().catch(() => {});
-    } else if (!isPlaying) {
+    } else {
       audio.pause();
       if (!isActive) audio.currentTime = 0;
     }
   }, [isActive, isPlaying]);
-
-  const surahName = getSurahName(seg.surah);
 
   return (
     <div className="my-2 rounded-2xl border border-amber-400/50 overflow-hidden shadow-sm">
       <div className="bg-gradient-to-l from-amber-800 to-amber-900 dark:from-amber-950 dark:to-yellow-950 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BookOpen size={13} className="text-amber-300" />
-          <span className="text-[11px] font-bold text-amber-200 tracking-wide">سورة {surahName} — آية {seg.ayah}</span>
+          <span className="text-[11px] font-bold text-amber-200 tracking-wide">
+            سورة {getSurahName(seg.surah!)} — آية {seg.ayah}
+          </span>
         </div>
         <button
           onClick={onManualToggle}
@@ -257,17 +265,14 @@ function QuranCard({
         </button>
       </div>
       <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
-        <p className="quran-text text-right text-amber-950 dark:text-amber-100 leading-[2.4]">
+        <p className="quran-text text-right text-amber-950 dark:text-amber-100">
           ﴿{seg.text}﴾
         </p>
         {isActive && isPlaying && (
           <div className="flex gap-0.5 items-end justify-center mt-2 h-4">
             {[1,2,3,4,5,6,7].map((k) => (
-              <span
-                key={k}
-                className="w-0.5 bg-amber-500 rounded-full animate-bounce"
-                style={{ height: `${3 + (k % 4) * 3}px`, animationDelay: `${k * 60}ms` }}
-              />
+              <span key={k} className="w-0.5 bg-amber-500 rounded-full animate-bounce"
+                style={{ height: `${3 + (k % 4) * 3}px`, animationDelay: `${k * 60}ms` }} />
             ))}
           </div>
         )}
@@ -276,42 +281,13 @@ function QuranCard({
   );
 }
 
-function getSurahName(num: number): string {
-  const names: Record<number, string> = {
-    1:"الفاتحة",2:"البقرة",3:"آل عمران",4:"النساء",5:"المائدة",
-    6:"الأنعام",7:"الأعراف",8:"الأنفال",9:"التوبة",10:"يونس",
-    11:"هود",12:"يوسف",13:"الرعد",14:"إبراهيم",15:"الحجر",
-    16:"النحل",17:"الإسراء",18:"الكهف",19:"مريم",20:"طه",
-    21:"الأنبياء",22:"الحج",23:"المؤمنون",24:"النور",25:"الفرقان",
-    26:"الشعراء",27:"النمل",28:"القصص",29:"العنكبوت",30:"الروم",
-    31:"لقمان",32:"السجدة",33:"الأحزاب",34:"سبأ",35:"فاطر",
-    36:"يس",37:"الصافات",38:"ص",39:"الزمر",40:"غافر",
-    41:"فصلت",42:"الشورى",43:"الزخرف",44:"الدخان",45:"الجاثية",
-    46:"الأحقاف",47:"محمد",48:"الفتح",49:"الحجرات",50:"ق",
-    51:"الذاريات",52:"الطور",53:"النجم",54:"القمر",55:"الرحمن",
-    56:"الواقعة",57:"الحديد",58:"المجادلة",59:"الحشر",60:"الممتحنة",
-    61:"الصف",62:"الجمعة",63:"المنافقون",64:"التغابن",65:"الطلاق",
-    66:"التحريم",67:"الملك",68:"القلم",69:"الحاقة",70:"المعارج",
-    71:"نوح",72:"الجن",73:"المزمل",74:"المدثر",75:"القيامة",
-    76:"الإنسان",77:"المرسلات",78:"النبأ",79:"النازعات",80:"عبس",
-    81:"التكوير",82:"الانفطار",83:"المطففين",84:"الانشقاق",85:"البروج",
-    86:"الطارق",87:"الأعلى",88:"الغاشية",89:"الفجر",90:"البلد",
-    91:"الشمس",92:"الليل",93:"الضحى",94:"الشرح",95:"التين",
-    96:"العلق",97:"القدر",98:"البينة",99:"الزلزلة",100:"العاديات",
-    101:"القارعة",102:"التكاثر",103:"العصر",104:"الهمزة",105:"الفيل",
-    106:"قريش",107:"الماعون",108:"الكوثر",109:"الكافرون",110:"النصر",
-    111:"المسد",112:"الإخلاص",113:"الفلق",114:"الناس",
-  };
-  return names[num] ?? `السورة ${num}`;
-}
-
 // ══════════════════════════════════════════
 // FATWA CARD
 // ══════════════════════════════════════════
 
-function FatwaCard({ seg }: { seg: FatwaSegment }) {
+function FatwaCard({ seg }: { seg: MessageSegment }) {
   const [expanded, setExpanded] = useState(false);
-  const preview = seg.text.length > 120 ? seg.text.slice(0, 120) + "..." : seg.text;
+  const preview = (seg.text?.length ?? 0) > 120 ? seg.text!.slice(0, 120) + "..." : seg.text;
 
   return (
     <div className="my-2 rounded-2xl border border-emerald-400/50 overflow-hidden shadow-sm">
@@ -325,7 +301,7 @@ function FatwaCard({ seg }: { seg: FatwaSegment }) {
           {expanded ? seg.text : preview}
         </p>
         <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200/50 dark:border-emerald-800/30">
-          {seg.text.length > 120 && (
+          {(seg.text?.length ?? 0) > 120 && (
             <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
               {expanded ? "إخفاء" : "عرض الكامل"}
             </button>
@@ -374,37 +350,50 @@ function ImpressionPanel({ impression, onClose }: { impression: string; onClose:
 }
 
 // ══════════════════════════════════════════
-// SUGGESTION CHIPS
+// SUGGESTION CARDS (outside bubble, like starter cards)
 // ══════════════════════════════════════════
 
-function SuggestionChips({ suggestions, onSelect, loading }: { suggestions: string[]; onSelect: (q: string) => void; loading?: boolean }) {
-  if (!suggestions.length && !loading) return null;
+function SuggestionCards({ suggestions, loading, onSelect }: {
+  suggestions?: string[];
+  loading?: boolean;
+  onSelect: (q: string) => void;
+}) {
+  if (!loading && (!suggestions || suggestions.length === 0)) return null;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="flex flex-wrap gap-2 justify-end mt-2"
+      className="mt-2 pr-9"
     >
       {loading ? (
-        <span className="text-[10px] text-muted-foreground/60 flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> يفكر في أسئلة...</span>
+        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
+          <Loader2 size={11} className="animate-spin" />
+          <span>يفكر في أسئلة...</span>
+        </div>
       ) : (
-        suggestions.map((q, i) => (
-          <button
-            key={i}
-            onClick={() => onSelect(q)}
-            className="text-[11px] px-3 py-1.5 rounded-full border border-teal-400/60 bg-teal-50 dark:bg-teal-950/30 text-teal-700 dark:text-teal-300 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-all active:scale-95 font-medium shadow-sm"
-          >
-            {q}
-          </button>
-        ))
+        <div className="grid grid-cols-2 gap-1.5">
+          {suggestions!.map((q, i) => (
+            <motion.button
+              key={i}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: i * 0.05 }}
+              onClick={() => onSelect(q)}
+              className="text-right text-xs px-3 py-2 rounded-xl border border-border/60 bg-card hover:bg-teal-50 dark:hover:bg-teal-950/20 hover:border-teal-400/50 text-foreground transition-all active:scale-95 shadow-sm leading-snug font-medium"
+            >
+              {q}
+            </motion.button>
+          ))}
+        </div>
       )}
     </motion.div>
   );
 }
 
 // ══════════════════════════════════════════
-// STARTER QUESTION CARDS
+// STARTER CARDS
 // ══════════════════════════════════════════
 
 function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
@@ -416,8 +405,7 @@ function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
       className="px-2 py-3"
     >
       <div className="flex items-center gap-1.5 mb-3">
-        <Sparkles size={13} className="text-teal-500" />
-        <span className="text-xs font-semibold text-muted-foreground">أسئلة شائعة — اضغط لتبدأ</span>
+        <span className="text-xs font-semibold text-muted-foreground">✨ أسئلة شائعة — اضغط لتبدأ</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {STARTER_QUESTIONS.map((q, i) => (
@@ -438,92 +426,98 @@ function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
 }
 
 // ══════════════════════════════════════════
-// MESSAGE TYPES
-// ══════════════════════════════════════════
-
-interface Message {
-  id: string;
-  role: "user" | "bot";
-  text: string;
-  audioBase64?: string;
-  timestamp: Date;
-  suggestions?: string[];
-  suggestionsLoading?: boolean;
-}
-
-interface ApiHistory { role: "user" | "assistant"; content: string; }
-
-const GREETING: Message = {
-  id: "greeting",
-  role: "bot",
-  text: "أهلاً يا صاحبي! 🌿 أنا الزكي — مش بوت رسمي، أنا صاحبك اللي بيعرف دينه.\n\nابعت صوتك أو اكتب — أنا هنا أسمعك بكل قلبي.\nوالكلام اللي بيننا يفضل بيننا.",
-  timestamp: new Date(),
-};
-
-// ══════════════════════════════════════════
-// BOT MESSAGE BODY — with sequential Quran
+// BOT MESSAGE BODY — sequential segment playback
 // ══════════════════════════════════════════
 
 function BotMessageBody({
-  msg, playingId, onPlay, quranReady, onSuggestionSelect, sessionId, history, showImpressionFor, onToggleImpression,
+  msg, onImpressionToggle, impressionOpen, impressionText, sessionId, history,
 }: {
   msg: Message;
-  playingId: string | null;
-  onPlay: (id: string, b64: string) => void;
-  quranReady?: boolean;
-  onSuggestionSelect: (q: string) => void;
+  onImpressionToggle: (id: string, text?: string) => void;
+  impressionOpen: boolean;
+  impressionText?: string;
   sessionId: string;
   history: ApiHistory[];
-  showImpressionFor: string | null;
-  onToggleImpression: (id: string, impression?: string) => void;
 }) {
-  const segments = parseSegments(msg.text);
+  // ── Playback state machine ──
+  // playIdx: which segment index is currently "active" (-1 = stopped)
+  // isPlaying: whether we are currently playing (vs paused)
+  const [playIdx, setPlayIdx] = useState(-1);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Sequential Quran playback state
-  const [quranPlayIdx, setQuranPlayIdx] = useState(-1);
-  const [quranIsPlaying, setQuranIsPlaying] = useState(false);
-  const quranSegments = segments.filter((s): s is QuranSegment => s.type === "quran");
+  const textAudioRefs = useRef<Record<number, HTMLAudioElement>>({});
 
-  // Map: quranSegment index within all quran segments of this message
-  const quranIndexMap = useRef<Map<QuranSegment, number>>(new Map());
-  quranSegments.forEach((s, idx) => quranIndexMap.current.set(s, idx));
+  const segments = msg.segments ?? [];
 
-  // When bot audio finishes, start quran sequence
+  // Helper: advance to next segment
+  const advanceTo = useCallback((nextIdx: number) => {
+    const seg = segments[nextIdx];
+    if (!seg) { setPlayIdx(-1); setIsPlaying(false); return; }
+
+    // Skip fatwa segments (no audio)
+    if (seg.type === "fatwa") { advanceTo(nextIdx + 1); return; }
+
+    setPlayIdx(nextIdx);
+    setIsPlaying(true);
+  }, [segments]);
+
+  // When a segment ends, move to next
+  const handleSegmentEnd = useCallback((idx: number) => {
+    advanceTo(idx + 1);
+  }, [advanceTo]);
+
+  // Text segment audio effect
   useEffect(() => {
-    if (quranReady && quranSegments.length > 0 && quranPlayIdx === -1) {
-      setQuranPlayIdx(0);
-      setQuranIsPlaying(true);
-    }
-  }, [quranReady]);
+    if (playIdx === -1 || !isPlaying) return;
+    const seg = segments[playIdx];
+    if (!seg || seg.type !== "text") return;
+    if (!seg.audioBase64) { handleSegmentEnd(playIdx); return; }
 
-  function handleQuranEnded(idx: number) {
-    const next = idx + 1;
-    if (next < quranSegments.length) {
-      setQuranPlayIdx(next);
-      setQuranIsPlaying(true);
+    let audio = textAudioRefs.current[playIdx];
+    if (!audio) {
+      const binary = atob(seg.audioBase64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([bytes], { type: "audio/mp3" }));
+      audio = new Audio(url);
+      textAudioRefs.current[playIdx] = audio;
+    }
+    audio.onended = () => handleSegmentEnd(playIdx);
+    audio.play().catch(() => handleSegmentEnd(playIdx));
+
+    return () => { audio?.pause(); };
+  }, [playIdx, isPlaying]);
+
+  // Manual play/pause toggle for entire message
+  function handlePlayToggle() {
+    if (segments.length === 0) return;
+    if (playIdx !== -1 && isPlaying) {
+      // Pause
+      if (segments[playIdx]?.type === "text") {
+        textAudioRefs.current[playIdx]?.pause();
+      }
+      setIsPlaying(false);
+    } else if (playIdx !== -1 && !isPlaying) {
+      // Resume
+      if (segments[playIdx]?.type === "text") {
+        textAudioRefs.current[playIdx]?.play().catch(() => {});
+      }
+      setIsPlaying(true);
     } else {
-      setQuranPlayIdx(-1);
-      setQuranIsPlaying(false);
+      // Start from beginning
+      advanceTo(0);
     }
   }
 
-  function handleManualToggle(idx: number) {
-    if (quranPlayIdx === idx && quranIsPlaying) {
-      setQuranIsPlaying(false);
-    } else {
-      setQuranPlayIdx(idx);
-      setQuranIsPlaying(true);
-    }
-  }
+  const hasAudio = segments.some(s => s.type === "text" && s.audioBase64);
+  const isCurrentlyPlaying = playIdx !== -1 && isPlaying;
 
-  // Impression
-  const [impressionText, setImpressionText] = useState<string | null>(null);
+  // ── Impression ──
   const [impressionLoading, setImpressionLoading] = useState(false);
-  const isShowingImpression = showImpressionFor === msg.id;
 
   async function handleImpressionClick() {
-    if (isShowingImpression) { onToggleImpression(msg.id); return; }
-    if (impressionText) { onToggleImpression(msg.id, impressionText); return; }
+    if (impressionOpen) { onImpressionToggle(msg.id); return; }
+    if (impressionText) { onImpressionToggle(msg.id, impressionText); return; }
     setImpressionLoading(true);
     try {
       const res = await fetch("/api/zakiy/impression", {
@@ -532,33 +526,38 @@ function BotMessageBody({
         body: JSON.stringify({ history, sessionId }),
       });
       const data = await res.json();
-      const text = data.impression ?? "لسه بتعرف بعضنا — كمّل الحديث وهشوفك أكتر!";
-      setImpressionText(text);
-      onToggleImpression(msg.id, text);
+      onImpressionToggle(msg.id, data.impression ?? "لسه بتعرف بعضنا — كمّل الحديث وهشوفك أكتر!");
     } catch {
-      const fallback = "مش قدرت أوصلك الانطباع دلوقتي — جرّب تاني بعد شوية.";
-      setImpressionText(fallback);
-      onToggleImpression(msg.id, fallback);
+      onImpressionToggle(msg.id, "مش قدرت أوصلك الانطباع دلوقتي — جرّب تاني بعد شوية.");
     } finally {
       setImpressionLoading(false);
     }
   }
 
-  let quranCounter = 0;
+  // Render: if no segments (greeting or old format), render raw text
+  if (!segments.length) {
+    return <FormattedText text={msg.text} />;
+  }
 
   return (
     <div>
       {segments.map((seg, i) => {
         if (seg.type === "quran") {
-          const qIdx = quranCounter++;
           return (
             <QuranCard
               key={i}
               seg={seg}
-              isActive={quranPlayIdx === qIdx}
-              isPlaying={quranPlayIdx === qIdx && quranIsPlaying}
-              onEnded={() => handleQuranEnded(qIdx)}
-              onManualToggle={() => handleManualToggle(qIdx)}
+              isActive={playIdx === i}
+              isPlaying={playIdx === i && isPlaying}
+              onEnded={() => handleSegmentEnd(i)}
+              onManualToggle={() => {
+                if (playIdx === i && isPlaying) {
+                  setIsPlaying(false);
+                } else {
+                  setPlayIdx(i);
+                  setIsPlaying(true);
+                }
+              }}
             />
           );
         }
@@ -566,18 +565,19 @@ function BotMessageBody({
         return <FormattedText key={i} text={seg.text} />;
       })}
 
+      {/* Audio & impression controls */}
       <div className="flex items-center gap-2 mt-2 flex-wrap">
-        {msg.audioBase64 && (
+        {hasAudio && (
           <button
-            onClick={() => onPlay(msg.id, msg.audioBase64!)}
+            onClick={handlePlayToggle}
             className={cn(
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all",
-              playingId === msg.id
+              isCurrentlyPlaying
                 ? "bg-teal-600 text-white"
                 : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 hover:bg-teal-100"
             )}
           >
-            {playingId === msg.id ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
+            {isCurrentlyPlaying ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
           </button>
         )}
 
@@ -587,34 +587,40 @@ function BotMessageBody({
             disabled={impressionLoading}
             className={cn(
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
-              isShowingImpression
+              impressionOpen
                 ? "bg-rose-500 text-white border-rose-500"
                 : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-300/60 hover:bg-rose-100"
             )}
           >
             {impressionLoading
               ? <><Loader2 size={12} className="animate-spin" /> لحظة...</>
-              : <><Heart size={12} className={isShowingImpression ? "fill-white" : ""} /> انطباعي عنك</>
+              : <><Heart size={12} className={impressionOpen ? "fill-white" : ""} /> انطباعي عنك</>
             }
           </button>
         )}
       </div>
 
       <AnimatePresence>
-        {isShowingImpression && impressionText && (
-          <ImpressionPanel impression={impressionText} onClose={() => onToggleImpression(msg.id)} />
+        {impressionOpen && impressionText && (
+          <ImpressionPanel impression={impressionText} onClose={() => onImpressionToggle(msg.id)} />
         )}
       </AnimatePresence>
-
-      {msg.id !== "greeting" && (
-        <SuggestionChips
-          suggestions={msg.suggestions ?? []}
-          onSelect={onSuggestionSelect}
-          loading={msg.suggestionsLoading}
-        />
-      )}
     </div>
   );
+}
+
+// ══════════════════════════════════════════
+// AUDIO HELPERS
+// ══════════════════════════════════════════
+
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
 }
 
 // ══════════════════════════════════════════
@@ -626,8 +632,6 @@ export default function ZakiyPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const [quranReadyId, setQuranReadyId] = useState<string | null>(null);
   const [impressionOpenId, setImpressionOpenId] = useState<string | null>(null);
   const [impressionTexts, setImpressionTexts] = useState<Record<string, string>>({});
 
@@ -635,7 +639,6 @@ export default function ZakiyPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const audioRefs = useRef<Record<string, HTMLAudioElement>>({});
 
   const sessionId = getSessionId();
   const hasUserMessages = messages.some((m) => m.role === "user");
@@ -652,7 +655,7 @@ export default function ZakiyPage() {
       .map((m) => ({ role: m.role === "user" ? "user" as const : "assistant" as const, content: m.text }));
   }
 
-  function handleToggleImpression(id: string, text?: string) {
+  function handleImpressionToggle(id: string, text?: string) {
     if (impressionOpenId === id) {
       setImpressionOpenId(null);
     } else {
@@ -670,33 +673,39 @@ export default function ZakiyPage() {
       });
       const data = await res.json();
       setMessages((prev) =>
-        prev.map((m) => m.id === msgId ? { ...m, suggestions: data.suggestions ?? [], suggestionsLoading: false } : m)
+        prev.map((m) => m.id === msgId
+          ? { ...m, suggestions: data.suggestions ?? [], suggestionsLoading: false }
+          : m)
       );
     } catch {
       setMessages((prev) =>
-        prev.map((m) => m.id === msgId ? { ...m, suggestions: [], suggestionsLoading: false } : m)
+        prev.map((m) => m.id === msgId
+          ? { ...m, suggestions: [], suggestionsLoading: false }
+          : m)
       );
     }
   }
 
-  function addBotMessage(text: string, audioBase64?: string) {
+  function addBotMessage(text: string, segments?: MessageSegment[]) {
     const msg: Message = {
       id: Date.now().toString(),
       role: "bot",
       text,
-      audioBase64,
+      segments: segments ?? [],
       timestamp: new Date(),
       suggestions: [],
       suggestionsLoading: true,
     };
     setMessages((prev) => [...prev, msg]);
-    if (audioBase64) setTimeout(() => playAudio(msg.id, audioBase64), 600);
     const currentHistory = buildHistory();
     fetchSuggestions([...currentHistory, { role: "assistant", content: text }], msg.id);
   }
 
   function addUserMessage(text: string) {
-    setMessages((prev) => [...prev, { id: Date.now().toString() + "u", role: "user", text, timestamp: new Date() }]);
+    setMessages((prev) => [
+      ...prev,
+      { id: Date.now().toString() + "u", role: "user", text, timestamp: new Date() },
+    ]);
   }
 
   async function sendMessage(text: string) {
@@ -714,9 +723,9 @@ export default function ZakiyPage() {
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      addBotMessage(data.response, data.audioBase64);
+      addBotMessage(data.response, data.segments);
     } catch {
-      addBotMessage("(بنبرة آسف) عذراً يا صاحبي، في مشكلة تقنية. جرّب تاني بعد شوية.");
+      addBotMessage("عذراً يا صاحبي، في مشكلة تقنية. جرّب تاني بعد شوية.");
     } finally {
       setLoading(false);
     }
@@ -740,7 +749,7 @@ export default function ZakiyPage() {
       const data = await res.json();
 
       addUserMessage(data.transcript || "🎤 رسالة صوتية");
-      addBotMessage(data.response, data.audioBase64);
+      addBotMessage(data.response, data.segments);
     } catch {
       addBotMessage("مش قدرت أفهم التسجيل كويس — جرّب تاني أو اكتبلي.");
     } finally {
@@ -765,8 +774,7 @@ export default function ZakiyPage() {
       mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
       mr.onstop = () => {
         stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(audioChunksRef.current, { type: mr.mimeType });
-        sendVoice(blob);
+        sendVoice(new Blob(audioChunksRef.current, { type: mr.mimeType }));
       };
       mr.start(200);
       setRecording(true);
@@ -778,24 +786,6 @@ export default function ZakiyPage() {
   function stopRecording() {
     mediaRecorderRef.current?.stop();
     setRecording(false);
-  }
-
-  function playAudio(id: string, base64: string) {
-    if (playingId && playingId !== id) audioRefs.current[playingId]?.pause();
-
-    let audio = audioRefs.current[id];
-    if (!audio) {
-      const binary = atob(base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const url = URL.createObjectURL(new Blob([bytes], { type: "audio/mp3" }));
-      audio = new Audio(url);
-      audioRefs.current[id] = audio;
-      audio.onended = () => { setPlayingId(null); setQuranReadyId(id); };
-    }
-
-    if (playingId === id && !audio.paused) { audio.pause(); setPlayingId(null); }
-    else { audio.play().catch(() => {}); setPlayingId(id); }
   }
 
   return (
@@ -816,7 +806,7 @@ export default function ZakiyPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
         <AnimatePresence initial={false}>
           {messages.map((msg) => (
             <motion.div
@@ -824,38 +814,45 @@ export default function ZakiyPage() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
-              className={cn("flex items-end gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}
             >
-              {msg.role === "bot" && (
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center flex-shrink-0 mb-1">
-                  <Bot size={14} className="text-white" />
-                </div>
-              )}
-              <div className={cn(
-                "max-w-[88%] rounded-2xl px-4 py-3 shadow-sm",
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-tl-sm"
-                  : "bg-card border border-border/60 text-foreground rounded-tr-sm"
-              )}>
-                {msg.role === "bot" ? (
-                  <BotMessageBody
-                    msg={msg}
-                    playingId={playingId}
-                    onPlay={playAudio}
-                    quranReady={msg.id === quranReadyId}
-                    onSuggestionSelect={(q) => sendMessage(q)}
-                    sessionId={sessionId}
-                    history={buildHistory()}
-                    showImpressionFor={impressionOpenId}
-                    onToggleImpression={handleToggleImpression}
-                  />
-                ) : (
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+              <div className={cn("flex items-end gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                {msg.role === "bot" && (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center flex-shrink-0 mb-1">
+                    <Bot size={14} className="text-white" />
+                  </div>
                 )}
-                <p className="text-[10px] opacity-50 mt-1 text-end">
-                  {msg.timestamp.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
-                </p>
+                <div className={cn(
+                  "max-w-[88%] rounded-2xl px-4 py-3 shadow-sm",
+                  msg.role === "user"
+                    ? "bg-primary text-primary-foreground rounded-tl-sm"
+                    : "bg-card border border-border/60 text-foreground rounded-tr-sm"
+                )}>
+                  {msg.role === "bot" ? (
+                    <BotMessageBody
+                      msg={msg}
+                      onImpressionToggle={handleImpressionToggle}
+                      impressionOpen={impressionOpenId === msg.id}
+                      impressionText={impressionTexts[msg.id]}
+                      sessionId={sessionId}
+                      history={buildHistory()}
+                    />
+                  ) : (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                  )}
+                  <p className="text-[10px] opacity-50 mt-1 text-end">
+                    {msg.timestamp.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
               </div>
+
+              {/* Suggestions OUTSIDE the bubble */}
+              {msg.role === "bot" && msg.id !== "greeting" && (
+                <SuggestionCards
+                  suggestions={msg.suggestions}
+                  loading={msg.suggestionsLoading}
+                  onSelect={(q) => sendMessage(q)}
+                />
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -878,6 +875,7 @@ export default function ZakiyPage() {
             </div>
           </motion.div>
         )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -907,7 +905,9 @@ export default function ZakiyPage() {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); } }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
+              }}
               placeholder="اكتب ما في قلبك... أو اضغط على الميك 🎤"
               disabled={loading || recording}
               rows={1}

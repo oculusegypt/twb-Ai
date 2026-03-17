@@ -453,14 +453,14 @@ router.post("/zakiy/message", async (req, res) => {
 
     const memory = await loadMemory(sessionId);
     const responseText = await generateZakiyResponse(message, history, memory);
-    const audioBase64 = await generateZakiyAudio(responseText);
+    const segments = await generateSegmentedAudio(responseText);
 
     // Update memory asynchronously (fire and forget)
     if (sessionId) {
       updateMemory(sessionId, message, responseText, memory).catch(() => {});
     }
 
-    res.json({ response: responseText, audioBase64 });
+    res.json({ response: responseText, segments });
   } catch (err) {
     console.error("Zakiy message error:", err);
     res.status(500).json({ error: "Failed to generate response" });
@@ -583,13 +583,13 @@ router.post("/zakiy/voice", async (req, res) => {
 
     const memory = await loadMemory(sessionId);
     const responseText = await generateZakiyResponse(transcript, history, memory);
-    const audioBase64Out = await generateZakiyAudio(responseText);
+    const segments = await generateSegmentedAudio(responseText);
 
     if (sessionId) {
       updateMemory(sessionId, transcript, responseText, memory).catch(() => {});
     }
 
-    res.json({ transcript, response: responseText, audioBase64: audioBase64Out });
+    res.json({ transcript, response: responseText, segments });
   } catch (err) {
     console.error("Zakiy voice error:", err);
     res.status(500).json({ error: "Failed to process voice message" });
