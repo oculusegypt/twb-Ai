@@ -140,31 +140,22 @@ function PlayableText({ text, activeWordIdx }: { text: string; activeWordIdx: nu
   const stripped = text.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
   const words = stripped.split(/\s+/).filter(Boolean);
 
-  const toneMarkers = Array.from(text.matchAll(/\(\s*(ب[^)]+)\)/g)).map((m) => m[1]!.trim());
-
   return (
-    <div className="space-y-1">
-      {toneMarkers.length > 0 && (
-        <div className="flex flex-wrap gap-1 mb-1">
-          {toneMarkers.map((t, i) => <ToneBadge key={i} text={t} />)}
-        </div>
-      )}
-      <p dir="rtl" className="text-sm leading-loose font-sans">
-        {words.map((word, i) => (
-          <span key={i}>
-            <span className={cn(
-              "transition-colors duration-100 rounded px-0.5",
-              activeWordIdx === i
-                ? "bg-teal-300/70 dark:bg-teal-700/70 text-teal-950 dark:text-teal-50 font-semibold"
-                : ""
-            )}>
-              {word}
-            </span>
-            {i < words.length - 1 && " "}
+    <p dir="rtl" className="text-sm leading-loose font-sans">
+      {words.map((word, i) => (
+        <span key={i}>
+          <span className={cn(
+            "transition-colors duration-100 rounded px-0.5",
+            activeWordIdx === i
+              ? "bg-teal-300/70 dark:bg-teal-700/70 text-teal-950 dark:text-teal-50 font-semibold"
+              : ""
+          )}>
+            {word}
           </span>
-        ))}
-      </p>
-    </div>
+          {i < words.length - 1 && " "}
+        </span>
+      ))}
+    </p>
   );
 }
 
@@ -183,20 +174,17 @@ function FormattedText({ text }: { text: string }) {
   const SEPARATOR = /^[═─━─]+$/;
 
   function renderInline(raw: string): React.ReactNode[] {
+    const stripped = raw.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ");
     const parts: React.ReactNode[] = [];
-    const combinedRe = /\*\*([^*]+)\*\*|\(\s*(ب[^)]+)\)/g;
+    const boldRe = /\*\*([^*]+)\*\*/g;
     let cursor = 0;
     let m: RegExpExecArray | null;
-    while ((m = combinedRe.exec(raw)) !== null) {
-      if (m.index > cursor) parts.push(raw.slice(cursor, m.index));
-      if (m[1] !== undefined) {
-        parts.push(<strong key={m.index} className="font-bold text-foreground">{m[1]}</strong>);
-      } else if (m[2] !== undefined) {
-        parts.push(<ToneBadge key={m.index} text={m[2].trim()} />);
-      }
+    while ((m = boldRe.exec(stripped)) !== null) {
+      if (m.index > cursor) parts.push(stripped.slice(cursor, m.index));
+      parts.push(<strong key={m.index} className="font-bold text-foreground">{m[1]}</strong>);
       cursor = m.index + m[0].length;
     }
-    if (cursor < raw.length) parts.push(raw.slice(cursor));
+    if (cursor < stripped.length) parts.push(stripped.slice(cursor));
     return parts;
   }
 

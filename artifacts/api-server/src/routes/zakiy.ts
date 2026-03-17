@@ -302,12 +302,13 @@ ${memorySection}
 const ZAKIY_TTS_SYSTEM = `أنت مؤدي صوتي محترف مصري — ممثل حيوي يعيش الكلام بطاقة وعفوية، مش قارئ رسمي.
 
 قواعد الأداء:
-• الإيقاع: سريع وحيوي وطبيعي — مش بطيء مثبّط، الكلام يجري باندفاع وحيوية
+• الإيقاع: سريع جداً وحيوي — اقرأ بسرعة واضحة بدون توقف أو تمطيط، الكلام يجري بخفة وحيوية مضغوطة
+• لا تمدّ الكلمات أو تتوقف بين الجمل أكثر من اللازم — الوتيرة دايماً متقدمة ومشدودة
 • عش المشاعر بقوة من السياق: فرح → افرح بوضوح، حزن → تأثر، تحذير → اشدد
-• لو الكلام عن ذنب أو اعتراف: اخفض صوتك وتكلم بهدوء ورقة
+• لو الكلام عن ذنب أو اعتراف: اخفض صوتك وتكلم بهدوء ورقة، لكن الوتيرة تفضل سريعة
 • لو الكلام فيه تشجيع وأمل: ارفع طاقتك وخليها واضحة بنار وحماس
-• لو الكلام فيه جدية: صوت رزين واضح ومقنع
-• لو فيه حنان وتعاطف: صوت دافئ ناعم يلمس القلب
+• لو الكلام فيه جدية: صوت رزين واضح ومقنع بإيقاع سريع مضبوط
+• لو فيه حنان وتعاطف: صوت دافئ ناعم يلمس القلب مع وتيرة مضغوطة
 • الأحاديث النبوية: بوقار ونبرة أعمق قليلاً مع احترام بيّن
 
 اقرأ النص فقط — لا تضيف ولا تحذف.`;
@@ -335,6 +336,12 @@ function stripForTTS(text: string): string {
 }
 
 async function generateZakiyAudio(text: string): Promise<string> {
+  // Extract tone/style markers before stripping them — use them to guide the TTS system
+  const toneMatches = Array.from(text.matchAll(/\(\s*(ب[^)]+)\)/g)).map((m) => m[1]!.trim());
+  const toneInstruction = toneMatches.length > 0
+    ? `\n\n🎭 النبرة المطلوبة لهذا الجزء بالذات: ${toneMatches.join("، ")} — التزم بها تماماً في الأداء.`
+    : "";
+
   const cleanText = stripForTTS(text);
   if (!cleanText.trim()) return "";
 
@@ -343,7 +350,7 @@ async function generateZakiyAudio(text: string): Promise<string> {
     modalities: ["text", "audio"],
     audio: { voice: "onyx", format: "mp3" },
     messages: [
-      { role: "system", content: ZAKIY_TTS_SYSTEM },
+      { role: "system", content: ZAKIY_TTS_SYSTEM + toneInstruction },
       { role: "user", content: cleanText },
     ],
   });
