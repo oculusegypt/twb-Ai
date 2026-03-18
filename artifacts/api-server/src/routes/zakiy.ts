@@ -428,8 +428,36 @@ function stripQuranMarkers(text: string): string {
   return text
     .replace(/\{\{quran:\d+:\d+(?:-\d+)?\|[^}]*\}\}/g, "")
     .replace(/﴿[^﴾]*﴾/g, "")
+    // Strip "سورة X — آية N" labels that appear when AI doesn't use proper markers
+    .replace(/سورة\s+\S+\s*[—–\-]\s*آية\s+[\d٠-٩]+/g, "")
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+/**
+ * Pre-processes AI response text to convert informal Quran citation patterns
+ * like "سورة طه — آية 11\n﴿text﴾" into proper {{quran:20:11|text}} markers
+ * so the segment parser can handle them correctly with reciter audio.
+ */
+function preprocessQuranCitations(text: string): string {
+  const arabicToWestern = (s: string) =>
+    s.replace(/[٠١٢٣٤٥٦٧٨٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d)));
+
+  // Build reverse map lazily from SURAH_NAMES_AR (defined later in the file but available at runtime)
+  const nameToNum: Record<string, number> = {};
+  for (const [num, name] of Object.entries(SURAH_NAMES_AR)) {
+    nameToNum[name] = Number(num);
+  }
+
+  return text.replace(
+    /سورة\s+([^\s—–\-\n]+)\s*[—–\-]\s*آية\s+([\d٠-٩]+)\s*\n?\s*﴿([^﴾]+)﴾/g,
+    (_, surahName, ayahRaw, ayahText) => {
+      const surahNum = nameToNum[surahName.trim()];
+      const ayahNum = parseInt(arabicToWestern(ayahRaw.trim()));
+      if (!surahNum || isNaN(ayahNum)) return `﴿${ayahText}﴾`;
+      return `{{quran:${surahNum}:${ayahNum}|${ayahText.trim()}}}`;
+    }
+  );
 }
 
 function stripFatwaMarkers(text: string): string {
@@ -593,7 +621,8 @@ async function expandSurahMarkers(raw: string): Promise<string> {
 }
 
 async function generateSegmentedAudio(responseText: string): Promise<ServerResponseSegment[]> {
-  const expanded = await expandSurahMarkers(responseText);
+  const preprocessed = preprocessQuranCitations(responseText);
+  const expanded = await expandSurahMarkers(preprocessed);
   const segments = parseRawSegments(expanded);
 
   // Collect text segments that need audio, generate in parallel

@@ -292,20 +292,25 @@ function QuranCard({
   reciterId: string;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Keep a ref to always call the latest onEnded without stale closure issues
+  const onEndedRef = useRef(onEnded);
+  useEffect(() => { onEndedRef.current = onEnded; }, [onEnded]);
 
   useEffect(() => {
     const url = reciterAudioUrl(seg.surah!, seg.ayah!, reciterId);
     const audio = new Audio(url);
     audioRef.current = audio;
-    audio.onended = () => onEnded();
-    return () => { audio.pause(); audioRef.current = null; };
+    audio.onended = () => onEndedRef.current();
+    // Advance on error so sequential playback never gets stuck
+    audio.onerror = () => onEndedRef.current();
+    return () => { audio.pause(); audio.onended = null; audio.onerror = null; audioRef.current = null; };
   }, [seg.surah, seg.ayah, reciterId]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (isActive && isPlaying) {
-      audio.play().catch(() => {});
+      audio.play().catch(() => { onEndedRef.current(); });
     } else {
       audio.pause();
       if (!isActive) audio.currentTime = 0;
