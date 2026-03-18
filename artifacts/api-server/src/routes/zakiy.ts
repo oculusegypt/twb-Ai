@@ -118,20 +118,36 @@ ${dayFadhail}
 // MEMORY
 // ══════════════════════════════════════════
 
+interface ZakiyPromise {
+  text: string;
+  date: string;
+  broken: boolean;
+  brokenCount: number;
+}
+
+interface ZakiySlip {
+  sin: string;
+  date: string;
+  afterPromise: boolean;
+}
+
 interface ZakiyMemoryData {
   traits: string[];
   challenges: string[];
   recentTopics: string[];
   personalNote: string;
+  promises: ZakiyPromise[];
+  slips: ZakiySlip[];
 }
 
 async function loadMemory(sessionId: string): Promise<ZakiyMemoryData> {
-  const defaultMemory: ZakiyMemoryData = { traits: [], challenges: [], recentTopics: [], personalNote: "" };
+  const defaultMemory: ZakiyMemoryData = { traits: [], challenges: [], recentTopics: [], personalNote: "", promises: [], slips: [] };
   if (!sessionId) return defaultMemory;
   try {
     const row = await db.query.zakiyMemoryTable.findFirst({ where: eq(zakiyMemoryTable.sessionId, sessionId) });
     if (!row) return defaultMemory;
-    return JSON.parse(row.memoryJson) as ZakiyMemoryData;
+    const parsed = JSON.parse(row.memoryJson) as Partial<ZakiyMemoryData>;
+    return { ...defaultMemory, ...parsed };
   } catch { return defaultMemory; }
 }
 
@@ -145,28 +161,36 @@ async function updateMemory(
   try {
     const extraction = await openai.chat.completions.create({
       model: "gpt-4o",
-      max_completion_tokens: 300,
+      max_completion_tokens: 400,
       messages: [
         {
           role: "system",
-          content: `أنت محلل نفسي هادئ. مهمتك استخراج معلومات شخصية مفيدة عن المستخدم من المحادثة.
-أرجع JSON فقط بالهيكل ده:
+          content: `أنت محلل نفسي ذكي. مهمتك استخراج معلومات شخصية مفيدة عن المستخدم من المحادثة وتحديث الذاكرة.
+أرجع JSON فقط بالهيكل ده (لا تغير المفاتيح):
 {
   "traits": ["صفة 1", "صفة 2"],
   "challenges": ["تحدي 1"],
   "recentTopics": ["موضوع المحادثة الحالية"],
-  "personalNote": "ملاحظة مختصرة جداً عن شخصيته"
+  "personalNote": "ملاحظة مختصرة جداً عن شخصيته",
+  "promises": [],
+  "slips": []
 }
 
-دمج مع الذاكرة الموجودة:
-${JSON.stringify(currentMemory)}
+الذاكرة الحالية (احتفظ بها وادمج فيها فقط):
+${JSON.stringify(currentMemory, null, 2)}
 
-لو ما فيش معلومات جديدة مفيدة، أعد الذاكرة الموجودة كما هي.
-أقصى عدد لكل قائمة: 5 عناصر — احتفظ بالأهم وامسح القديم.`,
+تعليمات خاصة للوعود والزللات:
+- لو المستخدم اعترف بذنب أو معصية: أضف إلى slips بالشكل: {"sin": "اسم الذنب", "date": "${new Date().toISOString().slice(0,10)}", "afterPromise": true/false}
+  - afterPromise: true لو عنده وعد مكسور يتعلق بهذا الذنب
+- لو الرد فيه مارك وعد {{promise:...}}: لا تضيفه للذاكرة هنا — هيتضاف لما يضغط الزر
+- promises و slips: احتفظ بكل القديم، فقط أضف الجديد
+- traits و challenges: أقصى 5 عناصر — احتفظ بالأهم
+
+لو ما فيش معلومات جديدة، أعد الذاكرة كما هي.`,
         },
         {
           role: "user",
-          content: `المستخدم قال: "${userMessage}"\nالزكي رد: "${botResponse.slice(0, 200)}"`,
+          content: `المستخدم قال: "${userMessage}"\nالزكي رد: "${botResponse.slice(0, 300)}"`,
         },
       ],
     });
@@ -186,12 +210,77 @@ ${JSON.stringify(currentMemory)}
   } catch { /* fire-and-forget — don't fail the main response */ }
 }
 
+async function savePromiseToMemory(sessionId: string, promiseText: string): Promise<void> {
+  if (!sessionId) return;
+  const memory = await loadMemory(sessionId);
+  const newPromise: ZakiyPromise = {
+    text: promiseText,
+    date: new Date().toISOString().slice(0, 10),
+    broken: false,
+    brokenCount: 0,
+  };
+  // Check if same promise already exists
+  const existing = memory.promises.find((p) => p.text === promiseText);
+  if (existing) {
+    existing.broken = false;
+    existing.date = newPromise.date;
+  } else {
+    memory.promises.push(newPromise);
+  }
+  await db
+    .insert(zakiyMemoryTable)
+    .values({ sessionId, memoryJson: JSON.stringify(memory), updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: zakiyMemoryTable.sessionId,
+      set: { memoryJson: JSON.stringify(memory), updatedAt: new Date() },
+    });
+}
+
+async function markPromiseBroken(sessionId: string, sin: string): Promise<void> {
+  if (!sessionId) return;
+  try {
+    const memory = await loadMemory(sessionId);
+    let changed = false;
+    for (const p of memory.promises) {
+      if (!p.broken) {
+        p.broken = true;
+        p.brokenCount = (p.brokenCount ?? 0) + 1;
+        changed = true;
+      }
+    }
+    if (changed) {
+      await db
+        .insert(zakiyMemoryTable)
+        .values({ sessionId, memoryJson: JSON.stringify(memory), updatedAt: new Date() })
+        .onConflictDoUpdate({
+          target: zakiyMemoryTable.sessionId,
+          set: { memoryJson: JSON.stringify(memory), updatedAt: new Date() },
+        });
+    }
+  } catch { /* ignore */ }
+}
+
 function buildMemorySection(memory: ZakiyMemoryData): string {
   const parts: string[] = [];
   if (memory.traits.length) parts.push(`🧠 صفاته: ${memory.traits.join("، ")}`);
   if (memory.challenges.length) parts.push(`⚡ تحدياته: ${memory.challenges.join("، ")}`);
   if (memory.recentTopics.length) parts.push(`📌 آخر مواضيعه: ${memory.recentTopics.join("، ")}`);
   if (memory.personalNote) parts.push(`📝 ملاحظة: ${memory.personalNote}`);
+
+  const activePromises = memory.promises?.filter((p) => !p.broken) ?? [];
+  const brokenPromises = memory.promises?.filter((p) => p.broken) ?? [];
+  const recentSlips = memory.slips?.slice(-5) ?? [];
+
+  if (activePromises.length) {
+    parts.push(`🤝 وعوده القائمة:\n${activePromises.map((p) => `  - "${p.text}" (${p.date})`).join("\n")}`);
+  }
+  if (brokenPromises.length) {
+    parts.push(`💔 وعود كسرها:\n${brokenPromises.map((p) => `  - "${p.text}" (كُسر ${p.brokenCount} مرة)`).join("\n")}`);
+  }
+  if (recentSlips.length) {
+    parts.push(`⚠️ زللاته الأخيرة:\n${recentSlips.map((s) => `  - ${s.sin} (${s.date})${s.afterPromise ? " [بعد وعد!]" : ""}`).join("\n")}`);
+  }
+
   if (!parts.length) return "";
   return `\n╔══════════════════════════════╗\n║       ما تعرفه عن صاحبك       ║\n╚══════════════════════════════╝\n${parts.join("\n")}\n`;
 }
@@ -362,7 +451,7 @@ async function generateZakiyAudio(text: string): Promise<string> {
 // ══════════════════════════════════════════
 
 export interface ServerResponseSegment {
-  type: "text" | "quran" | "fatwa";
+  type: "text" | "quran" | "fatwa" | "promise" | "surah-link";
   text: string;
   audioBase64?: string;
   surah?: number;
@@ -373,7 +462,7 @@ export interface ServerResponseSegment {
 
 function parseRawSegments(raw: string): ServerResponseSegment[] {
   const segments: ServerResponseSegment[] = [];
-  const re = /\{\{quran:(\d+):(\d+)\|([^}]*)\}\}|\{\{fatwa:([^|]*)\|([^|]*)\|([^}]*)\}\}/g;
+  const re = /\{\{quran:(\d+):(\d+)\|([^}]*)\}\}|\{\{fatwa:([^|]*)\|([^|]*)\|([^}]*)\}\}|\{\{promise:([^}]+)\}\}|\{\{surah-link:(\d+):(\d+)\|([^}]*)\}\}/g;
   let last = 0;
   let m: RegExpExecArray | null;
   const isBareLabel = (t: string) =>
@@ -386,8 +475,21 @@ function parseRawSegments(raw: string): ServerResponseSegment[] {
     }
     if (m[1] !== undefined) {
       segments.push({ type: "quran", surah: Number(m[1]), ayah: Number(m[2]), text: m[3]! });
-    } else {
+    } else if (m[4] !== undefined) {
       segments.push({ type: "fatwa", source: m[4]!, url: m[5]!, text: m[6]! });
+    } else if (m[7] !== undefined) {
+      segments.push({ type: "promise", text: m[7]!.trim() });
+    } else if (m[8] !== undefined) {
+      const surahNum = Number(m[8]);
+      const startAyah = Number(m[9]);
+      const surahName = m[10] ?? "";
+      segments.push({
+        type: "surah-link",
+        surah: surahNum,
+        ayah: startAyah,
+        text: surahName,
+        url: `https://quran.com/${surahNum}/${startAyah}`,
+      });
     }
     last = m.index + m[0].length;
   }
@@ -396,6 +498,60 @@ function parseRawSegments(raw: string): ServerResponseSegment[] {
     if (t && !isBareLabel(t)) segments.push({ type: "text", text: t });
   }
   return segments.length ? segments : [{ type: "text", text: raw }];
+}
+
+// ══════════════════════════════════════════
+// SURAH EXPANSION
+// ══════════════════════════════════════════
+
+const SURAH_NAMES_AR: Record<number, string> = {
+  1:"الفاتحة",2:"البقرة",3:"آل عمران",4:"النساء",5:"المائدة",6:"الأنعام",
+  7:"الأعراف",8:"الأنفال",9:"التوبة",10:"يونس",11:"هود",12:"يوسف",
+  13:"الرعد",14:"إبراهيم",15:"الحجر",16:"النحل",17:"الإسراء",18:"الكهف",
+  19:"مريم",20:"طه",21:"الأنبياء",22:"الحج",23:"المؤمنون",24:"النور",
+  25:"الفرقان",26:"الشعراء",27:"النمل",28:"القصص",29:"العنكبوت",30:"الروم",
+  31:"لقمان",32:"السجدة",33:"الأحزاب",34:"سبأ",35:"فاطر",36:"يس",
+  37:"الصافات",38:"ص",39:"الزمر",40:"غافر",41:"فصلت",42:"الشورى",
+  43:"الزخرف",44:"الدخان",45:"الجاثية",46:"الأحقاف",47:"محمد",48:"الفتح",
+  49:"الحجرات",50:"ق",51:"الذاريات",52:"الطور",53:"النجم",54:"القمر",
+  55:"الرحمن",56:"الواقعة",57:"الحديد",58:"المجادلة",59:"الحشر",60:"الممتحنة",
+  61:"الصف",62:"الجمعة",63:"المنافقون",64:"التغابن",65:"الطلاق",66:"التحريم",
+  67:"الملك",68:"القلم",69:"الحاقة",70:"المعارج",71:"نوح",72:"الجن",
+  73:"المزمل",74:"المدثر",75:"القيامة",76:"الإنسان",77:"المرسلات",78:"النبأ",
+  79:"النازعات",80:"عبس",81:"التكوير",82:"الانفطار",83:"المطففين",84:"الانشقاق",
+  85:"البروج",86:"الطارق",87:"الأعلى",88:"الغاشية",89:"الفجر",90:"البلد",
+  91:"الشمس",92:"الليل",93:"الضحى",94:"الشرح",95:"التين",96:"العلق",
+  97:"القدر",98:"البينة",99:"الزلزلة",100:"العاديات",101:"القارعة",102:"التكاثر",
+  103:"العصر",104:"الهمزة",105:"الفيل",106:"قريش",107:"الماعون",108:"الكوثر",
+  109:"الكافرون",110:"النصر",111:"المسد",112:"الإخلاص",113:"الفلق",114:"الناس",
+};
+
+async function expandSurahMarkers(raw: string): Promise<string> {
+  const re = /\{\{full-surah:(\d+)\}\}/g;
+  const matches = Array.from(raw.matchAll(re));
+  if (!matches.length) return raw;
+
+  let result = raw;
+  for (const match of matches) {
+    const surahNum = Number(match[1]);
+    try {
+      const apiRes = await fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/quran-uthmani`);
+      if (!apiRes.ok) continue;
+      const data = await apiRes.json() as { data?: { numberOfAyahs: number; ayahs: { numberInSurah: number; text: string }[] } };
+      const ayahs = data.data?.ayahs ?? [];
+      const total = data.data?.numberOfAyahs ?? ayahs.length;
+      const limit = 20;
+      const display = ayahs.slice(0, limit);
+      const surahName = SURAH_NAMES_AR[surahNum] ?? `سورة ${surahNum}`;
+
+      let expanded = display.map((a) => `{{quran:${surahNum}:${a.numberInSurah}|${a.text}}}`).join("\n");
+      if (total > limit) {
+        expanded += `\n{{surah-link:${surahNum}:${limit}|${surahName}}}`;
+      }
+      result = result.replace(match[0], expanded);
+    } catch { /* skip if API fails */ }
+  }
+  return result;
 }
 
 async function generateSegmentedAudio(responseText: string): Promise<ServerResponseSegment[]> {
