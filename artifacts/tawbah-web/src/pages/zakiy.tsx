@@ -600,7 +600,7 @@ function BotMessageBody({
   history: ApiHistory[];
   isLatest: boolean;
 }) {
-  const { autoPlayBotAudio, autoPlayQuran, quranReciterId } = useSettings();
+  const { autoPlayBotAudio, quranReciterId } = useSettings();
 
   // ── Playback state machine ──
   // playIdx: which segment index is currently "active" (-1 = stopped)
@@ -623,22 +623,21 @@ function BotMessageBody({
       advanceTo(nextIdx + 1); return;
     }
 
-    // Skip Quran segments if auto-play Quran is off
-    if (seg.type === "quran" && !autoPlayQuran) {
-      advanceTo(nextIdx + 1); return;
-    }
-
+    // Quran segments always play with reciter audio — never skip
     setPlayIdx(nextIdx);
     setIsPlaying(true);
-  }, [segments, autoPlayQuran]);
+  }, [segments]);
 
-  // Auto-play bot audio for the latest message if setting is enabled
+  // Auto-play for the latest message:
+  // - Bot text audio plays if autoPlayBotAudio is enabled
+  // - Quran verses always auto-play with reciter voice regardless of settings
   useEffect(() => {
-    if (!isLatest || !autoPlayBotAudio || autoStartedRef.current) return;
-    const hasAudio = segments.some(s => s.type === "text" && s.audioBase64);
-    if (!hasAudio) return;
+    if (!isLatest || autoStartedRef.current) return;
+    const hasTextAudio = segments.some(s => s.type === "text" && s.audioBase64);
+    const hasQuran = segments.some(s => s.type === "quran");
+    const shouldStart = (autoPlayBotAudio && hasTextAudio) || hasQuran;
+    if (!shouldStart) return;
     autoStartedRef.current = true;
-    // Small delay so the UI renders first
     const t = setTimeout(() => advanceTo(0), 400);
     return () => clearTimeout(t);
   }, [isLatest, autoPlayBotAudio, segments]);
