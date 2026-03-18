@@ -40,9 +40,11 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-primary/40 mix-blend-multiply" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-primary-foreground p-6 text-center">
-          <h1 className="text-3xl font-display font-bold mb-2 tracking-wide text-white drop-shadow-md">
-            دليل التوبة النصوح
-          </h1>
+          <img
+            src={`${import.meta.env.BASE_URL}images/logo.png`}
+            alt="توبة نصوحة"
+            className="h-24 w-24 object-contain drop-shadow-xl mb-2"
+          />
           <p className="text-sm font-medium text-white/90 max-w-[280px] leading-relaxed drop-shadow">
             "قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ"
           </p>

@@ -34,10 +34,12 @@ export function Layout({ children }: { children: ReactNode }) {
           >
             <Settings2 size={18} />
           </button>
-          {/* Spacer / App name */}
-          <span className="text-xs font-semibold text-muted-foreground tracking-wide select-none">
-            دليل التوبة
-          </span>
+          {/* App Logo */}
+          <img
+            src="/images/logo.png"
+            alt="توبة نصوحة"
+            className="h-10 w-10 object-contain rounded-full select-none"
+          />
           {/* Invisible placeholder for symmetry */}
           <div className="w-9" />
         </div>

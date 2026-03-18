@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   useColorScheme,
   Platform,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -63,9 +64,11 @@ export default function HomeScreen() {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.appName, { color: C.tint, fontFamily: "Inter_700Bold" }]}>
-            دليل التوبة النصوح
-          </Text>
+          <Image
+            source={require("../../assets/images/logo.png")}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={[styles.appSubtitle, { color: C.textSecondary, fontFamily: "Inter_400Regular" }]}>
             رحلتك نحو النور
           </Text>
@@ -177,6 +180,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 120 },
   header: { alignItems: "center", marginBottom: 24 },
+  logoImage: { width: 100, height: 100, marginBottom: 8 },
   appName: { fontSize: 26, textAlign: "center", lineHeight: 38 },
   appSubtitle: { fontSize: 14, textAlign: "center", marginTop: 4 },
   verseCard: {
