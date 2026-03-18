@@ -436,6 +436,14 @@ function stripFatwaMarkers(text: string): string {
   return text.replace(/\{\{fatwa:[^|]*\|[^|]*\|([^}]*)\}\}/g, "").replace(/\s{2,}/g, " ").trim();
 }
 
+function stripStageDirections(text: string): string {
+  // Remove stage directions in square brackets like [توقف] [تنفس] [بصوت هادئ] etc.
+  return text
+    .replace(/\[[^\]]{1,80}\]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function stripForTTS(text: string): string {
   // Strip all markers and any leftover English bracket expressions [...]
   return stripFatwaMarkers(stripQuranMarkers(text))
