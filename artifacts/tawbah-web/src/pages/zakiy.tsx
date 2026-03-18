@@ -136,8 +136,7 @@ function ToneBadge({ text }: { text: string }) {
 // FORMATTED TEXT RENDERER (with word highlighting)
 // ══════════════════════════════════════════
 
-function FormattedText({ text, highlightWordIdx }: { text: string; highlightWordIdx?: number | null }) {
-  const counter = { idx: 0 };
+function FormattedText({ text, isActivePlaying }: { text: string; isActivePlaying?: boolean }) {
   const lines = text.split("\n");
   const elements: React.ReactNode[] = [];
 
@@ -147,6 +146,10 @@ function FormattedText({ text, highlightWordIdx }: { text: string; highlightWord
   const SECTION_HEADER = /^〔(.+)〕$/;
   const SEPARATOR = /^[═─━─]+$/;
 
+  function arabicNumToInt(s: string): number {
+    return parseInt(s.replace(/[٠١٢٣٤٥٦٧٨٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))));
+  }
+
   function renderInline(raw: string): React.ReactNode[] {
     const stripped = raw.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ");
     const parts: React.ReactNode[] = [];
@@ -155,20 +158,8 @@ function FormattedText({ text, highlightWordIdx }: { text: string; highlightWord
     let m: RegExpExecArray | null;
 
     function renderPart(t: string, bold: boolean, keyBase: number): React.ReactNode[] {
-      const result: React.ReactNode[] = [];
-      const tokens = t.split(/(\s+)/);
-      tokens.forEach((token, ti) => {
-        if (/^\s*$/.test(token)) { if (token) result.push(token); return; }
-        const widx = counter.idx++;
-        const isHl = highlightWordIdx != null && widx === highlightWordIdx;
-        const hlCls = "bg-teal-300/70 dark:bg-teal-700/70 text-teal-950 dark:text-teal-50 font-semibold";
-        if (bold) {
-          result.push(<strong key={`${keyBase}-${ti}`} className={cn("font-bold text-foreground transition-colors duration-100 rounded px-0.5", isHl && hlCls)}>{token}</strong>);
-        } else {
-          result.push(<span key={`${keyBase}-${ti}`} className={cn("transition-colors duration-100 rounded px-0.5", isHl && hlCls)}>{token}</span>);
-        }
-      });
-      return result;
+      if (bold) return [<strong key={keyBase} className="font-bold text-foreground">{t}</strong>];
+      return [<span key={keyBase}>{t}</span>];
     }
 
     while ((m = boldRe.exec(stripped)) !== null) {
@@ -201,11 +192,21 @@ function FormattedText({ text, highlightWordIdx }: { text: string; highlightWord
 
     if (NUMBERED_AR.test(line) || NUMBERED_EN.test(line)) {
       const listItems: string[] = [];
+      let startNum = 1;
+      let firstItem = true;
       while (i < lines.length) {
         const l = lines[i]!.trim();
         if (!l) { i++; continue; }
         if (!NUMBERED_AR.test(l) && !NUMBERED_EN.test(l)) break;
         i++;
+        if (firstItem) {
+          const arMatch = NUMBERED_AR.exec(l);
+          const enMatch = NUMBERED_EN.exec(l);
+          const numStr = arMatch ? arMatch[1]! : enMatch ? enMatch[1]! : "1";
+          const parsed = /[١٢٣٤٥٦٧٨٩٠]/.test(numStr) ? arabicNumToInt(numStr) : parseInt(numStr);
+          startNum = isNaN(parsed) ? 1 : parsed;
+          firstItem = false;
+        }
         const content = l.replace(/^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)]\s*/, "");
         if (content.trim()) listItems.push(content);
       }
@@ -215,7 +216,7 @@ function FormattedText({ text, highlightWordIdx }: { text: string; highlightWord
             {listItems.map((item, idx) => (
               <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed">
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
-                  {idx + 1}
+                  {startNum + idx}
                 </span>
                 <span className="flex-1">{renderInline(item)}</span>
               </li>
@@ -264,7 +265,14 @@ function FormattedText({ text, highlightWordIdx }: { text: string; highlightWord
     i++;
   }
 
-  return <div className="space-y-0.5">{elements}</div>;
+  return (
+    <div className={cn(
+      "space-y-0.5 rounded-xl transition-colors duration-300",
+      isActivePlaying && "bg-teal-50/60 dark:bg-teal-950/30 px-2 py-1 -mx-2"
+    )}>
+      {elements}
+    </div>
+  );
 }
 
 // ══════════════════════════════════════════
@@ -502,7 +510,6 @@ function BotMessageBody({
   // isPlaying: whether we are currently playing (vs paused)
   const [playIdx, setPlayIdx] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activeWordIdx, setActiveWordIdx] = useState<number | null>(null);
 
   const textAudioRefs = useRef<Record<number, HTMLAudioElement>>({});
 
@@ -525,12 +532,9 @@ function BotMessageBody({
     advanceTo(idx + 1);
   }, [advanceTo]);
 
-  // Text segment audio effect with word highlighting
+  // Text segment audio playback
   useEffect(() => {
-    if (playIdx === -1 || !isPlaying) {
-      setActiveWordIdx(null);
-      return;
-    }
+    if (playIdx === -1 || !isPlaying) return;
     const seg = segments[playIdx];
     if (!seg || seg.type !== "text") return;
     if (!seg.audioBase64) { handleSegmentEnd(playIdx); return; }
@@ -545,45 +549,10 @@ function BotMessageBody({
       textAudioRefs.current[playIdx] = audio;
     }
 
-    // Count speakable words matching what FormattedText renders
-    const speakable = seg.text
-      .replace(/\(\s*ب[^)]*\)/g, "")
-      .replace(/\*\*([^*]+)\*\*/g, "$1")
-      .replace(/^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)]\s*/mg, "")
-      .replace(/^[•·]\s*/mg, "")
-      .replace(/^[✅⚠️💡🎯✨📌🔹🔸➡️⭐🌟💎🕌📿🌙❤️🤲🌿🎉🎊]\s*/mg, "")
-      .replace(/^〔.+〕$/mg, "")
-      .replace(/^[═─━─]+$/mg, "")
-      .replace(/\s{2,}/g, " ").trim();
-    const wordCount = speakable.split(/\s+/).filter(Boolean).length;
+    audio.onended = () => { handleSegmentEnd(playIdx); };
+    audio.play().catch(() => handleSegmentEnd(playIdx));
 
-    // RAF loop for 60fps word tracking
-    let rafId = 0;
-    let lastIdx = -1;
-    // LOOKAHEAD compensates for the ~0.5s audio processing/rendering delay
-    const LOOKAHEAD = 0.5;
-
-    function tick() {
-      const a = textAudioRefs.current[playIdx];
-      if (!a || a.paused || a.ended) return;
-      const dur = a.duration;
-      if (dur > 0 && !isNaN(dur) && wordCount > 0) {
-        const adjusted = Math.min(a.currentTime + LOOKAHEAD, dur);
-        const idx = Math.min(Math.floor((adjusted / dur) * wordCount), wordCount - 1);
-        if (idx !== lastIdx) { lastIdx = idx; setActiveWordIdx(idx); }
-      }
-      rafId = requestAnimationFrame(tick);
-    }
-
-    audio.onended = () => {
-      cancelAnimationFrame(rafId);
-      setActiveWordIdx(null);
-      handleSegmentEnd(playIdx);
-    };
-    audio.play().then(() => { rafId = requestAnimationFrame(tick); })
-      .catch(() => handleSegmentEnd(playIdx));
-
-    return () => { cancelAnimationFrame(rafId); audio?.pause(); };
+    return () => { audio?.pause(); };
   }, [playIdx, isPlaying]);
 
   // Manual play/pause toggle for entire message
@@ -664,7 +633,7 @@ function BotMessageBody({
           <FormattedText
             key={i}
             text={seg.text}
-            highlightWordIdx={playIdx === i && isPlaying ? activeWordIdx : null}
+            isActivePlaying={playIdx === i && isPlaying}
           />
         );
       })}
