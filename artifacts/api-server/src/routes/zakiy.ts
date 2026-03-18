@@ -384,17 +384,30 @@ ${memorySection}
 لا تكتب شرح بعد الآية.`;
 }
 
-const ZAKIY_TTS_SYSTEM = `أنت شاب مصري طبيعي وودود — صوتك مريح وصادق زي صاحبك اللي بيكلمك من قلبه.
+const ZAKIY_TTS_SYSTEM = `أنت مُقرئ وخطيب عربي ذو صوت عميق ورصين وجذاب — صوتك يحمل وقار العالم وحرارة الأخ الكبير في آنٍ واحد.
+
+شخصية الصوت:
+• عمق حقيقي في الصوت — ليس مصطنعاً ولا مبالغاً
+• وضوح مطلق في نطق كل مقطع وكل حرف حتى حروف المد والهمزات
+• جاذبية وتأثير — الكلمة تصل وتترك أثراً في القلب
+• إيقاع محكوم ومتدفق — كالنهر الهادئ العميق لا البطيء الراكد
 
 قواعد الأداء — بالأهمية:
-① الأولوية الأولى: كل كلمة تتسمع واضحة وكاملة — لا حذف ولا بلع للمقاطع أبداً
-② الأولوية الثانية: اكمل كل جملة وكل فكرة حتى آخر حرف بدون انقطاع
-③ الإيقاع: هادئ ومتدفق ومريح — لا سريع ولا بطيء، بلا مبالغة في أي اتجاه
-④ الطبيعية: إنساني حقيقي بس محكوم — المشاعر خفيفة ومعبّرة، مش مذيع ولا آلة
-• الكلام الجاد أو التنبيه: نبرة واضحة ومقنعة بهدوء
-• التشجيع والأمل: طاقة إيجابية ناعمة وطبيعية
-• الحنان والتعاطف: صوت دافئ يلمس القلب بدون مسرحية
-• الأحاديث النبوية: وقار ونبرة أعمق مع وضوح تام
+① الوضوح أولاً: كل كلمة تتسمع كاملة — لا بلع للمقاطع، لا اختصار في الحروف
+② الإيقاع: متأنٍّ وواثق — لا تسرّع ولا تتمطّى، ثقيل بالمعنى لا بالبطء
+③ النبرة: عميقة دافئة رصينة — كالصوت الذي تثق به فور سماعه
+④ الطبيعية: إنساني حقيقي — المشاعر أصيلة لا مُمثَّلة
+
+أداء النبرات المختلفة:
+• [speaking firmly] / [بجدية وحزم]: صوت واضح حازم، أبطأ قليلاً، ثقل في النهايات
+• [hesitantly] / [بتردد]: إيقاع متقطع خفيف، توقفات قصيرة طبيعية
+• [insistently] / [بإلحاح]: تصعيد خفيف في الطاقة، تأكيد على الكلمات المحورية
+• [wearily] / [بإرهاق]: صوت أخفض وأبطأ، نفَس أعمق
+• [long pause]: توقف حقيقي ومقصود — صمت ثقيل بالمعنى
+• [thoughtful] / [بتأمل]: إيقاع أهدأ، نبرة أعمق، كأن الكلام يصدر من داخل
+• [reciting] / [يقرأ]: نبرة التلاوة الخاشعة — وقار وترتيل بدون تصنّع
+• [speaking clearly] / [بوضوح]: أبطأ من الطبيعي، كل مقطع منفصل ومسموع
+• الأحاديث النبوية: وقار تام ونبرة أعمق مع صون كل حرف
 
 اقرأ النص كاملاً كما هو — لا تضيف ولا تحذف ولا تختصر.`;
 
@@ -411,9 +424,14 @@ function stripFatwaMarkers(text: string): string {
 }
 
 function stripStageDirections(text: string): string {
-  // Removes tone markers like (بنبرة هامسة) (بجدية تامة) (بحماس وفرحة) etc.
-  // \s* handles optional spaces after opening paren
-  return text.replace(/\(\s*ب[^)]*\)/g, "").replace(/\s{2,}/g, " ").trim();
+  // Removes Arabic tone markers like (بنبرة هامسة) (بجدية تامة) etc.
+  // Removes English bracket stage directions like [speaking firmly] [long pause] [thoughtful] etc.
+  // Bracket pattern: matches [latin letters/spaces] — i.e., stage directions in English only
+  return text
+    .replace(/\(\s*ب[^)]*\)/g, "")
+    .replace(/\[[a-zA-Z][a-zA-Z\s]*\]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function stripForTTS(text: string): string {
@@ -421,10 +439,14 @@ function stripForTTS(text: string): string {
 }
 
 async function generateZakiyAudio(text: string): Promise<string> {
-  // Extract tone/style markers before stripping them — use them to guide the TTS system
-  const toneMatches = Array.from(text.matchAll(/\(\s*(ب[^)]+)\)/g)).map((m) => m[1]!.trim());
-  const toneInstruction = toneMatches.length > 0
-    ? `\n\n🎭 النبرة المطلوبة لهذا الجزء بالذات: ${toneMatches.join("، ")} — التزم بها تماماً في الأداء.`
+  // Extract Arabic tone markers: (بنبرة هامسة) etc.
+  const arabicTones = Array.from(text.matchAll(/\(\s*(ب[^)]+)\)/g)).map((m) => m[1]!.trim());
+  // Extract English bracket stage directions: [speaking firmly], [hesitantly], [long pause], [thoughtful] etc.
+  const englishTones = Array.from(text.matchAll(/\[([a-zA-Z][a-zA-Z\s]*)\]/g)).map((m) => m[1]!.trim());
+
+  const allTones = [...arabicTones, ...englishTones];
+  const toneInstruction = allTones.length > 0
+    ? `\n\n🎭 تعليمات الأداء لهذا المقطع — التزم بها بدقة:\n${allTones.map((t) => `• ${t}`).join("\n")}`
     : "";
 
   const cleanText = stripForTTS(text);
@@ -433,7 +455,7 @@ async function generateZakiyAudio(text: string): Promise<string> {
   const ttsResponse = await openai.chat.completions.create({
     model: "gpt-audio",
     modalities: ["text", "audio"],
-    audio: { voice: "echo", format: "mp3" },
+    audio: { voice: "onyx", format: "mp3" },
     messages: [
       { role: "system", content: ZAKIY_TTS_SYSTEM + toneInstruction },
       { role: "user", content: cleanText },
