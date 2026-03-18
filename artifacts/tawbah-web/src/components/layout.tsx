@@ -26,20 +26,30 @@ export function Layout({ children }: { children: ReactNode }) {
       <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none -z-10" />
 
       {!isSos && (
-        <div className="flex items-center justify-between px-4 pt-3 pb-1 z-50">
+        <div className={cn(
+          "flex items-center justify-between px-4 pt-3 pb-1 z-50",
+          location === "/" ? "absolute top-0 inset-x-0" : "relative"
+        )}>
           <button
             onClick={() => setSettingsOpen(true)}
-            className="p-2 rounded-full bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+            className={cn(
+              "p-2 rounded-full transition-all",
+              location === "/"
+                ? "bg-black/20 backdrop-blur-sm text-white hover:bg-black/30"
+                : "bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground"
+            )}
             aria-label="الإعدادات"
           >
             <Settings2 size={18} />
           </button>
-          {/* App Logo */}
-          <img
-            src="/images/logo.png"
-            alt="توبة نصوحة"
-            className="h-10 w-10 object-contain rounded-full select-none"
-          />
+          {/* App Logo — only show in header on non-home pages */}
+          {location !== "/" && (
+            <img
+              src="/images/logo.png"
+              alt="توبة نصوحة"
+              className="h-10 w-10 object-contain rounded-full select-none"
+            />
+          )}
           {/* Invisible placeholder for symmetry */}
           <div className="w-9" />
         </div>

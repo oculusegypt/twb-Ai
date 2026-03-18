@@ -43,7 +43,7 @@ export default function Home() {
           <img
             src={`${import.meta.env.BASE_URL}images/logo.png`}
             alt="توبة نصوحة"
-            className="h-24 w-24 object-contain drop-shadow-xl mb-2"
+            className="h-24 w-24 object-cover rounded-full drop-shadow-xl mb-2 ring-4 ring-white/30"
           />
           <p className="text-sm font-medium text-white/90 max-w-[280px] leading-relaxed drop-shadow">
             "قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ"
