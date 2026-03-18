@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare, Handshake, BookMarked } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
-import { useSettings } from "@/context/SettingsContext";
+import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
 
 // ══════════════════════════════════════════
 // TYPES
@@ -292,25 +292,36 @@ function QuranCard({
   reciterId: string;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioError, setAudioError] = useState(false);
   // Keep a ref to always call the latest onEnded without stale closure issues
   const onEndedRef = useRef(onEnded);
   useEffect(() => { onEndedRef.current = onEnded; }, [onEnded]);
 
   useEffect(() => {
-    const url = reciterAudioUrl(seg.surah!, seg.ayah!, reciterId);
-    const audio = new Audio(url);
+    const audio = new Audio();
+    // preload="none" prevents loading (and spurious onerror) until play() is called
+    audio.preload = "none";
+    audio.src = reciterAudioUrl(seg.surah!, seg.ayah!, reciterId);
     audioRef.current = audio;
+    setAudioError(false);
     audio.onended = () => onEndedRef.current();
-    // Advance on error so sequential playback never gets stuck
-    audio.onerror = () => onEndedRef.current();
-    return () => { audio.pause(); audio.onended = null; audio.onerror = null; audioRef.current = null; };
+    // onerror fires only after play() triggers loading — advance to next on CDN failure
+    audio.onerror = () => { setAudioError(true); onEndedRef.current(); };
+    return () => { audio.pause(); audio.src = ""; audio.onended = null; audio.onerror = null; audioRef.current = null; };
   }, [seg.surah, seg.ayah, reciterId]);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
     if (isActive && isPlaying) {
-      audio.play().catch(() => { onEndedRef.current(); });
+      setAudioError(false);
+      audio.play().catch((e: unknown) => {
+        if (e instanceof Error && e.name === "NotAllowedError") {
+          // Browser blocked autoplay — onerror won't fire; advance to continue sequence
+          onEndedRef.current();
+        }
+        // CDN / format errors are handled by the onerror handler above
+      });
     } else {
       audio.pause();
       if (!isActive) audio.currentTime = 0;
@@ -335,7 +346,10 @@ function QuranCard({
               : "bg-amber-900/60 text-amber-300 hover:bg-amber-800/60"
           )}
         >
-          {isActive && isPlaying ? <><Pause size={10} /> إيقاف</> : <><Play size={10} /> مشاري</>}
+          {isActive && isPlaying
+            ? <><Pause size={10} /> إيقاف</>
+            : <><Play size={10} /> {QURAN_RECITERS.find(r => r.id === reciterId)?.nameAr ?? "استمع"}</>
+          }
         </button>
       </div>
       <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
@@ -349,6 +363,9 @@ function QuranCard({
                 style={{ height: `${3 + (k % 4) * 3}px`, animationDelay: `${k * 60}ms` }} />
             ))}
           </div>
+        )}
+        {audioError && (
+          <p className="text-[10px] text-amber-500/70 text-center mt-1">تعذّر تشغيل الصوت</p>
         )}
       </div>
     </div>
@@ -605,7 +622,7 @@ function BotMessageBody({
   history: ApiHistory[];
   isLatest: boolean;
 }) {
-  const { autoPlayBotAudio, quranReciterId } = useSettings();
+  const { autoPlayBotAudio, autoPlayQuran, quranReciterId } = useSettings();
 
   // ── Playback state machine ──
   // playIdx: which segment index is currently "active" (-1 = stopped)
@@ -633,19 +650,17 @@ function BotMessageBody({
     setIsPlaying(true);
   }, [segments]);
 
-  // Auto-play for the latest message:
-  // - Bot text audio plays if autoPlayBotAudio is enabled
-  // - Quran verses always auto-play with reciter voice regardless of settings
+  // Auto-play for the latest message respecting both settings
   useEffect(() => {
     if (!isLatest || autoStartedRef.current) return;
     const hasTextAudio = segments.some(s => s.type === "text" && s.audioBase64);
     const hasQuran = segments.some(s => s.type === "quran");
-    const shouldStart = (autoPlayBotAudio && hasTextAudio) || hasQuran;
+    const shouldStart = (autoPlayBotAudio && hasTextAudio) || (autoPlayQuran && hasQuran);
     if (!shouldStart) return;
     autoStartedRef.current = true;
     const t = setTimeout(() => advanceTo(0), 400);
     return () => clearTimeout(t);
-  }, [isLatest, autoPlayBotAudio, segments]);
+  }, [isLatest, autoPlayBotAudio, autoPlayQuran, segments]);
 
   // When a segment ends, move to next
   const handleSegmentEnd = useCallback((idx: number) => {
@@ -670,7 +685,15 @@ function BotMessageBody({
     }
 
     audio.onended = () => { handleSegmentEnd(playIdx); };
-    audio.play().catch(() => handleSegmentEnd(playIdx));
+    audio.play().catch((e: unknown) => {
+      if (e instanceof Error && e.name === "NotAllowedError") {
+        // Browser blocked autoplay — stop and let user tap the play button manually
+        setIsPlaying(false);
+      } else {
+        // Actual audio error (bad format, network) — skip to next
+        handleSegmentEnd(playIdx);
+      }
+    });
 
     return () => { audio?.pause(); };
   }, [playIdx, isPlaying]);

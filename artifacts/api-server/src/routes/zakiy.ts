@@ -636,8 +636,14 @@ async function generateSegmentedAudio(responseText: string): Promise<ServerRespo
     textIndices.map(async (segIdx) => {
       const seg = segments[segIdx]!;
       const cleanText = stripStageDirections(stripFatwaMarkers(seg.text));
-      const audio = cleanText.trim() ? await generateZakiyAudio(seg.text) : "";
-      return { segIdx, audio };
+      if (!cleanText.trim()) return { segIdx, audio: "" };
+      try {
+        const audio = await generateZakiyAudio(seg.text);
+        return { segIdx, audio };
+      } catch (err) {
+        console.error(`TTS failed for segment ${segIdx}:`, err);
+        return { segIdx, audio: "" };
+      }
     })
   );
 
