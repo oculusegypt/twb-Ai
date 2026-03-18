@@ -61,6 +61,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
     localStorage.setItem("tawbah_theme", theme);
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    if (metaTheme) {
+      metaTheme.setAttribute("content", theme === "dark" ? "#0a1f14" : "#faf9f5");
+    }
   }, [theme]);
 
   useEffect(() => {
