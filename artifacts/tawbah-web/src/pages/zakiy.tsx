@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare, Handshake, BookMarked } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
+import { useSettings } from "@/context/SettingsContext";
 
 // ══════════════════════════════════════════
 // TYPES
@@ -43,8 +44,8 @@ function toGlobalAyah(surah: number, ayah: number): number {
   return count + ayah;
 }
 
-function misharyUrl(surah: number, ayah: number): string {
-  return `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${toGlobalAyah(surah, ayah)}.mp3`;
+function reciterAudioUrl(surah: number, ayah: number, reciterId: string): string {
+  return `https://cdn.islamic.network/quran/audio/128/${reciterId}/${toGlobalAyah(surah, ayah)}.mp3`;
 }
 
 function getSurahName(num: number): string {
@@ -281,23 +282,24 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
 // ══════════════════════════════════════════
 
 function QuranCard({
-  seg, isActive, isPlaying, onEnded, onManualToggle,
+  seg, isActive, isPlaying, onEnded, onManualToggle, reciterId,
 }: {
   seg: MessageSegment;
   isActive: boolean;
   isPlaying: boolean;
   onEnded: () => void;
   onManualToggle: () => void;
+  reciterId: string;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const url = misharyUrl(seg.surah!, seg.ayah!);
+    const url = reciterAudioUrl(seg.surah!, seg.ayah!, reciterId);
     const audio = new Audio(url);
     audioRef.current = audio;
     audio.onended = () => onEnded();
     return () => { audio.pause(); audioRef.current = null; };
-  }, [seg.surah, seg.ayah]);
+  }, [seg.surah, seg.ayah, reciterId]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -588,7 +590,7 @@ function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
 // ══════════════════════════════════════════
 
 function BotMessageBody({
-  msg, onImpressionToggle, impressionOpen, impressionText, sessionId, history,
+  msg, onImpressionToggle, impressionOpen, impressionText, sessionId, history, isLatest,
 }: {
   msg: Message;
   onImpressionToggle: (id: string, text?: string) => void;
@@ -596,12 +598,16 @@ function BotMessageBody({
   impressionText?: string;
   sessionId: string;
   history: ApiHistory[];
+  isLatest: boolean;
 }) {
+  const { autoPlayBotAudio, autoPlayQuran, quranReciterId } = useSettings();
+
   // ── Playback state machine ──
   // playIdx: which segment index is currently "active" (-1 = stopped)
   // isPlaying: whether we are currently playing (vs paused)
   const [playIdx, setPlayIdx] = useState(-1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const autoStartedRef = useRef(false);
 
   const textAudioRefs = useRef<Record<number, HTMLAudioElement>>({});
 
@@ -612,12 +618,30 @@ function BotMessageBody({
     const seg = segments[nextIdx];
     if (!seg) { setPlayIdx(-1); setIsPlaying(false); return; }
 
-    // Skip fatwa segments (no audio)
-    if (seg.type === "fatwa") { advanceTo(nextIdx + 1); return; }
+    // Skip fatwa, promise, surah-link segments (no audio)
+    if (seg.type === "fatwa" || seg.type === "promise" || seg.type === "surah-link") {
+      advanceTo(nextIdx + 1); return;
+    }
+
+    // Skip Quran segments if auto-play Quran is off
+    if (seg.type === "quran" && !autoPlayQuran) {
+      advanceTo(nextIdx + 1); return;
+    }
 
     setPlayIdx(nextIdx);
     setIsPlaying(true);
-  }, [segments]);
+  }, [segments, autoPlayQuran]);
+
+  // Auto-play bot audio for the latest message if setting is enabled
+  useEffect(() => {
+    if (!isLatest || !autoPlayBotAudio || autoStartedRef.current) return;
+    const hasAudio = segments.some(s => s.type === "text" && s.audioBase64);
+    if (!hasAudio) return;
+    autoStartedRef.current = true;
+    // Small delay so the UI renders first
+    const t = setTimeout(() => advanceTo(0), 400);
+    return () => clearTimeout(t);
+  }, [isLatest, autoPlayBotAudio, segments]);
 
   // When a segment ends, move to next
   const handleSegmentEnd = useCallback((idx: number) => {
@@ -739,6 +763,7 @@ function BotMessageBody({
               isActive={playIdx === i}
               isPlaying={playIdx === i && isPlaying}
               onEnded={() => handleSegmentEnd(i)}
+              reciterId={quranReciterId}
               onManualToggle={() => {
                 if (playIdx === i && isPlaying) {
                   setIsPlaying(false);
@@ -1025,7 +1050,7 @@ export default function ZakiyPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
         <AnimatePresence initial={false}>
-          {messages.map((msg) => (
+          {messages.map((msg, msgIdx) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 12 }}
@@ -1052,6 +1077,7 @@ export default function ZakiyPage() {
                       impressionText={impressionTexts[msg.id]}
                       sessionId={sessionId}
                       history={buildHistory()}
+                      isLatest={msg.role === "bot" && msgIdx === messages.map(m => m.role).lastIndexOf("bot")}
                     />
                   ) : (
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>

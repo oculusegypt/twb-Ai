@@ -1,13 +1,15 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, Moon, Sun, Languages, Sparkles } from "lucide-react";
+import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, Settings2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
+import { SettingsSheet } from "@/components/SettingsSheet";
 
 export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  const { t, lang, theme, toggleLang, toggleTheme } = useSettings();
+  const { t, lang } = useSettings();
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const navItems = [
     { href: "/", label: t.nav.home, icon: Home },
@@ -26,20 +28,18 @@ export function Layout({ children }: { children: ReactNode }) {
       {!isSos && (
         <div className="flex items-center justify-between px-4 pt-3 pb-1 z-50">
           <button
-            onClick={toggleTheme}
+            onClick={() => setSettingsOpen(true)}
             className="p-2 rounded-full bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
-            aria-label="Toggle theme"
+            aria-label="الإعدادات"
           >
-            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            <Settings2 size={18} />
           </button>
-          <button
-            onClick={toggleLang}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-bold transition-all"
-            aria-label="Toggle language"
-          >
-            <Languages size={15} />
-            {lang === "ar" ? "EN" : "عر"}
-          </button>
+          {/* Spacer / App name */}
+          <span className="text-xs font-semibold text-muted-foreground tracking-wide select-none">
+            دليل التوبة
+          </span>
+          {/* Invisible placeholder for symmetry */}
+          <div className="w-9" />
         </div>
       )}
 
@@ -104,6 +104,8 @@ export function Layout({ children }: { children: ReactNode }) {
           </nav>
         </>
       )}
+
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }
