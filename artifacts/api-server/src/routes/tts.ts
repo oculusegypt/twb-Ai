@@ -34,7 +34,7 @@ router.post("/tts", async (req, res) => {
     if (type === "story" && story) {
       systemPrompt = STORY_SYSTEM_PROMPT;
       userText = lesson ? `${story}\n\nالعبرة: ${lesson}` : story;
-      voice = "onyx";
+      voice = "echo";
     } else if (hadith) {
       systemPrompt = HADITH_SYSTEM_PROMPT;
       userText = note ? `${hadith}\n\n${note}` : hadith;
