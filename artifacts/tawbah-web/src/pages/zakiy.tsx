@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare } from "lucide-react";
+import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare, Handshake, BookMarked } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
 
@@ -10,7 +10,7 @@ import { getSessionId } from "@/lib/session";
 // ══════════════════════════════════════════
 
 interface MessageSegment {
-  type: "text" | "quran" | "fatwa";
+  type: "text" | "quran" | "fatwa" | "promise" | "surah-link";
   text: string;
   audioBase64?: string;
   surah?: number;
@@ -386,6 +386,97 @@ function FatwaCard({ seg }: { seg: MessageSegment }) {
 }
 
 // ══════════════════════════════════════════
+// PROMISE CARD
+// ══════════════════════════════════════════
+
+function PromiseCard({ seg, sessionId }: { seg: MessageSegment; sessionId: string }) {
+  const [state, setState] = useState<"idle" | "loading" | "done">("idle");
+
+  async function handlePromise() {
+    setState("loading");
+    try {
+      await fetch("/api/zakiy/promise", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, promiseText: seg.text }),
+      });
+      setState("done");
+    } catch {
+      setState("idle");
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="my-3 rounded-2xl border border-amber-400/60 overflow-hidden shadow-md"
+    >
+      <div className="bg-gradient-to-l from-amber-700 to-yellow-800 dark:from-amber-900 dark:to-yellow-950 px-4 py-2 flex items-center gap-2">
+        <Handshake size={13} className="text-amber-200" />
+        <span className="text-[11px] font-bold text-amber-100 tracking-wide">وعد أمام الله</span>
+      </div>
+      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
+        <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200 text-right font-medium mb-4">
+          "{seg.text}"
+        </p>
+        {state === "done" ? (
+          <div className="flex items-center justify-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl py-2.5">
+            <CheckSquare size={16} className="text-emerald-600" />
+            <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">وعدتَ الله — والله شاهد على وعدك</span>
+          </div>
+        ) : (
+          <button
+            onClick={handlePromise}
+            disabled={state === "loading"}
+            className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl py-2.5 font-bold text-sm transition-all active:scale-95"
+          >
+            {state === "loading"
+              ? <><Loader2 size={14} className="animate-spin" /> لحظة...</>
+              : <><Handshake size={14} /> أعدك بالله</>
+            }
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ══════════════════════════════════════════
+// SURAH LINK CARD
+// ══════════════════════════════════════════
+
+function SurahLinkCard({ seg }: { seg: MessageSegment }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="my-2 rounded-2xl border border-teal-400/50 overflow-hidden shadow-sm"
+    >
+      <div className="bg-gradient-to-l from-teal-700 to-emerald-800 dark:from-teal-950 dark:to-emerald-950 px-4 py-2 flex items-center gap-2">
+        <BookMarked size={13} className="text-teal-200" />
+        <span className="text-[11px] font-bold text-teal-100 tracking-wide">السورة كاملة</span>
+      </div>
+      <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 px-4 py-3 flex items-center justify-between">
+        <div>
+          <p className="text-sm font-bold text-teal-900 dark:text-teal-200">سورة {seg.text}</p>
+          <p className="text-[11px] text-teal-600 dark:text-teal-400 mt-0.5">تابع قراءة باقي السورة من الآية {seg.ayah}</p>
+        </div>
+        <a
+          href={seg.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 bg-teal-600 text-white text-xs px-3 py-2 rounded-xl font-medium hover:bg-teal-700 transition-colors"
+        >
+          <ExternalLink size={12} />
+          افتح السورة
+        </a>
+      </div>
+    </motion.div>
+  );
+}
+
+// ══════════════════════════════════════════
 // IMPRESSION PANEL
 // ══════════════════════════════════════════
 
@@ -660,6 +751,8 @@ function BotMessageBody({
           );
         }
         if (seg.type === "fatwa") return <FatwaCard key={i} seg={seg} />;
+        if (seg.type === "promise") return <PromiseCard key={i} seg={seg} sessionId={sessionId} />;
+        if (seg.type === "surah-link") return <SurahLinkCard key={i} seg={seg} />;
         return (
           <FormattedText
             key={i}
