@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X } from "lucide-react";
+import { useLocation } from "wouter";
+import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
 
@@ -579,6 +580,36 @@ function BotMessageBody({
   const hasAudio = segments.some(s => s.type === "text" && s.audioBase64);
   const isCurrentlyPlaying = playIdx !== -1 && isPlaying;
 
+  // ── Hadi Tasks ──
+  const [hadiLoading, setHadiLoading] = useState(false);
+  const [hadiDone, setHadiDone] = useState(false);
+  const [, navigate] = useLocation();
+
+  const hasSteps = (() => {
+    const fullText = segments.map(s => s.text).join("\n");
+    return /[\u0661-\u0669][\.\-\)]|^[1-9][\.\-\)]/m.test(fullText) || /^[\u0661-\u0669][\.\-\)]/m.test(fullText);
+  })();
+
+  async function handleHadiTasks() {
+    setHadiLoading(true);
+    try {
+      const fullText = segments.map(s => s.text).join("\n").slice(0, 2000);
+      const res = await fetch("/api/hadi-tasks/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: fullText, sessionId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "فشل الاستخراج");
+      setHadiDone(true);
+      setTimeout(() => navigate("/hadi-tasks"), 600);
+    } catch {
+      setHadiDone(false);
+    } finally {
+      setHadiLoading(false);
+    }
+  }
+
   // ── Impression ──
   const [impressionLoading, setImpressionLoading] = useState(false);
 
@@ -668,6 +699,26 @@ function BotMessageBody({
             {impressionLoading
               ? <><Loader2 size={12} className="animate-spin" /> لحظة...</>
               : <><Heart size={12} className={impressionOpen ? "fill-white" : ""} /> انطباعي عنك</>
+            }
+          </button>
+        )}
+
+        {msg.id !== "greeting" && hasSteps && (
+          <button
+            onClick={handleHadiTasks}
+            disabled={hadiLoading || hadiDone}
+            className={cn(
+              "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
+              hadiDone
+                ? "bg-emerald-500 text-white border-emerald-500"
+                : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-300/60 hover:bg-emerald-100"
+            )}
+          >
+            {hadiLoading
+              ? <><Loader2 size={12} className="animate-spin" /> جاري الاستخراج...</>
+              : hadiDone
+                ? <><CheckSquare size={12} /> تمت الإضافة!</>
+                : <><CheckSquare size={12} /> مهام هادي</>
             }
           </button>
         )}

@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 
@@ -217,6 +217,17 @@ export default function Home() {
               <div>
                 <h3 className="font-bold text-sm">ضعفت وعدت؟</h3>
                 <p className="text-[11px] text-muted-foreground">اقرأ هذا فوراً</p>
+              </div>
+            </Link>
+            <Link href="/hadi-tasks" className="bg-card p-4 rounded-2xl border border-emerald-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5 col-span-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+                  <ListChecks size={20} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm">مهام هادي</h3>
+                  <p className="text-[11px] text-muted-foreground">نصائح الزكي تتحول لمهام تتابعها خطوة بخطوة</p>
+                </div>
               </div>
             </Link>
           </div>

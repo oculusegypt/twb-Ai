@@ -80,3 +80,29 @@ export const zakiyMemoryTable = pgTable("zakiy_memory", {
 });
 
 export type ZakiyMemory = typeof zakiyMemoryTable.$inferSelect;
+
+export const hadiTaskGroupsTable = pgTable("hadi_task_groups", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertHadiTaskGroupSchema = createInsertSchema(hadiTaskGroupsTable).omit({ id: true, createdAt: true });
+export type InsertHadiTaskGroup = z.infer<typeof insertHadiTaskGroupSchema>;
+export type HadiTaskGroup = typeof hadiTaskGroupsTable.$inferSelect;
+
+export const hadiTaskItemsTable = pgTable("hadi_task_items", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id").notNull(),
+  sessionId: text("session_id").notNull(),
+  title: text("title").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  orderIdx: integer("order_idx").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertHadiTaskItemSchema = createInsertSchema(hadiTaskItemsTable).omit({ id: true, createdAt: true });
+export type InsertHadiTaskItem = z.infer<typeof insertHadiTaskItemSchema>;
+export type HadiTaskItem = typeof hadiTaskItemsTable.$inferSelect;
