@@ -661,12 +661,12 @@ function BotMessageBody({
     const seg = segments[nextIdx];
     if (!seg) { setPlayIdx(-1); setIsPlaying(false); return; }
 
-    // Skip fatwa, promise, surah-link, and quran segments in sequential playback
-    // Quran should only play when user explicitly presses the play button on the QuranCard
-    if (seg.type === "fatwa" || seg.type === "promise" || seg.type === "surah-link" || seg.type === "quran") {
+    // Skip fatwa, promise, surah-link segments (no audio)
+    if (seg.type === "fatwa" || seg.type === "promise" || seg.type === "surah-link") {
       advanceTo(nextIdx + 1); return;
     }
 
+    // Quran segments play automatically with reciter audio in sequence
     setPlayIdx(nextIdx);
     setIsPlaying(true);
   }, [segments]);

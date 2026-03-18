@@ -50,7 +50,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   });
   const [autoPlayQuran, setAutoPlayQuranState] = useState<boolean>(() => {
     const stored = localStorage.getItem("tawbah_autoplay_quran");
-    return stored === null ? false : stored === "true";
+    return stored === null ? true : stored === "true";
   });
   const [quranReciterId, setQuranReciterIdState] = useState<string>(() => {
     return localStorage.getItem("tawbah_reciter") || "ar.alafasy";
