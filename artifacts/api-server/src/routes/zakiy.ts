@@ -397,26 +397,10 @@ ${memorySection}
 لا تكتب شرح بعد الآية.`;
 }
 
-const ZAKIY_TTS_SYSTEM = `أنت شاب مصري طبيعي وودود وحكيم — صوتك دافئ وصادق زي الأخ الكبير اللي بيكلمك من قلبه ويخاف عليك.
-
-شخصية الصوت:
-• مصري أصيل — طبيعي ومريح زي حد من أهلك مش مذيع ولا شيخ رسمي
-• دافئ وحكيم — فيه عمق وتأثير من غير تصنّع أو مبالغة
-• حيوي ومعبّر — فيه طاقة حياة، مش صوت نوم
-
-قواعد الأداء — بالأهمية:
-① كل كلمة تتسمع واضحة وكاملة — لا حذف ولا بلع للمقاطع أبداً
-② اكمل كل جملة وكل فكرة حتى آخر حرف بدون انقطاع
-③ الإيقاع: هادئ ومتدفق ومريح — لا سريع ولا بطيء
-④ إنساني حقيقي — المشاعر خفيفة ومعبّرة تلقائياً من المحتوى نفسه
-
-تعبير النبرة يأتي تلقائياً من محتوى الكلام:
-• الكلام الجاد: نبرة واضحة وحازمة
-• التشجيع والأمل: طاقة إيجابية ناعمة
-• الحنان والتعاطف: صوت دافئ
-• الأحاديث النبوية: وقار ونبرة أعمق مع وضوح تام
-
-اقرأ النص كاملاً كما هو — لا تضيف ولا تحذف ولا تختصر.`;
+const ZAKIY_TTS_SYSTEM = `اقرأ النص التالي كما هو بالضبط بصوت رجل عربي دافئ وطبيعي وواضح.
+النبرة: هادئة ومطمئنة، كأخ أكبر حكيم يتكلم من قلبه.
+اقرأ كل كلمة بوضوح تام، بإيقاع متدفق ومريح.
+لا تضف ولا تحذف ولا تختصر أي شيء.`;
 
 // ══════════════════════════════════════════
 // HELPERS
@@ -481,14 +465,28 @@ function stripForTTS(text: string): string {
     .trim();
 }
 
+function stripEmojisAndSymbols(text: string): string {
+  return text
+    // Remove emoji ranges
+    .replace(/[\u{1F300}-\u{1FFFF}]/gu, "")
+    .replace(/[\u{2600}-\u{27BF}]/gu, "")
+    // Remove decorative Arabic/box-drawing characters used as separators
+    .replace(/[═─━╔╗╚╝║〔〕]/g, "")
+    // Remove Arabic markers / Quran decorators
+    .replace(/[۝﴿﴾]/g, "")
+    // Normalize multiple spaces/newlines
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 async function generateZakiyAudio(text: string): Promise<string> {
-  const cleanText = stripForTTS(text);
+  const cleanText = stripEmojisAndSymbols(stripForTTS(text));
   if (!cleanText.trim()) return "";
 
   const ttsResponse = await openai.chat.completions.create({
     model: "gpt-audio",
     modalities: ["text", "audio"],
-    audio: { voice: "echo", format: "mp3" },
+    audio: { voice: "onyx", format: "mp3" },
     messages: [
       { role: "system", content: ZAKIY_TTS_SYSTEM },
       { role: "user", content: cleanText },

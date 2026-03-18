@@ -293,19 +293,31 @@ function QuranCard({
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioError, setAudioError] = useState(false);
-  // Keep a ref to always call the latest onEnded without stale closure issues
+  const [verseText, setVerseText] = useState<string>(seg.text);
+  const [verseLoading, setVerseLoading] = useState(true);
   const onEndedRef = useRef(onEnded);
   useEffect(() => { onEndedRef.current = onEnded; }, [onEnded]);
 
+  // Fetch the actual verse text from the official Quran API (never rely on AI text)
+  useEffect(() => {
+    setVerseLoading(true);
+    const globalAyah = toGlobalAyah(seg.surah!, seg.ayah!);
+    fetch(`https://api.alquran.cloud/v1/ayah/${globalAyah}/quran-uthmani`)
+      .then(r => r.json())
+      .then((data: { data?: { text?: string } }) => {
+        if (data?.data?.text) setVerseText(data.data.text);
+      })
+      .catch(() => { /* keep seg.text as fallback */ })
+      .finally(() => setVerseLoading(false));
+  }, [seg.surah, seg.ayah]);
+
   useEffect(() => {
     const audio = new Audio();
-    // preload="none" prevents loading (and spurious onerror) until play() is called
     audio.preload = "none";
     audio.src = reciterAudioUrl(seg.surah!, seg.ayah!, reciterId);
     audioRef.current = audio;
     setAudioError(false);
     audio.onended = () => onEndedRef.current();
-    // onerror fires only after play() triggers loading — advance to next on CDN failure
     audio.onerror = () => { setAudioError(true); onEndedRef.current(); };
     return () => { audio.pause(); audio.src = ""; audio.onended = null; audio.onerror = null; audioRef.current = null; };
   }, [seg.surah, seg.ayah, reciterId]);
@@ -317,16 +329,17 @@ function QuranCard({
       setAudioError(false);
       audio.play().catch((e: unknown) => {
         if (e instanceof Error && e.name === "NotAllowedError") {
-          // Browser blocked autoplay — onerror won't fire; advance to continue sequence
-          onEndedRef.current();
+          setIsPlaying_noop();
         }
-        // CDN / format errors are handled by the onerror handler above
       });
     } else {
       audio.pause();
       if (!isActive) audio.currentTime = 0;
     }
   }, [isActive, isPlaying]);
+
+  // no-op to avoid lint warning (isPlaying state is managed by parent)
+  function setIsPlaying_noop() {}
 
   return (
     <div className="my-2 rounded-2xl border border-amber-400/50 overflow-hidden shadow-sm">
@@ -353,9 +366,17 @@ function QuranCard({
         </button>
       </div>
       <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
-        <p className="quran-text text-right text-amber-950 dark:text-amber-100">
-          ﴿{seg.text}﴾
-        </p>
+        {verseLoading ? (
+          <div className="flex justify-center py-2">
+            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "0ms" }} />
+            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "150ms" }} />
+            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "300ms" }} />
+          </div>
+        ) : (
+          <p className="quran-text text-right text-amber-950 dark:text-amber-100">
+            ﴿{verseText}﴾
+          </p>
+        )}
         {isActive && isPlaying && (
           <div className="flex gap-0.5 items-end justify-center mt-2 h-4">
             {[1,2,3,4,5,6,7].map((k) => (
@@ -640,12 +661,12 @@ function BotMessageBody({
     const seg = segments[nextIdx];
     if (!seg) { setPlayIdx(-1); setIsPlaying(false); return; }
 
-    // Skip fatwa, promise, surah-link segments (no audio)
-    if (seg.type === "fatwa" || seg.type === "promise" || seg.type === "surah-link") {
+    // Skip fatwa, promise, surah-link, and quran segments in sequential playback
+    // Quran should only play when user explicitly presses the play button on the QuranCard
+    if (seg.type === "fatwa" || seg.type === "promise" || seg.type === "surah-link" || seg.type === "quran") {
       advanceTo(nextIdx + 1); return;
     }
 
-    // Quran segments always play with reciter audio — never skip
     setPlayIdx(nextIdx);
     setIsPlaying(true);
   }, [segments]);
