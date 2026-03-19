@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Flame, Calendar as CalendarIcon, Sparkles, BookOpen, Eye } from "lucide-react";
+import { Check, Flame, Calendar as CalendarIcon, Sparkles, BookOpen, Eye, ChevronDown } from "lucide-react";
 import { useAppUserProgress, useAppHabits, useAppCompleteHabit } from "@/hooks/use-app-data";
 
 const JOURNEY_PHASES = [
@@ -74,7 +74,54 @@ const JOURNEY_PHASES = [
   },
 ];
 
+const HABIT_REASONS: Record<string, { reason: string; timing: string }> = {
+  istighfar_100: {
+    reason: "يمحو الذنوب ويُزيل الران عن القلب",
+    timing: "🕐 في أي وقت",
+  },
+  quran: {
+    reason: "القرآن شفاء وهدى — صفحتان تكفيان لتحريك القلب",
+    timing: "🌅 بعد الفجر",
+  },
+  witr: {
+    reason: "ختمٌ يوميٌّ بين العبد وربه قبل النوم",
+    timing: "🌙 قبل النوم",
+  },
+  sayyid_morning: {
+    reason: "أفضل الاستغفار — من قالها صادقاً دخل الجنة",
+    timing: "🌅 بعد الفجر",
+  },
+  sayyid_evening: {
+    reason: "درع روحية تحميك من الشيطان حتى الصباح",
+    timing: "🌆 بعد العصر",
+  },
+};
+
 type TabType = "today" | "journey";
+
+function AllDoneBanner() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      className="bg-gradient-to-l from-emerald-500/20 to-primary/10 border border-emerald-400/40 rounded-2xl p-5 mb-5 text-center"
+    >
+      <motion.div
+        animate={{ rotate: [0, -10, 10, -10, 0] }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="text-4xl mb-3"
+      >
+        🌿
+      </motion.div>
+      <h3 className="font-bold text-base text-emerald-700 dark:text-emerald-400 mb-1">
+        أتممت مهام اليوم!
+      </h3>
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        «أحبُّ الأعمالِ إلى اللهِ أدومُها وإن قَلَّ» — يُكتب لك أجر هذا اليوم
+      </p>
+    </motion.div>
+  );
+}
 
 export default function Plan() {
   const { data: progress } = useAppUserProgress();
@@ -82,6 +129,7 @@ export default function Plan() {
   const completeHabit = useAppCompleteHabit();
   const [activeTab, setActiveTab] = useState<TabType>("today");
   const [expandedPhase, setExpandedPhase] = useState<number | null>(null);
+  const [expandedReason, setExpandedReason] = useState<string | null>(null);
 
   const handleToggle = (habitKey: string, currentStatus: boolean) => {
     completeHabit.mutate({ habitKey, completed: !currentStatus });
@@ -90,6 +138,7 @@ export default function Plan() {
   const completedCount = habits?.filter(h => h.completed).length || 0;
   const totalCount = habits?.length || 1;
   const progressPercent = Math.round((completedCount / totalCount) * 100);
+  const allDone = completedCount > 0 && completedCount === totalCount;
 
   const currentDay = progress?.day40Progress || 1;
   const currentPhaseIndex = Math.min(Math.floor((currentDay - 1) / 10), 3);
@@ -119,7 +168,7 @@ export default function Plan() {
           </div>
           <div className="w-full h-3 bg-white/10 rounded-full overflow-hidden border border-white/10">
             <motion.div
-              className="h-full bg-accent"
+              className={`h-full ${allDone ? "bg-emerald-400" : "bg-accent"}`}
               initial={{ width: 0 }}
               animate={{ width: `${progressPercent}%` }}
               transition={{ duration: 0.8, ease: "easeOut" }}
@@ -158,6 +207,8 @@ export default function Plan() {
             exit={{ opacity: 0, y: -5 }}
             className="flex-1 p-6 -mt-4"
           >
+            {allDone && <AllDoneBanner />}
+
             <div className="bg-card rounded-2xl p-5 shadow-xl shadow-black/5 border border-border mb-6">
               <div className="flex items-center gap-3 mb-2">
                 <Sparkles className="text-accent" size={20} />
@@ -179,31 +230,79 @@ export default function Plan() {
               ) : habits && habits.length > 0 ? (
                 habits.map((habit, i) => {
                   const isCompleted = habit.completed;
+                  const extra = HABIT_REASONS[habit.habitKey];
+                  const isReasonOpen = expandedReason === habit.habitKey;
+
                   return (
-                    <motion.button
+                    <motion.div
                       key={habit.habitKey}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.08 }}
-                      onClick={() => handleToggle(habit.habitKey, isCompleted)}
-                      disabled={completeHabit.isPending}
-                      className={`flex items-center p-4 rounded-xl border text-right transition-all duration-300 w-full ${
+                      className={`rounded-xl border overflow-hidden transition-all duration-300 ${
                         isCompleted
                           ? "bg-primary/5 border-primary/30"
-                          : "bg-card border-border shadow-sm hover:border-primary/40 active:scale-[0.98]"
+                          : "bg-card border-border shadow-sm"
                       }`}
                     >
-                      <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center ml-4 shrink-0 transition-all duration-300 ${
-                        isCompleted ? "bg-primary border-primary text-white scale-110" : "bg-transparent border-muted-foreground/30"
-                      }`}>
-                        {isCompleted && <Check size={16} strokeWidth={3} />}
-                      </div>
-                      <span className={`font-bold text-sm transition-colors duration-300 ${
-                        isCompleted ? "text-primary line-through opacity-70" : "text-foreground"
-                      }`}>
-                        {habit.habitNameAr}
-                      </span>
-                    </motion.button>
+                      <button
+                        onClick={() => handleToggle(habit.habitKey, isCompleted)}
+                        disabled={completeHabit.isPending}
+                        className="flex items-center p-4 w-full text-right active:scale-[0.98] transition-transform"
+                      >
+                        <div className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center ml-4 shrink-0 transition-all duration-300 ${
+                          isCompleted ? "bg-primary border-primary text-white scale-110" : "bg-transparent border-muted-foreground/30"
+                        }`}>
+                          {isCompleted && <Check size={16} strokeWidth={3} />}
+                        </div>
+                        <div className="flex-1 text-right">
+                          <span className={`font-bold text-sm block transition-colors duration-300 ${
+                            isCompleted ? "text-primary line-through opacity-70" : "text-foreground"
+                          }`}>
+                            {habit.habitNameAr}
+                          </span>
+                          {extra && (
+                            <span className="text-[10px] text-muted-foreground mt-0.5 block">{extra.timing}</span>
+                          )}
+                        </div>
+                        {extra && !isCompleted && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedReason(isReasonOpen ? null : habit.habitKey);
+                            }}
+                            className="mr-2 p-1 rounded-lg hover:bg-muted/50 transition-colors"
+                          >
+                            <motion.div
+                              animate={{ rotate: isReasonOpen ? 180 : 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <ChevronDown size={14} className="text-muted-foreground" />
+                            </motion.div>
+                          </button>
+                        )}
+                      </button>
+
+                      <AnimatePresence>
+                        {extra && isReasonOpen && !isCompleted && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-4 pb-3 pt-0">
+                              <div className="bg-primary/5 border border-primary/15 rounded-lg px-3 py-2.5">
+                                <p className="text-xs text-primary/80 leading-relaxed">
+                                  💡 {extra.reason}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
                   );
                 })
               ) : (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "wouter";
+import { useLocation } from "wouter";
 import { ArrowLeft, ShieldAlert, Droplets, Wind, BookOpen } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -9,7 +9,23 @@ const EMERGENCY_DUAS = [
   { arabic: "أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ", transliteration: "أعوذ بالله من الشيطان الرجيم" },
   { arabic: "اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنْ شَرِّ نَفْسِي وَمِنْ شَرِّ الشَّيْطَانِ وَشَرَكِهِ", transliteration: "اللهم إني أعوذ بك من شر نفسي" },
   { arabic: "رَبِّ اغْفِرْ لِي وَتُبْ عَلَيَّ إِنَّكَ أَنتَ التَّوَّابُ الرَّحِيمُ", transliteration: "رب اغفر لي وتب علي" },
+  { arabic: "حَسْبُنَا اللَّهُ وَنِعْمَ الْوَكِيلُ", transliteration: "حسبنا الله ونعم الوكيل" },
+  { arabic: "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ الْعَلِيِّ الْعَظِيمِ", transliteration: "لا حول ولا قوة إلا بالله العلي العظيم" },
 ];
+
+function trackSosUsage() {
+  try {
+    const prev = parseInt(localStorage.getItem("sos_count") || "0", 10);
+    localStorage.setItem("sos_count", String(prev + 1));
+    localStorage.setItem("sos_last", new Date().toISOString());
+  } catch {}
+}
+
+function markSosReturn() {
+  try {
+    localStorage.setItem("sos_return", "1");
+  } catch {}
+}
 
 export default function Sos() {
   const [phase, setPhase] = useState<Phase>("alert");
@@ -18,6 +34,11 @@ export default function Sos() {
   const [countdown, setCountdown] = useState(4);
   const [duaIndex, setDuaIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [, navigate] = useLocation();
+
+  useEffect(() => {
+    trackSosUsage();
+  }, []);
 
   const clearTimer = () => { if (timerRef.current) clearTimeout(timerRef.current); };
 
@@ -58,8 +79,12 @@ export default function Sos() {
     return clearTimer;
   }, [phase]);
 
+  const handleReturn = () => {
+    markSosReturn();
+    navigate("/");
+  };
+
   const breathLabels = { inhale: "استنشق ببطء...", hold: "أمسك نفسك...", exhale: "أخرج ببطء..." };
-  const breathColors = { inhale: "bg-blue-500/20 border-blue-400", hold: "bg-yellow-500/20 border-yellow-400", exhale: "bg-green-500/20 border-green-400" };
 
   return (
     <div className="fixed inset-0 z-50 bg-destructive/95 backdrop-blur-md flex flex-col p-6 text-destructive-foreground overflow-y-auto max-w-md mx-auto">
@@ -118,10 +143,10 @@ export default function Sos() {
                 <span>أدعية الاستعاذة</span>
               </button>
 
-              <Link href="/" className="w-full py-3 bg-transparent text-white/60 font-medium text-sm rounded-xl hover:text-white transition-all flex items-center justify-center gap-2">
+              <button onClick={handleReturn} className="w-full py-3 bg-transparent text-white/60 font-medium text-sm rounded-xl hover:text-white transition-all flex items-center justify-center gap-2">
                 <span>العودة للرئيسية</span>
                 <ArrowLeft size={16} />
-              </Link>
+              </button>
             </motion.div>
           </motion.div>
         )}
@@ -213,10 +238,13 @@ export default function Sos() {
               إعادة تمرين التنفس
             </button>
 
-            <Link href="/" className="w-full py-3.5 bg-white text-destructive font-bold rounded-xl active:scale-95 transition-all flex items-center justify-center gap-2">
+            <button
+              onClick={handleReturn}
+              className="w-full py-3.5 bg-white text-destructive font-bold rounded-xl active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
               <span>العودة والمضي في رحلتي</span>
               <ArrowLeft size={18} />
-            </Link>
+            </button>
           </motion.div>
         )}
 

@@ -297,8 +297,55 @@ function DynamicBanner() {
   );
 }
 
+function getTimeGreeting(): { greeting: string; sub: string } {
+  const hour = new Date().getHours();
+  if (hour >= 4 && hour < 12) return { greeting: "صباح النور يا تائب 🌅", sub: "ابدأ يومك بذكر الله" };
+  if (hour >= 12 && hour < 16) return { greeting: "طاب ظهرك بطاعة الله ☀️", sub: "استمر — الله يراك ويُحبّ مداومتك" };
+  if (hour >= 16 && hour < 20) return { greeting: "مساء الخير والإيمان 🌇", sub: "لا تنسَ سيد الاستغفار مساءً" };
+  return { greeting: "الله يثبّتك في ليلتك 🌙", sub: "هذا وقت الوتر وسيد الاستغفار" };
+}
+
+function SosReturnToast({ onDismiss }: { onDismiss: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 5000);
+    return () => clearTimeout(t);
+  }, [onDismiss]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="fixed top-4 inset-x-4 z-50 max-w-md mx-auto"
+    >
+      <div
+        className="bg-emerald-600 text-white rounded-2xl px-5 py-3.5 shadow-xl flex items-center gap-3"
+        onClick={onDismiss}
+      >
+        <span className="text-xl shrink-0">🌿</span>
+        <div className="flex-1">
+          <p className="font-bold text-sm">أحسنت — الله يثبّتك</p>
+          <p className="text-emerald-100 text-xs">قاومت ونجحت. استمر في رحلتك.</p>
+        </div>
+        <button onClick={onDismiss} className="text-white/70 hover:text-white text-lg leading-none">×</button>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Home() {
   const { data: progress, isLoading } = useAppUserProgress();
+  const [showSosToast, setShowSosToast] = useState(false);
+  const timeGreeting = getTimeGreeting();
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("sos_return") === "1") {
+        localStorage.removeItem("sos_return");
+        setShowSosToast(true);
+      }
+    } catch {}
+  }, []);
 
   if (isLoading) {
     return (
@@ -313,6 +360,10 @@ export default function Home() {
 
   return (
     <div className="flex flex-col flex-1 pb-8">
+      <AnimatePresence>
+        {showSosToast && <SosReturnToast onDismiss={() => setShowSosToast(false)} />}
+      </AnimatePresence>
+
       <div className="relative h-[220px] w-full rounded-b-[2rem] overflow-hidden shadow-lg">
         <img
           src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
@@ -326,8 +377,9 @@ export default function Home() {
             alt="توبة نصوحة"
             className="h-20 w-20 object-cover rounded-full drop-shadow-xl mb-2 ring-4 ring-white/30"
           />
-          <p className="text-sm font-medium text-white/90 max-w-[280px] leading-relaxed drop-shadow">
-            "قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ"
+          <p className="text-base font-bold text-white drop-shadow mb-1">{timeGreeting.greeting}</p>
+          <p className="text-xs font-medium text-white/80 max-w-[260px] leading-relaxed drop-shadow">
+            {timeGreeting.sub}
           </p>
         </div>
       </div>

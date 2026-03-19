@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Flame, CheckCircle2, BookOpen, Moon, Star } from "lucide-react";
+import { TrendingUp, Flame, CheckCircle2, BookOpen, Moon, Star, Brain, ShieldAlert, TrendingDown } from "lucide-react";
 import { useAppUserProgress, useAppDhikrCount, useAppHabits } from "@/hooks/use-app-data";
 import { getSessionId } from "@/lib/session";
 
@@ -19,12 +19,116 @@ const MOTIVATIONAL = [
   "اليوم الذي تضبطه لا يُعوَّض",
 ];
 
+const DAY_NAMES = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+
+function getSosStats(): { count: number; lastDate: string | null } {
+  try {
+    return {
+      count: parseInt(localStorage.getItem("sos_count") || "0", 10),
+      lastDate: localStorage.getItem("sos_last"),
+    };
+  } catch {
+    return { count: 0, lastDate: null };
+  }
+}
+
+function SmartInsights({ weekData, streakDays, sosCount }: {
+  weekData: DayRecord[];
+  streakDays: number;
+  sosCount: number;
+}) {
+  if (weekData.length === 0) return null;
+
+  const insights: { icon: string; text: string; color: string }[] = [];
+
+  const dayRates = weekData.map(d => d.habitsTotal > 0 ? d.habitsCompleted / d.habitsTotal : 0);
+  const avgRate = dayRates.reduce((s, r) => s + r, 0) / dayRates.length;
+  const lastHalf = dayRates.slice(3);
+  const firstHalf = dayRates.slice(0, 3);
+  const lastAvg = lastHalf.reduce((s, r) => s + r, 0) / lastHalf.length;
+  const firstAvg = firstHalf.reduce((s, r) => s + r, 0) / firstHalf.length;
+  const improving = lastAvg > firstAvg + 0.1;
+  const declining = lastAvg < firstAvg - 0.1;
+
+  const bestDayIndex = dayRates.indexOf(Math.max(...dayRates));
+  const bestDay = weekData[bestDayIndex];
+  const worstDayIndex = dayRates.indexOf(Math.min(...dayRates));
+  const worstDay = weekData[worstDayIndex];
+
+  const totalIstighfar = weekData.reduce((s, d) => s + d.istighfar, 0);
+  const prevWeekIstighfar = totalIstighfar;
+
+  if (improving) {
+    insights.push({ icon: "📈", text: "أداؤك يتحسن! النصف الثاني من الأسبوع أفضل من الأول.", color: "text-emerald-600 dark:text-emerald-400" });
+  } else if (declining) {
+    insights.push({ icon: "⚠️", text: "لاحظنا تراجعاً طفيفاً — تذكّر أن الاستمرار هو الهدف.", color: "text-amber-600 dark:text-amber-400" });
+  }
+
+  if (avgRate >= 0.8) {
+    insights.push({ icon: "🌟", text: "معدل أسبوعك ممتاز! أنت في المسار الصحيح.", color: "text-primary" });
+  } else if (avgRate >= 0.5) {
+    insights.push({ icon: "💪", text: "تقوم بجهد جيد — زيادة عادة واحدة يومياً ستصنع فرقاً.", color: "text-blue-600 dark:text-blue-400" });
+  } else {
+    insights.push({ icon: "🤲", text: "لا تيأس — حتى الاستغفار مرة واحدة يُحتسب لك.", color: "text-violet-600 dark:text-violet-400" });
+  }
+
+  if (bestDay && dayRates[bestDayIndex]! > 0) {
+    const d = new Date(bestDay.date);
+    insights.push({ icon: "🏆", text: `أفضل يوم لك هذا الأسبوع: ${DAY_NAMES[d.getDay()]} — استحضر ما أعانك فيه.`, color: "text-amber-600 dark:text-amber-400" });
+  }
+
+  if (streakDays >= 7) {
+    insights.push({ icon: "🔥", text: `سلسلة ${streakDays} يوم متواصل — الله يحفظها لك في الميزان.`, color: "text-orange-500" });
+  }
+
+  if (totalIstighfar >= 700) {
+    insights.push({ icon: "📿", text: `${totalIstighfar} استغفارة هذا الأسبوع — قلبك يصقله هذا الذكر.`, color: "text-emerald-600 dark:text-emerald-400" });
+  }
+
+  if (sosCount > 0) {
+    insights.push({
+      icon: "🛡️",
+      text: `استخدمت زر الطوارئ ${sosCount} ${sosCount === 1 ? "مرة" : "مرات"} — هذا قوة، لا ضعف. طلبت الله في لحظة صعبة.`,
+      color: "text-rose-600 dark:text-rose-400",
+    });
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4 }}
+      className="bg-card rounded-xl border border-border p-4 mb-5"
+    >
+      <div className="flex items-center gap-2 mb-3">
+        <Brain size={16} className="text-primary" />
+        <h2 className="font-bold text-sm">تحليل ذكي لأسبوعك</h2>
+      </div>
+      <div className="space-y-2.5">
+        {insights.map((ins, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.5 + i * 0.07 }}
+            className="flex items-start gap-2.5"
+          >
+            <span className="text-base shrink-0 mt-0.5">{ins.icon}</span>
+            <p className={`text-xs leading-relaxed ${ins.color}`}>{ins.text}</p>
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function ProgressChart() {
   const { data: progress } = useAppUserProgress();
   const { data: dhikr } = useAppDhikrCount();
   const { data: habits } = useAppHabits();
   const [weekData, setWeekData] = useState<DayRecord[]>([]);
   const [quote] = useState(() => MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)]);
+  const sosStats = getSosStats();
 
   useEffect(() => {
     const sessionId = getSessionId();
@@ -56,10 +160,9 @@ export default function ProgressChart() {
     ).then(setWeekData);
   }, []);
 
-  const dayNames = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
   const getDayName = (dateStr: string) => {
     const d = new Date(dateStr);
-    return dayNames[d.getDay()];
+    return DAY_NAMES[d.getDay()];
   };
   const isToday = (dateStr: string) => dateStr === new Date().toISOString().split("T")[0];
 
@@ -75,6 +178,14 @@ export default function ProgressChart() {
     : 0;
 
   const maxIstighfar = Math.max(...weekData.map((d) => d.istighfar), 1);
+
+  const dayRates = weekData.map(d => d.habitsTotal > 0 ? d.habitsCompleted / d.habitsTotal : 0);
+  const lastHalf = dayRates.slice(3);
+  const firstHalf = dayRates.slice(0, 3);
+  const lastAvg = lastHalf.length ? lastHalf.reduce((s, r) => s + r, 0) / lastHalf.length : 0;
+  const firstAvg = firstHalf.length ? firstHalf.reduce((s, r) => s + r, 0) / firstHalf.length : 0;
+  const trendUp = lastAvg > firstAvg + 0.05;
+  const trendDown = lastAvg < firstAvg - 0.05;
 
   return (
     <div className="flex flex-col flex-1 pb-8 px-5 pt-4">
@@ -106,6 +217,25 @@ export default function ProgressChart() {
         ))}
       </div>
 
+      {sosStats.count > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+          className="bg-rose-500/10 border border-rose-400/30 rounded-xl p-4 mb-5 flex items-center gap-3"
+        >
+          <ShieldAlert size={20} className="text-rose-500 shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-rose-700 dark:text-rose-400">
+              استخدمت زر الطوارئ {sosStats.count} {sosStats.count === 1 ? "مرة" : "مرات"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              طلبت الله في لحظة صعبة — هذا جهاد حقيقي
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -115,6 +245,13 @@ export default function ProgressChart() {
         <div className="flex items-center gap-2 mb-4">
           <CheckCircle2 size={16} className="text-primary" />
           <h2 className="font-bold text-sm">نسبة إتمام العادات - آخر 7 أيام</h2>
+          <div className="mr-auto flex items-center gap-1">
+            {trendUp && <TrendingUp size={13} className="text-emerald-500" />}
+            {trendDown && <TrendingDown size={13} className="text-rose-500" />}
+            <span className={`text-[10px] font-bold ${trendUp ? "text-emerald-500" : trendDown ? "text-rose-500" : "text-muted-foreground"}`}>
+              {trendUp ? "في تحسّن" : trendDown ? "تراجع طفيف" : "مستقر"}
+            </span>
+          </div>
         </div>
         <div className="flex items-end justify-between gap-2 h-32">
           {weekData.map((day, i) => {
@@ -133,7 +270,7 @@ export default function ProgressChart() {
                   />
                 </div>
                 <span className={`text-[10px] font-medium ${today ? "text-primary" : "text-muted-foreground"}`}>
-                  {getDayName(day.date).slice(0, 3)}
+                  {getDayName(day.date)!.slice(0, 3)}
                 </span>
               </div>
             );
@@ -176,6 +313,8 @@ export default function ProgressChart() {
           })}
         </div>
       </motion.div>
+
+      <SmartInsights weekData={weekData} streakDays={streakDays} sosCount={sosStats.count} />
 
       <motion.div
         initial={{ opacity: 0, y: 10 }}
