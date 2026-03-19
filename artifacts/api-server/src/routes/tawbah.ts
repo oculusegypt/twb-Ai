@@ -8,8 +8,9 @@ import {
   journalEntriesTable,
   globalStatsTable,
   challengesTable,
+  secretDuasTable,
 } from "@workspace/db/schema";
-import { eq, and, desc, count, gte, sql } from "drizzle-orm";
+import { eq, and, desc, count, gte, sql, ne, isNull, or } from "drizzle-orm";
 import {
   GetUserProgressResponse,
   UpdateUserProgressBody,
@@ -567,6 +568,68 @@ router.post("/challenges/:slug/encourage", async (req, res) => {
     .where(eq(challengesTable.id, row.id));
   await db.insert(globalStatsTable).values({ eventType: "dua", date: todayStr() });
   res.json({ ok: true });
+});
+
+router.post("/secret-dua", async (req, res) => {
+  const { sessionId, content } = req.body as { sessionId: string; content: string };
+  if (!sessionId || !content?.trim()) {
+    res.status(400).json({ error: "sessionId و content مطلوبان" });
+    return;
+  }
+
+  const recentSessions = await db
+    .select({ sessionId: userProgressTable.sessionId })
+    .from(userProgressTable)
+    .where(ne(userProgressTable.sessionId, sessionId))
+    .orderBy(sql`RANDOM()`)
+    .limit(10);
+
+  const alreadyReceiving = await db
+    .select({ toSessionId: secretDuasTable.toSessionId })
+    .from(secretDuasTable)
+    .where(and(
+      gte(secretDuasTable.createdAt, new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)),
+      ne(secretDuasTable.fromSessionId, sessionId)
+    ));
+
+  const alreadyReceivingSet = new Set(alreadyReceiving.map(r => r.toSessionId));
+
+  const candidate = recentSessions.find(s => !alreadyReceivingSet.has(s.sessionId));
+  const toSessionId = candidate?.sessionId ?? null;
+
+  await db.insert(secretDuasTable).values({
+    fromSessionId: sessionId,
+    toSessionId,
+    content: content.trim(),
+  });
+
+  await db.insert(globalStatsTable).values({ eventType: "dua", date: todayStr() });
+  res.json({ ok: true, matched: !!toSessionId });
+});
+
+router.get("/secret-dua/received", async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  if (!sessionId) { res.status(400).json({ error: "sessionId مطلوب" }); return; }
+
+  const [dua] = await db
+    .select({ id: secretDuasTable.id, content: secretDuasTable.content, createdAt: secretDuasTable.createdAt })
+    .from(secretDuasTable)
+    .where(and(
+      eq(secretDuasTable.toSessionId, sessionId),
+      eq(secretDuasTable.isRead, false)
+    ))
+    .orderBy(desc(secretDuasTable.createdAt))
+    .limit(1);
+
+  if (!dua) { res.json({ dua: null }); return; }
+
+  await db.update(secretDuasTable).set({ isRead: true }).where(eq(secretDuasTable.id, dua.id));
+  res.json({ dua: { content: dua.content, createdAt: dua.createdAt } });
+});
+
+router.get("/secret-dua/stats", async (_req, res) => {
+  const [result] = await db.select({ total: count() }).from(secretDuasTable);
+  res.json({ total: result?.total ?? 0 });
 });
 
 export default router;

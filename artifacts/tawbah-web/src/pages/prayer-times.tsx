@@ -1,0 +1,433 @@
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight, Bell, BellOff, MapPin, RefreshCw, Moon, Sun, Sunset, Sunrise } from "lucide-react";
+
+interface PrayerTimings {
+  Fajr: string;
+  Sunrise: string;
+  Dhuhr: string;
+  Asr: string;
+  Maghrib: string;
+  Isha: string;
+}
+
+interface PrayerInfo {
+  key: keyof PrayerTimings;
+  nameAr: string;
+  dhikrBefore: string;
+  icon: React.ReactNode;
+  color: string;
+}
+
+const PRAYERS: PrayerInfo[] = [
+  {
+    key: "Fajr",
+    nameAr: "الفجر",
+    dhikrBefore: "الوقت الذهبي للاستغفار — قبل الفجر بـ١٠ دقائق",
+    icon: <Moon size={18} />,
+    color: "from-indigo-500/20 to-violet-500/10 border-indigo-400/20",
+  },
+  {
+    key: "Sunrise",
+    nameAr: "الشروق",
+    dhikrBefore: "وقت صلاة الضحى وذكر الصباح",
+    icon: <Sunrise size={18} />,
+    color: "from-amber-500/20 to-yellow-500/10 border-amber-400/20",
+  },
+  {
+    key: "Dhuhr",
+    nameAr: "الظهر",
+    dhikrBefore: "صلِّ ركعتَي السنة ثم اذكر الله",
+    icon: <Sun size={18} />,
+    color: "from-orange-500/20 to-amber-500/10 border-orange-400/20",
+  },
+  {
+    key: "Asr",
+    nameAr: "العصر",
+    dhikrBefore: "ذكر العصر — لا تفوّته",
+    icon: <Sunset size={18} />,
+    color: "from-sky-500/20 to-blue-500/10 border-sky-400/20",
+  },
+  {
+    key: "Maghrib",
+    nameAr: "المغرب",
+    dhikrBefore: "أذكار المساء — ابدأ فور الأذان",
+    icon: <Moon size={18} />,
+    color: "from-rose-500/20 to-pink-500/10 border-rose-400/20",
+  },
+  {
+    key: "Isha",
+    nameAr: "العشاء",
+    dhikrBefore: "صلاة الوتر — لا تنَم قبلها",
+    icon: <Moon size={18} />,
+    color: "from-purple-500/20 to-violet-500/10 border-purple-400/20",
+  },
+];
+
+function toArabicTime(time24: string): string {
+  const [h, m] = time24.split(":").map(Number);
+  const suffix = h < 12 ? "ص" : "م";
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  const mm = String(m).padStart(2, "0");
+  return `${h12}:${mm} ${suffix}`;
+}
+
+function getNextPrayer(timings: PrayerTimings): string | null {
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+
+  for (const p of PRAYERS) {
+    const [h, min] = timings[p.key].split(":").map(Number);
+    const pMins = h * 60 + min;
+    if (pMins > nowMins) return p.key;
+  }
+  return null;
+}
+
+function getMinutesUntil(time24: string): number {
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const [h, m] = time24.split(":").map(Number);
+  const target = h * 60 + m;
+  return target - nowMins;
+}
+
+function formatCountdown(mins: number): string {
+  if (mins <= 0) return "الآن";
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (h > 0) return `${h} س ${m} د`;
+  return `${m} دقيقة`;
+}
+
+export default function PrayerTimes() {
+  const [, setLocation] = useLocation();
+  const [timings, setTimings] = useState<PrayerTimings | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [city, setCity] = useState(() => localStorage.getItem("prayerCity") || "");
+  const [country, setCountry] = useState(() => localStorage.getItem("prayerCountry") || "");
+  const [cityInput, setCityInput] = useState(city);
+  const [countryInput, setCountryInput] = useState(country);
+  const [notifEnabled, setNotifEnabled] = useState(false);
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>("default");
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if ("Notification" in window) {
+      setNotifPermission(Notification.permission);
+    }
+    const timer = setInterval(() => setTick(t => t + 1), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (city && country) fetchTimes(city, country);
+  }, []);
+
+  const fetchTimes = async (c: string, cn: string) => {
+    if (!c.trim() || !cn.trim()) return;
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch(
+        `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(c)}&country=${encodeURIComponent(cn)}&method=4`
+      );
+      if (!res.ok) throw new Error("المدينة غير موجودة");
+      const data = await res.json();
+      if (data.code !== 200) throw new Error("تعذّر جلب المواقيت");
+      const t = data.data.timings as PrayerTimings;
+      const cleaned: PrayerTimings = {
+        Fajr: t.Fajr.split(" ")[0],
+        Sunrise: t.Sunrise.split(" ")[0],
+        Dhuhr: t.Dhuhr.split(" ")[0],
+        Asr: t.Asr.split(" ")[0],
+        Maghrib: t.Maghrib.split(" ")[0],
+        Isha: t.Isha.split(" ")[0],
+      };
+      setTimings(cleaned);
+      setCity(c);
+      setCountry(cn);
+      localStorage.setItem("prayerCity", c);
+      localStorage.setItem("prayerCountry", cn);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "خطأ في جلب المواقيت");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) {
+      setError("المتصفح لا يدعم تحديد الموقع");
+      return;
+    }
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await fetch(
+            `https://api.aladhan.com/v1/timings?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&method=4`
+          );
+          const data = await res.json();
+          if (data.code !== 200) throw new Error("تعذّر جلب المواقيت");
+          const t = data.data.timings as PrayerTimings;
+          const cleaned: PrayerTimings = {
+            Fajr: t.Fajr.split(" ")[0],
+            Sunrise: t.Sunrise.split(" ")[0],
+            Dhuhr: t.Dhuhr.split(" ")[0],
+            Asr: t.Asr.split(" ")[0],
+            Maghrib: t.Maghrib.split(" ")[0],
+            Isha: t.Isha.split(" ")[0],
+          };
+          setTimings(cleaned);
+          const loc = data.data.meta?.timezone?.split("/")[1]?.replace("_", " ") || "موقعك";
+          setCity(loc);
+          setCountry("Auto");
+          setCityInput(loc);
+          setCountryInput("Auto");
+          localStorage.setItem("prayerCity", loc);
+          localStorage.setItem("prayerCountry", "Auto");
+        } catch {
+          setError("تعذّر جلب المواقيت");
+        } finally {
+          setLoading(false);
+        }
+      },
+      () => {
+        setError("رُفض الإذن بالوصول للموقع");
+        setLoading(false);
+      }
+    );
+  };
+
+  const enableNotifications = async () => {
+    if (!("Notification" in window)) {
+      setError("المتصفح لا يدعم الإشعارات");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setNotifPermission(permission);
+    if (permission === "granted") {
+      setNotifEnabled(true);
+      scheduleNotifications();
+      new Notification("دليل التوبة النصوح 🌙", {
+        body: "سيتم تذكيرك بمواقيت الصلاة إن شاء الله",
+      });
+    }
+  };
+
+  const scheduleNotifications = () => {
+    if (!timings) return;
+    PRAYERS.forEach((p) => {
+      const mins = getMinutesUntil(timings[p.key]);
+      const reminderMins = mins - 10;
+      if (reminderMins > 0) {
+        setTimeout(() => {
+          if (Notification.permission === "granted") {
+            new Notification(`حان وقت ${p.nameAr} 🕌`, {
+              body: p.dhikrBefore,
+            });
+          }
+        }, reminderMins * 60 * 1000);
+      }
+    });
+  };
+
+  const nextPrayerKey = timings ? getNextPrayer(timings) : null;
+
+  return (
+    <div className="flex-1 flex flex-col bg-background" dir="rtl">
+      <div className="p-6 pb-4">
+        <button
+          onClick={() => setLocation("/")}
+          className="flex items-center gap-1 text-muted-foreground text-sm mb-6"
+        >
+          <ArrowRight size={16} /> رجوع
+        </button>
+
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <Bell size={22} />
+          </div>
+          <div>
+            <h1 className="text-xl font-display font-bold text-foreground">مواقيت الصلاة</h1>
+            <p className="text-xs text-muted-foreground">تذكيرات الصلاة والأذكار الذكية</p>
+          </div>
+        </div>
+
+        {!timings && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-3"
+          >
+            <button
+              onClick={handleGeolocate}
+              disabled={loading}
+              className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+            >
+              <MapPin size={16} />
+              {loading ? "يجري التحديد..." : "حدّد موقعي تلقائياً"}
+            </button>
+
+            <div className="relative flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <span className="relative bg-card px-3 text-xs text-muted-foreground">أو أدخل يدوياً</span>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                value={cityInput}
+                onChange={(e) => setCityInput(e.target.value)}
+                placeholder="المدينة (مثل: Riyadh)"
+                className="flex-1 bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              />
+              <input
+                value={countryInput}
+                onChange={(e) => setCountryInput(e.target.value)}
+                placeholder="الدولة (مثل: SA)"
+                className="w-24 bg-muted rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              />
+            </div>
+            <button
+              onClick={() => fetchTimes(cityInput, countryInput)}
+              disabled={loading || !cityInput.trim() || !countryInput.trim()}
+              className="w-full py-2.5 bg-primary/10 text-primary rounded-xl font-medium text-sm disabled:opacity-40"
+            >
+              {loading ? "جارٍ البحث..." : "ابحث"}
+            </button>
+            {error && <p className="text-xs text-destructive text-center">{error}</p>}
+          </motion.div>
+        )}
+      </div>
+
+      {timings && (
+        <div className="flex-1 overflow-y-auto px-6 pb-8 flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <MapPin size={14} className="text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">{city}</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setTimings(null); setCity(""); setCountry(""); }}
+                className="text-xs text-primary underline"
+              >
+                تغيير
+              </button>
+              <button
+                onClick={() => fetchTimes(city, country)}
+                className="p-1.5 rounded-lg bg-muted text-muted-foreground"
+              >
+                <RefreshCw size={12} />
+              </button>
+            </div>
+          </div>
+
+          {nextPrayerKey && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 rounded-2xl p-4 text-center"
+            >
+              <p className="text-xs text-muted-foreground mb-1">الصلاة القادمة</p>
+              <p className="text-xl font-bold text-foreground">
+                {PRAYERS.find(p => p.key === nextPrayerKey)?.nameAr}
+              </p>
+              <p className="text-sm text-primary font-medium mt-1">
+                بعد {formatCountdown(getMinutesUntil(timings[nextPrayerKey]))}
+              </p>
+            </motion.div>
+          )}
+
+          <div className="flex flex-col gap-3">
+            {PRAYERS.map((p, i) => {
+              const mins = getMinutesUntil(timings[p.key]);
+              const isPassed = mins < 0;
+              const isNext = p.key === nextPrayerKey;
+              return (
+                <motion.div
+                  key={p.key}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className={`bg-gradient-to-br ${p.color} border rounded-xl p-4 transition-all ${
+                    isNext ? "shadow-lg shadow-primary/10 scale-[1.01]" : ""
+                  } ${isPassed ? "opacity-50" : ""}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 bg-background/60 rounded-xl flex items-center justify-center text-foreground">
+                        {p.icon}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-sm text-foreground">{p.nameAr}</p>
+                          {isNext && (
+                            <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">
+                              التالية
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                          {p.dhikrBefore}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-bold text-base text-foreground">
+                        {toArabicTime(timings[p.key])}
+                      </p>
+                      {!isPassed && !isNext && (
+                        <p className="text-[10px] text-muted-foreground">
+                          بعد {formatCountdown(mins)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+
+          <div className="mt-2">
+            {notifPermission === "granted" && notifEnabled ? (
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center gap-3">
+                <Bell size={18} className="text-primary" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">الإشعارات مُفعَّلة ✓</p>
+                  <p className="text-xs text-muted-foreground">ستصلك تذكيرات قبل كل صلاة بـ١٠ دقائق</p>
+                </div>
+              </div>
+            ) : notifPermission === "denied" ? (
+              <div className="bg-muted rounded-xl p-4 flex items-center gap-3">
+                <BellOff size={18} className="text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  الإشعارات محجوبة — فعّلها من إعدادات المتصفح
+                </p>
+              </div>
+            ) : (
+              <button
+                onClick={enableNotifications}
+                className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-md"
+              >
+                <Bell size={16} />
+                فعّل التذكيرات قبل كل صلاة
+              </button>
+            )}
+          </div>
+
+          <div className="text-center">
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              ﴿إِنَّ الصَّلَاةَ كَانَتْ عَلَى الْمُؤْمِنِينَ كِتَابًا مَّوْقُوتًا﴾
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

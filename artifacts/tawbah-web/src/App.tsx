@@ -26,6 +26,8 @@ import ChallengeView from "@/pages/challenge-view";
 import TawbahMap from "@/pages/tawbah-map";
 import Journey30 from "@/pages/journey30";
 import DhikrRooms from "@/pages/dhikr-rooms";
+import SecretDua from "@/pages/secret-dua";
+import PrayerTimes from "@/pages/prayer-times";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -62,6 +64,8 @@ function Router() {
         <Route path="/map" component={TawbahMap} />
         <Route path="/journey" component={Journey30} />
         <Route path="/dhikr-rooms" component={DhikrRooms} />
+        <Route path="/secret-dua" component={SecretDua} />
+        <Route path="/prayer-times" component={PrayerTimes} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

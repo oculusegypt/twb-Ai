@@ -145,3 +145,12 @@ export const dhikrRoomsTable = pgTable("dhikr_rooms", {
   totalCount: integer("total_count").notNull().default(0),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const secretDuasTable = pgTable("secret_duas", {
+  id: serial("id").primaryKey(),
+  fromSessionId: text("from_session_id").notNull(),
+  toSessionId: text("to_session_id"),
+  content: text("content").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
