@@ -1,11 +1,14 @@
 import { Link } from "wouter";
-import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart, Moon, Sun, Star, BookMarked, MessageCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart, Moon, Sun, Star, BookMarked, MessageCircle, Volume2, X, BookText } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useSettings } from "@/context/SettingsContext";
 
 type BannerType = "season" | "nafl" | "ayah" | "hadith" | "dua" | "wisdom";
+
+type AyahRef = { surah: number; ayah: number };
 
 type BannerItem = {
   type: BannerType;
@@ -13,6 +16,8 @@ type BannerItem = {
   content: string;
   icon: "sparkles" | "moon" | "sun" | "star" | "book" | "chat";
   seasonColor?: string;
+  ayahRef?: AyahRef;
+  tafsir?: string;
 };
 
 const TYPE_STYLES: Record<BannerType, { gradient: string; border: string; iconColor: string }> = {
@@ -25,18 +30,18 @@ const TYPE_STYLES: Record<BannerType, { gradient: string; border: string; iconCo
 };
 
 const BANNER_POOL: BannerItem[] = [
-  { type: "ayah",   label: "آية كريمة",        icon: "book",     content: "﴿قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ﴾ — الزمر: 53" },
+  { type: "ayah",   label: "آية كريمة",        icon: "book",     content: "﴿قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ﴾ — الزمر: 53", ayahRef: { surah: 39, ayah: 53 }, tafsir: "قل يا محمد لعبادي الذين أكثروا من الذنوب والمعاصي: لا تيأسوا من رحمة الله ومغفرته، فإن الله يغفر الذنوب جميعًا لمن تاب وأناب — صغيرها وكبيرها. إنه هو الغفور الذي يستر الذنوب، الرحيم الذي يعطف على عباده التائبين. هذه الآية هي أوسع آية في القرآن في باب الرحمة والمغفرة." },
   { type: "hadith", label: "حديث شريف",        icon: "chat",     content: "«إنَّ اللهَ يَقبلُ توبةَ العبدِ ما لم يُغَرْغِر» — رواه الترمذي" },
   { type: "nafl",   label: "تذكير بالنوافل",   icon: "sun",      content: "صلاة الضحى ركعتان — تُصلَّى بعد شروق الشمس بربع ساعة حتى قُبيل الظهر. لا تفوّتها!" },
   { type: "dua",    label: "دعاء مأثور",       icon: "star",     content: "«اللهم إني أعوذ بك من الهمّ والحزن، وأعوذ بك من العجز والكسل، وأعوذ بك من الجبن والبخل»" },
   { type: "wisdom", label: "عبرة ونصيحة",      icon: "sparkles", content: "الذنب الذي يُورِث الإنكسار خير من طاعة تُورِث الكِبر — ابن عطاء الله السكندري" },
   { type: "nafl",   label: "نافلة الليل",      icon: "moon",     content: "قيام الليل ولو بركعتين — أفضل الصلاة بعد المكتوبة. الله ينزل في الثلث الأخير فهل ستناديه؟" },
-  { type: "ayah",   label: "آية كريمة",        icon: "book",     content: "﴿وَمَن يَعْمَلْ سُوءًا أَوْ يَظْلِمْ نَفْسَهُ ثُمَّ يَسْتَغْفِرِ اللَّهَ يَجِدِ اللَّهَ غَفُورًا رَّحِيمًا﴾ — النساء: 110" },
+  { type: "ayah",   label: "آية كريمة",        icon: "book",     content: "﴿وَمَن يَعْمَلْ سُوءًا أَوْ يَظْلِمْ نَفْسَهُ ثُمَّ يَسْتَغْفِرِ اللَّهَ يَجِدِ اللَّهَ غَفُورًا رَّحِيمًا﴾ — النساء: 110", ayahRef: { surah: 4, ayah: 110 }, tafsir: "ومن يرتكب ذنبًا أو يضر نفسه بالمعصية والخطيئة — ثم يرجع إلى الله ويطلب مغفرته — يجد الله غفورًا يمحو ذنوبه ويسترها، رحيمًا لا يعاجله بالعقوبة. فالباب مفتوح لكل عبد عاد." },
   { type: "hadith", label: "حديث شريف",        icon: "chat",     content: "«التائبُ مِنَ الذنبِ كمَنْ لا ذنبَ له» — رواه ابن ماجه" },
   { type: "wisdom", label: "نصيحة روحية",      icon: "sparkles", content: "كلما ازداد إحساسك بالذنب ازداد دليلاً على يقظة قلبك — فلا تيأس، بل تب وأقبِل." },
   { type: "nafl",   label: "سنة مؤكدة",        icon: "sun",      content: "السنن الرواتب الـ12: ركعتان قبل الفجر، 4 قبل الظهر، 2 بعده، 2 بعد المغرب، 2 بعد العشاء — من داوم عليها بُنِي له بيت في الجنة." },
   { type: "dua",    label: "دعاء التوبة",      icon: "star",     content: "«اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك علي وأبوء بذنبي فاغفر لي» — سيد الاستغفار" },
-  { type: "ayah",   label: "آية كريمة",        icon: "book",     content: "﴿وَإِنِّي لَغَفَّارٌ لِّمَن تَابَ وَآمَنَ وَعَمِلَ صَالِحًا ثُمَّ اهْتَدَى﴾ — طه: 82" },
+  { type: "ayah",   label: "آية كريمة",        icon: "book",     content: "﴿وَإِنِّي لَغَفَّارٌ لِّمَن تَابَ وَآمَنَ وَعَمِلَ صَالِحًا ثُمَّ اهْتَدَى﴾ — طه: 82", ayahRef: { surah: 20, ayah: 82 }, tafsir: "وإني — الله — لكثير المغفرة والعفو لمن تاب عن ذنبه وآمن بي إيمانًا صادقًا وعمل الصالحات بعد توبته ثم ثبت على الهداية واستقام عليها ولم يرتد عنها. فالتوبة الصادقة تجمع أربعة: الرجوع، والإيمان، والعمل، والاستقامة." },
   { type: "nafl",   label: "صيام النوافل",     icon: "moon",     content: "الاثنين والخميس — أيام تُعرَض فيها الأعمال على الله. أحبّ أن يُعرَض عملي وأنا صائم." },
   { type: "wisdom", label: "فائدة إيمانية",    icon: "sparkles", content: "أعظم ما تفعله بعد المعصية: أن تسارع للصلاة والاستغفار فور السقوط — لا تمكّن الشيطان من إقناعك بالتأجيل." },
 ];
@@ -75,8 +80,73 @@ const ICON_MAP = {
   chat: MessageCircle,
 };
 
+function TafsirSheet({ item, onClose }: { item: BannerItem; onClose: () => void }) {
+  const styles = TYPE_STYLES[item.type];
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-[2px]"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ y: "100%" }}
+          animate={{ y: 0 }}
+          exit={{ y: "100%" }}
+          transition={{ type: "spring", damping: 28, stiffness: 260 }}
+          className="w-full max-w-md bg-card rounded-t-3xl shadow-2xl overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Handle bar */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 bg-muted-foreground/25 rounded-full" />
+          </div>
+
+          {/* Header */}
+          <div className={`flex items-center justify-between px-5 py-3 bg-gradient-to-r ${styles.gradient} border-b ${styles.border}`}>
+            <div className="flex items-center gap-2">
+              <BookText size={16} className={styles.iconColor} />
+              <span className={`font-bold text-sm ${styles.iconColor}`}>التفسير الميسر</span>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-background/60 hover:bg-background/90 transition-colors"
+            >
+              <X size={14} className="text-muted-foreground" />
+            </button>
+          </div>
+
+          {/* Ayah text */}
+          <div className="px-5 pt-4 pb-2">
+            <p className="text-sm font-semibold text-foreground leading-loose text-center font-arabic mb-3">
+              {item.content}
+            </p>
+            <div className="h-px bg-border/60 my-3" />
+            <p className="text-sm text-foreground/80 leading-relaxed text-right" dir="rtl">
+              {item.tafsir}
+            </p>
+          </div>
+
+          {/* Footer */}
+          <div className="px-5 py-4 flex justify-end">
+            <button
+              onClick={onClose}
+              className={`px-5 py-2 rounded-xl text-xs font-bold ${styles.iconColor} bg-gradient-to-r ${styles.gradient} border ${styles.border}`}
+            >
+              حفظ الله قلبك
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 function DynamicBanner() {
   const seasonBanner = getSeasonBanner();
+  const { quranReciterId } = useSettings();
 
   const getPoolIndex = () => {
     const slotMinutes = 30;
@@ -87,6 +157,9 @@ function DynamicBanner() {
   const [poolIndex, setPoolIndex] = useState(getPoolIndex);
   const [manualIndex, setManualIndex] = useState<number | null>(null);
   const [showSeason, setShowSeason] = useState(!!seasonBanner);
+  const [showTafsir, setShowTafsir] = useState(false);
+  const [audioState, setAudioState] = useState<"idle" | "loading" | "playing">("idle");
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -95,6 +168,16 @@ function DynamicBanner() {
     }, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Stop audio when banner changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setAudioState("idle");
+    setShowTafsir(false);
+  }, [poolIndex, manualIndex, showSeason]);
 
   const currentItem: BannerItem = showSeason && seasonBanner
     ? seasonBanner
@@ -112,32 +195,105 @@ function DynamicBanner() {
     }
   };
 
+  const handleListen = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!currentItem.ayahRef) return;
+
+    // If already playing, stop
+    if (audioState === "playing" && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setAudioState("idle");
+      return;
+    }
+
+    setAudioState("loading");
+    try {
+      const { surah, ayah } = currentItem.ayahRef;
+      const res = await fetch(
+        `https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/${quranReciterId}`
+      );
+      const json = await res.json();
+      const audioUrl: string = json?.data?.audio;
+      if (!audioUrl) throw new Error("No audio URL");
+
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.play();
+      setAudioState("playing");
+      audio.onended = () => setAudioState("idle");
+      audio.onerror = () => setAudioState("idle");
+    } catch {
+      setAudioState("idle");
+    }
+  };
+
   const styles = TYPE_STYLES[currentItem.type];
   const gradientClass = currentItem.type === "season" && currentItem.seasonColor
     ? currentItem.seasonColor
     : `${styles.gradient} ${styles.border}`;
 
+  const isAyah = currentItem.type === "ayah" && !!currentItem.ayahRef;
+
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={currentItem.label + currentItem.content.slice(0, 20)}
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 8 }}
-        transition={{ duration: 0.35 }}
-        className={`bg-gradient-to-r ${gradientClass} rounded-2xl p-4 border shadow-sm cursor-pointer select-none`}
-        onClick={handleNext}
-      >
-        <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-2">
-            <IconComp size={15} className={`${styles.iconColor} shrink-0`} />
-            <span className={`font-bold text-xs ${styles.iconColor}`}>{currentItem.label}</span>
+    <>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentItem.label + currentItem.content.slice(0, 20)}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 8 }}
+          transition={{ duration: 0.35 }}
+          className={`bg-gradient-to-r ${gradientClass} rounded-2xl p-4 border shadow-sm cursor-pointer select-none`}
+          onClick={handleNext}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-2">
+              <IconComp size={15} className={`${styles.iconColor} shrink-0`} />
+              <span className={`font-bold text-xs ${styles.iconColor}`}>{currentItem.label}</span>
+            </div>
+            <span className="text-[10px] text-muted-foreground/60">اضغط للتالي ›</span>
           </div>
-          <span className="text-[10px] text-muted-foreground/60">اضغط للتالي ›</span>
-        </div>
-        <p className="text-xs text-foreground/80 leading-relaxed">{currentItem.content}</p>
-      </motion.div>
-    </AnimatePresence>
+          <p className="text-xs text-foreground/80 leading-relaxed">{currentItem.content}</p>
+
+          {/* Ayah action buttons */}
+          {isAyah && (
+            <div className="flex gap-2 mt-3 pt-3 border-t border-current/10" onClick={(e) => e.stopPropagation()}>
+              {/* Listen button */}
+              <button
+                onClick={handleListen}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all
+                  ${audioState === "playing"
+                    ? "bg-emerald-500 text-white shadow-md"
+                    : "bg-background/70 hover:bg-background text-foreground/80 border border-current/10"
+                  }`}
+              >
+                {audioState === "loading" ? (
+                  <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin inline-block" />
+                ) : (
+                  <Volume2 size={12} className={audioState === "playing" ? "animate-pulse" : ""} />
+                )}
+                {audioState === "playing" ? "إيقاف" : "استمع"}
+              </button>
+
+              {/* Tafsir button */}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowTafsir(true); }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-background/70 hover:bg-background text-foreground/80 border border-current/10 transition-all"
+              >
+                <BookText size={12} />
+                تفسير ميسر
+              </button>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Tafsir floating sheet */}
+      {showTafsir && currentItem.tafsir && (
+        <TafsirSheet item={currentItem} onClose={() => setShowTafsir(false)} />
+      )}
+    </>
   );
 }
 
