@@ -124,3 +124,24 @@ export const challengesTable = pgTable("challenges", {
   encouragements: integer("encouragements").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const journey30Table = pgTable("journey30", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  dayNumber: integer("day_number").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  date: date("date"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertJourney30Schema = createInsertSchema(journey30Table).omit({ id: true, createdAt: true });
+export type InsertJourney30 = z.infer<typeof insertJourney30Schema>;
+export type Journey30 = typeof journey30Table.$inferSelect;
+
+export const dhikrRoomsTable = pgTable("dhikr_rooms", {
+  id: serial("id").primaryKey(),
+  roomType: text("room_type").notNull(),
+  totalCount: integer("total_count").notNull().default(0),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});

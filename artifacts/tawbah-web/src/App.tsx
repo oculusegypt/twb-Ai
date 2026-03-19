@@ -24,6 +24,8 @@ import TawbahCard from "@/pages/tawbah-card";
 import ChallengeCreate from "@/pages/challenge-create";
 import ChallengeView from "@/pages/challenge-view";
 import TawbahMap from "@/pages/tawbah-map";
+import Journey30 from "@/pages/journey30";
+import DhikrRooms from "@/pages/dhikr-rooms";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -58,6 +60,8 @@ function Router() {
         <Route path="/challenge/create" component={ChallengeCreate} />
         <Route path="/challenge/:slug" component={ChallengeView} />
         <Route path="/map" component={TawbahMap} />
+        <Route path="/journey" component={Journey30} />
+        <Route path="/dhikr-rooms" component={DhikrRooms} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
