@@ -14,6 +14,30 @@ const VERSES = [
 
 const THEMES = [
   {
+    id: "sapphire",
+    name: "الليلة الزرقاء",
+    bg: "linear-gradient(160deg, #0a1628 0%, #0f2547 60%, #071020 100%)",
+    accent: "#c9a84c",
+    text: "#f0ead6",
+    sub: "rgba(240,234,214,0.65)",
+    border: "rgba(201,168,76,0.4)",
+    pattern: "radial-gradient(circle at 30% 70%, rgba(201,168,76,0.06) 0%, transparent 50%)",
+    bgImage: "card-bg-1.png",
+    bgOverlay: "rgba(7,16,32,0.62)",
+  },
+  {
+    id: "emerald",
+    name: "الجنة الخضراء",
+    bg: "linear-gradient(160deg, #071f12 0%, #0d3320 60%, #041510 100%)",
+    accent: "#d4af37",
+    text: "#fefcf0",
+    sub: "rgba(255,255,255,0.65)",
+    border: "rgba(212,175,55,0.4)",
+    pattern: "radial-gradient(circle at 20% 20%, rgba(212,175,55,0.07) 0%, transparent 50%)",
+    bgImage: "card-bg-2.png",
+    bgOverlay: "rgba(4,21,16,0.6)",
+  },
+  {
     id: "forest",
     name: "الغابة الخضراء",
     bg: "linear-gradient(135deg, #0f4c35 0%, #1a6b4a 50%, #0a3525 100%)",
@@ -22,6 +46,8 @@ const THEMES = [
     sub: "rgba(255,255,255,0.65)",
     border: "rgba(212,175,55,0.4)",
     pattern: "radial-gradient(circle at 20% 20%, rgba(212,175,55,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(212,175,55,0.06) 0%, transparent 50%)",
+    bgImage: undefined,
+    bgOverlay: undefined,
   },
   {
     id: "night",
@@ -32,6 +58,8 @@ const THEMES = [
     sub: "rgba(240,234,214,0.6)",
     border: "rgba(201,168,76,0.35)",
     pattern: "radial-gradient(circle at 30% 70%, rgba(201,168,76,0.07) 0%, transparent 50%)",
+    bgImage: undefined,
+    bgOverlay: undefined,
   },
   {
     id: "sand",
@@ -42,6 +70,8 @@ const THEMES = [
     sub: "rgba(255,249,230,0.7)",
     border: "rgba(255,249,230,0.3)",
     pattern: "radial-gradient(circle at 70% 30%, rgba(255,255,255,0.08) 0%, transparent 50%)",
+    bgImage: undefined,
+    bgOverlay: undefined,
   },
   {
     id: "pearl",
@@ -52,6 +82,8 @@ const THEMES = [
     sub: "rgba(26,46,26,0.55)",
     border: "rgba(26,92,58,0.25)",
     pattern: "radial-gradient(circle at 50% 50%, rgba(26,92,58,0.04) 0%, transparent 60%)",
+    bgImage: undefined,
+    bgOverlay: undefined,
   },
 ];
 
@@ -166,6 +198,22 @@ export default function TawbahCard() {
             direction: "rtl",
           }}
         >
+          {/* AI-generated image background */}
+          {theme.bgImage && (
+            <img
+              src={`${import.meta.env.BASE_URL}images/${theme.bgImage}`}
+              alt=""
+              crossOrigin="anonymous"
+              style={{
+                position: "absolute", inset: 0, width: "100%", height: "100%",
+                objectFit: "cover", opacity: 1,
+              }}
+            />
+          )}
+          {/* Dark overlay for readability */}
+          {theme.bgOverlay && (
+            <div style={{ position: "absolute", inset: 0, background: theme.bgOverlay }} />
+          )}
           {/* Background pattern */}
           <div style={{ position: "absolute", inset: 0, background: theme.pattern }} />
 
@@ -297,17 +345,28 @@ export default function TawbahCard() {
         {/* Theme selector */}
         <div className="bg-card rounded-2xl border border-border p-4">
           <p className="text-xs font-bold text-muted-foreground mb-3">اختر التصميم</p>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {THEMES.map((t, i) => (
               <button
                 key={t.id}
                 onClick={() => setThemeIdx(i)}
-                className={`relative h-14 rounded-xl overflow-hidden border-2 transition-all ${themeIdx === i ? "border-primary scale-105" : "border-transparent"}`}
+                className={`relative h-16 rounded-xl overflow-hidden border-2 transition-all ${themeIdx === i ? "border-primary scale-105" : "border-transparent opacity-80"}`}
                 style={{ background: t.bg }}
               >
+                {t.bgImage && (
+                  <img
+                    src={`${import.meta.env.BASE_URL}images/${t.bgImage}`}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ opacity: 0.7 }}
+                  />
+                )}
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+                  <span className="text-[10px] font-bold text-white drop-shadow-md leading-tight">{t.name}</span>
+                </div>
                 {themeIdx === i && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Check size={16} className="text-white drop-shadow" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <Check size={18} className="text-white drop-shadow-lg" />
                   </div>
                 )}
               </button>
