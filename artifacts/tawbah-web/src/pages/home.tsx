@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
@@ -228,6 +228,26 @@ export default function Home() {
             <div className="flex-1">
               <h3 className="font-bold text-sm">غرف الذكر الجماعي</h3>
               <p className="text-[11px] text-muted-foreground">سبّح مع آلاف المسلمين الآن</p>
+            </div>
+            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+          </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.197 }}
+        >
+          <Link
+            href="/ameen"
+            className="flex items-center gap-4 bg-gradient-to-l from-rose-500/10 to-pink-500/5 border border-rose-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
+          >
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-md shrink-0">
+              <HandHeart size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">قل آمين 🤲</h3>
+              <p className="text-[11px] text-muted-foreground">ادعُ لأخٍ مجهول — وقل آمين لدعائه</p>
             </div>
             <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
           </Link>

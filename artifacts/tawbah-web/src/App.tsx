@@ -28,6 +28,7 @@ import Journey30 from "@/pages/journey30";
 import DhikrRooms from "@/pages/dhikr-rooms";
 import SecretDua from "@/pages/secret-dua";
 import PrayerTimes from "@/pages/prayer-times";
+import CommunityDuas from "@/pages/community-duas";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -66,6 +67,7 @@ function Router() {
         <Route path="/dhikr-rooms" component={DhikrRooms} />
         <Route path="/secret-dua" component={SecretDua} />
         <Route path="/prayer-times" component={PrayerTimes} />
+        <Route path="/ameen" component={CommunityDuas} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

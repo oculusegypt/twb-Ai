@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare, Handshake, BookMarked } from "lucide-react";
+import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare, Handshake, BookMarked, AlertTriangle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
 import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
@@ -924,6 +924,9 @@ export default function ZakiyPage() {
   const [recording, setRecording] = useState(false);
   const [impressionOpenId, setImpressionOpenId] = useState<string | null>(null);
   const [impressionTexts, setImpressionTexts] = useState<Record<string, string>>({});
+  const [riskAlert, setRiskAlert] = useState<{ level: "medium" | "high"; message: string; sign: string | null } | null>(null);
+  const [riskDismissed, setRiskDismissed] = useState(false);
+  const [anniversaryMilestone, setAnniversaryMilestone] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -932,12 +935,57 @@ export default function ZakiyPage() {
 
   const sessionId = getSessionId();
   const hasUserMessages = messages.some((m) => m.role === "user");
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    const controller = new AbortController();
+
+    async function checkAnniversaryAndRisk() {
+      try {
+        const [annRes, riskRes] = await Promise.all([
+          fetch(`${base}/api/zakiy/anniversary?sessionId=${sessionId}`, { signal: controller.signal }),
+          fetch(`${base}/api/zakiy/risk-check?sessionId=${sessionId}`, { signal: controller.signal }),
+        ]);
+        const [annData, riskData] = await Promise.all([
+          annRes.json() as Promise<{ anniversary: { milestone: string; message: string } | null }>,
+          riskRes.json() as Promise<{ riskLevel: string; message: string; warningSign: string | null }>,
+        ]);
+
+        if (annData.anniversary?.message) {
+          const { milestone, message } = annData.anniversary;
+          setAnniversaryMilestone(milestone);
+          const annMsg: Message = {
+            id: "anniversary-" + Date.now(),
+            role: "bot",
+            text: message,
+            segments: [{ type: "text", text: message }],
+            timestamp: new Date(),
+            suggestions: [],
+            suggestionsLoading: false,
+          };
+          setMessages((prev) => [...prev, annMsg]);
+        }
+
+        if (riskData.riskLevel === "medium" || riskData.riskLevel === "high") {
+          setRiskAlert({
+            level: riskData.riskLevel as "medium" | "high",
+            message: riskData.message,
+            sign: riskData.warningSign,
+          });
+        }
+      } catch { /* ignore — background check */ }
+    }
+
+    checkAnniversaryAndRisk();
+    return () => controller.abort();
+  }, [sessionId, base]);
 
   function buildHistory(): ApiHistory[] {
     return messages
@@ -1090,10 +1138,48 @@ export default function ZakiyPage() {
           <p className="text-xs text-muted-foreground">صاحبك الروحاني دايماً معاك</p>
         </div>
         <div className="mr-auto flex items-center gap-1.5">
+          {anniversaryMilestone && (
+            <span className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold border border-amber-300/40">
+              <Sparkles size={11} /> {anniversaryMilestone}
+            </span>
+          )}
           <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
           <span className="text-xs text-emerald-600 font-medium">متصل</span>
         </div>
       </div>
+
+      {/* Risk Alert Banner */}
+      <AnimatePresence>
+        {riskAlert && !riskDismissed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className={cn(
+              "overflow-hidden border-b",
+              riskAlert.level === "high"
+                ? "bg-red-50 dark:bg-red-950/30 border-red-200/50 dark:border-red-800/30"
+                : "bg-amber-50 dark:bg-amber-950/30 border-amber-200/50 dark:border-amber-800/30"
+            )}
+          >
+            <div className="flex items-start gap-3 px-4 py-3">
+              <AlertTriangle size={16} className={cn("mt-0.5 flex-shrink-0", riskAlert.level === "high" ? "text-red-500" : "text-amber-500")} />
+              <div className="flex-1 min-w-0">
+                <p className={cn("text-xs font-bold mb-0.5", riskAlert.level === "high" ? "text-red-700 dark:text-red-400" : "text-amber-700 dark:text-amber-400")}>
+                  {riskAlert.level === "high" ? "⚠️ الزكي قلقان عليك" : "💛 الزكي يلاحظ"}
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">{riskAlert.message}</p>
+                {riskAlert.sign && (
+                  <p className="text-[10px] text-muted-foreground/70 mt-1">العلامة: {riskAlert.sign}</p>
+                )}
+              </div>
+              <button onClick={() => setRiskDismissed(true)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
+                <X size={14} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
