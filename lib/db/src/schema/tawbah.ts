@@ -154,3 +154,11 @@ export const secretDuasTable = pgTable("secret_duas", {
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const communityDuasTable = pgTable("community_duas", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  content: text("content").notNull(),
+  amenCount: integer("amen_count").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});

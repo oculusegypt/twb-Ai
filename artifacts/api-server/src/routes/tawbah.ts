@@ -9,6 +9,7 @@ import {
   globalStatsTable,
   challengesTable,
   secretDuasTable,
+  communityDuasTable,
 } from "@workspace/db/schema";
 import { eq, and, desc, count, gte, sql, ne, isNull, or } from "drizzle-orm";
 import {
@@ -630,6 +631,54 @@ router.get("/secret-dua/received", async (req, res) => {
 router.get("/secret-dua/stats", async (_req, res) => {
   const [result] = await db.select({ total: count() }).from(secretDuasTable);
   res.json({ total: result?.total ?? 0 });
+});
+
+// ══════════════════════════════════════════
+// COMMUNITY DUAS — "قل آمين"
+// ══════════════════════════════════════════
+
+router.post("/community-duas", async (req, res) => {
+  const { sessionId, content } = req.body as { sessionId: string; content: string };
+  if (!sessionId || !content?.trim()) {
+    res.status(400).json({ error: "sessionId و content مطلوبان" });
+    return;
+  }
+  if (content.trim().length > 300) {
+    res.status(400).json({ error: "الدعاء يجب ألا يتجاوز ٣٠٠ حرف" });
+    return;
+  }
+  const [inserted] = await db
+    .insert(communityDuasTable)
+    .values({ sessionId, content: content.trim() })
+    .returning();
+  res.json({ dua: inserted });
+});
+
+router.get("/community-duas", async (req, res) => {
+  const limit = Math.min(parseInt((req.query.limit as string) ?? "20"), 50);
+  const rows = await db
+    .select({
+      id: communityDuasTable.id,
+      content: communityDuasTable.content,
+      amenCount: communityDuasTable.amenCount,
+      createdAt: communityDuasTable.createdAt,
+    })
+    .from(communityDuasTable)
+    .orderBy(desc(communityDuasTable.createdAt))
+    .limit(limit);
+  res.json({ duas: rows });
+});
+
+router.post("/community-duas/:id/amen", async (req, res) => {
+  const id = parseInt(req.params.id ?? "0");
+  if (!id) { res.status(400).json({ error: "id غير صحيح" }); return; }
+  const [updated] = await db
+    .update(communityDuasTable)
+    .set({ amenCount: sql`${communityDuasTable.amenCount} + 1` })
+    .where(eq(communityDuasTable.id, id))
+    .returning({ amenCount: communityDuasTable.amenCount });
+  if (!updated) { res.status(404).json({ error: "الدعاء غير موجود" }); return; }
+  res.json({ amenCount: updated.amenCount });
 });
 
 export default router;

@@ -2,8 +2,8 @@ import { Router, type IRouter } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { speechToText, ensureCompatibleFormat } from "@workspace/integrations-openai-ai-server/audio";
 import { db } from "@workspace/db";
-import { zakiyMemoryTable } from "@workspace/db/schema";
-import { eq } from "drizzle-orm";
+import { zakiyMemoryTable, journalEntriesTable, userProgressTable } from "@workspace/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -847,6 +847,148 @@ router.post("/zakiy/promise", async (req, res) => {
   } catch (err) {
     console.error("Promise save error:", err);
     res.status(500).json({ error: "Failed to save promise" });
+  }
+});
+
+// ══════════════════════════════════════════
+// RELAPSE RISK DETECTION
+// ══════════════════════════════════════════
+
+router.get("/zakiy/risk-check", async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  if (!sessionId) { res.status(400).json({ error: "sessionId مطلوب" }); return; }
+
+  try {
+    const [memory, recentJournals, progress] = await Promise.all([
+      loadMemory(sessionId),
+      db.query.journalEntriesTable.findMany({
+        where: eq(journalEntriesTable.sessionId, sessionId),
+        orderBy: [desc(journalEntriesTable.createdAt)],
+        limit: 5,
+        columns: { content: true, mood: true, createdAt: true },
+      }),
+      db.query.userProgressTable.findFirst({
+        where: eq(userProgressTable.sessionId, sessionId),
+        columns: { streakDays: true, lastActiveDate: true, covenantDate: true },
+      }),
+    ]);
+
+    const recentSlips = memory.slips?.slice(-3) ?? [];
+    const brokenPromises = memory.promises?.filter((p) => p.broken) ?? [];
+
+    const daysSinceActive = progress?.lastActiveDate
+      ? Math.floor((Date.now() - new Date(progress.lastActiveDate).getTime()) / 86400000)
+      : 0;
+
+    const analysisPrompt = `أنت محلل نفسي متخصص في الصحة الروحية الإسلامية.
+حلّل البيانات التالية وحدّد مستوى خطر الانتكاسة:
+
+اليوميات الأخيرة (${recentJournals.length} مدخلات):
+${recentJournals.map((j) => `- المزاج: ${j.mood ?? "غير محدد"} | المحتوى: "${String(j.content).slice(0, 100)}"`).join("\n")}
+
+معلومات الذاكرة:
+- زللات حديثة: ${recentSlips.map((s) => s.sin).join("، ") || "لا شيء"}
+- وعود مكسورة: ${brokenPromises.length}
+- الصفات: ${memory.traits.join("، ")}
+- التحديات: ${memory.challenges.join("، ")}
+
+بيانات التقدم:
+- أيام التتابع: ${progress?.streakDays ?? 0}
+- أيام منذ آخر نشاط: ${daysSinceActive}
+
+أرجع JSON فقط:
+{
+  "riskLevel": "low" | "medium" | "high",
+  "message": "رسالة دافئة ومختصرة من الزكي للمستخدم تناسب مستوى الخطر (جملتين فقط بالعربية)",
+  "warningSign": "العلامة الأبرز التي تدل على الخطر (إن وجدت، وإلا null)"
+}`;
+
+    const analysis = await openai.chat.completions.create({
+      model: "gpt-4o",
+      max_completion_tokens: 200,
+      messages: [
+        { role: "system", content: analysisPrompt },
+        { role: "user", content: "حلّل وأرجع النتيجة" },
+      ],
+    });
+
+    const raw = analysis.choices[0]?.message?.content ?? "{}";
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    const result = jsonMatch ? JSON.parse(jsonMatch[0]) : { riskLevel: "low", message: "", warningSign: null };
+
+    res.json(result);
+  } catch (err) {
+    console.error("Risk check error:", err);
+    res.json({ riskLevel: "low", message: "", warningSign: null });
+  }
+});
+
+// ══════════════════════════════════════════
+// ANNIVERSARY MEMORY CHECK
+// ══════════════════════════════════════════
+
+router.get("/zakiy/anniversary", async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  if (!sessionId) { res.status(400).json({ error: "sessionId مطلوب" }); return; }
+
+  try {
+    const progress = await db.query.userProgressTable.findFirst({
+      where: eq(userProgressTable.sessionId, sessionId),
+      columns: { covenantDate: true, streakDays: true },
+    });
+
+    if (!progress?.covenantDate) { res.json({ anniversary: null }); return; }
+
+    const memory = await loadMemory(sessionId);
+    const covenant = new Date(progress.covenantDate);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - covenant.getTime()) / 86400000);
+
+    const MILESTONES: Record<number, string> = {
+      7: "أسبوع",
+      30: "شهر",
+      40: "٤٠ يوماً",
+      90: "٣ أشهر",
+      180: "٦ أشهر",
+      365: "سنة كاملة",
+      730: "سنتان",
+    };
+
+    const milestone = MILESTONES[diffDays];
+    if (!milestone) { res.json({ anniversary: null }); return; }
+
+    const personalNote = memory.personalNote || "";
+    const traits = memory.traits.join("، ");
+
+    const msgPrompt = `أنت الزكي — الأخ الأكبر الحكيم في تطبيق دليل التوبة.
+اليوم يمرّ ${milestone} على بدء المستخدم رحلة التوبة.
+ما تعرفه عنه: ${traits || "لا شيء بعد"}.
+ملاحظتك عنه: ${personalNote || "لم تتعرف عليه بعد"}.
+اكتب رسالة قصيرة (٣-٤ جمل) تذكّره بهذه المحطة، وتشجّعه على الاستمرار.
+أسلوبك: دافئ وصادق كالأخ الأكبر، ليس رسمياً.
+لا تبدأ بـ "أنا" ولا بـ "الزكي".`;
+
+    const msgResp = await openai.chat.completions.create({
+      model: "gpt-4o",
+      max_completion_tokens: 200,
+      messages: [
+        { role: "user", content: msgPrompt },
+      ],
+    });
+
+    const message = msgResp.choices[0]?.message?.content?.trim() ?? "";
+
+    res.json({
+      anniversary: {
+        milestone,
+        daysCount: diffDays,
+        covenantDate: progress.covenantDate,
+        message,
+      },
+    });
+  } catch (err) {
+    console.error("Anniversary check error:", err);
+    res.json({ anniversary: null });
   }
 });
 
