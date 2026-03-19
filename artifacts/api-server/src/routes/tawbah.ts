@@ -6,8 +6,9 @@ import {
   dhikrCountTable,
   kaffarahStepsTable,
   journalEntriesTable,
+  globalStatsTable,
 } from "@workspace/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count, gte, sql } from "drizzle-orm";
 import {
   GetUserProgressResponse,
   UpdateUserProgressBody,
@@ -441,6 +442,48 @@ router.delete("/journal/:id", async (req, res) => {
     .where(and(eq(journalEntriesTable.id, id), eq(journalEntriesTable.sessionId, sessionId)));
 
   res.json({ success: true });
+});
+
+router.post("/stats/event", async (req, res) => {
+  const { eventType } = req.body as { eventType: string };
+  const validEvents = ["tawbah", "dhikr", "covenant", "dua", "quran"];
+  if (!eventType || !validEvents.includes(eventType)) {
+    return res.status(400).json({ error: "invalid eventType" });
+  }
+  await db.insert(globalStatsTable).values({
+    eventType,
+    date: todayStr(),
+  });
+  res.json({ success: true });
+});
+
+router.get("/stats/live", async (_req, res) => {
+  const today = todayStr();
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+
+  const [todayRows, totalRows, weekRows] = await Promise.all([
+    db.select({ eventType: globalStatsTable.eventType, cnt: count() })
+      .from(globalStatsTable)
+      .where(eq(globalStatsTable.date, today))
+      .groupBy(globalStatsTable.eventType),
+    db.select({ cnt: count() }).from(globalStatsTable),
+    db.select({ cnt: count() }).from(globalStatsTable)
+      .where(gte(globalStatsTable.date, weekAgo)),
+  ]);
+
+  const todayMap: Record<string, number> = {};
+  for (const r of todayRows) todayMap[r.eventType] = Number(r.cnt);
+
+  res.json({
+    today: {
+      tawbah: (todayMap["tawbah"] ?? 0) + (todayMap["covenant"] ?? 0),
+      dhikr: todayMap["dhikr"] ?? 0,
+      dua: todayMap["dua"] ?? 0,
+      quran: todayMap["quran"] ?? 0,
+    },
+    total: Number(totalRows[0]?.cnt ?? 0),
+    thisWeek: Number(weekRows[0]?.cnt ?? 0),
+  });
 });
 
 export default router;

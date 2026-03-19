@@ -106,3 +106,10 @@ export const hadiTaskItemsTable = pgTable("hadi_task_items", {
 export const insertHadiTaskItemSchema = createInsertSchema(hadiTaskItemsTable).omit({ id: true, createdAt: true });
 export type InsertHadiTaskItem = z.infer<typeof insertHadiTaskItemSchema>;
 export type HadiTaskItem = typeof hadiTaskItemsTable.$inferSelect;
+
+export const globalStatsTable = pgTable("global_stats", {
+  id: serial("id").primaryKey(),
+  eventType: text("event_type").notNull(),
+  date: date("date").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});

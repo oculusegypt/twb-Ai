@@ -20,6 +20,7 @@ import Journal from "@/pages/journal";
 import ProgressChart from "@/pages/progress-chart";
 import DangerTimes from "@/pages/danger-times";
 import HadiTasks from "@/pages/hadi-tasks";
+import TawbahCard from "@/pages/tawbah-card";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -50,6 +51,7 @@ function Router() {
         <Route path="/progress" component={ProgressChart} />
         <Route path="/danger-times" component={DangerTimes} />
         <Route path="/hadi-tasks" component={HadiTasks} />
+        <Route path="/card" component={TawbahCard} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

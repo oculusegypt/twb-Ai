@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Check, Shield } from "lucide-react";
 import { useAppCreateCovenant } from "@/hooks/use-app-data";
 import type { CreateCovenantRequestSinCategory } from "@workspace/api-client-react";
+import { recordEvent } from "@/components/live-stats";
 
 const CATEGORIES: { id: CreateCovenantRequestSinCategory; label: string; desc: string }[] = [
   { id: "khilwat", label: "ذنب الخلوات والنظر", desc: "ذنوب السر والتعلق بالمحرمات البصرية" },
@@ -23,6 +24,7 @@ export default function Covenant() {
     if (!selected) return;
     createCovenant.mutate({ sinCategory: selected }, {
       onSuccess: () => {
+        recordEvent("covenant");
         setLocation("/day-one");
       }
     });

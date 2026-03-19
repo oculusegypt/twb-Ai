@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppDhikrCount, useAppIncrementDhikr } from "@/hooks/use-app-data";
 import type { IncrementDhikrRequestDhikrType } from "@workspace/api-client-react";
+import { recordEvent } from "@/components/live-stats";
 
 type DhikrTab = {
   id: IncrementDhikrRequestDhikrType;
@@ -21,6 +22,7 @@ export default function Dhikr() {
   const { data: counts } = useAppDhikrCount();
   const increment = useAppIncrementDhikr();
   const [clickEffect, setClickEffect] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
 
   const currentTab = TABS.find(t => t.id === activeTab)!;
   const currentCount = counts?.[activeTab] || 0;
@@ -29,14 +31,13 @@ export default function Dhikr() {
   const handleTap = () => {
     setClickEffect(true);
     setTimeout(() => setClickEffect(false), 150);
-    
-    // Optimistic UI could be added here, but mutation handles it
     increment.mutate({ dhikrType: activeTab, amount: 1 });
-    
-    // Haptic feedback if available
-    if (navigator.vibrate) {
-      navigator.vibrate(50);
-    }
+    if (navigator.vibrate) navigator.vibrate(50);
+    setTapCount((prev) => {
+      const next = prev + 1;
+      if (next % 10 === 0) recordEvent("dhikr");
+      return next;
+    });
   };
 
   return (
