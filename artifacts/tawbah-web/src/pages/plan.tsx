@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Flame, Calendar as CalendarIcon, Sparkles, BookOpen, Eye, ChevronDown } from "lucide-react";
+import { Check, Flame, Calendar as CalendarIcon, Sparkles, BookOpen, Eye, ChevronDown, Share2 } from "lucide-react";
 import { useAppUserProgress, useAppHabits, useAppCompleteHabit } from "@/hooks/use-app-data";
 
 const JOURNEY_PHASES = [
@@ -99,7 +99,20 @@ const HABIT_REASONS: Record<string, { reason: string; timing: string }> = {
 
 type TabType = "today" | "journey";
 
-function AllDoneBanner() {
+function AllDoneBanner({ currentDay, streakDays }: { currentDay: number; streakDays: number }) {
+  const [shared, setShared] = useState(false);
+
+  const handleShare = async () => {
+    const text = `أتممت مهام اليوم ${currentDay} في رحلة التوبة 🌿\n${streakDays > 1 ? `سلسلة ${streakDays} أيام متواصلة — ` : ""}الحمد لله على التوفيق.\n\n«أحبُّ الأعمالِ إلى اللهِ أدومُها وإن قَلَّ»\n\n#رحلة_التوبة`;
+    if (navigator.share) {
+      try { await navigator.share({ text, title: "رحلة التوبة" }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(text).catch(() => {});
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95, y: -10 }}
@@ -114,11 +127,18 @@ function AllDoneBanner() {
         🌿
       </motion.div>
       <h3 className="font-bold text-base text-emerald-700 dark:text-emerald-400 mb-1">
-        أتممت مهام اليوم!
+        أتممت مهام اليوم {currentDay}!
       </h3>
-      <p className="text-xs text-muted-foreground leading-relaxed">
+      <p className="text-xs text-muted-foreground leading-relaxed mb-4">
         «أحبُّ الأعمالِ إلى اللهِ أدومُها وإن قَلَّ» — يُكتب لك أجر هذا اليوم
       </p>
+      <button
+        onClick={handleShare}
+        className="flex items-center gap-2 mx-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold active:scale-95 transition-all shadow-md shadow-emerald-500/20"
+      >
+        <Share2 size={14} />
+        {shared ? "تم النسخ! ✓" : "شارك إنجازك"}
+      </button>
     </motion.div>
   );
 }
@@ -207,7 +227,7 @@ export default function Plan() {
             exit={{ opacity: 0, y: -5 }}
             className="flex-1 p-6 -mt-4"
           >
-            {allDone && <AllDoneBanner />}
+            {allDone && <AllDoneBanner currentDay={currentDay} streakDays={progress?.streakDays || 0} />}
 
             <div className="bg-card rounded-2xl p-5 shadow-xl shadow-black/5 border border-border mb-6">
               <div className="flex items-center gap-3 mb-2">

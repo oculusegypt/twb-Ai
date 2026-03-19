@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, Flame, CheckCircle2, BookOpen, Moon, Star, Brain, ShieldAlert, TrendingDown } from "lucide-react";
 import { useAppUserProgress, useAppDhikrCount, useAppHabits } from "@/hooks/use-app-data";
 import { getSessionId } from "@/lib/session";
+import { BadgesSection } from "@/components/badges";
 
 interface DayRecord {
   date: string;
@@ -216,6 +217,8 @@ export default function ProgressChart() {
           </motion.div>
         ))}
       </div>
+
+      <BadgesSection />
 
       {sosStats.count > 0 && (
         <motion.div
