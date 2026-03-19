@@ -1,24 +1,216 @@
 import { Link } from "wouter";
-import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart } from "lucide-react";
-import { motion } from "framer-motion";
+import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart, Moon, Sun, Star, BookMarked, MessageCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
+import { useState, useEffect } from "react";
 
-function getIslamicSeason(): { label: string; desc: string; color: string } | null {
+type BannerItem = {
+  type: "season" | "nafl" | "ayah" | "hadith" | "dua" | "wisdom";
+  label: string;
+  content: string;
+  color: string;
+  icon: "sparkles" | "moon" | "sun" | "star" | "book" | "chat";
+};
+
+const BANNER_POOL: BannerItem[] = [
+  {
+    type: "ayah",
+    label: "آية كريمة",
+    content: "﴿قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ﴾ — الزمر: 53",
+    color: "from-emerald-500/20 to-teal-500/10",
+    icon: "book",
+  },
+  {
+    type: "hadith",
+    label: "حديث شريف",
+    content: "«إنَّ اللهَ يَقبلُ توبةَ العبدِ ما لم يُغَرْغِر» — رواه الترمذي",
+    color: "from-amber-500/20 to-yellow-500/10",
+    icon: "chat",
+  },
+  {
+    type: "nafl",
+    label: "تذكير بالنوافل",
+    content: "صلاة الضحى ركعتان — تُصلَّى بعد شروق الشمس بربع ساعة حتى قُبيل الظهر. لا تفوّتها!",
+    color: "from-orange-400/20 to-yellow-400/10",
+    icon: "sun",
+  },
+  {
+    type: "dua",
+    label: "دعاء مأثور",
+    content: "«اللهم إني أعوذ بك من الهمّ والحزن، وأعوذ بك من العجز والكسل، وأعوذ بك من الجبن والبخل»",
+    color: "from-violet-500/20 to-purple-500/10",
+    icon: "star",
+  },
+  {
+    type: "wisdom",
+    label: "عبرة ونصيحة",
+    content: "الذنب الذي يُورِث الإنكسار خير من طاعة تُورِث الكِبر — ابن عطاء الله السكندري",
+    color: "from-rose-400/20 to-pink-400/10",
+    icon: "sparkles",
+  },
+  {
+    type: "nafl",
+    label: "نافلة الليل",
+    content: "قيام الليل ولو بركعتين — أفضل الصلاة بعد المكتوبة. الله ينزل في الثلث الأخير فهل ستناديه؟",
+    color: "from-indigo-500/20 to-blue-500/10",
+    icon: "moon",
+  },
+  {
+    type: "ayah",
+    label: "آية كريمة",
+    content: "﴿وَمَن يَعْمَلْ سُوءًا أَوْ يَظْلِمْ نَفْسَهُ ثُمَّ يَسْتَغْفِرِ اللَّهَ يَجِدِ اللَّهَ غَفُورًا رَّحِيمًا﴾ — النساء: 110",
+    color: "from-teal-500/20 to-cyan-500/10",
+    icon: "book",
+  },
+  {
+    type: "hadith",
+    label: "حديث شريف",
+    content: "«التائبُ مِنَ الذنبِ كمَنْ لا ذنبَ له» — رواه ابن ماجه",
+    color: "from-green-500/20 to-emerald-500/10",
+    icon: "chat",
+  },
+  {
+    type: "wisdom",
+    label: "نصيحة روحية",
+    content: "كلما ازداد إحساسك بالذنب ازداد دليلاً على يقظة قلبك — فلا تيأس، بل تب وأقبِل.",
+    color: "from-amber-400/20 to-orange-400/10",
+    icon: "sparkles",
+  },
+  {
+    type: "nafl",
+    label: "سنة مؤكدة",
+    content: "السنن الرواتب الـ12: ركعتان قبل الفجر، 4 قبل الظهر، 2 بعده، 2 بعد المغرب، 2 بعد العشاء — من داوم عليها بُنِي له بيت في الجنة.",
+    color: "from-sky-400/20 to-blue-400/10",
+    icon: "sun",
+  },
+  {
+    type: "dua",
+    label: "دعاء التوبة",
+    content: "«اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك علي وأبوء بذنبي فاغفر لي، فإنه لا يغفر الذنوب إلا أنت» — سيد الاستغفار",
+    color: "from-primary/15 to-primary/5",
+    icon: "star",
+  },
+  {
+    type: "ayah",
+    label: "آية كريمة",
+    content: "﴿وَإِنِّي لَغَفَّارٌ لِّمَن تَابَ وَآمَنَ وَعَمِلَ صَالِحًا ثُمَّ اهْتَدَى﴾ — طه: 82",
+    color: "from-emerald-400/20 to-green-400/10",
+    icon: "book",
+  },
+  {
+    type: "nafl",
+    label: "صيام النوافل",
+    content: "الاثنين والخميس — أيام تُعرَض فيها الأعمال على الله. أحبّ أن يُعرَض عملي وأنا صائم.",
+    color: "from-violet-400/20 to-purple-400/10",
+    icon: "moon",
+  },
+  {
+    type: "wisdom",
+    label: "فائدة إيمانية",
+    content: "أعظم ما تفعله بعد المعصية: أن تسارع للصلاة والاستغفار فور السقوط — لا تمكّن الشيطان من إقناعك بالتأجيل.",
+    color: "from-rose-500/20 to-red-400/10",
+    icon: "sparkles",
+  },
+];
+
+function getSeasonBanner(): BannerItem | null {
   const now = new Date();
   const month = now.getMonth() + 1;
   const day = now.getDate();
 
-  if (month === 3 && day >= 15 && day <= 31) return { label: "آخر رمضان قادم", desc: "استعد لليالي المباركة - حسّن توبتك الآن", color: "from-emerald-500/20 to-teal-500/10" };
-  if (month === 6 && day >= 1 && day <= 10) return { label: "العشر من ذي الحجة", desc: "أفضل أيام السنة - أعمالك الصالحة مضاعفة", color: "from-amber-500/20 to-yellow-500/10" };
-  if (month === 7 && day === 9) return { label: "يوم عرفة", desc: "يوم تكفير الذنوب - أكثر من الدعاء والاستغفار", color: "from-primary/20 to-primary/5" };
-  if (month === 8 && day >= 1 && day <= 15) return { label: "شعبان - شهر رفع الأعمال", desc: "قبل رمضان: صفحة بيضاء لأعمالك", color: "from-purple-500/20 to-violet-500/10" };
+  if (month === 3 && day >= 15 && day <= 31)
+    return { type: "season", label: "آخر رمضان قادم", content: "استعد لليالي المباركة — العشر الأواخر فرصة لا تتكرر. حسّن توبتك الآن.", color: "from-emerald-500/25 to-teal-500/10", icon: "moon" };
+  if (month === 4 && day <= 3)
+    return { type: "season", label: "ليالي العيد", content: "من أحيا ليالي العيد بالذكر والطاعة لم يمُت قلبه يوم تموت القلوب.", color: "from-amber-500/25 to-yellow-400/10", icon: "star" };
+  if (month === 6 && day >= 1 && day <= 10)
+    return { type: "season", label: "العشر من ذي الحجة", content: "أفضل أيام السنة — صيام وذكر وتوبة. أعمالك الصالحة مضاعفة.", color: "from-amber-500/25 to-yellow-500/10", icon: "sparkles" };
+  if (month === 7 && day === 9)
+    return { type: "season", label: "يوم عرفة 🤲", content: "أكثر يوم يُعتَق فيه الناس من النار — اجتهد في الدعاء والاستغفار الآن.", color: "from-primary/20 to-primary/5", icon: "star" };
+  if (month === 8 && day >= 1 && day <= 15)
+    return { type: "season", label: "شعبان — شهر رفع الأعمال", content: "أعمالك تُرفَع إلى الله قبل رمضان. ابدأ الاستعداد من الآن بصفحة نظيفة.", color: "from-purple-500/25 to-violet-500/10", icon: "moon" };
+  if (month === 1 || month === 2)
+    return { type: "season", label: "الأشهر الحرم", content: "ذو القعدة وذو الحجة والمحرم ورجب — أشهر عظّمها الله. الحسنات مضاعفة والسيئات مثقّلة.", color: "from-sky-500/20 to-blue-400/10", icon: "sparkles" };
+
+  const dayOfWeek = now.getDay();
+  if (dayOfWeek === 5)
+    return { type: "season", label: "يوم الجمعة المبارك", content: "أكثر من الصلاة على النبي ﷺ اليوم — اقرأ سورة الكهف وادعُ في ساعة الإجابة.", color: "from-green-500/20 to-emerald-400/10", icon: "sun" };
+
   return null;
+}
+
+const ICON_MAP = {
+  sparkles: Sparkles,
+  moon: Moon,
+  sun: Sun,
+  star: Star,
+  book: BookMarked,
+  chat: MessageCircle,
+};
+
+function DynamicBanner() {
+  const seasonBanner = getSeasonBanner();
+
+  const getPoolIndex = () => {
+    const slotMinutes = 30;
+    const slotIndex = Math.floor(Date.now() / (slotMinutes * 60 * 1000));
+    return slotIndex % BANNER_POOL.length;
+  };
+
+  const [poolIndex, setPoolIndex] = useState(getPoolIndex);
+  const [manualIndex, setManualIndex] = useState<number | null>(null);
+  const [showSeason, setShowSeason] = useState(!!seasonBanner);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPoolIndex(getPoolIndex());
+      setManualIndex(null);
+    }, 30 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentItem: BannerItem = showSeason && seasonBanner
+    ? seasonBanner
+    : BANNER_POOL[manualIndex !== null ? manualIndex : poolIndex];
+
+  const IconComp = ICON_MAP[currentItem.icon];
+
+  const handleNext = () => {
+    if (showSeason) {
+      setShowSeason(false);
+      setManualIndex(poolIndex);
+    } else {
+      const next = ((manualIndex !== null ? manualIndex : poolIndex) + 1) % BANNER_POOL.length;
+      setManualIndex(next);
+    }
+  };
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={currentItem.label + currentItem.content.slice(0, 20)}
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 8 }}
+        transition={{ duration: 0.35 }}
+        className={`bg-gradient-to-r ${currentItem.color} rounded-2xl p-4 border border-white/10 shadow-sm cursor-pointer select-none`}
+        onClick={handleNext}
+      >
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-2">
+            <IconComp size={15} className="text-primary shrink-0" />
+            <span className="font-bold text-xs text-primary">{currentItem.label}</span>
+          </div>
+          <span className="text-[10px] text-muted-foreground/70">اضغط للتالي ›</span>
+        </div>
+        <p className="text-xs text-foreground/80 leading-relaxed">{currentItem.content}</p>
+      </motion.div>
+    </AnimatePresence>
+  );
 }
 
 export default function Home() {
   const { data: progress, isLoading } = useAppUserProgress();
-  const season = getIslamicSeason();
 
   if (isLoading) {
     return (
@@ -33,7 +225,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col flex-1 pb-8">
-      <div className="relative h-[240px] w-full rounded-b-[2rem] overflow-hidden shadow-lg">
+      <div className="relative h-[220px] w-full rounded-b-[2rem] overflow-hidden shadow-lg">
         <img
           src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
           alt="Islamic Pattern"
@@ -44,7 +236,7 @@ export default function Home() {
           <img
             src={`${import.meta.env.BASE_URL}images/logo.png`}
             alt="توبة نصوحة"
-            className="h-24 w-24 object-cover rounded-full drop-shadow-xl mb-2 ring-4 ring-white/30"
+            className="h-20 w-20 object-cover rounded-full drop-shadow-xl mb-2 ring-4 ring-white/30"
           />
           <p className="text-sm font-medium text-white/90 max-w-[280px] leading-relaxed drop-shadow">
             "قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ"
@@ -52,21 +244,9 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="px-5 -mt-6 relative z-10 flex flex-col gap-4">
+      <div className="px-5 -mt-5 relative z-10 flex flex-col gap-4">
 
-        {season && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`bg-gradient-to-r ${season.color} rounded-2xl p-4 border border-white/10 shadow-sm`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              <Sparkles size={16} className="text-primary" />
-              <span className="font-bold text-sm text-primary">{season.label}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">{season.desc}</p>
-          </motion.div>
-        )}
+        <DynamicBanner />
 
         <motion.div
           initial={{ y: 20, opacity: 0 }}
