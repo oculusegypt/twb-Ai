@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Flame, Calendar as CalendarIcon, Sparkles, BookOpen, Eye, ChevronDown, Share2 } from "lucide-react";
+import { Check, Flame, Calendar as CalendarIcon, Sparkles, BookOpen, Eye, ChevronDown, Share2, Scale, AlertTriangle, ChevronRight, X } from "lucide-react";
+import { Link } from "wouter";
 import { useAppUserProgress, useAppHabits, useAppCompleteHabit } from "@/hooks/use-app-data";
+import { getSelectedSins, CATEGORY_META, type Sin } from "@/lib/sins-data";
 
 const JOURNEY_PHASES = [
   {
@@ -98,6 +100,100 @@ const HABIT_REASONS: Record<string, { reason: string; timing: string }> = {
 };
 
 type TabType = "today" | "journey";
+
+function PersonalPlanCard() {
+  const [sins, setSins] = useState<Sin[]>([]);
+  const [expanded, setExpanded] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    setSins(getSelectedSins());
+    const wasDismissed = localStorage.getItem("personal_plan_dismissed") === "1";
+    setDismissed(wasDismissed);
+  }, []);
+
+  if (sins.length === 0 || dismissed) return null;
+
+  const hasKaffarah = sins.some(s => s.kaffarahId);
+  const allConditions = Array.from(new Set(sins.flatMap(s => s.conditions)));
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    localStorage.setItem("personal_plan_dismissed", "1");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-card border border-primary/20 rounded-2xl overflow-hidden mb-5 shadow-sm"
+    >
+      <div className="flex items-center gap-3 px-4 py-3 bg-primary/5 border-b border-primary/15">
+        <Sparkles size={15} className="text-primary shrink-0" />
+        <p className="font-bold text-sm flex-1">خطتك الشخصية</p>
+        <button onClick={handleDismiss} className="p-1 text-muted-foreground/50 hover:text-muted-foreground">
+          <X size={14} />
+        </button>
+      </div>
+
+      <div className="px-4 pt-3 pb-1">
+        <p className="text-[11px] text-muted-foreground mb-2">ذنوبك المختارة:</p>
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {sins.map(sin => {
+            const meta = CATEGORY_META[sin.category];
+            return (
+              <span key={sin.id} className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border ${meta.bg} ${meta.color} ${meta.borderColor}`}>
+                {sin.icon} {sin.name}
+              </span>
+            );
+          })}
+        </div>
+
+        {hasKaffarah && (
+          <Link
+            href="/kaffarah"
+            className="flex items-center gap-2 bg-red-500/10 border border-red-400/30 rounded-xl px-3 py-2.5 mb-3 hover:bg-red-500/15 transition-colors"
+          >
+            <Scale size={14} className="text-red-500 shrink-0" />
+            <p className="text-xs font-bold text-red-600 dark:text-red-400 flex-1">ذنوبك تستلزم كفارة شرعية</p>
+            <ChevronRight size={13} className="text-red-400" />
+          </Link>
+        )}
+
+        <button
+          onClick={() => setExpanded(e => !e)}
+          className="w-full flex items-center gap-2 py-2 text-primary text-xs font-bold"
+        >
+          <BookOpen size={13} />
+          {expanded ? "إخفاء شروط التوبة" : `عرض شروط توبتك (${allConditions.length} خطوة)`}
+          <ChevronDown size={13} className={`mr-auto transition-transform ${expanded ? "rotate-180" : ""}`} />
+        </button>
+
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="flex flex-col gap-1.5 pb-3">
+                {allConditions.map((cond, i) => (
+                  <div key={i} className="flex items-start gap-2 bg-muted/40 rounded-lg px-3 py-2">
+                    <span className="w-4 h-4 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-bold shrink-0 mt-0.5">
+                      {i + 1}
+                    </span>
+                    <p className="text-[11px] leading-relaxed">{cond}</p>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+}
 
 function AllDoneBanner({ currentDay, streakDays }: { currentDay: number; streakDays: number }) {
   const [shared, setShared] = useState(false);
@@ -227,6 +323,8 @@ export default function Plan() {
             exit={{ opacity: 0, y: -5 }}
             className="flex-1 p-6 -mt-4"
           >
+            <PersonalPlanCard />
+
             {allDone && <AllDoneBanner currentDay={currentDay} streakDays={progress?.streakDays || 0} />}
 
             <div className="bg-card rounded-2xl p-5 shadow-xl shadow-black/5 border border-border mb-6">
