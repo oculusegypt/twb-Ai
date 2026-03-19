@@ -23,7 +23,7 @@ const THEMES = [
     border: "rgba(201,168,76,0.4)",
     pattern: "radial-gradient(circle at 30% 70%, rgba(201,168,76,0.06) 0%, transparent 50%)",
     bgImage: "card-bg-1.png",
-    bgOverlay: "rgba(7,16,32,0.62)",
+    bgOverlay: "rgba(7,16,32,0.55)",
   },
   {
     id: "emerald",
@@ -198,7 +198,7 @@ export default function TawbahCard() {
             direction: "rtl",
           }}
         >
-          {/* AI-generated image background */}
+          {/* AI-generated certificate image background */}
           {theme.bgImage && (
             <img
               src={`${import.meta.env.BASE_URL}images/${theme.bgImage}`}
@@ -206,21 +206,25 @@ export default function TawbahCard() {
               crossOrigin="anonymous"
               style={{
                 position: "absolute", inset: 0, width: "100%", height: "100%",
-                objectFit: "cover", opacity: 1,
+                objectFit: "cover",
               }}
             />
           )}
-          {/* Dark overlay for readability */}
+          {/* Overlay for readability on image themes */}
           {theme.bgOverlay && (
             <div style={{ position: "absolute", inset: 0, background: theme.bgOverlay }} />
           )}
-          {/* Background pattern */}
+          {/* Background pattern (subtle gradient spots) */}
           <div style={{ position: "absolute", inset: 0, background: theme.pattern }} />
 
-          {/* Decorative circles */}
-          <div style={{ position: "absolute", top: -60, left: -60, width: 200, height: 200, borderRadius: "50%", border: `1px solid ${theme.border}`, opacity: 0.5 }} />
-          <div style={{ position: "absolute", bottom: -80, right: -80, width: 280, height: 280, borderRadius: "50%", border: `1px solid ${theme.border}`, opacity: 0.3 }} />
-          <div style={{ position: "absolute", top: 20, right: 20, width: 80, height: 80, borderRadius: "50%", border: `1px solid ${theme.border}`, opacity: 0.4 }} />
+          {/* Decorative circles — only for non-image themes */}
+          {!theme.bgImage && (
+            <>
+              <div style={{ position: "absolute", top: -60, left: -60, width: 200, height: 200, borderRadius: "50%", border: `1px solid ${theme.border}`, opacity: 0.5 }} />
+              <div style={{ position: "absolute", bottom: -80, right: -80, width: 280, height: 280, borderRadius: "50%", border: `1px solid ${theme.border}`, opacity: 0.3 }} />
+              <div style={{ position: "absolute", top: 20, right: 20, width: 80, height: 80, borderRadius: "50%", border: `1px solid ${theme.border}`, opacity: 0.4 }} />
+            </>
+          )}
 
           {/* Top badge */}
           <div style={{ position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
