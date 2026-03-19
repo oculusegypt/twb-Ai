@@ -111,5 +111,16 @@ export const globalStatsTable = pgTable("global_stats", {
   id: serial("id").primaryKey(),
   eventType: text("event_type").notNull(),
   date: date("date").notNull(),
+  countryCode: text("country_code"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const challengesTable = pgTable("challenges", {
+  id: serial("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  duration: integer("duration").notNull(),
+  pledge: text("pledge"),
+  startDate: date("start_date").notNull(),
+  encouragements: integer("encouragements").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });

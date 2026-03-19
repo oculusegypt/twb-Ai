@@ -21,6 +21,9 @@ import ProgressChart from "@/pages/progress-chart";
 import DangerTimes from "@/pages/danger-times";
 import HadiTasks from "@/pages/hadi-tasks";
 import TawbahCard from "@/pages/tawbah-card";
+import ChallengeCreate from "@/pages/challenge-create";
+import ChallengeView from "@/pages/challenge-view";
+import TawbahMap from "@/pages/tawbah-map";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -52,6 +55,9 @@ function Router() {
         <Route path="/danger-times" component={DangerTimes} />
         <Route path="/hadi-tasks" component={HadiTasks} />
         <Route path="/card" component={TawbahCard} />
+        <Route path="/challenge/create" component={ChallengeCreate} />
+        <Route path="/challenge/:slug" component={ChallengeView} />
+        <Route path="/map" component={TawbahMap} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

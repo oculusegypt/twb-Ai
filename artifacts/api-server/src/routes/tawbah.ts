@@ -7,6 +7,7 @@ import {
   kaffarahStepsTable,
   journalEntriesTable,
   globalStatsTable,
+  challengesTable,
 } from "@workspace/db/schema";
 import { eq, and, desc, count, gte, sql } from "drizzle-orm";
 import {
@@ -484,6 +485,88 @@ router.get("/stats/live", async (_req, res) => {
     total: Number(totalRows[0]?.cnt ?? 0),
     thisWeek: Number(weekRows[0]?.cnt ?? 0),
   });
+});
+
+// ── Country Map Endpoints ────────────────────────────────────────────
+
+router.post("/stats/pin", async (req, res) => {
+  const { countryCode } = req.body as { countryCode: string };
+  if (!countryCode || !/^[A-Z]{2}$/.test(countryCode)) {
+    res.status(400).json({ error: "كود دولة غير صحيح" });
+    return;
+  }
+  await db.insert(globalStatsTable).values({ eventType: "tawbah", date: todayStr(), countryCode });
+  res.json({ ok: true });
+});
+
+router.get("/stats/countries", async (_req, res) => {
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+  const rows = await db
+    .select({ countryCode: globalStatsTable.countryCode, cnt: count() })
+    .from(globalStatsTable)
+    .where(and(gte(globalStatsTable.date, weekAgo), sql`${globalStatsTable.countryCode} IS NOT NULL`))
+    .groupBy(globalStatsTable.countryCode)
+    .orderBy(sql`count(*) DESC`)
+    .limit(20);
+  res.json(rows.map(r => ({ countryCode: r.countryCode, count: Number(r.cnt) })));
+});
+
+// ── Challenge Endpoints ──────────────────────────────────────────────
+
+function makeSlug(len = 8) {
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let out = "";
+  for (let i = 0; i < len; i++) out += chars[Math.floor(Math.random() * chars.length)];
+  return out;
+}
+
+router.post("/challenges", async (req, res) => {
+  const { duration, pledge } = req.body as { duration: number; pledge?: string };
+  if (!duration || ![7, 21, 40, 90].includes(Number(duration))) {
+    res.status(400).json({ error: "مدة غير صحيحة" });
+    return;
+  }
+  let slug = makeSlug();
+  for (let i = 0; i < 5; i++) {
+    const existing = await db.select({ id: challengesTable.id }).from(challengesTable).where(eq(challengesTable.slug, slug));
+    if (existing.length === 0) break;
+    slug = makeSlug();
+  }
+  const [row] = await db.insert(challengesTable).values({
+    slug,
+    duration: Number(duration),
+    pledge: pledge?.trim() || null,
+    startDate: todayStr(),
+  }).returning();
+  await db.insert(globalStatsTable).values({ eventType: "tawbah", date: todayStr() });
+  res.json({ slug: row.slug });
+});
+
+router.get("/challenges/:slug", async (req, res) => {
+  const { slug } = req.params;
+  const [row] = await db.select().from(challengesTable).where(eq(challengesTable.slug, slug));
+  if (!row) { res.status(404).json({ error: "التحدي غير موجود" }); return; }
+  const start = new Date(row.startDate);
+  const daysPassed = Math.floor((Date.now() - start.getTime()) / 86400000);
+  res.json({
+    slug: row.slug,
+    duration: row.duration,
+    pledge: row.pledge,
+    startDate: row.startDate,
+    daysPassed: Math.min(daysPassed, row.duration),
+    encouragements: row.encouragements,
+  });
+});
+
+router.post("/challenges/:slug/encourage", async (req, res) => {
+  const { slug } = req.params;
+  const [row] = await db.select({ id: challengesTable.id }).from(challengesTable).where(eq(challengesTable.slug, slug));
+  if (!row) { res.status(404).json({ error: "التحدي غير موجود" }); return; }
+  await db.update(challengesTable)
+    .set({ encouragements: sql`${challengesTable.encouragements} + 1` })
+    .where(eq(challengesTable.id, row.id));
+  await db.insert(globalStatsTable).values({ eventType: "dua", date: todayStr() });
+  res.json({ ok: true });
 });
 
 export default router;

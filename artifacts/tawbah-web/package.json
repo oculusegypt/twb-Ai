@@ -78,6 +78,7 @@
   },
   "dependencies": {
     "html2canvas": "^1.4.1",
+    "react-simple-maps": "^3.0.0",
     "uuid": "^13.0.0"
   }
 }

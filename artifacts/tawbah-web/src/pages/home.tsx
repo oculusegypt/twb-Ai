@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
@@ -156,7 +156,47 @@ export default function Home() {
         <motion.div
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.175 }}
+        >
+          <Link
+            href="/challenge/create"
+            className="flex items-center gap-4 bg-gradient-to-l from-emerald-500/10 to-primary/10 border border-emerald-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
+          >
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-md shrink-0">
+              <Swords size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">تحدي التوبة</h3>
+              <p className="text-[11px] text-muted-foreground">ابدأ تحدياً وشارك رابطه — ليدعو لك الناس</p>
+            </div>
+            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+          </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.18 }}
+        >
+          <Link
+            href="/map"
+            className="flex items-center gap-4 bg-gradient-to-l from-blue-500/10 to-primary/10 border border-blue-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
+          >
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-md shrink-0">
+              <Globe size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">خريطة التوبة العالمية</h3>
+              <p className="text-[11px] text-muted-foreground">من أي دول يتوب المسلمون الآن؟</p>
+            </div>
+            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+          </Link>
+        </motion.div>
+
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.185 }}
         >
           <LiveStats />
         </motion.div>
