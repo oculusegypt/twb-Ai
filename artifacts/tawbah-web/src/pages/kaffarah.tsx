@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, ChevronDown, ChevronUp, AlertTriangle, Info, Plus, X, Scale } from "lucide-react";
+import { CheckCircle2, Circle, ChevronDown, ChevronUp, AlertTriangle, Info, Plus, X, Scale, ChevronLeft, Shuffle } from "lucide-react";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { getSessionId } from "@/lib/session";
 import { getSelectedSins, type Sin } from "@/lib/sins-data";
@@ -14,6 +14,8 @@ interface KaffarahStep {
   desc: string;
   obligatory: boolean;
   order?: string[];
+  choiceGroup?: string;
+  choiceLabel?: string;
 }
 
 interface KaffarahInfo {
@@ -115,10 +117,10 @@ const SPECIFIC_KAFFARAHS: SpecificKaffarah[] = [
     color: "bg-blue-500/10 border-blue-400/30 text-blue-600",
     steps: [
       { key: "yamin_confirm", title: "تأكيد الحنث في اليمين", desc: "تأكد أنك حلفت على شيء ثم فعلت خلافه، فإن كنت مكرهاً أو ناسياً فلا كفارة.", obligatory: true },
-      { key: "yamin_itam", title: "إطعام عشرة مساكين", desc: "أطعم عشرة مساكين من أوسط ما تطعم أهلك، لكل مسكين وجبة كاملة (نصف صاع تقريباً).", obligatory: true, order: ["الخيار الأول"] },
-      { key: "yamin_kiswa", title: "كسوة عشرة مساكين", desc: "البديل: اكسُ عشرة مساكين، كل واحد ما يصلي فيه كالثوب أو العباءة.", obligatory: true, order: ["الخيار الثاني"] },
-      { key: "yamin_itq", title: "تحرير رقبة", desc: "البديل الثالث لمن يستطيع (نادر في زماننا).", obligatory: false },
-      { key: "yamin_sawm", title: "صيام ثلاثة أيام", desc: "إن لم تستطع الإطعام ولا الكسوة: صم ثلاثة أيام متتالية أو متفرقة.", obligatory: false },
+      { key: "yamin_itam", title: "إطعام عشرة مساكين", desc: "أطعم عشرة مساكين من أوسط ما تطعم أهلك، لكل مسكين وجبة كاملة (نصف صاع تقريباً).", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الأول" },
+      { key: "yamin_kiswa", title: "كسوة عشرة مساكين", desc: "البديل: اكسُ عشرة مساكين، كل واحد ما يصلي فيه كالثوب أو العباءة.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثاني" },
+      { key: "yamin_itq", title: "تحرير رقبة", desc: "البديل الثالث لمن يستطيع (نادر في زماننا).", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثالث" },
+      { key: "yamin_sawm", title: "صيام ثلاثة أيام", desc: "إن لم تستطع الإطعام ولا الكسوة: صم ثلاثة أيام متتالية أو متفرقة.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الرابع — عند العجز" },
     ],
   },
   {
@@ -129,9 +131,9 @@ const SPECIFIC_KAFFARAHS: SpecificKaffarah[] = [
     color: "bg-purple-500/10 border-purple-400/30 text-purple-600",
     steps: [
       { key: "dhihar_tawba", title: "التوبة الفورية وعدم الإعادة", desc: "الظهار من المنكر والزور، فتب إلى الله فوراً.", obligatory: true },
-      { key: "dhihar_itq", title: "تحرير رقبة قبل المسيس", desc: "الكفارة الأولى: تحرير رقبة مؤمنة قبل إتيان الزوجة.", obligatory: true, order: ["الخيار الأول"] },
-      { key: "dhihar_sawm", title: "صيام شهرين متتابعين", desc: "إن لم يجد الرقبة: صيام شهرين متتابعين قبل المسيس. لا يجوز الفطر إلا لعذر شرعي.", obligatory: true, order: ["الخيار الثاني"] },
-      { key: "dhihar_itam", title: "إطعام ستين مسكيناً", desc: "إن لم يستطع الصيام لمرض مزمن: إطعام ستين مسكيناً.", obligatory: true, order: ["الخيار الثالث"] },
+      { key: "dhihar_itq", title: "تحرير رقبة قبل المسيس", desc: "الكفارة الأولى: تحرير رقبة مؤمنة قبل إتيان الزوجة.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الأول" },
+      { key: "dhihar_sawm", title: "صيام شهرين متتابعين", desc: "إن لم يجد الرقبة: صيام شهرين متتابعين قبل المسيس. لا يجوز الفطر إلا لعذر شرعي.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثاني" },
+      { key: "dhihar_itam", title: "إطعام ستين مسكيناً", desc: "إن لم يستطع الصيام لمرض مزمن: إطعام ستين مسكيناً.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثالث" },
     ],
   },
   {
@@ -143,9 +145,9 @@ const SPECIFIC_KAFFARAHS: SpecificKaffarah[] = [
     steps: [
       { key: "iftar_tawba", title: "التوبة الفورية والإمساك", desc: "أمسك فوراً حتى غروب الشمس ولو كانت الكفارة لم تُنجز بعد.", obligatory: true },
       { key: "iftar_qada", title: "قضاء اليوم", desc: "اقضِ اليوم الذي أفطرت فيه بعد رمضان.", obligatory: true },
-      { key: "iftar_itq", title: "تحرير رقبة", desc: "الكفارة الأولى بالترتيب: عتق رقبة مؤمنة.", obligatory: true, order: ["الخيار الأول"] },
-      { key: "iftar_sawm2", title: "صيام شهرين متتابعين", desc: "إن عجز عن الرقبة: صيام شهرين متتابعين بلا انقطاع.", obligatory: true, order: ["الخيار الثاني"] },
-      { key: "iftar_itam60", title: "إطعام ستين مسكيناً", desc: "إن عجز عن الصيام لمرض مزمن: إطعام ستين مسكيناً.", obligatory: true, order: ["الخيار الثالث"] },
+      { key: "iftar_itq", title: "تحرير رقبة", desc: "الكفارة الأولى بالترتيب: عتق رقبة مؤمنة.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الأول" },
+      { key: "iftar_sawm2", title: "صيام شهرين متتابعين", desc: "إن عجز عن الرقبة: صيام شهرين متتابعين بلا انقطاع.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثاني" },
+      { key: "iftar_itam60", title: "إطعام ستين مسكيناً", desc: "إن عجز عن الصيام لمرض مزمن: إطعام ستين مسكيناً.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثالث" },
     ],
   },
   {
@@ -157,8 +159,8 @@ const SPECIFIC_KAFFARAHS: SpecificKaffarah[] = [
     steps: [
       { key: "qatl_tawba", title: "التوبة الصادقة والحزن", desc: "ابكِ على من قتلته وادعُ له بالرحمة والمغفرة كثيراً.", obligatory: true },
       { key: "qatl_diya", title: "الدية لأهل الضحية", desc: "دية القتل الخطأ تُؤدى إلى أهل المقتول من مال القاتل أو عاقلته.", obligatory: true },
-      { key: "qatl_itq", title: "تحرير رقبة مؤمنة", desc: "الكفارة الأولى: عتق رقبة مؤمنة.", obligatory: true, order: ["الخيار الأول"] },
-      { key: "qatl_sawm2", title: "صيام شهرين متتابعين", desc: "إن عجز عن الرقبة: صيام شهرين متتابعين.", obligatory: true, order: ["الخيار الثاني"] },
+      { key: "qatl_itq", title: "تحرير رقبة مؤمنة", desc: "الكفارة الأولى: عتق رقبة مؤمنة.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الأول" },
+      { key: "qatl_sawm2", title: "صيام شهرين متتابعين", desc: "إن عجز عن الرقبة: صيام شهرين متتابعين.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثاني" },
       { key: "qatl_dua", title: "الدعاء المستمر للمقتول", desc: "أكثر من الدعاء للمقتول بالرحمة والمغفرة ما دمت حياً.", obligatory: false },
     ],
   },
@@ -170,9 +172,9 @@ const SPECIFIC_KAFFARAHS: SpecificKaffarah[] = [
     color: "bg-amber-500/10 border-amber-400/30 text-amber-600",
     steps: [
       { key: "haj_tawba", title: "التوبة والاستغفار", desc: "استغفر الله على ما حصل، سواء كان عمداً أو خطأً.", obligatory: true },
-      { key: "haj_sawm3", title: "صيام ثلاثة أيام", desc: "الخيار الأول: صيام ثلاثة أيام.", obligatory: true, order: ["الخيار الأول"] },
-      { key: "haj_itam6", title: "إطعام ستة مساكين", desc: "الخيار الثاني: إطعام ستة مساكين (لكل مسكين نصف صاع).", obligatory: true, order: ["الخيار الثاني"] },
-      { key: "haj_shaah", title: "ذبح شاة", desc: "الخيار الثالث: نسك (ذبح شاة) وتوزيع لحمها على الفقراء.", obligatory: true, order: ["الخيار الثالث"] },
+      { key: "haj_sawm3", title: "صيام ثلاثة أيام", desc: "الخيار الأول: صيام ثلاثة أيام.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الأول" },
+      { key: "haj_itam6", title: "إطعام ستة مساكين", desc: "الخيار الثاني: إطعام ستة مساكين (لكل مسكين نصف صاع).", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثاني" },
+      { key: "haj_shaah", title: "ذبح شاة", desc: "الخيار الثالث: نسك (ذبح شاة) وتوزيع لحمها على الفقراء.", obligatory: true, choiceGroup: "choice", choiceLabel: "الخيار الثالث" },
     ],
   },
   {
@@ -190,6 +192,38 @@ const SPECIFIC_KAFFARAHS: SpecificKaffarah[] = [
     ],
   },
 ];
+
+function getUniqueChoiceGroups(steps: KaffarahStep[]): string[] {
+  const seen = new Set<string>();
+  const groups: string[] = [];
+  for (const s of steps) {
+    if (s.choiceGroup && !seen.has(s.choiceGroup)) {
+      seen.add(s.choiceGroup);
+      groups.push(s.choiceGroup);
+    }
+  }
+  return groups;
+}
+
+function computeProgress(
+  steps: KaffarahStep[],
+  completedSteps: Record<string, boolean>,
+  selectedChoices: Record<string, string>,
+  compositePrefix: string
+) {
+  const choiceGroups = getUniqueChoiceGroups(steps);
+  const nonChoiceObl = steps.filter(s => s.obligatory && !s.choiceGroup);
+  const doneNonChoice = nonChoiceObl.filter(s => completedSteps[`${compositePrefix}${s.key}`]).length;
+  let doneGroups = 0;
+  for (const g of choiceGroups) {
+    const groupKey = `${compositePrefix}${g}`;
+    const chosen = selectedChoices[groupKey];
+    if (chosen && completedSteps[`${compositePrefix}${chosen}`]) doneGroups++;
+  }
+  const total = nonChoiceObl.length + choiceGroups.length;
+  const done = doneNonChoice + doneGroups;
+  return { total, done, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
+}
 
 function StepItem({
   step, done, expanded, onToggle, onExpand, colorClass
@@ -234,6 +268,111 @@ function StepItem({
   );
 }
 
+function ChoiceGroupBlock({
+  steps,
+  groupKey,
+  selectedKey,
+  onSelect,
+  completedSteps,
+  compositeKeyOf,
+  onToggle,
+  expandedStep,
+  onExpand,
+  colorClass,
+}: {
+  steps: KaffarahStep[];
+  groupKey: string;
+  selectedKey: string | undefined;
+  onSelect: (groupKey: string, stepKey: string) => void;
+  completedSteps: Record<string, boolean>;
+  compositeKeyOf: (stepKey: string) => string;
+  onToggle: (compositeKey: string) => void;
+  expandedStep: string | null;
+  onExpand: (compositeKey: string) => void;
+  colorClass: string;
+}) {
+  const [showOptions, setShowOptions] = useState(false);
+
+  if (!selectedKey || showOptions) {
+    return (
+      <div className="rounded-2xl border-2 border-dashed border-amber-400/50 bg-amber-50/30 dark:bg-amber-950/10 overflow-hidden">
+        <div className="flex items-center gap-2 px-4 pt-3 pb-2">
+          <Shuffle size={15} className="text-amber-600 shrink-0" />
+          <p className="text-xs font-bold text-amber-700 dark:text-amber-400 flex-1">
+            اختر خياراً واحداً فقط — نفّذ ما تستطيع
+          </p>
+          {selectedKey && (
+            <button
+              onClick={() => setShowOptions(false)}
+              className="text-[10px] text-muted-foreground hover:text-foreground underline"
+            >
+              إلغاء
+            </button>
+          )}
+        </div>
+        <div className="px-3 pb-3 flex flex-col gap-2">
+          {steps.map((step) => (
+            <button
+              key={step.key}
+              onClick={() => { onSelect(groupKey, step.key); setShowOptions(false); }}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl border text-right transition-all hover:shadow-sm active:scale-[0.98] ${
+                selectedKey === step.key
+                  ? "bg-primary/10 border-primary/40 text-primary"
+                  : "bg-card border-border hover:border-primary/30"
+              }`}
+            >
+              <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                selectedKey === step.key ? "border-primary bg-primary" : "border-muted-foreground/30"
+              }`}>
+                {selectedKey === step.key && <div className="w-3 h-3 rounded-full bg-white" />}
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-sm">{step.title}</p>
+                {step.choiceLabel && (
+                  <p className="text-[10px] text-muted-foreground">{step.choiceLabel}</p>
+                )}
+              </div>
+              <ChevronLeft size={15} className="text-muted-foreground shrink-0" />
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const chosen = steps.find(s => s.key === selectedKey)!;
+  const ck = compositeKeyOf(chosen.key);
+  const isDone = !!completedSteps[ck];
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between px-1">
+        <button
+          onClick={() => setShowOptions(true)}
+          className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors underline underline-offset-2"
+        >
+          <Shuffle size={11} />
+          تغيير الخيار
+        </button>
+        <div className="flex items-center gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          <span className="text-[10px] text-muted-foreground font-medium">
+            {chosen.choiceLabel || "الخيار المختار"}
+          </span>
+        </div>
+      </div>
+      <StepItem
+        step={chosen}
+        done={isDone}
+        expanded={expandedStep === ck}
+        onToggle={() => onToggle(ck)}
+        onExpand={() => onExpand(ck)}
+        colorClass={colorClass}
+      />
+    </div>
+  );
+}
+
 export default function Kaffarah() {
   const { data: progress } = useAppUserProgress();
   const sinCategory = (progress?.sinCategory || "other") as SinCategory;
@@ -241,6 +380,7 @@ export default function Kaffarah() {
 
   const [activeTab, setActiveTab] = useState<TabType>("main");
   const [completedSteps, setCompletedSteps] = useState<Record<string, boolean>>({});
+  const [selectedChoices, setSelectedChoices] = useState<Record<string, string>>({});
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedSpecific, setSelectedSpecific] = useState<string[]>([]);
@@ -263,13 +403,15 @@ export default function Kaffarah() {
     const saved = localStorage.getItem("selected_kaffarahs");
     if (saved) setSelectedSpecific(JSON.parse(saved));
 
-    // Load sins-derived kaffarahs
+    const savedChoices = localStorage.getItem("kaffarah_choice_selections");
+    if (savedChoices) setSelectedChoices(JSON.parse(savedChoices));
+
     const selectedSins = getSelectedSins();
     const kaffarahSins = selectedSins.filter(s => s.kaffarahId);
     if (kaffarahSins.length > 0) {
       setSinsDerivedKaffarahs(new Set(kaffarahSins.map(s => s.kaffarahId!)));
       setSinsDerivedSins(kaffarahSins);
-      setActiveTab("specific"); // auto-switch if sins have kaffarah
+      setActiveTab("specific");
     }
   }, []);
 
@@ -282,6 +424,12 @@ export default function Kaffarah() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId, stepKey, completed: newVal }),
     });
+  };
+
+  const selectChoice = (groupKey: string, stepKey: string) => {
+    const updated = { ...selectedChoices, [groupKey]: stepKey };
+    setSelectedChoices(updated);
+    localStorage.setItem("kaffarah_choice_selections", JSON.stringify(updated));
   };
 
   const addSpecific = (id: string) => {
@@ -428,9 +576,16 @@ export default function Kaffarah() {
                 {selectedSpecific.map((id) => {
                   const kaf = SPECIFIC_KAFFARAHS.find((k) => k.id === id);
                   if (!kaf) return null;
-                  const totalObl = kaf.steps.filter(s => s.obligatory).length;
-                  const doneObl = kaf.steps.filter(s => s.obligatory && completedSteps[`${id}_${s.key}`]).length;
-                  const pct = totalObl > 0 ? Math.round((doneObl / totalObl) * 100) : 0;
+
+                  const compositePrefix = `${id}_`;
+                  const compositeKeyOf = (stepKey: string) => `${compositePrefix}${stepKey}`;
+                  const { total, done: doneObl, pct } = computeProgress(
+                    kaf.steps, completedSteps, selectedChoices, compositePrefix
+                  );
+
+                  const choiceGroups = getUniqueChoiceGroups(kaf.steps);
+                  const nonChoiceSteps = kaf.steps.filter(s => !s.choiceGroup);
+
                   return (
                     <div key={id} className={`bg-card rounded-xl border overflow-hidden ${sinsDerivedKaffarahs.has(id) ? "border-red-400/40 ring-1 ring-red-400/20" : "border-border"}`}>
                       <div className={`flex items-center justify-between p-4 border-b border-border ${kaf.color} bg-opacity-30`}>
@@ -447,7 +602,7 @@ export default function Kaffarah() {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-primary">{doneObl}/{totalObl}</span>
+                          <span className="text-xs font-bold text-primary">{doneObl}/{total}</span>
                           <button onClick={() => removeSpecific(id)} className="p-1 text-muted-foreground/50 hover:text-destructive transition-colors">
                             <X size={16} />
                           </button>
@@ -459,20 +614,66 @@ export default function Kaffarah() {
                         </div>
                       </div>
                       <div className="px-4 pb-4 flex flex-col gap-2">
-                        {kaf.steps.map((step) => {
-                          const compositeKey = `${id}_${step.key}`;
+                        {nonChoiceSteps.map((step) => {
+                          const ck = compositeKeyOf(step.key);
+                          if (!step.obligatory) {
+                            return null;
+                          }
                           return (
                             <StepItem
-                              key={compositeKey}
+                              key={ck}
                               step={step}
-                              done={!!completedSteps[compositeKey]}
-                              expanded={expandedStep === compositeKey}
-                              onToggle={() => toggleStep(compositeKey)}
-                              onExpand={() => setExpandedStep(expandedStep === compositeKey ? null : compositeKey)}
+                              done={!!completedSteps[ck]}
+                              expanded={expandedStep === ck}
+                              onToggle={() => toggleStep(ck)}
+                              onExpand={() => setExpandedStep(expandedStep === ck ? null : ck)}
                               colorClass="border-primary/30"
                             />
                           );
                         })}
+
+                        {choiceGroups.map((group) => {
+                          const groupKey = `${compositePrefix}${group}`;
+                          const groupSteps = kaf.steps.filter(s => s.choiceGroup === group);
+                          return (
+                            <ChoiceGroupBlock
+                              key={groupKey}
+                              steps={groupSteps}
+                              groupKey={groupKey}
+                              selectedKey={selectedChoices[groupKey]}
+                              onSelect={selectChoice}
+                              completedSteps={completedSteps}
+                              compositeKeyOf={compositeKeyOf}
+                              onToggle={toggleStep}
+                              expandedStep={expandedStep}
+                              onExpand={(ck) => setExpandedStep(expandedStep === ck ? null : ck)}
+                              colorClass="border-primary/30"
+                            />
+                          );
+                        })}
+
+                        {nonChoiceSteps.filter(s => !s.obligatory).length > 0 && (
+                          <>
+                            <div className="flex items-center gap-2 mt-2 mb-0.5">
+                              <div className="w-1.5 h-1.5 rounded-full bg-secondary" />
+                              <span className="text-[10px] font-bold text-muted-foreground">مستحبات</span>
+                            </div>
+                            {nonChoiceSteps.filter(s => !s.obligatory).map((step) => {
+                              const ck = compositeKeyOf(step.key);
+                              return (
+                                <StepItem
+                                  key={ck}
+                                  step={step}
+                                  done={!!completedSteps[ck]}
+                                  expanded={expandedStep === ck}
+                                  onToggle={() => toggleStep(ck)}
+                                  onExpand={() => setExpandedStep(expandedStep === ck ? null : ck)}
+                                  colorClass="border-secondary/30"
+                                />
+                              );
+                            })}
+                          </>
+                        )}
                       </div>
                     </div>
                   );
