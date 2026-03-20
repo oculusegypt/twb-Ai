@@ -32,6 +32,10 @@ function toGlobalAyah(surah: number, ayah: number): number {
   return count + ayah;
 }
 
+function toArabicIndic(n: number): string {
+  return n.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]!);
+}
+
 const SURAH_TASK_MAP: Array<{ pattern: RegExp; surahs: Array<{ number: number; name: string }> }> = [
   { pattern: /سورة التوبة/,       surahs: [{ number: 9,   name: "سورة التوبة" }] },
   { pattern: /قصة يوسف/,          surahs: [{ number: 12,  name: "سورة يوسف" }] },
@@ -245,14 +249,16 @@ function SurahReaderModal({
                       <span
                         onClick={() => playFromIdx(idx)}
                         title={`الآية ${ayah.numberInSurah}`}
-                        className={`cursor-pointer inline-flex items-center justify-center rounded-full border text-[10px] font-bold align-middle transition-all mx-0.5 shrink-0 ${
-                          isCurrent
-                            ? "bg-primary text-primary-foreground border-primary w-5 h-5"
-                            : "bg-transparent text-primary border-primary/40 hover:bg-primary/10 w-5 h-5"
+                        className={`cursor-pointer transition-colors ${
+                          isCurrent ? "text-primary" : "text-primary/70 hover:text-primary"
                         }`}
-                        style={{ lineHeight: 1, fontSize: "9px", verticalAlign: "middle" }}
+                        style={{
+                          fontFamily: "'Amiri Quran', 'Amiri', serif",
+                          fontSize: "1em",
+                          verticalAlign: "middle",
+                        }}
                       >
-                        {ayah.numberInSurah}
+                        {"\u06DD"}{toArabicIndic(ayah.numberInSurah)}
                       </span>
                       {" "}
                     </span>
@@ -267,8 +273,11 @@ function SurahReaderModal({
                   {tafseerAyahs.map((t, idx) => (
                     <div key={t.number} className={`rounded-xl p-3 border text-right ${currentIdx === idx ? "bg-primary/5 border-primary/20" : "bg-muted/20 border-border/40"}`}>
                       <div className="flex items-center gap-2 mb-1.5">
-                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0">
-                          {ayahs[idx]?.numberInSurah ?? idx + 1}
+                        <span
+                          className="text-primary shrink-0"
+                          style={{ fontFamily: "'Amiri Quran', 'Amiri', serif", fontSize: "15px" }}
+                        >
+                          {"\u06DD"}{toArabicIndic(ayahs[idx]?.numberInSurah ?? idx + 1)}
                         </span>
                         <p className="text-[13px] font-display text-foreground/70 leading-relaxed flex-1 cursor-pointer hover:text-foreground" dir="rtl" onClick={() => playFromIdx(idx)}>
                           {ayahs[idx]?.text}
