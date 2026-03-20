@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Bell, BellOff, MapPin, RefreshCw, Moon, Sun, Sunset, Sunrise } from "lucide-react";
@@ -99,6 +99,83 @@ function formatCountdown(mins: number): string {
   const m = mins % 60;
   if (h > 0) return `${h} س ${m} د`;
   return `${m} دقيقة`;
+}
+
+function getDayProgress(): number {
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  return Math.max(0, Math.min(1, mins / (24 * 60)));
+}
+
+function getSkyColors(): { top: string; bottom: string; sunColor: string; sunGlow: string } {
+  const h = new Date().getHours();
+  if (h < 4)  return { top: "#0a0520", bottom: "#1a0a3a", sunColor: "#fbbf24", sunGlow: "rgba(251,191,36,0.08)" };
+  if (h < 6)  return { top: "#1e1035", bottom: "#4a1d73", sunColor: "#fbbf24", sunGlow: "rgba(251,191,36,0.18)" };
+  if (h < 8)  return { top: "#7c2d12", bottom: "#ea580c", sunColor: "#fbbf24", sunGlow: "rgba(251,191,36,0.35)" };
+  if (h < 12) return { top: "#1d4ed8", bottom: "#60a5fa", sunColor: "#fde047", sunGlow: "rgba(253,224,71,0.4)" };
+  if (h < 13) return { top: "#0c4a6e", bottom: "#0ea5e9", sunColor: "#fde68a", sunGlow: "rgba(253,230,138,0.45)" };
+  if (h < 16) return { top: "#78350f", bottom: "#d97706", sunColor: "#fbbf24", sunGlow: "rgba(251,191,36,0.3)" };
+  if (h < 19) return { top: "#4c1d95", bottom: "#b45309", sunColor: "#fb923c", sunGlow: "rgba(251,146,60,0.35)" };
+  return { top: "#0f172a", bottom: "#1e1b4b", sunColor: "#fbbf24", sunGlow: "rgba(251,191,36,0.08)" };
+}
+
+function PrayerSkyHeader() {
+  const [progress, setProgress] = useState(getDayProgress);
+  const sky = getSkyColors();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => setProgress(getDayProgress()), 60_000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, []);
+
+  const t = Math.min(progress, 0.98);
+  const sunX = 8 + (1 - t) * (1 - t) * 0 + 2 * (1 - t) * t * (50 - 8) + t * t * (92 - 8);
+  const sunY = (1 - t) * (1 - t) * 85 + 2 * (1 - t) * t * 10 + t * t * 85;
+
+  const isNight = (() => { const h = new Date().getHours(); return h < 5 || h >= 20; })();
+
+  return (
+    <div
+      className="w-full relative overflow-hidden"
+      style={{
+        height: 140,
+        background: `linear-gradient(to bottom, ${sky.top}, ${sky.bottom})`,
+        maskImage: "linear-gradient(to bottom, black 60%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 60%, transparent 100%)",
+      }}
+    >
+      {/* Stars for night */}
+      {isNight && (
+        <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 w-full h-full pointer-events-none opacity-70">
+          {[{cx:15,cy:8,r:0.7},{cx:42,cy:5,r:0.5},{cx:70,cy:12,r:0.6},{cx:88,cy:4,r:0.5},{cx:28,cy:22,r:0.4},{cx:80,cy:28,r:0.7},{cx:55,cy:18,r:0.5}].map((s,i) => (
+            <circle key={i} {...s} fill="white" opacity={0.6} />
+          ))}
+        </svg>
+      )}
+      {/* Sun arc */}
+      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full pointer-events-none">
+        <defs>
+          <filter id="prayerSunGlow">
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+          </filter>
+        </defs>
+        <path d="M 8,85 Q 50,10 92,85" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="0.6" strokeDasharray="2,2" />
+        {progress < 1 && (
+          <>
+            <circle cx={sunX} cy={sunY} r="6" fill={sky.sunGlow} filter="url(#prayerSunGlow)" />
+            <circle cx={sunX} cy={sunY} r="3.2" fill={sky.sunColor} opacity={0.95} />
+            <circle cx={sunX} cy={sunY} r="1.6" fill="white" opacity={0.7} />
+          </>
+        )}
+      </svg>
+      {/* Label */}
+      <div className="absolute bottom-5 inset-x-0 flex justify-center">
+        <span className="text-white/60 text-[11px] font-medium tracking-wide">مسار الشمس اليوم</span>
+      </div>
+    </div>
+  );
 }
 
 export default function PrayerTimes() {
@@ -239,6 +316,9 @@ export default function PrayerTimes() {
 
   return (
     <div className="flex-1 flex flex-col bg-background" dir="rtl">
+      {/* Sky header with animated sun arc */}
+      <PrayerSkyHeader />
+
       <div className="p-6 pb-4">
         <button
           onClick={() => setLocation("/")}

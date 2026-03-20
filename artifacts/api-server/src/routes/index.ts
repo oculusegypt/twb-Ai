@@ -7,10 +7,12 @@ import hadiTasksRouter from "./hadi-tasks";
 import journeyRouter from "./journey";
 import dhikrRoomsRouter from "./dhikr-rooms";
 import adminRouter from "./admin";
+import heroRouter from "./hero";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(heroRouter);
 router.use(tawbahRouter);
 router.use(ttsRouter);
 router.use(zakiyRouter);
