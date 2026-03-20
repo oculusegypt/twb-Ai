@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SettingsProvider } from "@/context/SettingsContext";
 import { NotificationsProvider } from "@/context/NotificationsContext";
+import { AppNotificationsProvider } from "@/context/AppNotificationsContext";
 
 import { Layout } from "@/components/layout";
 import AdminApp from "@/pages/admin/AdminApp";
@@ -35,6 +36,7 @@ import Account from "@/pages/account";
 import SinsList from "@/pages/sins-list";
 import EidPage from "@/pages/eid";
 import NotificationsPage from "@/pages/notifications";
+import InboxPage from "@/pages/inbox";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -78,6 +80,7 @@ function Router() {
         <Route path="/sins" component={SinsList} />
         <Route path="/eid" component={EidPage} />
         <Route path="/notifications" component={NotificationsPage} />
+        <Route path="/inbox" component={InboxPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -88,6 +91,7 @@ function App() {
   return (
     <SettingsProvider>
       <NotificationsProvider>
+        <AppNotificationsProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
@@ -102,6 +106,7 @@ function App() {
             <Toaster />
           </TooltipProvider>
         </QueryClientProvider>
+        </AppNotificationsProvider>
       </NotificationsProvider>
     </SettingsProvider>
   );

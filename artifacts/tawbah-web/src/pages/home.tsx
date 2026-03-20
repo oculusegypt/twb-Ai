@@ -1,10 +1,11 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart, Moon, Sun, Star, BookMarked, MessageCircle, Volume2, X, BookText, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
 import { useState, useEffect, useRef } from "react";
 import { useSettings } from "@/context/SettingsContext";
+import { useAppNotifications } from "@/context/AppNotificationsContext";
 import { IslamicHero } from "@/components/IslamicHero";
 import { getEidStatus } from "@/lib/eid-utils";
 
@@ -465,6 +466,31 @@ function EidEntryCard() {
   );
 }
 
+function HeroBellButton() {
+  const [, setLocation] = useLocation();
+  const { unreadCount } = useAppNotifications();
+
+  return (
+    <button
+      onClick={() => setLocation("/inbox")}
+      aria-label="صندوق الإشعارات"
+      className="absolute top-3 left-3 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 active:scale-95 transition-all"
+    >
+      <Bell size={20} className="text-white drop-shadow" />
+      {unreadCount > 0 && (
+        <motion.span
+          key={unreadCount}
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-sm"
+        >
+          {unreadCount > 9 ? "9+" : unreadCount}
+        </motion.span>
+      )}
+    </button>
+  );
+}
+
 export default function Home() {
   const { data: progress, isLoading } = useAppUserProgress();
   const [showSosToast, setShowSosToast] = useState(false);
@@ -495,7 +521,11 @@ export default function Home() {
         {showSosToast && <SosReturnToast onDismiss={() => setShowSosToast(false)} />}
       </AnimatePresence>
 
-      <IslamicHero />
+      {/* Hero + bell overlay */}
+      <div className="relative">
+        <IslamicHero />
+        <HeroBellButton />
+      </div>
 
       <div className="px-5 mt-4 relative z-10 flex flex-col gap-4">
 
