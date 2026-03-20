@@ -63,7 +63,7 @@ function SurahReaderModal({
   const [currentIdx, setCurrentIdx] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const ayahRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -154,17 +154,24 @@ function SurahReaderModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border shrink-0">
-          <div className="flex items-center gap-2">
-            <BookOpen size={16} className="text-primary" />
-            <span className="font-bold text-base">{surahName}</span>
-            {ayahs.length > 0 && (
-              <span className="text-xs text-muted-foreground">({ayahs.length} آية)</span>
-            )}
+        <div className="shrink-0 pt-4 pb-3 border-b border-border">
+          <div className="flex items-center justify-between px-5 mb-2">
+            <div className="w-8" />
+            <div className="text-center">
+              <p
+                className="text-2xl text-primary font-bold"
+                style={{ fontFamily: "'Amiri Quran', 'Amiri', serif" }}
+              >
+                {surahName.replace("سورة ", "")}
+              </p>
+              {ayahs.length > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">{ayahs.length} آية</p>
+              )}
+            </div>
+            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50">
+              <X size={18} />
+            </button>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-muted-foreground hover:text-foreground">
-            <X size={18} />
-          </button>
         </div>
 
         {/* Tabs */}
@@ -201,56 +208,79 @@ function SurahReaderModal({
             <p className="text-sm text-muted-foreground text-center py-8">تعذّر تحميل السورة. تأكد من اتصالك بالإنترنت.</p>
           )}
           {!loading && !error && (
-            <div className="flex flex-col gap-2 pb-2">
-              {ayahs.map((ayah, idx) => {
-                const isCurrent = currentIdx === idx;
-                const tafseerText = tafseerAyahs[ayah.numberInSurah - 1]?.text;
-                return (
-                  <div
-                    key={ayah.number}
-                    ref={(el) => { ayahRefs.current[idx] = el; }}
-                    onClick={() => playFromIdx(idx)}
-                    className={`rounded-xl border cursor-pointer transition-all select-none ${
-                      isCurrent
-                        ? "bg-primary/10 border-primary/40 shadow-sm"
-                        : "bg-muted/20 border-border/40 hover:bg-muted/40"
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5 p-3">
-                      <div className={`w-7 h-7 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 transition-all ${
-                        isCurrent
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-primary/10 text-primary"
-                      }`}>
-                        {isCurrent && isPlaying ? (
-                          <span className="flex gap-0.5 items-end h-3">
-                            <span className="w-0.5 bg-primary-foreground rounded-full animate-[bounce_0.8s_ease-in-out_infinite]" style={{ height: "40%" }} />
-                            <span className="w-0.5 bg-primary-foreground rounded-full animate-[bounce_0.8s_ease-in-out_0.15s_infinite]" style={{ height: "80%" }} />
-                            <span className="w-0.5 bg-primary-foreground rounded-full animate-[bounce_0.8s_ease-in-out_0.3s_infinite]" style={{ height: "55%" }} />
-                          </span>
-                        ) : (
-                          ayah.numberInSurah
-                        )}
-                      </div>
-                      <p className={`font-display text-[15px] leading-loose text-right flex-1 transition-colors ${
-                        isCurrent ? "text-foreground" : "text-foreground/80"
-                      }`} dir="rtl">
+            <div className="pb-4">
+              {/* Bismillah (not for Surah At-Tawbah = 9) */}
+              {surahNumber !== 9 && (
+                <p
+                  className="text-center text-muted-foreground mb-5 mt-1"
+                  dir="rtl"
+                  style={{ fontFamily: "'Amiri Quran', 'Amiri', serif", fontSize: "17px", letterSpacing: "0.05em" }}
+                >
+                  بِسۡمِ ٱللَّهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِيمِ
+                </p>
+              )}
+
+              {/* Mushaf-style flowing text */}
+              <div
+                dir="rtl"
+                className="leading-[3] text-[18px] text-right"
+                style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif", textAlign: "justify" }}
+              >
+                {ayahs.map((ayah, idx) => {
+                  const isCurrent = currentIdx === idx;
+                  return (
+                    <span key={ayah.number}>
+                      <span
+                        ref={(el) => { ayahRefs.current[idx] = el; }}
+                        onClick={() => playFromIdx(idx)}
+                        className={`cursor-pointer rounded transition-colors ${
+                          isCurrent
+                            ? "bg-primary/20 text-primary"
+                            : "hover:bg-muted/60"
+                        }`}
+                      >
                         {ayah.text}
+                      </span>
+                      {" "}
+                      <span
+                        onClick={() => playFromIdx(idx)}
+                        title={`الآية ${ayah.numberInSurah}`}
+                        className={`cursor-pointer inline-flex items-center justify-center rounded-full border text-[10px] font-bold align-middle transition-all mx-0.5 shrink-0 ${
+                          isCurrent
+                            ? "bg-primary text-primary-foreground border-primary w-5 h-5"
+                            : "bg-transparent text-primary border-primary/40 hover:bg-primary/10 w-5 h-5"
+                        }`}
+                        style={{ lineHeight: 1, fontSize: "9px", verticalAlign: "middle" }}
+                      >
+                        {ayah.numberInSurah}
+                      </span>
+                      {" "}
+                    </span>
+                  );
+                })}
+              </div>
+
+              {/* Tafseer section (shows below each ayah as separate blocks) */}
+              {showTafseer && tafseerAyahs.length > 0 && (
+                <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5">
+                  <h3 className="text-xs font-bold text-muted-foreground text-center mb-1">التفسير الميسّر</h3>
+                  {tafseerAyahs.map((t, idx) => (
+                    <div key={t.number} className={`rounded-xl p-3 border text-right ${currentIdx === idx ? "bg-primary/5 border-primary/20" : "bg-muted/20 border-border/40"}`}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[9px] font-bold flex items-center justify-center shrink-0">
+                          {ayahs[idx]?.numberInSurah ?? idx + 1}
+                        </span>
+                        <p className="text-[13px] font-display text-foreground/70 leading-relaxed flex-1 cursor-pointer hover:text-foreground" dir="rtl" onClick={() => playFromIdx(idx)}>
+                          {ayahs[idx]?.text}
+                        </p>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed pr-7" dir="rtl">
+                        {t.text}
                       </p>
                     </div>
-                    {showTafseer && tafseerText && (
-                      <div className="px-3 pb-3 pt-0">
-                        <div className="border-t border-border/40 pt-2">
-                          <p className="text-[11px] text-muted-foreground leading-relaxed" dir="rtl">
-                            <span className="font-bold text-primary ml-1">التفسير:</span>
-                            {tafseerText}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
