@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import { apiFetch, formatDate } from "@/lib/api";
+import { getUnreadCount, seedDailyNotifications } from "@/lib/notifications";
 
 interface UserProgress {
   id?: number;
@@ -32,7 +33,9 @@ interface AppContextValue {
   progress: UserProgress | null;
   liveStats: LiveStats | null;
   isLoading: boolean;
+  unreadCount: number;
   refreshProgress: () => Promise<void>;
+  refreshUnreadCount: () => Promise<void>;
   signCovenant: (sinCategory: string) => Promise<void>;
   updateProgress: (patch: Partial<UserProgress>) => Promise<void>;
 }
@@ -55,6 +58,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [progress, setProgress] = useState<UserProgress | null>(null);
   const [liveStats, setLiveStats] = useState<LiveStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const refreshUnreadCount = useCallback(async () => {
+    const count = await getUnreadCount();
+    setUnreadCount(count);
+  }, []);
 
   const refreshProgress = useCallback(async () => {
     try {
@@ -84,6 +93,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     };
     init();
   }, [refreshProgress, fetchLiveStats]);
+
+  useEffect(() => {
+    if (progress) {
+      seedDailyNotifications(
+        progress.streakDays ?? 0,
+        progress.day40Progress ?? 0,
+        progress.covenantSigned ?? false,
+      ).then(() => refreshUnreadCount());
+    }
+  }, [progress?.sessionId, refreshUnreadCount]);
 
   useEffect(() => {
     if (progress) {
@@ -123,7 +142,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         progress,
         liveStats,
         isLoading,
+        unreadCount,
         refreshProgress,
+        refreshUnreadCount,
         signCovenant,
         updateProgress,
       }}

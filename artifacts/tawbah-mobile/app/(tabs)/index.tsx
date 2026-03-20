@@ -24,7 +24,7 @@ export default function HomeScreen() {
   const C = isDark ? Colors.dark : Colors.light;
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === "web";
-  const { progress, liveStats, isLoading } = useApp();
+  const { progress, liveStats, isLoading, unreadCount } = useApp();
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
@@ -75,15 +75,35 @@ export default function HomeScreen() {
               دليل التوبة
             </Text>
           </View>
-          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+          <View style={styles.headerActions}>
+            {/* Bell */}
             <Pressable
-              style={[styles.sosBadge, { backgroundColor: C.danger }]}
-              onPress={handleSOS}
+              style={[styles.bellBtn, { backgroundColor: C.card, borderColor: C.border }]}
+              onPress={() => {
+                if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                router.push("/notifications");
+              }}
             >
-              <Feather name="alert-triangle" size={16} color="#fff" />
-              <Text style={[styles.sosText, { fontFamily: "Cairo_700Bold" }]}>نجدة</Text>
+              <Feather name="bell" size={18} color={unreadCount > 0 ? C.accent : C.textSecondary} />
+              {unreadCount > 0 && (
+                <View style={[styles.bellBadge, { backgroundColor: C.danger }]}>
+                  <Text style={[styles.bellBadgeText, { fontFamily: "Cairo_700Bold" }]}>
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </Text>
+                </View>
+              )}
             </Pressable>
-          </Animated.View>
+            {/* SOS */}
+            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+              <Pressable
+                style={[styles.sosBadge, { backgroundColor: C.danger }]}
+                onPress={handleSOS}
+              >
+                <Feather name="alert-triangle" size={16} color="#fff" />
+                <Text style={[styles.sosText, { fontFamily: "Cairo_700Bold" }]}>نجدة</Text>
+              </Pressable>
+            </Animated.View>
+          </View>
         </View>
 
         {/* Verse Card */}
@@ -276,6 +296,37 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingHorizontal: 20,
     paddingBottom: 16,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  bellBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  bellBadge: {
+    position: "absolute",
+    top: -4,
+    left: -4,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  bellBadgeText: {
+    color: "#fff",
+    fontSize: 10,
   },
   greeting: { fontSize: 13, marginBottom: 2 },
   title: { fontSize: 26 },
