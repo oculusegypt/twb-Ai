@@ -61,10 +61,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
     localStorage.setItem("tawbah_theme", theme);
-    const metaTheme = document.querySelector('meta[name="theme-color"]');
-    if (metaTheme) {
-      metaTheme.setAttribute("content", theme === "dark" ? "#0a1f14" : "#faf9f5");
-    }
+    // Update all theme-color meta tags to match the active theme
+    const color = theme === "dark" ? "#0a1f14" : "#145236";
+    document.querySelectorAll('meta[name="theme-color"]').forEach(el => {
+      el.setAttribute("content", color);
+    });
   }, [theme]);
 
   useEffect(() => {
