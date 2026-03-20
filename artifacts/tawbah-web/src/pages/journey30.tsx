@@ -284,20 +284,17 @@ function SurahReaderModal({
                   <h3 className="text-xs font-bold text-muted-foreground text-center mb-1">التفسير الميسّر</h3>
                   {tafseerAyahs.map((t, idx) => (
                     <div key={t.number} className={`rounded-xl p-3 border text-right ${currentIdx === idx ? "bg-primary/5 border-primary/20" : "bg-muted/20 border-border/40"}`}>
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-start gap-2">
                         <span
-                          className="text-primary shrink-0"
+                          className="text-primary shrink-0 mt-0.5"
                           style={{ fontFamily: "'Amiri Quran', 'Amiri', serif", fontSize: "15px" }}
                         >
                           {"\u06DD"}{toArabicIndic(ayahs[idx]?.numberInSurah ?? idx + 1)}
                         </span>
-                        <p className="text-[13px] font-display text-foreground/70 leading-relaxed flex-1 cursor-pointer hover:text-foreground" dir="rtl" onClick={() => playFromIdx(idx)}>
-                          {ayahs[idx]?.text}
+                        <p className="text-[12px] text-muted-foreground leading-relaxed flex-1" dir="rtl">
+                          {t.text}
                         </p>
                       </div>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed pr-7" dir="rtl">
-                        {t.text}
-                      </p>
                     </div>
                   ))}
                 </div>
