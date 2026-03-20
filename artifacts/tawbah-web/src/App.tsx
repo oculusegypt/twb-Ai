@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SettingsProvider } from "@/context/SettingsContext";
 
 import { Layout } from "@/components/layout";
+import AdminApp from "@/pages/admin/AdminApp";
 import Home from "@/pages/home";
 import Covenant from "@/pages/covenant";
 import DayOne from "@/pages/day-one";
@@ -86,7 +87,13 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
+            <Switch>
+              <Route path="/admin" component={AdminApp} />
+              <Route path="/admin/:rest*" component={AdminApp} />
+              <Route>
+                <Router />
+              </Route>
+            </Switch>
           </WouterRouter>
           <Toaster />
         </TooltipProvider>
