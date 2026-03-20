@@ -642,15 +642,6 @@ export default function Home() {
                 <p className="text-[11px] text-muted-foreground">خطوات مفصّلة لكل ذنب</p>
               </div>
             </Link>
-            <Link href="/sins" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
-                <BookText size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">قائمة الذنوب</h3>
-                <p className="text-[11px] text-muted-foreground">اعرف ذنبك وشروط توبته</p>
-              </div>
-            </Link>
             <Link href="/rajaa" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                 <BookOpen size={20} />

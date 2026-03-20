@@ -1,4 +1,6 @@
 import { Router, type IRouter } from "express";
+import { openai } from "@workspace/integrations-openai-ai-server";
+import { speechToText, ensureCompatibleFormat } from "@workspace/integrations-openai-ai-server/audio";
 import { db } from "@workspace/db";
 import {
   userProgressTable,
@@ -679,6 +681,93 @@ router.post("/community-duas/:id/amen", async (req, res) => {
     .returning({ amenCount: communityDuasTable.amenCount });
   if (!updated) { res.status(404).json({ error: "الدعاء غير موجود" }); return; }
   res.json({ amenCount: updated.amenCount });
+});
+
+// ══════════════════════════════════════════
+// AI SIN DETECTION
+// ══════════════════════════════════════════
+
+router.post("/detect-sins", async (req, res) => {
+  try {
+    const { description, audioBase64, sinsLookup } = req.body as {
+      description?: string;
+      audioBase64?: string;
+      sinsLookup: Array<{ id: string; name: string; category: string; description: string }>;
+    };
+
+    if (!sinsLookup?.length) {
+      res.status(400).json({ error: "sinsLookup is required" });
+      return;
+    }
+
+    let userText = description?.trim() ?? "";
+
+    // Transcribe audio if provided
+    if (audioBase64 && !userText) {
+      const rawBuffer = Buffer.from(audioBase64, "base64");
+      const { buffer, format } = await ensureCompatibleFormat(rawBuffer);
+      const transcript = await speechToText(buffer, format);
+      if (!transcript?.trim()) {
+        res.status(400).json({ error: "تعذّر فهم التسجيل الصوتي" });
+        return;
+      }
+      userText = transcript.trim();
+    }
+
+    if (!userText) {
+      res.status(400).json({ error: "description or audioBase64 is required" });
+      return;
+    }
+
+    const sinListText = sinsLookup
+      .map(s => `- id: "${s.id}" | الاسم: ${s.name} | التصنيف: ${s.category} | الوصف: ${s.description}`)
+      .join("\n");
+
+    const systemPrompt = `أنت مساعد إسلامي متخصص في تصنيف الذنوب وتحديد أنواعها من وصف المستخدم.
+مهمتك: تحليل وصف المستخدم واستخلاص الذنوب التي وقع فيها من القائمة المحددة فقط.
+
+قائمة الذنوب المتاحة:
+${sinListText}
+
+تعليمات مهمة:
+- استخرج فقط الذنوب الواردة في القائمة أعلاه — لا تخترع ذنوباً غير موجودة
+- إذا لم يتطابق الوصف مع أي ذنب، أعد قائمة فارغة
+- يمكن أن يتطابق الوصف مع ذنب أو أكثر
+- أجب بـ JSON فقط بلا أي نص إضافي
+
+الشكل المطلوب:
+{
+  "matchedIds": ["id1", "id2"],
+  "transcription": "نص ما قاله المستخدم بعد التنقية",
+  "explanation": "جملة قصيرة جداً تصف ما فهمته من الوصف"
+}`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-5-mini",
+      max_completion_tokens: 512,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userText },
+      ],
+      response_format: { type: "json_object" },
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    let parsed: { matchedIds?: string[]; transcription?: string; explanation?: string } = {};
+    try { parsed = JSON.parse(raw); } catch {}
+
+    const validIds = new Set(sinsLookup.map(s => s.id));
+    const matchedIds = (parsed.matchedIds ?? []).filter(id => validIds.has(id));
+
+    res.json({
+      matchedIds,
+      transcription: parsed.transcription ?? userText,
+      explanation: parsed.explanation ?? "",
+    });
+  } catch (err) {
+    console.error("Detect sins error:", err);
+    res.status(500).json({ error: "فشل في تحليل الوصف" });
+  }
 });
 
 export default router;
