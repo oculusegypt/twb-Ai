@@ -189,75 +189,119 @@ export default function NotificationsPage() {
       <div className="flex-1 overflow-y-auto px-5 pb-10">
 
         {/* ── Permission banner ─────────────────────────────────────────────── */}
-        {!supported ? (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-center gap-3"
-          >
-            <XCircle size={20} className="text-destructive flex-shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">الإشعارات غير مدعومة</p>
-              <p className="text-xs text-muted-foreground mt-0.5">المتصفح الحالي لا يدعم إشعارات الخلفية. استخدم Chrome أو Safari على الهاتف.</p>
-            </div>
-          </motion.div>
-        ) : permission === "denied" ? (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-center gap-3"
-          >
-            <BellOff size={20} className="text-destructive flex-shrink-0" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">الإشعارات محجوبة</p>
-              <p className="text-xs text-muted-foreground mt-0.5">فعّلها من إعدادات المتصفح ← الموقع ← الإشعارات.</p>
-            </div>
-          </motion.div>
-        ) : !settings.enabled || permission !== "granted" ? (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/25 rounded-2xl p-5"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-primary/20 rounded-2xl flex items-center justify-center text-primary">
-                <Shield size={20} />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-foreground">تفعيل الإشعارات</p>
-                <p className="text-xs text-muted-foreground mt-0.5">احصل على تذكيرات الصلاة والأذكار والرحلة</p>
-              </div>
-            </div>
-            <button
-              onClick={handleEnable}
-              disabled={enabling}
-              className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+        <AnimatePresence mode="wait">
+          {!supported ? (
+            <motion.div
+              key="unsupported"
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="mt-4 bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-center gap-3"
             >
-              <Bell size={15} />
-              {enabling ? "يجري التفعيل..." : "تفعيل الإشعارات الآن"}
-            </button>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-4 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 flex items-center justify-between gap-3"
-          >
-            <div className="flex items-center gap-3">
-              <CheckCircle size={20} className="text-emerald-500 flex-shrink-0" />
+              <XCircle size={20} className="text-destructive flex-shrink-0" />
               <div>
-                <p className="text-sm font-semibold text-foreground">الإشعارات مفعّلة ✓</p>
-                <p className="text-xs text-muted-foreground mt-0.5">يتم جدولة التذكيرات تلقائياً كل يوم</p>
+                <p className="text-sm font-semibold text-foreground">الإشعارات غير مدعومة</p>
+                <p className="text-xs text-muted-foreground mt-0.5">المتصفح الحالي لا يدعم إشعارات الخلفية. استخدم Chrome أو Safari على الهاتف.</p>
               </div>
-            </div>
-            <button
-              onClick={disableNotifications}
-              className="text-xs text-muted-foreground underline flex-shrink-0"
+            </motion.div>
+          ) : permission === "denied" ? (
+            <motion.div
+              key="denied"
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="mt-4 bg-destructive/10 border border-destructive/20 rounded-2xl p-5"
             >
-              إيقاف
-            </button>
-          </motion.div>
-        )}
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 bg-destructive/15 rounded-2xl flex items-center justify-center">
+                  <BellOff size={20} className="text-destructive" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">الإشعارات محجوبة</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">يجب السماح بالإشعارات من إعدادات المتصفح</p>
+                </div>
+              </div>
+              <div className="bg-destructive/10 rounded-xl p-3 text-xs text-destructive leading-relaxed">
+                افتح إعدادات المتصفح ← الخصوصية والأمان ← إعدادات الموقع ← الإشعارات ← ابحث عن هذا الموقع وغيّره إلى "سماح"
+              </div>
+            </motion.div>
+          ) : settings.enabled && permission === "granted" ? (
+            <motion.div
+              key="enabled"
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="mt-4 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-emerald-500/20 rounded-2xl flex items-center justify-center">
+                    <CheckCircle size={20} className="text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">الإشعارات مفعّلة</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">تذكيراتك تعمل في الخلفية تلقائياً</p>
+                  </div>
+                </div>
+                <button
+                  onClick={disableNotifications}
+                  className="flex items-center gap-1.5 text-xs text-destructive/70 hover:text-destructive border border-destructive/20 hover:border-destructive/40 px-3 py-1.5 rounded-xl transition-colors flex-shrink-0"
+                >
+                  <BellOff size={13} />
+                  إيقاف
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="activate"
+              initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+              className="mt-4 rounded-2xl overflow-hidden border border-primary/30 shadow-lg shadow-primary/10"
+            >
+              <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-5">
+                <div className="flex items-center gap-3 mb-4">
+                  <motion.div
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+                    className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-md shadow-primary/30"
+                  >
+                    <Bell size={22} className="text-primary-foreground" />
+                  </motion.div>
+                  <div>
+                    <p className="text-base font-bold text-foreground">فعّل الإشعارات</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">لا تفوّت وقت الصلاة والأذكار اليومية</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {[
+                    { icon: "🕌", text: "تنبيهات الصلاة" },
+                    { icon: "📿", text: "أذكار الصباح والمساء" },
+                    { icon: "📓", text: "تذكير المراجعة اليومية" },
+                    { icon: "🌙", text: "تنبيهات الصيام والجمعة" },
+                  ].map((item) => (
+                    <div key={item.text} className="flex items-center gap-2 bg-background/50 rounded-xl px-3 py-2">
+                      <span className="text-base">{item.icon}</span>
+                      <span className="text-xs font-medium text-foreground">{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={handleEnable}
+                  disabled={enabling}
+                  className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-primary/30 active:scale-[0.98] transition-all disabled:opacity-60"
+                >
+                  {enabling ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" />
+                      <span>يجري التفعيل...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Bell size={16} />
+                      <span>تفعيل الإشعارات الآن</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* ── Content (disabled overlay if not enabled) ──────────────────────── */}
         <div className={cn("transition-opacity", (!settings.enabled || permission !== "granted") && "opacity-40 pointer-events-none select-none")}>
