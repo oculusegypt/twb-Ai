@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Circle, ChevronDown, ChevronUp, AlertTriangle, Info, Plus, X } from "lucide-react";
+import { CheckCircle2, Circle, ChevronDown, ChevronUp, AlertTriangle, Info, Plus, X, Scale } from "lucide-react";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { getSessionId } from "@/lib/session";
+import { getSelectedSins, type Sin } from "@/lib/sins-data";
 
 type SinCategory = "khilwat" | "mali" | "huquq_nas" | "taqsir_faraid" | "other";
 type TabType = "main" | "specific";
@@ -244,6 +245,8 @@ export default function Kaffarah() {
   const [loading, setLoading] = useState(true);
   const [selectedSpecific, setSelectedSpecific] = useState<string[]>([]);
   const [showSelector, setShowSelector] = useState(false);
+  const [sinsDerivedKaffarahs, setSinsDerivedKaffarahs] = useState<Set<string>>(new Set());
+  const [sinsDerivedSins, setSinsDerivedSins] = useState<Sin[]>([]);
 
   useEffect(() => {
     const sessionId = getSessionId();
@@ -259,6 +262,15 @@ export default function Kaffarah() {
 
     const saved = localStorage.getItem("selected_kaffarahs");
     if (saved) setSelectedSpecific(JSON.parse(saved));
+
+    // Load sins-derived kaffarahs
+    const selectedSins = getSelectedSins();
+    const kaffarahSins = selectedSins.filter(s => s.kaffarahId);
+    if (kaffarahSins.length > 0) {
+      setSinsDerivedKaffarahs(new Set(kaffarahSins.map(s => s.kaffarahId!)));
+      setSinsDerivedSins(kaffarahSins);
+      setActiveTab("specific"); // auto-switch if sins have kaffarah
+    }
   }, []);
 
   const toggleStep = async (stepKey: string) => {
@@ -388,6 +400,23 @@ export default function Kaffarah() {
           </motion.div>
         ) : (
           <motion.div key="specific" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-5 flex flex-col gap-4">
+
+            {sinsDerivedSins.length > 0 && (
+              <div className="bg-gradient-to-l from-red-500/10 to-orange-500/5 border border-red-400/30 rounded-xl px-4 py-3 flex items-start gap-3">
+                <Scale size={15} className="text-red-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-1">كفارات مشتقة من ذنوبك المختارة</p>
+                  <div className="flex flex-wrap gap-1">
+                    {sinsDerivedSins.map(s => (
+                      <span key={s.id} className="text-[10px] bg-red-500/10 text-red-600 dark:text-red-400 border border-red-400/20 px-1.5 py-0.5 rounded-full font-bold">
+                        {s.icon} {s.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="bg-muted/30 rounded-xl p-3">
               <p className="text-xs text-muted-foreground leading-relaxed">
                 إن كان عليك كفارة نوعية محددة (كحنث في يمين، أو إفطار رمضان، أو غيرها) فأضفها هنا وتتبع خطواتها.
@@ -403,12 +432,17 @@ export default function Kaffarah() {
                   const doneObl = kaf.steps.filter(s => s.obligatory && completedSteps[`${id}_${s.key}`]).length;
                   const pct = totalObl > 0 ? Math.round((doneObl / totalObl) * 100) : 0;
                   return (
-                    <div key={id} className="bg-card rounded-xl border border-border overflow-hidden">
+                    <div key={id} className={`bg-card rounded-xl border overflow-hidden ${sinsDerivedKaffarahs.has(id) ? "border-red-400/40 ring-1 ring-red-400/20" : "border-border"}`}>
                       <div className={`flex items-center justify-between p-4 border-b border-border ${kaf.color} bg-opacity-30`}>
                         <div className="flex items-center gap-2">
                           <span className="text-xl">{kaf.icon}</span>
                           <div>
-                            <p className="font-bold text-sm">{kaf.title}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-bold text-sm">{kaf.title}</p>
+                              {sinsDerivedKaffarahs.has(id) && (
+                                <span className="text-[9px] bg-red-500 text-white px-1.5 py-0.5 rounded-full font-bold">من ذنوبك</span>
+                              )}
+                            </div>
                             <p className="text-[11px] text-muted-foreground">{kaf.subtitle}</p>
                           </div>
                         </div>

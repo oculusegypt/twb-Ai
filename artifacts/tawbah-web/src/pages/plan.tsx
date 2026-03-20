@@ -112,7 +112,7 @@ function PersonalPlanCard() {
     setDismissed(wasDismissed);
   }, []);
 
-  if (sins.length === 0 || dismissed) return null;
+  if (sins.length === 0) return null;
 
   const hasKaffarah = sins.some(s => s.kaffarahId);
   const allConditions = Array.from(new Set(sins.flatMap(s => s.conditions)));
@@ -121,6 +121,36 @@ function PersonalPlanCard() {
     setDismissed(true);
     localStorage.setItem("personal_plan_dismissed", "1");
   };
+
+  const handleReopen = () => {
+    setDismissed(false);
+    localStorage.removeItem("personal_plan_dismissed");
+  };
+
+  // Compact chip shown when card is dismissed
+  if (dismissed) {
+    return (
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {sins.slice(0, 3).map(sin => {
+          const meta = CATEGORY_META[sin.category];
+          return (
+            <span key={sin.id} className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full border ${meta.bg} ${meta.color} ${meta.borderColor}`}>
+              {sin.icon} {sin.name}
+            </span>
+          );
+        })}
+        {sins.length > 3 && (
+          <span className="text-[10px] text-muted-foreground">+{sins.length - 3}</span>
+        )}
+        <button onClick={handleReopen} className="mr-auto text-[10px] text-primary underline underline-offset-2">
+          عرض خطتي
+        </button>
+        <Link href="/sins" className="text-[10px] text-muted-foreground underline underline-offset-2">
+          تعديل
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -131,6 +161,9 @@ function PersonalPlanCard() {
       <div className="flex items-center gap-3 px-4 py-3 bg-primary/5 border-b border-primary/15">
         <Sparkles size={15} className="text-primary shrink-0" />
         <p className="font-bold text-sm flex-1">خطتك الشخصية</p>
+        <Link href="/sins" className="text-[10px] text-primary/70 hover:text-primary ml-1">
+          تعديل ذنوبك
+        </Link>
         <button onClick={handleDismiss} className="p-1 text-muted-foreground/50 hover:text-muted-foreground">
           <X size={14} />
         </button>
@@ -155,7 +188,7 @@ function PersonalPlanCard() {
             className="flex items-center gap-2 bg-red-500/10 border border-red-400/30 rounded-xl px-3 py-2.5 mb-3 hover:bg-red-500/15 transition-colors"
           >
             <Scale size={14} className="text-red-500 shrink-0" />
-            <p className="text-xs font-bold text-red-600 dark:text-red-400 flex-1">ذنوبك تستلزم كفارة شرعية</p>
+            <p className="text-xs font-bold text-red-600 dark:text-red-400 flex-1">ذنوبك تستلزم كفارة شرعية — اضغط للمتابعة</p>
             <ChevronRight size={13} className="text-red-400" />
           </Link>
         )}

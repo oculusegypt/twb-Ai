@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   ArrowLeft, ChevronDown, AlertTriangle, CheckCircle2,
-  BookOpen, Scale, Info, Plus, Check, X,
+  BookOpen, Scale, Info, Plus, Check, X, Save,
 } from "lucide-react";
 import {
   SINS, CATEGORY_META, SIN_CATEGORY_ORDER,
@@ -148,33 +148,71 @@ function SinDetailSheet({ sin, onClose }: { sin: Sin; onClose: () => void }) {
   );
 }
 
-function SinCard({ sin, onClick }: { sin: Sin; onClick: () => void }) {
+function SinCard({
+  sin, selected, onToggle, onDetail,
+}: { sin: Sin; selected: boolean; onToggle: () => void; onDetail: () => void }) {
   const meta = CATEGORY_META[sin.category];
   return (
-    <motion.button
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      onClick={onClick}
-      className="w-full flex items-center gap-3.5 bg-card border border-border rounded-xl px-4 py-3.5 text-right active:scale-[0.98] transition-all hover:shadow-sm"
-    >
-      <span className="text-2xl shrink-0">{sin.icon}</span>
-      <div className="flex-1 min-w-0">
-        <p className="font-bold text-sm truncate">{sin.name}</p>
-        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border mt-1 ${meta.bg} ${meta.color} ${meta.borderColor}`}>
+    <div className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 transition-all ${
+      selected ? `${meta.bg} ${meta.borderColor} ring-1 ring-inset ${meta.borderColor}` : "bg-card border-border"
+    }`}>
+      <button
+        onClick={onToggle}
+        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+          selected ? "bg-primary border-primary text-primary-foreground" : "border-muted-foreground/30"
+        }`}
+      >
+        {selected && <Check size={13} strokeWidth={3} />}
+      </button>
+      <span className="text-xl shrink-0">{sin.icon}</span>
+      <button className="flex-1 min-w-0 text-right" onClick={onDetail}>
+        <p className={`font-bold text-sm truncate ${selected ? meta.color : ""}`}>{sin.name}</p>
+        <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border mt-0.5 ${meta.bg} ${meta.color} ${meta.borderColor}`}>
           {meta.label}
         </span>
+      </button>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {sin.kaffarahId && <Scale size={12} className="text-red-400" />}
+        <button onClick={onDetail} className="p-1 text-muted-foreground">
+          <Info size={14} />
+        </button>
       </div>
-      {sin.kaffarahId && <Scale size={13} className="text-red-400 shrink-0" />}
-      <ChevronDown size={15} className="text-muted-foreground shrink-0 -rotate-90" />
-    </motion.button>
+    </div>
   );
 }
 
 export default function SinsList() {
+  const [, setLocation] = useLocation();
   const [filter, setFilter] = useState<FilterType>("all");
   const [selectedSin, setSelectedSin] = useState<Sin | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const existing = getSelectedSins();
+    setSelectedIds(new Set(existing.map(s => s.id)));
+  }, []);
 
   const filtered = filter === "all" ? SINS : SINS.filter(s => s.category === filter);
+
+  const toggleSin = (id: string) => {
+    setSaved(false);
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSave = () => {
+    const sins = SINS.filter(s => selectedIds.has(s.id));
+    saveSelectedSins(sins);
+    // reset personal plan dismissed so it shows again
+    localStorage.removeItem("personal_plan_dismissed");
+    setSaved(true);
+    setTimeout(() => setLocation("/plan"), 700);
+  };
 
   const counts: Record<FilterType, number> = {
     all: SINS.length,
@@ -193,21 +231,26 @@ export default function SinsList() {
   ];
 
   return (
-    <div className="flex flex-col flex-1 pb-8">
+    <div className="flex flex-col flex-1 pb-32">
       <div className="flex items-center gap-3 px-5 pt-4 mb-1">
-        <Link href="/" className="p-2 -ml-2 rounded-xl hover:bg-muted/50 text-muted-foreground">
+        <Link href="/plan" className="p-2 -ml-2 rounded-xl hover:bg-muted/50 text-muted-foreground">
           <ArrowLeft size={20} />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-display font-bold">قائمة الذنوب الذكية</h1>
-          <p className="text-xs text-muted-foreground">اعرف ذنبك وشروط توبته</p>
+          <p className="text-xs text-muted-foreground">اختر ذنبك لتُبنى خطتك عليه</p>
         </div>
+        {selectedIds.size > 0 && (
+          <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full border border-primary/20">
+            {selectedIds.size} مختار
+          </span>
+        )}
       </div>
 
-      <div className="mx-5 mt-3 mb-4 bg-amber-500/10 border border-amber-400/20 rounded-xl px-4 py-3 flex items-start gap-2">
-        <Info size={14} className="text-amber-500 mt-0.5 shrink-0" />
+      <div className="mx-5 mt-3 mb-4 bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 flex items-start gap-2">
+        <Info size={14} className="text-primary mt-0.5 shrink-0" />
         <p className="text-[11px] text-muted-foreground leading-relaxed">
-          اضغط على أي ذنب لتعرف شروط التوبة منه. الذنوب ذات الكفارة تُضاف مباشرة لخطتك.
+          حدّد ذنبك أو ذنوبك، ثم احفظ لتُحدَّث خطتك وكفاراتك تلقائياً. اضغط ℹ على أي ذنب لمعرفة شروط التوبة.
         </p>
       </div>
 
@@ -241,13 +284,47 @@ export default function SinsList() {
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ delay: i * 0.03 }}
+              transition={{ delay: i * 0.025 }}
             >
-              <SinCard sin={sin} onClick={() => setSelectedSin(sin)} />
+              <SinCard
+                sin={sin}
+                selected={selectedIds.has(sin.id)}
+                onToggle={() => toggleSin(sin.id)}
+                onDetail={() => setSelectedSin(sin)}
+              />
             </motion.div>
           ))}
         </AnimatePresence>
       </div>
+
+      {/* Sticky Save Button */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            className="fixed bottom-20 left-0 right-0 px-5 z-40"
+          >
+            <button
+              onClick={handleSave}
+              className="w-full max-w-md mx-auto flex items-center justify-center gap-2 py-4 bg-primary text-primary-foreground rounded-2xl font-bold text-sm shadow-2xl shadow-primary/30 active:scale-[0.98] transition-all"
+            >
+              {saved ? (
+                <>
+                  <Check size={18} />
+                  تم الحفظ! جاري الانتقال...
+                </>
+              ) : (
+                <>
+                  <Save size={18} />
+                  احفظ وحدّث خطتي ({selectedIds.size} {selectedIds.size === 1 ? "ذنب" : "ذنوب"})
+                </>
+              )}
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {selectedSin && (
