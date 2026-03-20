@@ -46,6 +46,22 @@ function RootLayoutNav() {
           animation: "slide_from_bottom",
         }}
       />
+      <Stack.Screen
+        name="prayer-times"
+        options={{ headerShown: false, animation: "slide_from_left" }}
+      />
+      <Stack.Screen
+        name="duas"
+        options={{ headerShown: false, animation: "slide_from_left" }}
+      />
+      <Stack.Screen
+        name="secret-dua"
+        options={{ headerShown: false, animation: "slide_from_left" }}
+      />
+      <Stack.Screen
+        name="community-duas"
+        options={{ headerShown: false, animation: "slide_from_left" }}
+      />
     </Stack>
   );
 }
