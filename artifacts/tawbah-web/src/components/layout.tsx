@@ -24,29 +24,6 @@ export function Layout({ children }: { children: ReactNode }) {
     <div className="min-h-[100dvh] flex flex-col bg-background relative pb-[80px] max-w-md mx-auto shadow-2xl shadow-black/5 overflow-hidden ring-1 ring-border/50">
       <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none -z-10" />
 
-      {!isSos && location === "/" && (
-        <div className="absolute top-0 inset-x-0 z-50 flex items-center justify-between px-4 pt-3 pb-1 pointer-events-none" />
-      )}
-
-      {!isSos && location !== "/" && (
-        <div className="relative h-[120px] w-full overflow-hidden shrink-0">
-          <img
-            src="/images/mosque-silhouette.png"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover object-bottom opacity-30"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-primary via-primary/80 to-primary/60" />
-          <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-background to-transparent" />
-          <div className="absolute inset-0 flex items-center justify-center pb-2">
-            <img
-              src="/images/logo.png"
-              alt="توبة نصوحة"
-              className="h-16 w-16 object-cover rounded-full drop-shadow-2xl ring-4 ring-white/20 select-none"
-            />
-          </div>
-        </div>
-      )}
-
       <main className="flex-1 flex flex-col relative z-0">
         <AnimatePresence mode="wait">
           <motion.div
