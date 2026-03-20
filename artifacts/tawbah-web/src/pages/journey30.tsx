@@ -215,13 +215,23 @@ function SurahReaderModal({
             <div className="pb-4">
               {/* Bismillah (not for Surah At-Tawbah = 9) */}
               {surahNumber !== 9 && (
-                <p
-                  className="text-center text-muted-foreground mb-5 mt-1"
-                  dir="rtl"
-                  style={{ fontFamily: "'Amiri Quran', 'Amiri', serif", fontSize: "17px", letterSpacing: "0.05em" }}
-                >
-                  بِسۡمِ ٱللَّهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِيمِ
-                </p>
+                <div className="flex flex-col items-center my-5">
+                  <div className="flex items-center w-full gap-3 mb-1">
+                    <div className="flex-1 h-px bg-border/60" />
+                    <p
+                      className="text-center text-foreground"
+                      dir="rtl"
+                      style={{
+                        fontFamily: "'Amiri Quran', 'Amiri', serif",
+                        fontSize: "20px",
+                        lineHeight: 2,
+                      }}
+                    >
+                      بِسۡمِ ٱللَّهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِيمِ
+                    </p>
+                    <div className="flex-1 h-px bg-border/60" />
+                  </div>
+                </div>
               )}
 
               {/* Mushaf-style flowing text */}
@@ -255,7 +265,9 @@ function SurahReaderModal({
                         style={{
                           fontFamily: "'Amiri Quran', 'Amiri', serif",
                           fontSize: "1em",
-                          verticalAlign: "middle",
+                          position: "relative",
+                          top: "-0.12em",
+                          display: "inline-block",
                         }}
                       >
                         {"\u06DD"}{toArabicIndic(ayah.numberInSurah)}
