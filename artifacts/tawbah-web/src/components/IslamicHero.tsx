@@ -505,14 +505,42 @@ export function IslamicHero() {
         </motion.div>
       </AnimatePresence>
 
-      {/* Bottom fade to page background */}
+      {/* Bottom fade to page background — stronger */}
       <div
-        className="absolute inset-x-0 bottom-0 h-28 pointer-events-none"
+        className="absolute inset-x-0 bottom-0 pointer-events-none"
         style={{
+          height: "60%",
           background:
-            "linear-gradient(to top, var(--background, #fff) 0%, transparent 100%)",
+            "linear-gradient(to top, var(--background, #fff) 20%, transparent 100%)",
         }}
       />
+
+      {/* Centered circular logo */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={period + "-logo"}
+          className="absolute inset-x-0 flex justify-center pointer-events-none"
+          style={{ top: 22 }}
+          initial={{ opacity: 0, scale: 0.75, y: -8 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.85 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <div
+            className="relative w-16 h-16 rounded-full overflow-hidden"
+            style={{
+              border: `2.5px solid ${cfg.accentColor}99`,
+              boxShadow: `0 0 18px ${cfg.accentColor}66, 0 0 36px ${cfg.accentColor}33, inset 0 0 12px ${cfg.accentColor}22`,
+            }}
+          >
+            <img
+              src="/images/logo.png"
+              alt="التوبة"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Content */}
       <div className="absolute inset-0 flex flex-col justify-end p-5 pb-8">
