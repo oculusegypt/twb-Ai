@@ -405,9 +405,13 @@ export default function Home() {
         <img
           src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
           alt="Islamic Pattern"
-          className="absolute inset-0 w-full h-full object-cover object-center scale-105"
+          className="absolute inset-0 w-full h-full object-cover object-center scale-105 dark:opacity-60"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/50 to-primary/20 mix-blend-multiply" />
+        {/* Light mode: multiply blend tints the image with primary color */}
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/50 to-primary/20 mix-blend-multiply dark:hidden" />
+        {/* Dark mode: normal overlay keeps image visible with deep dark gradient */}
+        <div className="absolute inset-0 hidden dark:block bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
+        {/* Bottom fade — adapts automatically via `background` CSS variable */}
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background via-background/60 to-transparent" />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-primary-foreground p-6 text-center pb-10">
           <img
