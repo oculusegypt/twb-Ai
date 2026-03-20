@@ -384,7 +384,14 @@ function SosReturnToast({ onDismiss }: { onDismiss: () => void }) {
 
 function EidEntryCard() {
   const eid = getEidStatus();
+
+  const dismissKey = `eid_banner_dismissed_${eid.period}`;
+  const [dismissed, setDismissed] = useState(() => {
+    try { return localStorage.getItem(dismissKey) === "1"; } catch { return false; }
+  });
+
   if (!eid.isActive && (eid.daysUntilEid === null || eid.daysUntilEid > 14)) return null;
+  if (dismissed) return null;
 
   const isEidDay = eid.period === "eid_fitr" || eid.period === "eid_adha";
   const isAdha = eid.eidType === "adha";
@@ -412,26 +419,46 @@ function EidEntryCard() {
     ? "أفضل أيام السنة — أكثر من الطاعة والتوبة"
     : "استعد وأخرج زكاة الفطر — اكتشف صفحة العيد";
 
+  const handleDismiss = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDismissed(true);
+    try { localStorage.setItem(dismissKey, "1"); } catch {}
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <Link
-        href="/eid"
-        className={`flex items-center gap-4 bg-gradient-to-l ${gradientClass} border rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all`}
-      >
-        <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shadow-md shrink-0`}>
-          <span className="text-xl">{isAdha ? "🐑" : isPreAdha ? "✨" : "🌙"}</span>
-        </div>
-        <div className="flex-1">
-          <h3 className="font-bold text-sm">{title}</h3>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
-        </div>
-        <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
-      </Link>
-    </motion.div>
+    <AnimatePresence>
+      {!dismissed && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+          transition={{ duration: 0.35 }}
+          className="relative"
+        >
+          <Link
+            href="/eid"
+            className={`flex items-center gap-4 bg-gradient-to-l ${gradientClass} border rounded-2xl p-4 pr-10 hover:shadow-md active:scale-[0.98] transition-all`}
+          >
+            <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shadow-md shrink-0`}>
+              <span className="text-xl">{isAdha ? "🐑" : isPreAdha ? "✨" : "🌙"}</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-sm">{title}</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
+            </div>
+            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+          </Link>
+          <button
+            onClick={handleDismiss}
+            aria-label="إغلاق"
+            className="absolute top-2 left-2 w-6 h-6 flex items-center justify-center rounded-full bg-background/70 hover:bg-background border border-border/50 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X size={12} />
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
