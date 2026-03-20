@@ -1,9 +1,9 @@
 const ICON = '/images/logo.png';
 const BADGE = '/images/logo.png';
-const APP_NAME = 'دليل التوبة النصوح';
 
 // Active notification timers
 const activeTimers = new Map();
+let midnightTimer = null;
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
@@ -48,6 +48,40 @@ self.addEventListener('notificationclick', (event) => {
 function clearAllTimers() {
   for (const id of activeTimers.values()) clearTimeout(id);
   activeTimers.clear();
+  if (midnightTimer !== null) {
+    clearTimeout(midnightTimer);
+    midnightTimer = null;
+  }
+}
+
+// Broadcast to all open app windows to trigger a reschedule
+function broadcastRescheduleNeeded() {
+  clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+    for (const client of windowClients) {
+      client.postMessage({ type: 'RESCHEDULE_NEEDED' });
+    }
+  });
+}
+
+// Schedule a timer that fires at 00:01 next day to trigger rescheduling for the new day
+function scheduleMidnightReset() {
+  if (midnightTimer !== null) {
+    clearTimeout(midnightTimer);
+    midnightTimer = null;
+  }
+  const now = new Date();
+  const nextMidnight = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0, 1, 0, 0  // 00:01:00 next day
+  );
+  const delay = nextMidnight.getTime() - now.getTime();
+
+  midnightTimer = setTimeout(() => {
+    midnightTimer = null;
+    broadcastRescheduleNeeded();
+  }, delay);
 }
 
 function scheduleNotifications(notifications) {
@@ -76,4 +110,7 @@ function scheduleNotifications(notifications) {
 
     activeTimers.set(notif.tag, timerId);
   }
+
+  // Always schedule a midnight reset so tomorrow's notifications are rescheduled
+  scheduleMidnightReset();
 }

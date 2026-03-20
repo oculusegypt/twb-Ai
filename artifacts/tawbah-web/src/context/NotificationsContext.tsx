@@ -36,17 +36,41 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     });
   }, [supported]);
 
-  // Reschedule whenever settings change (if enabled)
+  // Reschedule whenever settings change (if enabled), or clear if disabled
   const reschedule = useCallback(async () => {
     const fresh = loadSettings();
-    if (fresh.enabled && getPermission() === "granted") {
-      await scheduleAll(fresh);
-    }
+    await scheduleAll(fresh);
   }, []);
 
   useEffect(() => {
     reschedule();
   }, [settings, reschedule]);
+
+  // Re-schedule when the user opens the app (tab becomes visible) so next-day
+  // notifications are always up-to-date even if the SW was killed overnight.
+  useEffect(() => {
+    if (!supported) return;
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        reschedule();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [supported, reschedule]);
+
+  // Listen for RESCHEDULE_NEEDED messages from the service worker.
+  // The SW sends this at midnight so the next day's notifications are scheduled.
+  useEffect(() => {
+    if (!supported) return;
+    const handleSwMessage = (event: MessageEvent) => {
+      if (event.data?.type === "RESCHEDULE_NEEDED") {
+        reschedule();
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", handleSwMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", handleSwMessage);
+  }, [supported, reschedule]);
 
   const updateSettings = useCallback((patch: Partial<NotificationSettings>) => {
     setSettings((prev) => {
@@ -68,7 +92,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [updateSettings]);
 
   const disableNotifications = useCallback(() => {
-    clearAll();
+    void clearAll();
     updateSettings({ enabled: false });
   }, [updateSettings]);
 

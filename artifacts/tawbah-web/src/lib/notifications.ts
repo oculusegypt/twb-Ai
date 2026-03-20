@@ -123,9 +123,18 @@ export async function registerSW(): Promise<ServiceWorkerRegistration | null> {
   }
 }
 
-function postToSW(message: unknown) {
-  const sw = navigator.serviceWorker?.controller;
-  if (sw) sw.postMessage(message);
+// Post a message to the active service worker reliably.
+// Using navigator.serviceWorker.ready guarantees we have an active SW,
+// avoiding the null-controller bug that happens on first page load.
+async function postToSW(message: unknown): Promise<void> {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sw = reg.active;
+    if (sw) sw.postMessage(message);
+  } catch {
+    // SW unavailable — ignore silently
+  }
 }
 
 // ── Scheduled notification type ───────────────────────────────────────────────
@@ -409,13 +418,17 @@ export async function buildScheduledNotifications(
 // ── Main scheduling entry point ───────────────────────────────────────────────
 
 export async function scheduleAll(settings: NotificationSettings): Promise<void> {
-  if (!settings.enabled || getPermission() !== "granted") return;
+  if (!settings.enabled || getPermission() !== "granted") {
+    // If disabled, make sure the SW clears any stale timers
+    await clearAll();
+    return;
+  }
   if (!("serviceWorker" in navigator)) return;
   await navigator.serviceWorker.ready;
   const notifs = await buildScheduledNotifications(settings);
-  postToSW({ type: "SCHEDULE_NOTIFICATIONS", notifications: notifs });
+  await postToSW({ type: "SCHEDULE_NOTIFICATIONS", notifications: notifs });
 }
 
-export function clearAll(): void {
-  postToSW({ type: "CLEAR_ALL" });
+export async function clearAll(): Promise<void> {
+  await postToSW({ type: "CLEAR_ALL" });
 }

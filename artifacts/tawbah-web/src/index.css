@@ -108,6 +108,10 @@
     @apply bg-background text-foreground font-sans antialiased;
     direction: rtl;
     -webkit-tap-highlight-color: transparent;
+    /* Extend content to the very bottom on PWA fullscreen / edge-to-edge */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-top: env(safe-area-inset-top, 0px);
+    min-height: 100dvh;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
