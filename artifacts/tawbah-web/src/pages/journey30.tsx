@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Lock, Star, Trophy, Flame, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  CheckCircle2, Lock, Star, Trophy, Flame, ChevronDown, ChevronUp,
+  BookOpen, BookText, X, Loader2, Play, Square, CheckSquare
+} from "lucide-react";
 import { getSessionId } from "@/lib/session";
 
 interface JourneyDay {
@@ -19,6 +22,321 @@ interface JourneyData {
   completedCount: number;
   currentDay: number;
   streakDays: number;
+}
+
+const SURAH_LENGTHS = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+
+function toGlobalAyah(surah: number, ayah: number): number {
+  let count = 0;
+  for (let i = 0; i < surah - 1; i++) count += SURAH_LENGTHS[i] ?? 0;
+  return count + ayah;
+}
+
+const SURAH_TASK_MAP: Array<{ pattern: RegExp; surahs: Array<{ number: number; name: string }> }> = [
+  { pattern: /سورة التوبة/,       surahs: [{ number: 9,   name: "سورة التوبة" }] },
+  { pattern: /قصة يوسف/,          surahs: [{ number: 12,  name: "سورة يوسف" }] },
+  { pattern: /المعوذتين/,          surahs: [{ number: 113, name: "سورة الفلق" }, { number: 114, name: "سورة الناس" }] },
+  { pattern: /الكهف/,              surahs: [{ number: 18,  name: "سورة الكهف" }] },
+  { pattern: /الفاتحة/,            surahs: [{ number: 1,   name: "سورة الفاتحة" }] },
+  { pattern: /البقرة/,             surahs: [{ number: 2,   name: "سورة البقرة" }] },
+  { pattern: /آية الكرسي/,        surahs: [{ number: 2,   name: "سورة البقرة (آية الكرسي)" }] },
+];
+
+function extractSurahsFromTask(task: string): Array<{ number: number; name: string }> | null {
+  for (const entry of SURAH_TASK_MAP) {
+    if (entry.pattern.test(task)) return entry.surahs;
+  }
+  return null;
+}
+
+interface SurahAyah { number: number; numberInSurah: number; text: string; }
+
+function SurahReaderModal({
+  surahNumber, surahName, onClose
+}: { surahNumber: number; surahName: string; onClose: () => void }) {
+  const [ayahs, setAyahs] = useState<SurahAyah[]>([]);
+  const [tafseerAyahs, setTafseerAyahs] = useState<SurahAyah[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [showTafseer, setShowTafseer] = useState(false);
+  const [tafseerLoading, setTafseerLoading] = useState(false);
+  const [playingAyah, setPlayingAyah] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`);
+        const json = await res.json();
+        setAyahs(json?.data?.ayahs ?? []);
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [surahNumber]);
+
+  const loadTafseer = async () => {
+    if (tafseerAyahs.length > 0) { setShowTafseer(true); return; }
+    setTafseerLoading(true);
+    try {
+      const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.muyassar`);
+      const json = await res.json();
+      setTafseerAyahs(json?.data?.ayahs ?? []);
+      setShowTafseer(true);
+    } catch {
+    } finally {
+      setTafseerLoading(false);
+    }
+  };
+
+  const playAyah = (ayahInSurah: number) => {
+    const globalNum = toGlobalAyah(surahNumber, ayahInSurah);
+    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${globalNum}.mp3`;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = url;
+      audioRef.current.play();
+    } else {
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.play();
+      audio.onended = () => setPlayingAyah(null);
+    }
+    setPlayingAyah(ayahInSurah);
+  };
+
+  const stopAudio = () => {
+    audioRef.current?.pause();
+    setPlayingAyah(null);
+  };
+
+  useEffect(() => {
+    return () => { audioRef.current?.pause(); };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative mt-auto mx-auto w-full max-w-lg bg-card rounded-t-2xl border border-border shadow-2xl flex flex-col"
+        style={{ maxHeight: "90vh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border shrink-0">
+          <div className="flex items-center gap-2">
+            <BookOpen size={16} className="text-primary" />
+            <span className="font-bold text-base">{surahName}</span>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-muted-foreground hover:text-foreground">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="flex gap-2 px-5 py-3 border-b border-border shrink-0">
+          <button
+            onClick={() => setShowTafseer(false)}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all border ${
+              !showTafseer ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 border-border text-muted-foreground"
+            }`}
+          >
+            <BookOpen size={13} />
+            قراءة السورة
+          </button>
+          <button
+            onClick={loadTafseer}
+            disabled={tafseerLoading}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition-all border ${
+              showTafseer ? "bg-primary text-primary-foreground border-primary" : "bg-muted/50 border-border text-muted-foreground"
+            }`}
+          >
+            {tafseerLoading ? <Loader2 size={13} className="animate-spin" /> : <BookText size={13} />}
+            التفسير الميسّر
+          </button>
+        </div>
+
+        <div className="overflow-y-auto flex-1 px-4 py-3">
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 size={24} className="animate-spin text-primary" />
+            </div>
+          )}
+          {error && (
+            <p className="text-sm text-muted-foreground text-center py-8">تعذّر تحميل السورة. تأكد من اتصالك بالإنترنت.</p>
+          )}
+          {!loading && !error && (
+            <div className="flex flex-col gap-3">
+              {ayahs.map((ayah) => {
+                const tafseerText = tafseerAyahs[ayah.numberInSurah - 1]?.text;
+                return (
+                  <div key={ayah.number} className="bg-muted/30 rounded-xl p-3 border border-border/50">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <span className="w-6 h-6 bg-primary/10 text-primary rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                        {ayah.numberInSurah}
+                      </span>
+                      <p className="font-display text-[15px] leading-loose text-foreground text-right flex-1" dir="rtl">
+                        {ayah.text}
+                      </p>
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => playingAyah === ayah.numberInSurah ? stopAudio() : playAyah(ayah.numberInSurah)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+                          playingAyah === ayah.numberInSurah
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-muted/60 border-border text-muted-foreground hover:text-primary hover:border-primary/40"
+                        }`}
+                      >
+                        {playingAyah === ayah.numberInSurah ? (
+                          <>
+                            <span className="w-2 h-2 bg-primary-foreground rounded-sm" />
+                            إيقاف
+                          </>
+                        ) : (
+                          <>
+                            <Play size={11} />
+                            استمع
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    {showTafseer && tafseerText && (
+                      <div className="mt-2 pt-2 border-t border-border/40">
+                        <p className="text-[11px] text-muted-foreground leading-relaxed" dir="rtl">
+                          <span className="font-bold text-primary ml-1">التفسير:</span>
+                          {tafseerText}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SurahButton({ task }: { task: string }) {
+  const [openSurah, setOpenSurah] = useState<{ number: number; name: string } | null>(null);
+  const surahs = extractSurahsFromTask(task);
+  if (!surahs) return null;
+
+  if (surahs.length === 1) {
+    return (
+      <>
+        <button
+          onClick={() => setOpenSurah(surahs[0]!)}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
+        >
+          <BookOpen size={12} />
+          قراءة السورة
+        </button>
+        {openSurah && (
+          <SurahReaderModal
+            surahNumber={openSurah.number}
+            surahName={openSurah.name}
+            onClose={() => setOpenSurah(null)}
+          />
+        )}
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex gap-1.5 flex-wrap">
+        {surahs.map((s) => (
+          <button
+            key={s.number}
+            onClick={() => setOpenSurah(s)}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
+          >
+            <BookOpen size={12} />
+            {s.name}
+          </button>
+        ))}
+      </div>
+      {openSurah && (
+        <SurahReaderModal
+          surahNumber={openSurah.number}
+          surahName={openSurah.name}
+          onClose={() => setOpenSurah(null)}
+        />
+      )}
+    </>
+  );
+}
+
+function useTaskCompletion(dayNumber: number, tasksCount: number) {
+  const key = `journey30-tasks-day-${dayNumber}`;
+  const [checked, setChecked] = useState<boolean[]>(() => {
+    try {
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        const arr = JSON.parse(saved) as boolean[];
+        if (arr.length === tasksCount) return arr;
+      }
+    } catch {}
+    return Array(tasksCount).fill(false);
+  });
+
+  const toggle = (i: number) => {
+    const next = checked.map((v, idx) => (idx === i ? !v : v));
+    setChecked(next);
+    try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+  };
+
+  const allDone = checked.every(Boolean);
+  return { checked, toggle, allDone };
+}
+
+function DayTaskList({ day }: { day: JourneyDay }) {
+  const { checked, toggle, allDone } = useTaskCompletion(day.day, day.tasks.length);
+
+  return (
+    <div>
+      <h4 className="text-xs font-bold text-muted-foreground mb-2">مهام اليوم:</h4>
+      {allDone && !day.completed && (
+        <div className="mb-2 flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/5 rounded-lg px-3 py-2 border border-primary/15">
+          <CheckCircle2 size={13} />
+          أكملت جميع المهام! اضغط الزر أدناه لتسجيل اليوم.
+        </div>
+      )}
+      <div className="flex flex-col gap-2.5">
+        {day.tasks.map((task, i) => {
+          const surahsForTask = extractSurahsFromTask(task);
+          return (
+            <div key={i} className={`rounded-xl border transition-all ${checked[i] ? "bg-primary/5 border-primary/15" : "bg-muted/20 border-border/50"}`}>
+              <div className="flex items-start gap-2.5 p-2.5">
+                <button
+                  onClick={() => toggle(i)}
+                  className="shrink-0 mt-0.5"
+                >
+                  {checked[i] ? (
+                    <CheckSquare size={18} className="text-primary" />
+                  ) : (
+                    <Square size={18} className="text-muted-foreground/50" />
+                  )}
+                </button>
+                <span className={`text-sm flex-1 leading-relaxed ${checked[i] ? "line-through text-muted-foreground" : ""}`}>
+                  {task}
+                </span>
+              </div>
+              {surahsForTask && (
+                <div className="px-2.5 pb-2.5 flex flex-wrap gap-1.5">
+                  <SurahButton task={task} />
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export default function Journey30() {
@@ -193,19 +511,7 @@ export default function Journey30() {
                         </p>
                       </div>
 
-                      <div>
-                        <h4 className="text-xs font-bold text-muted-foreground mb-2">مهام اليوم:</h4>
-                        <div className="flex flex-col gap-2">
-                          {day.tasks.map((task, i) => (
-                            <div key={i} className="flex items-start gap-2">
-                              <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 mt-0.5">
-                                <span className="text-[10px] font-bold">{i + 1}</span>
-                              </div>
-                              <span className="text-sm">{task}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                      <DayTaskList day={day} />
 
                       {!day.completed && (
                         <button

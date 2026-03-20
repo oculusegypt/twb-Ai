@@ -1,6 +1,6 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Sparkles, Clock, Search, Heart, X, Play, Loader2 } from "lucide-react";
+import { BookOpen, Sparkles, Clock, Search, Heart, X, Play, Loader2, BookText } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 
 type VerseCategory = "رجاء" | "ترغيب" | "نعيم" | "طمأنينة";
@@ -440,6 +440,95 @@ function HadithAudioPlayer({ hadith, note }: { hadith: string; note: string }) {
   return <AudioPlayer payload={{ type: "hadith", hadith, note }} />;
 }
 
+interface TafseerModalProps {
+  surah: number;
+  ayah: number;
+  source: string;
+  arabic: string;
+  onClose: () => void;
+}
+
+function TafseerModal({ surah, ayah, source, arabic, onClose }: TafseerModalProps) {
+  const [tafseer, setTafseer] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/ar.muyassar`);
+        const json = await res.json();
+        setTafseer(json?.data?.text ?? null);
+      } catch {
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [surah, ayah]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative mt-auto mx-auto w-full max-w-lg bg-card rounded-t-2xl border border-border shadow-2xl max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border shrink-0">
+          <div className="flex items-center gap-2">
+            <BookText size={16} className="text-primary" />
+            <span className="font-bold text-sm">تفسير الآية</span>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-muted-foreground hover:text-foreground">
+            <X size={18} />
+          </button>
+        </div>
+        <div className="overflow-y-auto flex-1 px-5 py-4 flex flex-col gap-4">
+          <div className="bg-primary/5 rounded-xl p-4 border border-primary/10">
+            <p className="font-display text-[14px] leading-loose text-foreground text-center mb-2">{arabic}</p>
+            <p className="text-xs text-primary font-bold text-center">{source}</p>
+          </div>
+          <div>
+            <h3 className="text-xs font-bold text-muted-foreground mb-2">التفسير الميسّر:</h3>
+            {loading && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 size={20} className="animate-spin text-primary" />
+              </div>
+            )}
+            {error && (
+              <p className="text-sm text-muted-foreground text-center py-4">تعذّر تحميل التفسير. تأكد من اتصالك بالإنترنت.</p>
+            )}
+            {tafseer && (
+              <p className="text-sm leading-loose text-foreground/90 bg-muted/40 rounded-xl p-4 border border-border" dir="rtl">
+                {tafseer}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VerseTafseerButton({ surah, ayah, source, arabic }: { surah: number; ayah: number; source: string; arabic: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border bg-muted/60 border-border text-muted-foreground hover:text-primary hover:border-primary/40"
+        title="تفسير الآية"
+      >
+        <BookText size={12} />
+        <span>تفسير</span>
+      </button>
+      {open && (
+        <TafseerModal surah={surah} ayah={ayah} source={source} arabic={arabic} onClose={() => setOpen(false)} />
+      )}
+    </>
+  );
+}
+
 export default function Rajaa() {
   const [activeTab, setActiveTab] = useState<TabType>("quran");
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -573,8 +662,9 @@ export default function Rajaa() {
                         <p className="font-display text-[15px] leading-loose text-foreground mb-3 text-center">{v.arabic}</p>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs text-primary font-bold">{v.source}</span>
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
                             <VerseAudioPlayer surah={v.surah} ayah={v.ayah} />
+                            <VerseTafseerButton surah={v.surah} ayah={v.ayah} source={v.source} arabic={v.arabic} />
                             <button onClick={() => setExpanded(isOpen ? null : key)} className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
                               {isOpen ? "إغلاق" : "تأمل ▾"}
                             </button>
