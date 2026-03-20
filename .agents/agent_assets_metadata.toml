@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "WlqOHSZfi6Nlp17WG5UHR"
+uri = "file://README.md"
+type = "text"
+title = "README — دليل التوبة النصوح"

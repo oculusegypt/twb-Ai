@@ -434,28 +434,31 @@ function EidEntryCard() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, height: 0, marginBottom: 0 }}
           transition={{ duration: 0.35 }}
-          className="relative"
+          className={`flex items-center gap-3 bg-gradient-to-l ${gradientClass} border rounded-2xl p-3.5 shadow-sm`}
         >
-          <Link
-            href="/eid"
-            className={`flex items-center gap-4 bg-gradient-to-l ${gradientClass} border rounded-2xl p-4 pr-10 hover:shadow-md active:scale-[0.98] transition-all`}
-          >
-            <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shadow-md shrink-0`}>
-              <span className="text-xl">{isAdha ? "🐑" : isPreAdha ? "✨" : "🌙"}</span>
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">{title}</h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
-            </div>
-            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+          <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center shadow-md shrink-0`}>
+            <span className="text-lg">{isAdha ? "🐑" : isPreAdha ? "✨" : "🌙"}</span>
+          </div>
+          <Link href="/eid" className="flex-1 min-w-0 active:opacity-70 transition-opacity">
+            <h3 className="font-bold text-sm leading-tight">{title}</h3>
+            <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{subtitle}</p>
           </Link>
-          <button
-            onClick={handleDismiss}
-            aria-label="إغلاق"
-            className="absolute top-2 left-2 w-6 h-6 flex items-center justify-center rounded-full bg-background/70 hover:bg-background border border-border/50 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <X size={12} />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Link
+              href="/eid"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-background/60 hover:bg-background border border-border/40 text-foreground/70 hover:text-foreground transition-colors"
+              aria-label="الذهاب لصفحة العيد"
+            >
+              <ArrowLeft size={15} />
+            </Link>
+            <button
+              onClick={handleDismiss}
+              aria-label="إغلاق"
+              className="w-8 h-8 flex items-center justify-center rounded-xl bg-background/40 hover:bg-background/80 border border-border/30 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <X size={13} />
+            </button>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
