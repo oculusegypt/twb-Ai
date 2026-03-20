@@ -6,6 +6,7 @@ import { LiveStats } from "@/components/live-stats";
 import { useState, useEffect, useRef } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { IslamicHero } from "@/components/IslamicHero";
+import { getEidStatus } from "@/lib/eid-utils";
 
 type BannerType = "season" | "nafl" | "ayah" | "hadith" | "dua" | "wisdom";
 
@@ -48,24 +49,34 @@ const BANNER_POOL: BannerItem[] = [
 ];
 
 function getSeasonBanner(): BannerItem | null {
+  const eid = getEidStatus();
+
+  if (eid.period === "eid_fitr")
+    return { type: "season", label: "🌙 عيد الفطر المبارك", content: `عيد فطر مبارك — تقبّل الله منا ومنكم. اليوم ${eid.eidDay === 1 ? "الأول" : eid.eidDay === 2 ? "الثاني" : "الثالث"} من أيام العيد.`, icon: "star", seasonColor: "from-violet-600/25 to-purple-300/5 border-violet-400/25" };
+  if (eid.period === "eid_adha")
+    return { type: "season", label: "🐑 عيد الأضحى المبارك", content: `عيد أضحى مبارك — تقبّل الله منا ومنكم. اليوم ${eid.eidDay === 1 ? "الأول" : eid.eidDay === 2 ? "الثاني" : "الثالث"} من أيام العيد.`, icon: "star", seasonColor: "from-emerald-600/25 to-teal-300/5 border-emerald-400/25" };
+  if (eid.period === "pre_fitr") {
+    const d = eid.daysUntilEid;
+    return { type: "season", label: "🌙 العيد على الأبواب", content: `عيد الفطر ${d === 1 ? "غداً" : `بعد ${d} أيام`} — أخرج زكاة الفطر وابدأ التكبير وتهيّأ بخير.`, icon: "moon", seasonColor: "from-violet-600/25 to-purple-300/5 border-violet-400/25" };
+  }
+  if (eid.period === "arafah")
+    return { type: "season", label: "🤲 يوم عرفة — اليوم", content: "أعظم يوم يُعتَق فيه الناس من النار. صُم وأكثر من الدعاء والاستغفار — غداً عيد الأضحى.", icon: "star", seasonColor: "from-amber-600/25 to-yellow-300/5 border-amber-400/25" };
+  if (eid.period === "pre_adha_dhul_hijja") {
+    const d = eid.daysUntilEid;
+    return { type: "season", label: "✨ العشر من ذي الحجة", content: `أفضل أيام السنة — صيامٌ وذكرٌ وتوبة. عيد الأضحى ${d === 1 ? "غداً" : `بعد ${d} أيام`}.`, icon: "sparkles", seasonColor: "from-amber-600/25 to-yellow-400/5 border-amber-500/25" };
+  }
+
   const now = new Date();
   const month = now.getMonth() + 1;
   const day = now.getDate();
+  const dayOfWeek = now.getDay();
 
-  if (month === 3 && day >= 15 && day <= 31)
-    return { type: "season", label: "آخر رمضان قادم", content: "استعد لليالي المباركة — العشر الأواخر فرصة لا تتكرر. حسّن توبتك الآن.", icon: "moon", seasonColor: "from-emerald-600/25 to-teal-400/5 border-emerald-500/25" };
-  if (month === 4 && day <= 3)
-    return { type: "season", label: "ليالي العيد", content: "من أحيا ليالي العيد بالذكر والطاعة لم يمُت قلبه يوم تموت القلوب.", icon: "star", seasonColor: "from-amber-500/25 to-yellow-300/5 border-amber-400/25" };
-  if (month === 6 && day >= 1 && day <= 10)
-    return { type: "season", label: "العشر من ذي الحجة", content: "أفضل أيام السنة — صيام وذكر وتوبة. أعمالك الصالحة مضاعفة.", icon: "sparkles", seasonColor: "from-amber-600/25 to-yellow-400/5 border-amber-500/25" };
-  if (month === 7 && day === 9)
-    return { type: "season", label: "يوم عرفة 🤲", content: "أكثر يوم يُعتَق فيه الناس من النار — اجتهد في الدعاء والاستغفار الآن.", icon: "star", seasonColor: "from-primary/25 to-primary/5 border-primary/20" };
+  if (month === 3 && day >= 10 && day <= 19)
+    return { type: "season", label: "رمضان يودّعنا", content: "اغتنم ما بقي من رمضان — هي لحظات. العشر الأواخر فرصة لا تتكرر.", icon: "moon", seasonColor: "from-emerald-600/25 to-teal-400/5 border-emerald-500/25" };
   if (month === 8 && day >= 1 && day <= 15)
     return { type: "season", label: "شعبان — شهر رفع الأعمال", content: "أعمالك تُرفَع إلى الله قبل رمضان. ابدأ الاستعداد من الآن بصفحة نظيفة.", icon: "moon", seasonColor: "from-purple-600/25 to-violet-400/5 border-purple-400/25" };
   if (month === 1 || month === 2)
     return { type: "season", label: "الأشهر الحرم", content: "ذو القعدة وذو الحجة والمحرم ورجب — أشهر عظّمها الله. الحسنات مضاعفة والسيئات مثقّلة.", icon: "sparkles", seasonColor: "from-sky-600/25 to-blue-400/5 border-sky-400/25" };
-
-  const dayOfWeek = now.getDay();
   if (dayOfWeek === 5)
     return { type: "season", label: "يوم الجمعة المبارك", content: "أكثر من الصلاة على النبي ﷺ اليوم — اقرأ سورة الكهف وادعُ في ساعة الإجابة.", icon: "sun", seasonColor: "from-green-600/25 to-emerald-400/5 border-green-400/25" };
 
@@ -371,6 +382,59 @@ function SosReturnToast({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
+function EidEntryCard() {
+  const eid = getEidStatus();
+  if (!eid.isActive && (eid.daysUntilEid === null || eid.daysUntilEid > 14)) return null;
+
+  const isEidDay = eid.period === "eid_fitr" || eid.period === "eid_adha";
+  const isAdha = eid.eidType === "adha";
+  const isPreAdha = eid.period === "pre_adha_dhul_hijja" || eid.period === "arafah";
+
+  const gradientClass = isAdha
+    ? "from-emerald-600/15 to-teal-500/5 border-emerald-500/30"
+    : "from-violet-600/15 to-purple-500/5 border-violet-400/30";
+
+  const iconBg = isAdha ? "bg-emerald-500" : "bg-violet-600";
+
+  const title = isEidDay
+    ? isAdha ? "عيد الأضحى المبارك 🐑" : "عيد الفطر المبارك 🌙"
+    : eid.period === "arafah"
+    ? "يوم عرفة اليوم 🤲"
+    : isPreAdha
+    ? `العشر من ذي الحجة — ${eid.daysUntilEid === 1 ? "العيد غداً" : `العيد بعد ${eid.daysUntilEid} أيام`}`
+    : `العيد ${eid.daysUntilEid === 1 ? "غداً" : `بعد ${eid.daysUntilEid} أيام`} 🌙`;
+
+  const subtitle = isEidDay
+    ? "تقبّل الله منا ومنكم — اضغط لصفحة العيد الكاملة"
+    : eid.period === "arafah"
+    ? "صُم واستغفر وادعُ — اكتشف صفحة العيد"
+    : isPreAdha
+    ? "أفضل أيام السنة — أكثر من الطاعة والتوبة"
+    : "استعد وأخرج زكاة الفطر — اكتشف صفحة العيد";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
+      <Link
+        href="/eid"
+        className={`flex items-center gap-4 bg-gradient-to-l ${gradientClass} border rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all`}
+      >
+        <div className={`w-11 h-11 rounded-xl ${iconBg} flex items-center justify-center shadow-md shrink-0`}>
+          <span className="text-xl">{isAdha ? "🐑" : isPreAdha ? "✨" : "🌙"}</span>
+        </div>
+        <div className="flex-1">
+          <h3 className="font-bold text-sm">{title}</h3>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
+        </div>
+        <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+      </Link>
+    </motion.div>
+  );
+}
+
 export default function Home() {
   const { data: progress, isLoading } = useAppUserProgress();
   const [showSosToast, setShowSosToast] = useState(false);
@@ -404,6 +468,8 @@ export default function Home() {
       <IslamicHero />
 
       <div className="px-5 mt-4 relative z-10 flex flex-col gap-4">
+
+        <EidEntryCard />
 
         <DynamicBanner />
 
