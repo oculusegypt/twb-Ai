@@ -3,7 +3,7 @@
   "short_name": "التوبة",
   "description": "دليل التوبة النصوح - تطبيق إسلامي للتوبة والاستقامة",
   "start_url": "/",
-  "display": "fullscreen",
+  "display": "standalone",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#0f766e",
