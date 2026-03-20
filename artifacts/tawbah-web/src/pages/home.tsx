@@ -815,11 +815,20 @@ export default function Home() {
             </Link>
             <Link href="/prayer-times" className="bg-card p-4 rounded-2xl border border-indigo-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
-                <Bell size={20} />
+                <Clock size={20} />
               </div>
               <div>
                 <h3 className="font-bold text-sm">مواقيت الصلاة</h3>
                 <p className="text-[11px] text-muted-foreground">تذكيرات ذكية قبل كل صلاة</p>
+              </div>
+            </Link>
+            <Link href="/notifications" className="bg-card p-4 rounded-2xl border border-amber-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
+                <Bell size={20} />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm">الإشعارات</h3>
+                <p className="text-[11px] text-muted-foreground">ضبط تنبيهات الصلاة والأذكار</p>
               </div>
             </Link>
           </div>

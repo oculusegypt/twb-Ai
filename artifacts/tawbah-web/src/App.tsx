@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SettingsProvider } from "@/context/SettingsContext";
+import { NotificationsProvider } from "@/context/NotificationsContext";
 
 import { Layout } from "@/components/layout";
 import AdminApp from "@/pages/admin/AdminApp";
@@ -33,6 +34,7 @@ import CommunityDuas from "@/pages/community-duas";
 import Account from "@/pages/account";
 import SinsList from "@/pages/sins-list";
 import EidPage from "@/pages/eid";
+import NotificationsPage from "@/pages/notifications";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -75,6 +77,7 @@ function Router() {
         <Route path="/account" component={Account} />
         <Route path="/sins" component={SinsList} />
         <Route path="/eid" component={EidPage} />
+        <Route path="/notifications" component={NotificationsPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -84,20 +87,22 @@ function Router() {
 function App() {
   return (
     <SettingsProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Switch>
-              <Route path="/admin" component={AdminApp} />
-              <Route path="/admin/:rest*" component={AdminApp} />
-              <Route>
-                <Router />
-              </Route>
-            </Switch>
-          </WouterRouter>
-          <Toaster />
-        </TooltipProvider>
-      </QueryClientProvider>
+      <NotificationsProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Switch>
+                <Route path="/admin" component={AdminApp} />
+                <Route path="/admin/:rest*" component={AdminApp} />
+                <Route>
+                  <Router />
+                </Route>
+              </Switch>
+            </WouterRouter>
+            <Toaster />
+          </TooltipProvider>
+        </QueryClientProvider>
+      </NotificationsProvider>
     </SettingsProvider>
   );
 }

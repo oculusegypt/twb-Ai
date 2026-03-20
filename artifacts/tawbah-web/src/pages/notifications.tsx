@@ -1,0 +1,471 @@
+import { useLocation } from "wouter";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ArrowRight, Bell, BellOff, Clock, Moon, Sun, BookOpen,
+  Flame, Calendar, Star, RefreshCw, CheckCircle, XCircle,
+  ChevronDown, Shield, Sparkles
+} from "lucide-react";
+import { useState } from "react";
+import { useNotifications } from "@/context/NotificationsContext";
+import { cn } from "@/lib/utils";
+
+// ── Toggle ────────────────────────────────────────────────────────────────────
+
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      onClick={() => onChange(!checked)}
+      className={cn(
+        "relative w-12 h-6 rounded-full transition-colors duration-300 flex-shrink-0",
+        checked ? "bg-primary" : "bg-muted-foreground/30"
+      )}
+      role="switch"
+      aria-checked={checked}
+    >
+      <span className={cn(
+        "absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-all duration-300",
+        checked ? "left-[26px]" : "left-0.5"
+      )} />
+    </button>
+  );
+}
+
+// ── Time input ────────────────────────────────────────────────────────────────
+
+function TimeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <input
+      type="time"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="bg-muted rounded-xl px-3 py-1.5 text-sm font-mono text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 w-28 text-center"
+    />
+  );
+}
+
+// ── Row ───────────────────────────────────────────────────────────────────────
+
+function Row({
+  icon, color = "bg-primary/10 text-primary",
+  label, description, right,
+}: {
+  icon: React.ReactNode; color?: string;
+  label: string; description?: string; right: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3 py-3.5">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0", color)}>
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground leading-tight">{label}</p>
+          {description && <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{description}</p>}
+        </div>
+      </div>
+      <div className="flex-shrink-0">{right}</div>
+    </div>
+  );
+}
+
+// ── Row with time picker ───────────────────────────────────────────────────────
+
+function TimedRow({
+  icon, color = "bg-primary/10 text-primary",
+  label, description, enabled, onToggle, time, onTimeChange,
+}: {
+  icon: React.ReactNode; color?: string;
+  label: string; description?: string;
+  enabled: boolean; onToggle: (v: boolean) => void;
+  time: string; onTimeChange: (v: string) => void;
+}) {
+  return (
+    <div className="py-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={cn("w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0", color)}>
+            {icon}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground leading-tight">{label}</p>
+            {description && <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{description}</p>}
+          </div>
+        </div>
+        <Toggle checked={enabled} onChange={onToggle} />
+      </div>
+      <AnimatePresence>
+        {enabled && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center gap-2 mt-2.5 mr-11">
+              <Clock size={13} className="text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">وقت التذكير:</span>
+              <TimeInput value={time} onChange={onTimeChange} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── Section header ────────────────────────────────────────────────────────────
+
+function SectionHeader({ label }: { label: string }) {
+  return (
+    <div className="pt-5 pb-1.5">
+      <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">{label}</p>
+    </div>
+  );
+}
+
+// ── Advance minutes picker ────────────────────────────────────────────────────
+
+const ADVANCE_OPTIONS = [0, 5, 10, 15, 20, 30];
+
+function AdvancePicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex gap-1.5 flex-wrap">
+      {ADVANCE_OPTIONS.map((m) => (
+        <button
+          key={m}
+          onClick={() => onChange(m)}
+          className={cn(
+            "px-2.5 py-1 rounded-lg text-xs font-medium transition-colors",
+            value === m
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted text-muted-foreground hover:bg-muted/80"
+          )}
+        >
+          {m === 0 ? "عند الأذان" : `قبل ${m} د`}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
+
+export default function NotificationsPage() {
+  const [, setLocation] = useLocation();
+  const { settings, permission, supported, updateSettings, enableNotifications, disableNotifications } = useNotifications();
+  const [enabling, setEnabling] = useState(false);
+  const [prayersOpen, setPrayersOpen] = useState(true);
+
+  const handleEnable = async () => {
+    setEnabling(true);
+    await enableNotifications();
+    setEnabling(false);
+  };
+
+  const up = (patch: Partial<typeof settings>) => updateSettings(patch);
+  const upPrayer = (patch: Partial<typeof settings.prayers>) =>
+    updateSettings({ prayers: { ...settings.prayers, ...patch } });
+
+  return (
+    <div className="flex-1 flex flex-col bg-background min-h-screen" dir="rtl">
+
+      {/* Header */}
+      <div className="sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border/40 px-5 py-3.5 flex items-center gap-3">
+        <button onClick={() => setLocation("/")} className="p-1.5 -mr-1 text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowRight size={20} />
+        </button>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+            <Bell size={17} />
+          </div>
+          <div>
+            <h1 className="text-base font-bold text-foreground leading-tight">الإشعارات</h1>
+            <p className="text-[11px] text-muted-foreground">إدارة وتخصيص جميع التذكيرات</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-5 pb-10">
+
+        {/* ── Permission banner ─────────────────────────────────────────────── */}
+        {!supported ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-center gap-3"
+          >
+            <XCircle size={20} className="text-destructive flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">الإشعارات غير مدعومة</p>
+              <p className="text-xs text-muted-foreground mt-0.5">المتصفح الحالي لا يدعم إشعارات الخلفية. استخدم Chrome أو Safari على الهاتف.</p>
+            </div>
+          </motion.div>
+        ) : permission === "denied" ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 bg-destructive/10 border border-destructive/20 rounded-2xl p-4 flex items-center gap-3"
+          >
+            <BellOff size={20} className="text-destructive flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">الإشعارات محجوبة</p>
+              <p className="text-xs text-muted-foreground mt-0.5">فعّلها من إعدادات المتصفح ← الموقع ← الإشعارات.</p>
+            </div>
+          </motion.div>
+        ) : !settings.enabled || permission !== "granted" ? (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/25 rounded-2xl p-5"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 bg-primary/20 rounded-2xl flex items-center justify-center text-primary">
+                <Shield size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">تفعيل الإشعارات</p>
+                <p className="text-xs text-muted-foreground mt-0.5">احصل على تذكيرات الصلاة والأذكار والرحلة</p>
+              </div>
+            </div>
+            <button
+              onClick={handleEnable}
+              disabled={enabling}
+              className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+            >
+              <Bell size={15} />
+              {enabling ? "يجري التفعيل..." : "تفعيل الإشعارات الآن"}
+            </button>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 bg-emerald-500/10 border border-emerald-500/25 rounded-2xl p-4 flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3">
+              <CheckCircle size={20} className="text-emerald-500 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">الإشعارات مفعّلة ✓</p>
+                <p className="text-xs text-muted-foreground mt-0.5">يتم جدولة التذكيرات تلقائياً كل يوم</p>
+              </div>
+            </div>
+            <button
+              onClick={disableNotifications}
+              className="text-xs text-muted-foreground underline flex-shrink-0"
+            >
+              إيقاف
+            </button>
+          </motion.div>
+        )}
+
+        {/* ── Content (disabled overlay if not enabled) ──────────────────────── */}
+        <div className={cn("transition-opacity", (!settings.enabled || permission !== "granted") && "opacity-40 pointer-events-none select-none")}>
+
+          {/* ── Prayer times ────────────────────────────────────────────────── */}
+          <SectionHeader label="مواقيت الصلاة" />
+          <div className="bg-card border border-border/40 rounded-2xl px-4 divide-y divide-border/30">
+
+            {/* Header row with expand toggle */}
+            <button
+              onClick={() => setPrayersOpen(v => !v)}
+              className="w-full flex items-center justify-between py-3.5 gap-3"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center flex-shrink-0">
+                  <Clock size={15} />
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium text-foreground">تذكيرات الصلوات الخمس</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    {[settings.prayers.fajr, settings.prayers.dhuhr, settings.prayers.asr, settings.prayers.maghrib, settings.prayers.isha].filter(Boolean).length} صلوات مفعّلة
+                  </p>
+                </div>
+              </div>
+              <ChevronDown size={16} className={cn("text-muted-foreground transition-transform", prayersOpen && "rotate-180")} />
+            </button>
+
+            <AnimatePresence initial={false}>
+              {prayersOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="overflow-hidden"
+                >
+                  <div className="divide-y divide-border/20 pb-1">
+                    {([
+                      { key: "fajr", label: "الفجر", icon: <Moon size={13} /> },
+                      { key: "sunrise", label: "الشروق (صلاة الإشراق)", icon: <Sun size={13} /> },
+                      { key: "dhuhr", label: "الظهر", icon: <Sun size={13} /> },
+                      { key: "asr", label: "العصر", icon: <Sun size={13} /> },
+                      { key: "maghrib", label: "المغرب", icon: <Sun size={13} /> },
+                      { key: "isha", label: "العشاء", icon: <Moon size={13} /> },
+                    ] as const).map(p => (
+                      <div key={p.key} className="flex items-center justify-between py-3 pr-11">
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{p.icon}</span>
+                          <span className="text-sm text-foreground">{p.label}</span>
+                        </div>
+                        <Toggle
+                          checked={settings.prayers[p.key]}
+                          onChange={(v) => upPrayer({ [p.key]: v })}
+                        />
+                      </div>
+                    ))}
+
+                    {/* Advance minutes */}
+                    <div className="py-3.5 pr-11">
+                      <p className="text-xs text-muted-foreground mb-2">وقت التنبيه قبل الصلاة:</p>
+                      <AdvancePicker
+                        value={settings.prayers.advanceMinutes}
+                        onChange={(v) => upPrayer({ advanceMinutes: v })}
+                      />
+                    </div>
+
+                    {/* City note */}
+                    {!localStorage.getItem("prayerCity") && (
+                      <div className="py-3 pr-11">
+                        <p className="text-[11px] text-amber-600 bg-amber-500/10 px-3 py-2 rounded-xl">
+                          ⚠️ لم يتم تحديد موقعك. افتح صفحة مواقيت الصلاة وحدّد مدينتك أولاً.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* ── Adhkar ─────────────────────────────────────────────────────── */}
+          <SectionHeader label="الأذكار والأوراد" />
+          <div className="bg-card border border-border/40 rounded-2xl px-4 divide-y divide-border/30">
+            <TimedRow
+              icon={<Sun size={15} />}
+              color="bg-amber-500/15 text-amber-600"
+              label="أذكار الصباح"
+              description="تذكير يومي بأذكار الصباح"
+              enabled={settings.morningAdhkar}
+              onToggle={(v) => up({ morningAdhkar: v })}
+              time={settings.morningAdhkarTime}
+              onTimeChange={(v) => up({ morningAdhkarTime: v })}
+            />
+            <TimedRow
+              icon={<Moon size={15} />}
+              color="bg-indigo-500/15 text-indigo-600"
+              label="أذكار المساء"
+              description="تذكير يومي بأذكار المساء"
+              enabled={settings.eveningAdhkar}
+              onToggle={(v) => up({ eveningAdhkar: v })}
+              time={settings.eveningAdhkarTime}
+              onTimeChange={(v) => up({ eveningAdhkarTime: v })}
+            />
+            <TimedRow
+              icon={<Star size={15} />}
+              color="bg-violet-500/15 text-violet-600"
+              label="ذكر يومي"
+              description="تذكير لجلسة الذكر اليومي"
+              enabled={settings.dhikrReminder}
+              onToggle={(v) => up({ dhikrReminder: v })}
+              time={settings.dhikrReminderTime}
+              onTimeChange={(v) => up({ dhikrReminderTime: v })}
+            />
+          </div>
+
+          {/* ── Journey & Streak ─────────────────────────────────────────────── */}
+          <SectionHeader label="رحلة التوبة والاستقامة" />
+          <div className="bg-card border border-border/40 rounded-2xl px-4 divide-y divide-border/30">
+            <TimedRow
+              icon={<Sparkles size={15} />}
+              color="bg-emerald-500/15 text-emerald-600"
+              label="تذكير الرحلة اليومي"
+              description="تذكير بإكمال ورد اليوم في رحلة التوبة"
+              enabled={settings.journeyReminder}
+              onToggle={(v) => up({ journeyReminder: v })}
+              time={settings.journeyReminderTime}
+              onTimeChange={(v) => up({ journeyReminderTime: v })}
+            />
+            <TimedRow
+              icon={<Flame size={15} />}
+              color="bg-orange-500/15 text-orange-600"
+              label="تذكير الاستقامة اليومية"
+              description="تنبيه لتسجيل يومك قبل منتصف الليل"
+              enabled={settings.streakReminder}
+              onToggle={(v) => up({ streakReminder: v })}
+              time={settings.streakReminderTime}
+              onTimeChange={(v) => up({ streakReminderTime: v })}
+            />
+          </div>
+
+          {/* ── Evening review ─────────────────────────────────────────────── */}
+          <SectionHeader label="المراجعة والتأمل" />
+          <div className="bg-card border border-border/40 rounded-2xl px-4">
+            <TimedRow
+              icon={<BookOpen size={15} />}
+              color="bg-rose-500/15 text-rose-600"
+              label="مراجعة المساء"
+              description="تذكير بكتابة تأملات اليوم في المفكرة"
+              enabled={settings.eveningReview}
+              onToggle={(v) => up({ eveningReview: v })}
+              time={settings.eveningReviewTime}
+              onTimeChange={(v) => up({ eveningReviewTime: v })}
+            />
+          </div>
+
+          {/* ── Nafl fasting ─────────────────────────────────────────────────── */}
+          <SectionHeader label="صيام النوافل" />
+          <div className="bg-card border border-border/40 rounded-2xl px-4 divide-y divide-border/30">
+            <Row
+              icon={<Moon size={15} />}
+              color="bg-sky-500/15 text-sky-600"
+              label="تذكير صيام الاثنين"
+              description="تنبيه مساء الأحد للتحضير لصيام الاثنين"
+              right={<Toggle checked={settings.mondayFasting} onChange={(v) => up({ mondayFasting: v })} />}
+            />
+            <Row
+              icon={<Moon size={15} />}
+              color="bg-sky-500/15 text-sky-600"
+              label="تذكير صيام الخميس"
+              description="تنبيه مساء الأربعاء للتحضير لصيام الخميس"
+              right={<Toggle checked={settings.thursdayFasting} onChange={(v) => up({ thursdayFasting: v })} />}
+            />
+            <Row
+              icon={<Star size={15} />}
+              color="bg-yellow-500/15 text-yellow-600"
+              label="أيام البيض (13 و14 و15)"
+              description="تنبيه صباح أيام 13-14-15 من كل شهر هجري"
+              right={<Toggle checked={settings.ayyamBeedh} onChange={(v) => up({ ayyamBeedh: v })} />}
+            />
+          </div>
+
+          {/* ── Friday ────────────────────────────────────────────────────────── */}
+          <SectionHeader label="الجمعة المباركة" />
+          <div className="bg-card border border-border/40 rounded-2xl px-4">
+            <TimedRow
+              icon={<Calendar size={15} />}
+              color="bg-teal-500/15 text-teal-600"
+              label="تذكير الجمعة"
+              description="تذكير بقراءة الكهف والإكثار من الصلاة على النبي ﷺ"
+              enabled={settings.fridayKahf}
+              onToggle={(v) => up({ fridayKahf: v })}
+              time={settings.fridayKahfTime}
+              onTimeChange={(v) => up({ fridayKahfTime: v })}
+            />
+          </div>
+
+          {/* ── Footer note ───────────────────────────────────────────────────── */}
+          <div className="mt-6 px-1">
+            <div className="flex items-start gap-2 text-muted-foreground">
+              <RefreshCw size={13} className="mt-0.5 flex-shrink-0" />
+              <p className="text-[11px] leading-relaxed">
+                التذكيرات تُجدَّد تلقائياً في كل مرة تفتح فيها التطبيق. للحصول على تذكيرات الصلاة، تأكد من تحديد مدينتك في صفحة مواقيت الصلاة.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
