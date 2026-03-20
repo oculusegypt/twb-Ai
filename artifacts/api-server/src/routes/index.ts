@@ -6,6 +6,7 @@ import zakiyRouter from "./zakiy";
 import hadiTasksRouter from "./hadi-tasks";
 import journeyRouter from "./journey";
 import dhikrRoomsRouter from "./dhikr-rooms";
+import adminRouter from "./admin";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(zakiyRouter);
 router.use(hadiTasksRouter);
 router.use(journeyRouter);
 router.use(dhikrRoomsRouter);
+router.use("/admin", adminRouter);
 
 export default router;
