@@ -47,3 +47,8 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Capacitor native platform directories (generated locally — do not commit)
+# Run: cd artifacts/tawbah-web && npx cap add android
+artifacts/tawbah-web/android/
+artifacts/tawbah-web/ios/
