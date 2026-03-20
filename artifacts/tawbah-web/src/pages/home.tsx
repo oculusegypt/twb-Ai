@@ -401,20 +401,21 @@ export default function Home() {
         {showSosToast && <SosReturnToast onDismiss={() => setShowSosToast(false)} />}
       </AnimatePresence>
 
-      <div className="relative h-[220px] w-full rounded-b-[2rem] overflow-hidden shadow-lg">
+      <div className="relative h-[240px] w-full overflow-hidden">
         <img
           src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
           alt="Islamic Pattern"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover object-center scale-105"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-primary/40 mix-blend-multiply" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-primary-foreground p-6 text-center">
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/50 to-primary/20 mix-blend-multiply" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background via-background/60 to-transparent" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-primary-foreground p-6 text-center pb-10">
           <img
             src={`${import.meta.env.BASE_URL}images/logo.png`}
             alt="توبة نصوحة"
-            className="h-20 w-20 object-cover rounded-full drop-shadow-xl mb-2 ring-4 ring-white/30"
+            className="h-20 w-20 object-cover rounded-full drop-shadow-2xl mb-2 ring-4 ring-white/30"
           />
-          <p className="text-base font-bold text-white drop-shadow mb-1">{timeGreeting.greeting}</p>
+          <p className="text-base font-bold text-white drop-shadow-lg mb-1">{timeGreeting.greeting}</p>
           <p className="text-xs font-medium text-white/80 max-w-[260px] leading-relaxed drop-shadow">
             {timeGreeting.sub}
           </p>
