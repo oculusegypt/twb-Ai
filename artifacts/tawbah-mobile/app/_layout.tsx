@@ -8,7 +8,9 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import React, { useEffect } from "react";
+import { useColorScheme } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -31,6 +33,9 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -48,6 +53,11 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <StatusBar
+        style="light"
+        backgroundColor={isDark ? "#0D1F15" : "#1A5C38"}
+        translucent={false}
+      />
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AppProvider>
