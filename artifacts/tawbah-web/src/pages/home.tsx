@@ -5,6 +5,7 @@ import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
 import { useState, useEffect, useRef } from "react";
 import { useSettings } from "@/context/SettingsContext";
+import { IslamicHero } from "@/components/IslamicHero";
 
 type BannerType = "season" | "nafl" | "ayah" | "hadith" | "dua" | "wisdom";
 
@@ -373,7 +374,6 @@ function SosReturnToast({ onDismiss }: { onDismiss: () => void }) {
 export default function Home() {
   const { data: progress, isLoading } = useAppUserProgress();
   const [showSosToast, setShowSosToast] = useState(false);
-  const timeGreeting = getTimeGreeting();
 
   useEffect(() => {
     try {
@@ -401,30 +401,7 @@ export default function Home() {
         {showSosToast && <SosReturnToast onDismiss={() => setShowSosToast(false)} />}
       </AnimatePresence>
 
-      <div className="relative h-[240px] w-full overflow-hidden">
-        <img
-          src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
-          alt="Islamic Pattern"
-          className="absolute inset-0 w-full h-full object-cover object-center scale-105 dark:opacity-60"
-        />
-        {/* Light mode: multiply blend tints the image with primary color */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/50 to-primary/20 mix-blend-multiply dark:hidden" />
-        {/* Dark mode: normal overlay keeps image visible with deep dark gradient */}
-        <div className="absolute inset-0 hidden dark:block bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-        {/* Bottom fade — adapts automatically via `background` CSS variable */}
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-background via-background/60 to-transparent" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-primary-foreground p-6 text-center pb-10">
-          <img
-            src={`${import.meta.env.BASE_URL}images/logo.png`}
-            alt="توبة نصوحة"
-            className="h-20 w-20 object-cover rounded-full drop-shadow-2xl mb-2 ring-4 ring-white/30"
-          />
-          <p className="text-base font-bold text-white drop-shadow-lg mb-1">{timeGreeting.greeting}</p>
-          <p className="text-xs font-medium text-white/80 max-w-[260px] leading-relaxed drop-shadow">
-            {timeGreeting.sub}
-          </p>
-        </div>
-      </div>
+      <IslamicHero />
 
       <div className="px-5 mt-4 relative z-10 flex flex-col gap-4">
 
