@@ -106,6 +106,18 @@ function scheduleNotifications(notifications) {
         silent: false,
       });
       activeTimers.delete(notif.tag);
+      // Notify all open app windows to add this to in-app inbox
+      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+        for (const client of windowClients) {
+          client.postMessage({
+            type: 'NOTIFICATION_FIRED',
+            tag: notif.tag,
+            title: notif.title,
+            body: notif.body,
+            url: notif.url || '/',
+          });
+        }
+      });
     }, delay);
 
     activeTimers.set(notif.tag, timerId);

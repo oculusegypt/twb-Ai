@@ -176,8 +176,10 @@ async function fetchPrayerTimings(): Promise<PrayerTimings | null> {
   } catch { /* continue */ }
 
   try {
-    const url = country === "Auto"
-      ? `https://api.aladhan.com/v1/timings?latitude=${city}&longitude=${country}&method=4`
+    const lat = localStorage.getItem("prayerLat");
+    const lng = localStorage.getItem("prayerLng");
+    const url = (country === "Auto" && lat && lng)
+      ? `https://api.aladhan.com/v1/timings?latitude=${encodeURIComponent(lat)}&longitude=${encodeURIComponent(lng)}&method=4`
       : `https://api.aladhan.com/v1/timingsByCity?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=4`;
     const res = await fetch(url);
     if (!res.ok) return null;
@@ -229,7 +231,10 @@ function getHijriDay(date: Date): number {
 // ── Build scheduled notifications list ────────────────────────────────────────
 
 export async function buildScheduledNotifications(
-  settings: NotificationSettings
+  settings: NotificationSettings,
+  // When true, also includes notifications that fired within the last pastWindowMs ms
+  // (used by the in-app polling to catch recently-missed ones)
+  pastWindowMs = 0
 ): Promise<ScheduledNotif[]> {
   const now = Date.now();
   const notifs: ScheduledNotif[] = [];
@@ -255,7 +260,7 @@ export async function buildScheduledNotifications(
     for (const p of PRAYER_MAP) {
       if (!settings.prayers[p.key]) continue;
       const fireAt = timeToMs(prayerTimings[p.time], settings.prayers.advanceMinutes);
-      if (fireAt > now) {
+      if (fireAt > now - pastWindowMs) {
         notifs.push({
           tag: `prayer-${p.key}`,
           title: `🕌 وقت صلاة ${p.nameAr}`,
@@ -272,7 +277,7 @@ export async function buildScheduledNotifications(
   // ── Morning adhkar ───────────────────────────────────────────────────────────
   if (settings.morningAdhkar) {
     const fireAt = todayTimeMs(settings.morningAdhkarTime);
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "morning-adhkar",
         title: "📿 أذكار الصباح",
@@ -286,7 +291,7 @@ export async function buildScheduledNotifications(
   // ── Evening adhkar ───────────────────────────────────────────────────────────
   if (settings.eveningAdhkar) {
     const fireAt = todayTimeMs(settings.eveningAdhkarTime);
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "evening-adhkar",
         title: "🌙 أذكار المساء",
@@ -300,7 +305,7 @@ export async function buildScheduledNotifications(
   // ── Daily dhikr reminder ─────────────────────────────────────────────────────
   if (settings.dhikrReminder) {
     const fireAt = todayTimeMs(settings.dhikrReminderTime);
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "dhikr-reminder",
         title: "📿 تذكير الذكر اليومي",
@@ -314,7 +319,7 @@ export async function buildScheduledNotifications(
   // ── Journey reminder ─────────────────────────────────────────────────────────
   if (settings.journeyReminder) {
     const fireAt = todayTimeMs(settings.journeyReminderTime);
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "journey-reminder",
         title: "🌟 رحلة التوبة اليومية",
@@ -328,7 +333,7 @@ export async function buildScheduledNotifications(
   // ── Streak reminder ──────────────────────────────────────────────────────────
   if (settings.streakReminder) {
     const fireAt = todayTimeMs(settings.streakReminderTime);
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "streak-reminder",
         title: "🔥 تذكير الاستقامة اليومية",
@@ -342,7 +347,7 @@ export async function buildScheduledNotifications(
   // ── Evening review ───────────────────────────────────────────────────────────
   if (settings.eveningReview) {
     const fireAt = todayTimeMs(settings.eveningReviewTime);
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "evening-review",
         title: "📔 مراجعة المساء",
@@ -356,7 +361,7 @@ export async function buildScheduledNotifications(
   // ── Friday Kahf reminder ─────────────────────────────────────────────────────
   if (settings.fridayKahf && dayOfWeek === 5) {
     const fireAt = todayTimeMs(settings.fridayKahfTime);
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "friday-kahf",
         title: "📖 تذكير الجمعة المبارك",
@@ -370,7 +375,7 @@ export async function buildScheduledNotifications(
   // ── Monday fasting reminder (Sunday evening) ─────────────────────────────────
   if (settings.mondayFasting && dayOfWeek === 0) {
     const fireAt = todayTimeMs("20:00");
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "monday-fasting",
         title: "🌙 تذكير صيام الاثنين",
@@ -384,7 +389,7 @@ export async function buildScheduledNotifications(
   // ── Thursday fasting reminder (Wednesday evening) ────────────────────────────
   if (settings.thursdayFasting && dayOfWeek === 3) {
     const fireAt = todayTimeMs("20:00");
-    if (fireAt > now) {
+    if (fireAt > now - pastWindowMs) {
       notifs.push({
         tag: "thursday-fasting",
         title: "🌙 تذكير صيام الخميس",
@@ -400,7 +405,7 @@ export async function buildScheduledNotifications(
     const hijriDay = getHijriDay(new Date());
     if ([12, 13, 14].includes(hijriDay)) {
       const fireAt = todayTimeMs("06:00");
-      if (fireAt > now) {
+      if (fireAt > now - pastWindowMs) {
         notifs.push({
           tag: "ayyam-beedh",
           title: "☀️ أيام البيض",

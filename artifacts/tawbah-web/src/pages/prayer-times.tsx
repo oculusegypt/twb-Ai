@@ -266,6 +266,9 @@ export default function PrayerTimes() {
           setCountryInput("Auto");
           localStorage.setItem("prayerCity", loc);
           localStorage.setItem("prayerCountry", "Auto");
+          localStorage.setItem("prayerLat", String(pos.coords.latitude));
+          localStorage.setItem("prayerLng", String(pos.coords.longitude));
+          localStorage.removeItem("prayer_timings_cache");
         } catch {
           setError("تعذّر جلب المواقيت");
         } finally {

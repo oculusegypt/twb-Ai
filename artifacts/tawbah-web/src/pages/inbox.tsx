@@ -6,12 +6,7 @@ import {
 } from "lucide-react";
 import { useEffect } from "react";
 import { useAppNotifications } from "@/context/AppNotificationsContext";
-import {
-  markAllAsRead,
-  markAsRead,
-  deleteNotification,
-  type AppNotification,
-} from "@/lib/app-notifications";
+import { type AppNotification } from "@/lib/app-notifications";
 import { cn } from "@/lib/utils";
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -102,27 +97,22 @@ function NotifCard({ notif, onRead, onDelete }: {
 
 export default function InboxPage() {
   const [, setLocation] = useLocation();
-  const { notifications, refreshUnreadCount, reloadNotifications } = useAppNotifications();
+  const { notifications, markAllRead, markRead, removeNotification, reloadNotifications } = useAppNotifications();
 
   // Mark all as read on mount
   useEffect(() => {
-    markAllAsRead();
-    refreshUnreadCount();
+    markAllRead();
     reloadNotifications();
-  }, [refreshUnreadCount, reloadNotifications]);
+  }, [markAllRead, reloadNotifications]);
 
   const unread = notifications.filter((n) => !n.isRead).length;
 
   const handleRead = (id: string) => {
-    markAsRead(id);
-    reloadNotifications();
-    refreshUnreadCount();
+    markRead(id);
   };
 
   const handleDelete = (id: string) => {
-    deleteNotification(id);
-    reloadNotifications();
-    refreshUnreadCount();
+    removeNotification(id);
   };
 
   return (

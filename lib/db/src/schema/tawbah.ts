@@ -172,3 +172,27 @@ export const communityDuasTable = pgTable("community_duas", {
   amenCount: integer("amen_count").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const notificationSettingsTable = pgTable("notification_settings", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  settingsJson: text("settings_json").notNull().default("{}"),
+  prayerCity: text("prayer_city"),
+  prayerCountry: text("prayer_country"),
+  prayerLat: text("prayer_lat"),
+  prayerLng: text("prayer_lng"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const appInboxTable = pgTable("app_inbox", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  notifId: text("notif_id").notNull().unique(),
+  type: text("type").notNull().default("reminder"),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  icon: text("icon").notNull().default("bell"),
+  color: text("color").notNull().default("#4A90B8"),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});

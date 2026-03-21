@@ -12,6 +12,8 @@ import {
   challengesTable,
   secretDuasTable,
   communityDuasTable,
+  notificationSettingsTable,
+  appInboxTable,
 } from "@workspace/db/schema";
 import { eq, and, desc, count, gte, sql, ne, isNull, or } from "drizzle-orm";
 import {
@@ -768,6 +770,80 @@ ${sinListText}
     console.error("Detect sins error:", err);
     res.status(500).json({ error: "فشل في تحليل الوصف" });
   }
+});
+
+// ── Notification Settings ────────────────────────────────────────────────────
+
+router.get("/notifications/settings", async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+  const row = await db.query.notificationSettingsTable.findFirst({
+    where: eq(notificationSettingsTable.sessionId, sessionId),
+  });
+  res.json(row ?? null);
+});
+
+router.put("/notifications/settings", async (req, res) => {
+  const { sessionId, settingsJson, prayerCity, prayerCountry, prayerLat, prayerLng } = req.body as {
+    sessionId: string; settingsJson: string;
+    prayerCity?: string; prayerCountry?: string; prayerLat?: string; prayerLng?: string;
+  };
+  if (!sessionId || !settingsJson) return res.status(400).json({ error: "sessionId and settingsJson required" });
+  await db.insert(notificationSettingsTable)
+    .values({ sessionId, settingsJson, prayerCity, prayerCountry, prayerLat, prayerLng })
+    .onConflictDoUpdate({
+      target: notificationSettingsTable.sessionId,
+      set: { settingsJson, prayerCity, prayerCountry, prayerLat, prayerLng, updatedAt: new Date() },
+    });
+  res.json({ ok: true });
+});
+
+// ── App Inbox ─────────────────────────────────────────────────────────────────
+
+router.get("/notifications/inbox", async (req, res) => {
+  const sessionId = req.query.sessionId as string;
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+  const rows = await db.query.appInboxTable.findMany({
+    where: eq(appInboxTable.sessionId, sessionId),
+    orderBy: [desc(appInboxTable.createdAt)],
+    limit: 60,
+  });
+  res.json(rows);
+});
+
+router.post("/notifications/inbox", async (req, res) => {
+  const { sessionId, notifId, type, title, body, icon, color } = req.body as {
+    sessionId: string; notifId: string; type: string;
+    title: string; body: string; icon?: string; color?: string;
+  };
+  if (!sessionId || !notifId || !title || !body) return res.status(400).json({ error: "missing fields" });
+  const existing = await db.query.appInboxTable.findFirst({
+    where: eq(appInboxTable.notifId, notifId),
+  });
+  if (existing) return res.json(existing);
+  const [row] = await db.insert(appInboxTable)
+    .values({ sessionId, notifId, type: type || "reminder", title, body, icon: icon || "bell", color: color || "#4A90B8", isRead: false })
+    .returning();
+  res.json(row);
+});
+
+router.patch("/notifications/inbox/:notifId/read", async (req, res) => {
+  const notifId = req.params.notifId;
+  await db.update(appInboxTable).set({ isRead: true }).where(eq(appInboxTable.notifId, notifId));
+  res.json({ ok: true });
+});
+
+router.post("/notifications/inbox/read-all", async (req, res) => {
+  const { sessionId } = req.body as { sessionId: string };
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+  await db.update(appInboxTable).set({ isRead: true }).where(eq(appInboxTable.sessionId, sessionId));
+  res.json({ ok: true });
+});
+
+router.delete("/notifications/inbox/:notifId", async (req, res) => {
+  const notifId = req.params.notifId;
+  await db.delete(appInboxTable).where(eq(appInboxTable.notifId, notifId));
+  res.json({ ok: true });
 });
 
 export default router;

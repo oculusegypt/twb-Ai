@@ -1,7 +1,7 @@
-// In-app notification system for the web app (localStorage-based)
+// In-app notification system — backed by API with localStorage fallback
 
 export interface AppNotification {
-  id: string;
+  id: string;          // notifId (string, unique)
   type: "reminder" | "achievement" | "community" | "spiritual" | "warning";
   title: string;
   body: string;
@@ -12,6 +12,167 @@ export interface AppNotification {
 }
 
 const STORAGE_KEY = "tawbah_web_inbox";
+const API_BASE = "/api";
+
+function getSessionId(): string {
+  return localStorage.getItem("tawbah_session") ?? "guest";
+}
+
+function generateId(): string {
+  return `w_notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function todayStr(): string {
+  return new Date().toISOString().split("T")[0]!;
+}
+
+// ── localStorage helpers ──────────────────────────────────────────────────────
+
+export function loadNotifications(): AppNotification[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as AppNotification[];
+  } catch {
+    return [];
+  }
+}
+
+export function saveNotifications(notifications: AppNotification[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
+  } catch {}
+}
+
+export function getUnreadCount(): number {
+  return loadNotifications().filter((n) => !n.isRead).length;
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────────
+
+export async function fetchInboxFromApi(): Promise<AppNotification[]> {
+  try {
+    const sessionId = getSessionId();
+    const res = await fetch(`${API_BASE}/notifications/inbox?sessionId=${encodeURIComponent(sessionId)}`);
+    if (!res.ok) return loadNotifications();
+    const rows = await res.json() as {
+      notifId: string; type: string; title: string; body: string;
+      icon: string; color: string; isRead: boolean; createdAt: string;
+    }[];
+    return rows.map((r) => ({
+      id: r.notifId,
+      type: r.type as AppNotification["type"],
+      title: r.title,
+      body: r.body,
+      icon: r.icon,
+      color: r.color,
+      isRead: r.isRead,
+      createdAt: r.createdAt,
+    }));
+  } catch {
+    return loadNotifications();
+  }
+}
+
+export async function addToInboxApi(notif: {
+  id?: string;
+  type: AppNotification["type"];
+  title: string;
+  body: string;
+  icon?: string;
+  color?: string;
+}): Promise<AppNotification> {
+  const notifId = notif.id ?? generateId();
+  const now = new Date().toISOString();
+  const newNotif: AppNotification = {
+    id: notifId,
+    type: notif.type,
+    title: notif.title,
+    body: notif.body,
+    icon: notif.icon ?? "bell",
+    color: notif.color ?? "#4A90B8",
+    isRead: false,
+    createdAt: now,
+  };
+
+  // Persist to localStorage immediately
+  const existing = loadNotifications();
+  if (!existing.find((n) => n.id === notifId)) {
+    saveNotifications([newNotif, ...existing].slice(0, 50));
+  }
+
+  // Sync to API (non-blocking)
+  const sessionId = getSessionId();
+  fetch(`${API_BASE}/notifications/inbox`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      sessionId,
+      notifId,
+      type: notif.type,
+      title: notif.title,
+      body: notif.body,
+      icon: notif.icon ?? "bell",
+      color: notif.color ?? "#4A90B8",
+    }),
+  }).catch(() => {});
+
+  return newNotif;
+}
+
+export function markAsRead(id: string): void {
+  const notifications = loadNotifications();
+  const updated = notifications.map((n) => (n.id === id ? { ...n, isRead: true } : n));
+  saveNotifications(updated);
+  // Sync to API
+  fetch(`${API_BASE}/notifications/inbox/${encodeURIComponent(id)}/read`, { method: "PATCH" }).catch(() => {});
+}
+
+export function markAllAsRead(): void {
+  const notifications = loadNotifications();
+  saveNotifications(notifications.map((n) => ({ ...n, isRead: true })));
+  const sessionId = getSessionId();
+  fetch(`${API_BASE}/notifications/inbox/read-all`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId }),
+  }).catch(() => {});
+}
+
+export function deleteNotification(id: string): void {
+  saveNotifications(loadNotifications().filter((n) => n.id !== id));
+  fetch(`${API_BASE}/notifications/inbox/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => {});
+}
+
+// ── Fired-today tracking (prevents duplicate polling-based firing) ─────────────
+
+const FIRED_KEY_PREFIX = "notifs_fired_";
+
+export function hasFiredToday(tag: string): boolean {
+  const today = new Date().toDateString();
+  const raw = localStorage.getItem(`${FIRED_KEY_PREFIX}${today}`) ?? "[]";
+  try { return (JSON.parse(raw) as string[]).includes(tag); } catch { return false; }
+}
+
+export function markFiredToday(tag: string): void {
+  const today = new Date().toDateString();
+  const key = `${FIRED_KEY_PREFIX}${today}`;
+  const raw = localStorage.getItem(key) ?? "[]";
+  try {
+    const fired = JSON.parse(raw) as string[];
+    if (!fired.includes(tag)) {
+      fired.push(tag);
+      localStorage.setItem(key, JSON.stringify(fired));
+    }
+  } catch {
+    localStorage.setItem(key, JSON.stringify([tag]));
+  }
+  // Cleanup previous days (keep today only)
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  localStorage.removeItem(`${FIRED_KEY_PREFIX}${yesterday}`);
+}
+
+// ── Seeding (legacy localStorage approach, still used as initial seed) ─────────
 
 const SPIRITUAL_POOL: Omit<AppNotification, "id" | "isRead" | "createdAt">[] = [
   {
@@ -89,52 +250,6 @@ const REMINDER_POOL: Omit<AppNotification, "id" | "isRead" | "createdAt">[] = [
   },
 ];
 
-function generateId(): string {
-  return `w_notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-}
-
-function todayStr(): string {
-  return new Date().toISOString().split("T")[0]!;
-}
-
-export function loadNotifications(): AppNotification[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as AppNotification[];
-  } catch {
-    return [];
-  }
-}
-
-export function saveNotifications(notifications: AppNotification[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notifications));
-  } catch {}
-}
-
-export function markAllAsRead(): void {
-  const notifications = loadNotifications();
-  const updated = notifications.map((n) => ({ ...n, isRead: true }));
-  saveNotifications(updated);
-}
-
-export function markAsRead(id: string): void {
-  const notifications = loadNotifications();
-  const updated = notifications.map((n) => n.id === id ? { ...n, isRead: true } : n);
-  saveNotifications(updated);
-}
-
-export function deleteNotification(id: string): void {
-  const notifications = loadNotifications();
-  saveNotifications(notifications.filter((n) => n.id !== id));
-}
-
-export function getUnreadCount(): number {
-  const notifications = loadNotifications();
-  return notifications.filter((n) => !n.isRead).length;
-}
-
 export function seedDailyNotifications(
   streakDays: number,
   day40Progress: number,
@@ -155,65 +270,46 @@ export function seedDailyNotifications(
 
   if (covenantSigned && streakDays > 0 && streakDays % 7 === 0) {
     newNotifs.push({
-      id: generateId(),
-      type: "achievement",
+      id: generateId(), type: "achievement",
       title: "🏆 إنجاز جديد!",
       body: `أكملت ${streakDays} يوماً متواصلاً من الاستقامة — ثبّتك الله وزادك من فضله`,
-      icon: "award",
-      color: "#d97706",
-      isRead: false,
+      icon: "award", color: "#d97706", isRead: false,
       createdAt: new Date(Date.now() - 120000).toISOString(),
     });
   }
-
   if (covenantSigned && day40Progress === 10) {
     newNotifs.push({
-      id: generateId(),
-      type: "achievement",
+      id: generateId(), type: "achievement",
       title: "ربع الطريق! 🌿",
       body: "أتممت ١٠ أيام من رحلتك — الله يرى صدقك وثباتك",
-      icon: "award",
-      color: "#16a34a",
-      isRead: false,
+      icon: "award", color: "#16a34a", isRead: false,
       createdAt: new Date(Date.now() - 180000).toISOString(),
     });
   }
-
   if (covenantSigned && day40Progress === 20) {
     newNotifs.push({
-      id: generateId(),
-      type: "achievement",
+      id: generateId(), type: "achievement",
       title: "منتصف الرحلة! ⭐",
       body: "٢٠ يوماً من الثبات — أنت أقرب إلى الله مما تتخيل",
-      icon: "star",
-      color: "#d97706",
-      isRead: false,
+      icon: "star", color: "#d97706", isRead: false,
       createdAt: new Date(Date.now() - 180000).toISOString(),
     });
   }
-
   if (covenantSigned && day40Progress === 40) {
     newNotifs.push({
-      id: generateId(),
-      type: "achievement",
+      id: generateId(), type: "achievement",
       title: "أكملت الرحلة! 🌟",
       body: "ماشاء الله! أتممت الأربعين يوماً — سأل الله أن تكون من التوابين",
-      icon: "star",
-      color: "#d97706",
-      isRead: false,
+      icon: "star", color: "#d97706", isRead: false,
       createdAt: new Date(Date.now() - 180000).toISOString(),
     });
   }
-
   if (!covenantSigned) {
     newNotifs.push({
-      id: generateId(),
-      type: "warning",
+      id: generateId(), type: "warning",
       title: "ابدأ رحلتك",
       body: "لم توقّع ميثاقك بعد — كل لحظة تأخير هي فرصة ضائعة للتوبة",
-      icon: "alert-circle",
-      color: "#dc2626",
-      isRead: false,
+      icon: "alert-circle", color: "#dc2626", isRead: false,
       createdAt: new Date(Date.now() - 240000).toISOString(),
     });
   }
