@@ -157,11 +157,10 @@ export function Layout({ children }: { children: ReactNode }) {
             <div className="relative">
 
               {/*
-                SVG notch — uses ONLY cubic bezier curves (no arc/A command) so it
-                never distorts regardless of screen width.
-                ViewBox 400×80: x scales with screen width (proportional), y is fixed 1:1.
-                Notch: center x=200, spans x135→265 (130px), depth 44px.
-                Button center sits at nav-top (y=0); button bottom at y=30 → fits inside 42px notch.
+                SVG notch — true circular arc via cubic bezier (k=0.5523).
+                ViewBox 400×80. Button diameter=60px (r=30). Notch r=36 → 6px gap all around.
+                Center x=200. Arc from (164,0) → (200,36) → (236,0).
+                Spacer = 72/400 = 18% of nav width to match notch span.
               */}
               <svg
                 className="absolute inset-x-0 top-0 w-full pointer-events-none"
@@ -170,15 +169,15 @@ export function Layout({ children }: { children: ReactNode }) {
                 preserveAspectRatio="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                {/* Nav bar fill with smooth bezier notch — notch spans x=135→265 (130px) for even margins */}
+                {/* Nav bar fill — circular notch: left quarter C(164,20 180,36) + right quarter C(220,36 236,20) */}
                 <path
-                  d="M0,0 L135,0 C150,0 185,44 200,44 C215,44 250,0 265,0 L400,0 L400,80 L0,80 Z"
+                  d="M0,0 L164,0 C164,20 180,36 200,36 C220,36 236,20 236,0 L400,0 L400,80 L0,80 Z"
                   className="fill-card/95"
                   style={{ filter: "drop-shadow(0 -4px 16px rgba(0,0,0,0.09))" }}
                 />
-                {/* Border line following the same bezier curve */}
+                {/* Border line — same circular arc */}
                 <path
-                  d="M0,0.5 L135,0.5 C150,0.5 185,44.5 200,44.5 C215,44.5 250,0.5 265,0.5 L400,0.5"
+                  d="M0,0.5 L164,0.5 C164,20.5 180,36.5 200,36.5 C220,36.5 236,20.5 236,0.5 L400,0.5"
                   fill="none"
                   className="stroke-border/50"
                   strokeWidth="0.8"
@@ -191,8 +190,8 @@ export function Layout({ children }: { children: ReactNode }) {
                   <NavItem key={item.href} {...item} />
                 ))}
 
-                {/* Center spacer — 32.5% matches notch width (130/400) */}
-                <div className="flex-none" style={{ width: "32.5%" }} />
+                {/* Center spacer — 18% matches notch span (72/400) */}
+                <div className="flex-none" style={{ width: "18%" }} />
 
                 {rightItems.map((item) => (
                   <NavItem key={item.href} {...item} />
