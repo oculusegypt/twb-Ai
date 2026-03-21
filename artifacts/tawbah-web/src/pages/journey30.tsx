@@ -15,6 +15,7 @@ interface JourneyDay {
   completed: boolean;
   isCurrent: boolean;
   isLocked: boolean;
+  taskChecks: boolean[];
 }
 
 interface JourneyData {
@@ -454,31 +455,49 @@ function SurahButton({ task }: { task: string }) {
   );
 }
 
-function useTaskCompletion(dayNumber: number, tasksCount: number) {
-  const key = `journey30-tasks-day-${dayNumber}`;
-  const [checked, setChecked] = useState<boolean[]>(() => {
-    try {
-      const saved = localStorage.getItem(key);
-      if (saved) {
-        const arr = JSON.parse(saved) as boolean[];
-        if (arr.length === tasksCount) return arr;
+function DayTaskList({
+  day,
+  sessionId,
+  onAllDone,
+}: {
+  day: JourneyDay;
+  sessionId: string;
+  onAllDone: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const [optimistic, setOptimistic] = useState<boolean[]>(
+    day.taskChecks?.length ? day.taskChecks : Array(day.tasks.length).fill(false)
+  );
+
+  useEffect(() => {
+    setOptimistic(day.taskChecks?.length ? day.taskChecks : Array(day.tasks.length).fill(false));
+  }, [day.taskChecks]);
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ taskIndex, completed }: { taskIndex: number; completed: boolean }) => {
+      const res = await fetch("/api/journey30/task-toggle", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, dayNumber: day.day, taskIndex, completed }),
+      });
+      return res.json() as Promise<{ success: boolean; allDone: boolean }>;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["journey30", sessionId] });
+      if (data.allDone) {
+        onAllDone();
       }
-    } catch {}
-    return Array(tasksCount).fill(false);
+    },
   });
 
   const toggle = (i: number) => {
-    const next = checked.map((v, idx) => (idx === i ? !v : v));
-    setChecked(next);
-    try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+    if (day.completed) return;
+    const next = optimistic.map((v, idx) => (idx === i ? !v : v));
+    setOptimistic(next);
+    toggleMutation.mutate({ taskIndex: i, completed: next[i]! });
   };
 
-  const allDone = checked.every(Boolean);
-  return { checked, toggle, allDone };
-}
-
-function DayTaskList({ day }: { day: JourneyDay }) {
-  const { checked, toggle, allDone } = useTaskCompletion(day.day, day.tasks.length);
+  const allDone = optimistic.every(Boolean);
 
   return (
     <div>
@@ -486,26 +505,27 @@ function DayTaskList({ day }: { day: JourneyDay }) {
       {allDone && !day.completed && (
         <div className="mb-2 flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/5 rounded-lg px-3 py-2 border border-primary/15">
           <CheckCircle2 size={13} />
-          أكملت جميع المهام! اضغط الزر أدناه لتسجيل اليوم.
+          أحسنت! جاري حفظ اليوم تلقائياً...
         </div>
       )}
       <div className="flex flex-col gap-2.5">
         {day.tasks.map((task, i) => {
           const surahsForTask = extractSurahsFromTask(task);
           return (
-            <div key={i} className={`rounded-xl border transition-all ${checked[i] ? "bg-primary/5 border-primary/15" : "bg-muted/20 border-border/50"}`}>
+            <div key={i} className={`rounded-xl border transition-all ${optimistic[i] ? "bg-primary/5 border-primary/15" : "bg-muted/20 border-border/50"}`}>
               <div className="flex items-start gap-2.5 p-2.5">
                 <button
                   onClick={() => toggle(i)}
                   className="shrink-0 mt-0.5"
+                  disabled={day.completed}
                 >
-                  {checked[i] ? (
+                  {optimistic[i] ? (
                     <CheckSquare size={18} className="text-primary" />
                   ) : (
                     <Square size={18} className="text-muted-foreground/50" />
                   )}
                 </button>
-                <span className={`text-sm flex-1 leading-relaxed ${checked[i] ? "line-through text-muted-foreground" : ""}`}>
+                <span className={`text-sm flex-1 leading-relaxed ${optimistic[i] ? "line-through text-muted-foreground" : ""}`}>
                   {task}
                 </span>
               </div>
@@ -522,10 +542,92 @@ function DayTaskList({ day }: { day: JourneyDay }) {
   );
 }
 
+function RestoreCodePanel({ sessionId, onClose }: { sessionId: string; onClose: () => void }) {
+  const [inputCode, setInputCode] = useState("");
+  const [tab, setTab] = useState<"view" | "enter">("view");
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(sessionId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleRestore = () => {
+    const trimmed = inputCode.trim();
+    if (!trimmed || trimmed === sessionId) return;
+    try {
+      localStorage.setItem("tawbah_session_id", trimmed);
+      window.location.reload();
+    } catch {}
+  };
+
+  return (
+    <div className="bg-muted/40 border border-border rounded-2xl p-4" dir="rtl">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs font-bold text-foreground">🔗 المزامنة بين الأجهزة</p>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="flex gap-2 mb-3">
+        <button
+          onClick={() => setTab("view")}
+          className={`flex-1 text-[11px] py-1.5 rounded-lg font-bold transition-all ${tab === "view" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+        >
+          رمزي
+        </button>
+        <button
+          onClick={() => setTab("enter")}
+          className={`flex-1 text-[11px] py-1.5 rounded-lg font-bold transition-all ${tab === "enter" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+        >
+          أدخل رمزاً
+        </button>
+      </div>
+      {tab === "view" ? (
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-2">انسخ هذا الرمز واحفظه لاستعادة رحلتك من أي جهاز:</p>
+          <div className="flex items-center gap-2 bg-background rounded-xl border border-border px-3 py-2">
+            <code className="text-[10px] text-primary flex-1 break-all font-mono select-all">{sessionId}</code>
+            <button
+              onClick={handleCopy}
+              className="shrink-0 text-[11px] bg-primary text-primary-foreground px-2 py-1 rounded-lg font-bold"
+            >
+              {copied ? "✓" : "نسخ"}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-2">الصق رمز الاستعادة الخاص بك:</p>
+          <div className="flex gap-2">
+            <input
+              value={inputCode}
+              onChange={e => setInputCode(e.target.value)}
+              placeholder="الصق الرمز هنا..."
+              className="flex-1 bg-background border border-border rounded-xl px-3 py-2 text-[11px] font-mono outline-none focus:border-primary"
+              dir="ltr"
+            />
+            <button
+              onClick={handleRestore}
+              disabled={!inputCode.trim() || inputCode.trim() === sessionId}
+              className="shrink-0 text-[11px] bg-primary text-primary-foreground px-3 py-2 rounded-xl font-bold disabled:opacity-40"
+            >
+              استعادة
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Journey30() {
   const sessionId = getSessionId();
   const queryClient = useQueryClient();
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
+  const [justCompleted, setJustCompleted] = useState<number | null>(null);
+  const [showRestoreCode, setShowRestoreCode] = useState(false);
 
   const { data, isLoading } = useQuery<JourneyData>({
     queryKey: ["journey30", sessionId],
@@ -570,7 +672,40 @@ export default function Journey30() {
       >
         <h1 className="text-2xl font-bold mb-1">رحلة ٣٠ يوماً</h1>
         <p className="text-sm text-muted-foreground">طريق التوبة خطوة بخطوة</p>
+        <button
+          onClick={() => setShowRestoreCode(!showRestoreCode)}
+          className="mt-2 text-[11px] text-muted-foreground/60 hover:text-muted-foreground underline underline-offset-2 transition-colors"
+        >
+          استعادة رحلتي من جهاز آخر
+        </button>
       </motion.div>
+
+      <AnimatePresence>
+        {justCompleted !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-2xl p-4 text-center"
+          >
+            <p className="text-lg font-bold text-primary">🎉 أحسنت! اليوم {justCompleted} مكتمل</p>
+            <p className="text-xs text-muted-foreground mt-1">تم حفظ تقدمك. استمر في الرحلة بارك الله فيك</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showRestoreCode && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden"
+          >
+            <RestoreCodePanel sessionId={sessionId} onClose={() => setShowRestoreCode(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
@@ -694,17 +829,15 @@ export default function Journey30() {
                         </p>
                       </div>
 
-                      <DayTaskList day={day} />
-
-                      {!day.completed && (
-                        <button
-                          onClick={() => completeMutation.mutate(day.day)}
-                          disabled={completeMutation.isPending}
-                          className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50"
-                        >
-                          {completeMutation.isPending ? "يتم الحفظ..." : "✓ أكملت مهام هذا اليوم"}
-                        </button>
-                      )}
+                      <DayTaskList
+                        day={day}
+                        sessionId={sessionId}
+                        onAllDone={() => {
+                          setJustCompleted(day.day);
+                          setExpandedDay(null);
+                          setTimeout(() => setJustCompleted(null), 4000);
+                        }}
+                      />
 
                       {day.completed && (
                         <div className="flex items-center justify-center gap-2 py-2 text-primary">

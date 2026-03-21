@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { journey30Table, userProgressTable } from "@workspace/db/schema";
+import { journey30Table, journey30TasksTable, userProgressTable } from "@workspace/db/schema";
 import { eq, and } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -20,7 +20,7 @@ const JOURNEY_DAYS: Array<{ day: number; title: string; tasks: string[]; verse: 
   { day: 12, title: "يوم الجسد", tasks: ["نم مبكراً لتستيقظ لصلاة الفجر", "مارس رياضة خفيفة", "تجنّب كل ما يضعف إرادتك"], verse: "﴿وَلَا تُلْقُوا بِأَيْدِيكُمْ إِلَى التَّهْلُكَةِ﴾" },
   { day: 13, title: "يوم العلم", tasks: ["استمع لمحاضرة دينية", "اقرأ في كتاب إسلامي", "شارك علماً نافعاً مع أحد"], verse: "﴿هَلْ يَسْتَوِي الَّذِينَ يَعْلَمُونَ وَالَّذِينَ لَا يَعْلَمُونَ﴾" },
   { day: 14, title: "أسبوعان من التوبة", tasks: ["راجع أسبوعك الماضي", "استغفر عن أي تقصير", "جدّد نيتك وعزيمتك"], verse: "﴿وَالَّذِينَ إِذَا فَعَلُوا فَاحِشَةً أَوْ ظَلَمُوا أَنفُسَهُمْ ذَكَرُوا اللَّهَ فَاسْتَغْفَرُوا لِذُنُوبِهِمْ﴾" },
-  { day: 15, title: "منتصف الرحلة", tasks: ["احتفل بنصف الطريق", "تصدّق بصدقة جارية", "ادعُ لنفسك بالثبات"], verse: "﴿إِنَّ الَّذِينَ قَالُوا رَبُّنَا اللَّهُ ثُمَّ اسْتَقَامُوا تَتَنَزَّلُ عَلَيْهِمُ الْمَلَائِكَةُ﴾" },
+  { day: 15, title: "منتصف الرحلة", tasks: ["احتفل بنصف الطريق", "تصدّق بصدقة جارية", "ادعُ الله بالثبات"], verse: "﴿إِنَّ الَّذِينَ قَالُوا رَبُّنَا اللَّهُ ثُمَّ اسْتَقَامُوا تَتَنَزَّلُ عَلَيْهِمُ الْمَلَائِكَةُ﴾" },
   { day: 16, title: "يوم الأسرة", tasks: ["صلِّ في الجماعة", "أصلح علاقة مع أحد أقاربك", "ادعُ لوالديك بالرحمة والمغفرة"], verse: "﴿وَبِالْوَالِدَيْنِ إِحْسَانًا﴾" },
   { day: 17, title: "يوم الاستعاذة", tasks: ["قل أعوذ بالله من الشيطان كلما شعرت بإغراء", "اقرأ المعوذتين 3 مرات", "تجنّب الخلوة التامة"], verse: "﴿وَإِمَّا يَنزَغَنَّكَ مِنَ الشَّيْطَانِ نَزْغٌ فَاسْتَعِذْ بِاللَّهِ﴾" },
   { day: 18, title: "يوم التفكّر", tasks: ["تأمّل في خلق الله ساعة", "فكّر في الجنة وما أعدّ الله للتائبين", "اكتب ما تريد من الله في يوميّاتك"], verse: "﴿إِنَّ فِي خَلْقِ السَّمَاوَاتِ وَالْأَرْضِ وَاخْتِلَافِ اللَّيْلِ وَالنَّهَارِ لَآيَاتٍ لِّأُولِي الْأَلْبَابِ﴾" },
@@ -42,18 +42,35 @@ router.get("/journey30", async (req, res) => {
   const sessionId = req.query.sessionId as string;
   if (!sessionId) return res.status(400).json({ error: "sessionId required" });
 
-  const rows = await db.query.journey30Table.findMany({
-    where: eq(journey30Table.sessionId, sessionId),
-  });
+  const [rows, taskRows] = await Promise.all([
+    db.query.journey30Table.findMany({
+      where: eq(journey30Table.sessionId, sessionId),
+    }),
+    db.query.journey30TasksTable.findMany({
+      where: eq(journey30TasksTable.sessionId, sessionId),
+    }),
+  ]);
 
   const completedDays = new Set(rows.filter(r => r.completed).map(r => r.dayNumber));
   const currentDay = completedDays.size + 1;
+
+  const tasksByDay: Record<number, boolean[]> = {};
+  for (const t of taskRows) {
+    if (!tasksByDay[t.dayNumber]) {
+      const dayData = JOURNEY_DAYS.find(d => d.day === t.dayNumber);
+      tasksByDay[t.dayNumber] = Array(dayData?.tasks.length ?? 0).fill(false);
+    }
+    if (tasksByDay[t.dayNumber]) {
+      tasksByDay[t.dayNumber]![t.taskIndex] = t.completed;
+    }
+  }
 
   const days = JOURNEY_DAYS.map(d => ({
     ...d,
     completed: completedDays.has(d.day),
     isCurrent: d.day === currentDay,
     isLocked: d.day > currentDay,
+    taskChecks: tasksByDay[d.day] ?? Array(d.tasks.length).fill(false),
   }));
 
   res.json({
@@ -62,6 +79,84 @@ router.get("/journey30", async (req, res) => {
     currentDay,
     streakDays: completedDays.size,
   });
+});
+
+router.post("/journey30/task-toggle", async (req, res) => {
+  const { sessionId, dayNumber, taskIndex, completed } = req.body as {
+    sessionId: string; dayNumber: number; taskIndex: number; completed: boolean;
+  };
+  if (!sessionId || dayNumber == null || taskIndex == null) {
+    return res.status(400).json({ error: "sessionId, dayNumber, taskIndex required" });
+  }
+
+  const existing = await db.query.journey30TasksTable.findFirst({
+    where: and(
+      eq(journey30TasksTable.sessionId, sessionId),
+      eq(journey30TasksTable.dayNumber, dayNumber),
+      eq(journey30TasksTable.taskIndex, taskIndex),
+    ),
+  });
+
+  if (existing) {
+    await db.update(journey30TasksTable)
+      .set({ completed, completedAt: completed ? new Date() : null })
+      .where(and(
+        eq(journey30TasksTable.sessionId, sessionId),
+        eq(journey30TasksTable.dayNumber, dayNumber),
+        eq(journey30TasksTable.taskIndex, taskIndex),
+      ));
+  } else {
+    await db.insert(journey30TasksTable).values({
+      sessionId,
+      dayNumber,
+      taskIndex,
+      completed,
+      completedAt: completed ? new Date() : null,
+    });
+  }
+
+  const dayData = JOURNEY_DAYS.find(d => d.day === dayNumber);
+  if (!dayData) return res.json({ success: true, allDone: false });
+
+  const allTaskRows = await db.query.journey30TasksTable.findMany({
+    where: and(
+      eq(journey30TasksTable.sessionId, sessionId),
+      eq(journey30TasksTable.dayNumber, dayNumber),
+    ),
+  });
+
+  const completedCount = allTaskRows.filter(t => t.completed).length;
+  const allDone = completedCount >= dayData.tasks.length;
+
+  if (allDone) {
+    const existing = await db.query.journey30Table.findFirst({
+      where: and(
+        eq(journey30Table.sessionId, sessionId),
+        eq(journey30Table.dayNumber, dayNumber)
+      ),
+    });
+
+    if (!existing) {
+      await db.insert(journey30Table).values({
+        sessionId,
+        dayNumber,
+        completed: true,
+        completedAt: new Date(),
+        date: new Date().toISOString().split("T")[0],
+      });
+
+      await db.query.userProgressTable.findFirst({ where: eq(userProgressTable.sessionId, sessionId) })
+        .then(async (progress) => {
+          if (progress) {
+            await db.update(userProgressTable)
+              .set({ streakDays: dayNumber })
+              .where(eq(userProgressTable.sessionId, sessionId));
+          }
+        });
+    }
+  }
+
+  res.json({ success: true, allDone });
 });
 
 router.post("/journey30/complete", async (req, res) => {
