@@ -3,10 +3,10 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   User2, Settings2, Moon, Sun, Languages, Volume2, BookOpen,
-  ChevronDown, Check, BarChart2, Calendar, Clock, Heart,
-  ScrollText, PenLine, Bell, ChevronLeft, LogOut, Shield,
+  ChevronDown, Check, BarChart2, Calendar, Clock,
+  ScrollText, PenLine, Bell, ChevronLeft, Shield, Palette,
 } from "lucide-react";
-import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
+import { useSettings, QURAN_RECITERS, ACCENT_OPTIONS, type AccentColor } from "@/context/SettingsContext";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { cn } from "@/lib/utils";
 import { AnimatePresence } from "framer-motion";
@@ -114,8 +114,8 @@ function getHijriDate() {
 }
 
 export default function Account() {
-  const { lang, theme, autoPlayBotAudio, autoPlayQuran, quranReciterId,
-    toggleLang, toggleTheme, setAutoPlayBotAudio, setAutoPlayQuran, setQuranReciterId } = useSettings();
+  const { lang, theme, accentColor, autoPlayBotAudio, autoPlayQuran, quranReciterId,
+    toggleLang, toggleTheme, setAccentColor, setAutoPlayBotAudio, setAutoPlayQuran, setQuranReciterId } = useSettings();
   const { data: progress } = useAppUserProgress();
   const [reciterOpen, setReciterOpen] = useState(false);
   const currentReciter = QURAN_RECITERS.find(r => r.id === quranReciterId) ?? QURAN_RECITERS[0]!;
@@ -193,6 +193,52 @@ export default function Account() {
           description={theme === "dark" ? "مفعّل" : "غير مفعّل"}
           right={<Toggle checked={theme === "dark"} onToggle={toggleTheme} />}
         />
+
+        {/* Color theme picker */}
+        <div className="py-4 border-b border-border/30">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+              <Palette size={17} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">لون التطبيق</p>
+              <p className="text-xs text-muted-foreground">
+                {ACCENT_OPTIONS.find(o => o.id === accentColor)?.nameAr ?? "الغابة"}
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {ACCENT_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setAccentColor(opt.id as AccentColor)}
+                className="flex flex-col items-center gap-1.5 group"
+              >
+                <div
+                  className={cn(
+                    "w-full aspect-square rounded-2xl transition-all duration-200",
+                    accentColor === opt.id
+                      ? "ring-2 ring-offset-2 ring-offset-card scale-105 shadow-lg"
+                      : "opacity-75 group-hover:opacity-100 group-hover:scale-102"
+                  )}
+                  style={{
+                    background: opt.gradient,
+                    ringColor: theme === "dark" ? opt.darkPrimary : opt.lightPrimary,
+                  } as React.CSSProperties}
+                >
+                  {accentColor === opt.id && (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Check size={16} className="text-white drop-shadow" strokeWidth={3} />
+                    </div>
+                  )}
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium leading-none">
+                  {opt.nameAr}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         <SettingRow
           icon={<Languages size={17} />}

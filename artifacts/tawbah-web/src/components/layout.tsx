@@ -5,29 +5,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
 
-function ZakiIcon({ size = 28 }: { size?: number; active?: boolean }) {
-  const color = "#ffffff";
+/* Gemini-style 4-pointed star */
+function GeminiStar({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Crescent moon */}
+    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M22 7C17.5 7 13 11 13 16.5C13 22 17.5 26 22 26C18.5 25 15.5 21.5 15.5 16.5C15.5 11.5 18.5 8.5 22 7Z"
-        fill={color}
-        opacity="0.9"
+        d="M14 2C14 2 15.5 9.5 22 11C15.5 12.5 14 20 14 20C14 20 12.5 12.5 6 11C12.5 9.5 14 2 14 2Z"
+        fill="white"
       />
-      {/* Large star */}
       <path
-        d="M23.5 9L24.3 11.5L27 11.5L24.9 13.1L25.7 15.5L23.5 13.9L21.3 15.5L22.1 13.1L20 11.5L22.7 11.5Z"
-        fill={color}
+        d="M14 20C14 20 14.8 23.8 17.5 25C14.8 26.2 14 30 14 30C14 30 13.2 26.2 10.5 25C13.2 23.8 14 20 14 20Z"
+        fill="white"
+        opacity="0.7"
       />
-      {/* Small dot stars */}
-      <circle cx="19" cy="19" r="1" fill={color} opacity="0.7" />
-      <circle cx="11" cy="14" r="0.8" fill={color} opacity="0.5" />
-      {/* Neural/circuit lines */}
-      <line x1="10" y1="16" x2="13" y2="16" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-      <line x1="10" y1="19" x2="12" y2="19" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.4" />
-      <circle cx="10" cy="16" r="1" fill={color} opacity="0.5" />
-      <circle cx="10" cy="19" r="0.8" fill={color} opacity="0.4" />
+      <path
+        d="M22 6C22 6 22.5 8.2 24.5 9C22.5 9.8 22 12 22 12C22 12 21.5 9.8 19.5 9C21.5 8.2 22 6 22 6Z"
+        fill="white"
+        opacity="0.6"
+      />
     </svg>
   );
 }
@@ -233,13 +228,11 @@ export function Layout({ children }: { children: ReactNode }) {
                     whileHover={{ scale: 1.06 }}
                     className="flex flex-col items-center"
                   >
-                    {/* Siri-style circle button */}
+                    {/* Gemini-style circle button */}
                     <div className="zaki-btn-siri w-[64px] h-[64px] shadow-2xl">
-                      {/* Glass frost overlay sits above the rotating gradient (::after z-index:0) */}
-                      <div className="absolute inset-0 rounded-full bg-white/20 dark:bg-black/25 backdrop-blur-[2px] z-10" />
-                      {/* Icon on top */}
+                      <div className="absolute inset-0 rounded-full bg-white/10 backdrop-blur-[1px] z-10" />
                       <div className="absolute inset-0 rounded-full flex items-center justify-center z-20">
-                        <ZakiIcon size={30} active={true} />
+                        <GeminiStar size={28} />
                       </div>
                     </div>
                   </motion.div>

@@ -3,6 +3,83 @@ import { type Lang, getTranslations, type Translations } from "@/lib/translation
 
 type Theme = "light" | "dark";
 
+export type AccentColor =
+  | "forest"
+  | "ocean"
+  | "aurora"
+  | "midnight"
+  | "rose"
+  | "sunset"
+  | "slate"
+  | "mint";
+
+export type AccentOption = {
+  id: AccentColor;
+  nameAr: string;
+  lightPrimary: string;
+  darkPrimary: string;
+  gradient: string;
+};
+
+export const ACCENT_OPTIONS: AccentOption[] = [
+  {
+    id: "forest",
+    nameAr: "الغابة",
+    lightPrimary: "#174d2b",
+    darkPrimary: "#c9933a",
+    gradient: "linear-gradient(135deg, #174d2b 0%, #c9933a 100%)",
+  },
+  {
+    id: "ocean",
+    nameAr: "المحيط",
+    lightPrimary: "#0f4c81",
+    darkPrimary: "#38bdf8",
+    gradient: "linear-gradient(135deg, #0f4c81 0%, #0ea5e9 100%)",
+  },
+  {
+    id: "aurora",
+    nameAr: "الشفق",
+    lightPrimary: "#6b21a8",
+    darkPrimary: "#c084fc",
+    gradient: "linear-gradient(135deg, #7c3aed 0%, #ec4899 100%)",
+  },
+  {
+    id: "midnight",
+    nameAr: "منتصف الليل",
+    lightPrimary: "#1e3a8a",
+    darkPrimary: "#60a5fa",
+    gradient: "linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)",
+  },
+  {
+    id: "rose",
+    nameAr: "الورود",
+    lightPrimary: "#9f1239",
+    darkPrimary: "#fb7185",
+    gradient: "linear-gradient(135deg, #be123c 0%, #f472b6 100%)",
+  },
+  {
+    id: "sunset",
+    nameAr: "الغروب",
+    lightPrimary: "#92400e",
+    darkPrimary: "#fbbf24",
+    gradient: "linear-gradient(135deg, #b45309 0%, #f97316 100%)",
+  },
+  {
+    id: "slate",
+    nameAr: "الصخري",
+    lightPrimary: "#1e3a5f",
+    darkPrimary: "#7dd3fc",
+    gradient: "linear-gradient(135deg, #334155 0%, #38bdf8 100%)",
+  },
+  {
+    id: "mint",
+    nameAr: "النعناع",
+    lightPrimary: "#065f46",
+    darkPrimary: "#34d399",
+    gradient: "linear-gradient(135deg, #047857 0%, #06b6d4 100%)",
+  },
+];
+
 export type QuranReciter = {
   id: string;
   name: string;
@@ -10,17 +87,18 @@ export type QuranReciter = {
 };
 
 export const QURAN_RECITERS: QuranReciter[] = [
-  { id: "ar.alafasy",            name: "Mishary Rashid Alafasy",     nameAr: "مشاري راشد العفاسي" },
-  { id: "ar.abdurrahmaansudais", name: "Abdurrahman As-Sudais",      nameAr: "عبد الرحمن السديس" },
-  { id: "ar.mahermuaiqly",       name: "Maher Al Muaiqly",           nameAr: "ماهر المعيقلي" },
-  { id: "ar.husary",             name: "Mahmoud Khalil Al-Husary",   nameAr: "محمود خليل الحصري" },
-  { id: "ar.minshawi",           name: "Mohammed Siddiq Al-Minshawi",nameAr: "محمد صديق المنشاوي" },
-  { id: "ar.abdulsamad",         name: "Abdul Samad",                nameAr: "عبد الباسط عبد الصمد" },
+  { id: "ar.alafasy",            name: "Mishary Rashid Alafasy",      nameAr: "مشاري راشد العفاسي" },
+  { id: "ar.abdurrahmaansudais", name: "Abdurrahman As-Sudais",       nameAr: "عبد الرحمن السديس" },
+  { id: "ar.mahermuaiqly",       name: "Maher Al Muaiqly",            nameAr: "ماهر المعيقلي" },
+  { id: "ar.husary",             name: "Mahmoud Khalil Al-Husary",    nameAr: "محمود خليل الحصري" },
+  { id: "ar.minshawi",           name: "Mohammed Siddiq Al-Minshawi", nameAr: "محمد صديق المنشاوي" },
+  { id: "ar.abdulsamad",         name: "Abdul Samad",                 nameAr: "عبد الباسط عبد الصمد" },
 ];
 
 interface SettingsContextType {
   lang: Lang;
   theme: Theme;
+  accentColor: AccentColor;
   t: Translations;
   dir: "rtl" | "ltr";
   autoPlayBotAudio: boolean;
@@ -28,6 +106,7 @@ interface SettingsContextType {
   quranReciterId: string;
   toggleLang: () => void;
   toggleTheme: () => void;
+  setAccentColor: (c: AccentColor) => void;
   setAutoPlayBotAudio: (v: boolean) => void;
   setAutoPlayQuran: (v: boolean) => void;
   setQuranReciterId: (id: string) => void;
@@ -43,6 +122,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem("tawbah_theme") as Theme | null;
     if (stored) return stored;
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+  const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
+    return (localStorage.getItem("tawbah_accent") as AccentColor) || "forest";
   });
   const [autoPlayBotAudio, setAutoPlayBotAudioState] = useState<boolean>(() => {
     const stored = localStorage.getItem("tawbah_autoplay_bot");
@@ -61,12 +143,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (theme === "dark") root.classList.add("dark");
     else root.classList.remove("dark");
     localStorage.setItem("tawbah_theme", theme);
-    // Update all theme-color meta tags to match the active theme
-    const color = theme === "dark" ? "#0a1f14" : "#145236";
-    document.querySelectorAll('meta[name="theme-color"]').forEach(el => {
-      el.setAttribute("content", color);
-    });
   }, [theme]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.setAttribute("data-accent", accentColor);
+    localStorage.setItem("tawbah_accent", accentColor);
+    const opt = ACCENT_OPTIONS.find(o => o.id === accentColor);
+    document.querySelectorAll('meta[name="theme-color"]').forEach(el => {
+      el.setAttribute("content", theme === "dark" ? "#0a0a12" : (opt?.lightPrimary ?? "#174d2b"));
+    });
+  }, [accentColor, theme]);
 
   useEffect(() => {
     document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
@@ -77,6 +164,9 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const toggleLang = () => setLang((l) => (l === "ar" ? "en" : "ar"));
   const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
 
+  const setAccentColor = (c: AccentColor) => {
+    setAccentColorState(c);
+  };
   const setAutoPlayBotAudio = (v: boolean) => {
     setAutoPlayBotAudioState(v);
     localStorage.setItem("tawbah_autoplay_bot", String(v));
@@ -93,9 +183,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   return (
     <SettingsContext.Provider
       value={{
-        lang, theme, t: getTranslations(lang), dir: lang === "ar" ? "rtl" : "ltr",
+        lang, theme, accentColor,
+        t: getTranslations(lang), dir: lang === "ar" ? "rtl" : "ltr",
         autoPlayBotAudio, autoPlayQuran, quranReciterId,
-        toggleLang, toggleTheme,
+        toggleLang, toggleTheme, setAccentColor,
         setAutoPlayBotAudio, setAutoPlayQuran, setQuranReciterId,
       }}
     >

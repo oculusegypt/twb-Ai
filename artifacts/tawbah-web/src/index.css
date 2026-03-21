@@ -27,77 +27,322 @@
   --font-quran: 'Amiri Quran', 'Amiri', serif;
 }
 
+/* ── BASE (fallback = forest) ── */
 :root {
-  /* Soft warm cream background */
   --background: 45 20% 98%;
   --foreground: 153 30% 15%;
-
-  /* White cards with warm tint */
   --card: 0 0% 100%;
   --card-foreground: 153 30% 15%;
-
   --popover: 0 0% 100%;
   --popover-foreground: 153 30% 15%;
-
-  /* Deep Forest Green */
   --primary: 153 60% 20%;
   --primary-foreground: 43 74% 90%;
-
-  /* Gold/Sand */
   --secondary: 43 60% 50%;
   --secondary-foreground: 153 60% 15%;
-
-  /* Muted greens */
   --muted: 150 15% 90%;
   --muted-foreground: 153 15% 45%;
-
-  /* Golden Accent */
   --accent: 43 74% 49%;
   --accent-foreground: 0 0% 100%;
-
-  /* Destructive (Red/Rose) */
   --destructive: 350 70% 45%;
   --destructive-foreground: 0 0% 100%;
-
   --border: 150 20% 85%;
   --input: 150 20% 85%;
   --ring: 153 60% 20%;
-
   --radius: 1rem;
 }
-
 .dark {
-  /* Deep Night Green */
   --background: 153 50% 8%;
   --foreground: 45 20% 90%;
-
   --card: 153 45% 12%;
   --card-foreground: 45 20% 90%;
-
   --popover: 153 45% 12%;
   --popover-foreground: 45 20% 90%;
-
-  /* Gold */
   --primary: 43 74% 49%;
   --primary-foreground: 153 60% 10%;
-
-  /* Muted Gold */
   --secondary: 43 30% 30%;
   --secondary-foreground: 45 20% 90%;
-
-  /* Very dark muted */
   --muted: 153 30% 15%;
   --muted-foreground: 153 15% 65%;
-
   --accent: 43 74% 49%;
   --accent-foreground: 153 60% 10%;
-
   --destructive: 350 60% 40%;
   --destructive-foreground: 0 0% 100%;
-
   --border: 153 30% 20%;
   --input: 153 30% 20%;
   --ring: 43 74% 49%;
+}
+
+/* ══════════════════════════════════════
+   1. OCEAN — أزرق عميق + سماوي
+══════════════════════════════════════ */
+[data-accent="ocean"]:root,
+[data-accent="ocean"] {
+  --background: 210 30% 98%;
+  --foreground: 213 50% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 213 50% 15%;
+  --primary: 213 75% 25%;
+  --primary-foreground: 195 80% 92%;
+  --secondary: 195 60% 45%;
+  --secondary-foreground: 213 60% 12%;
+  --muted: 210 20% 90%;
+  --muted-foreground: 213 20% 48%;
+  --accent: 190 75% 38%;
+  --accent-foreground: 0 0% 100%;
+  --border: 210 25% 84%;
+  --input: 210 25% 84%;
+  --ring: 213 75% 25%;
+}
+[data-accent="ocean"].dark {
+  --background: 215 50% 7%;
+  --foreground: 200 25% 90%;
+  --card: 215 45% 11%;
+  --card-foreground: 200 25% 90%;
+  --primary: 195 85% 55%;
+  --primary-foreground: 215 60% 8%;
+  --secondary: 205 40% 28%;
+  --secondary-foreground: 200 25% 90%;
+  --muted: 215 30% 14%;
+  --muted-foreground: 210 20% 62%;
+  --accent: 190 80% 52%;
+  --accent-foreground: 215 60% 8%;
+  --border: 215 30% 18%;
+  --input: 215 30% 18%;
+  --ring: 195 85% 55%;
+}
+
+/* ══════════════════════════════════════
+   2. AURORA — بنفسجي + وردي
+══════════════════════════════════════ */
+[data-accent="aurora"]:root,
+[data-accent="aurora"] {
+  --background: 280 20% 98%;
+  --foreground: 275 40% 15%;
+  --card: 0 0% 100%;
+  --card-foreground: 275 40% 15%;
+  --primary: 275 62% 32%;
+  --primary-foreground: 300 80% 95%;
+  --secondary: 330 65% 52%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 275 15% 90%;
+  --muted-foreground: 275 18% 48%;
+  --accent: 330 70% 50%;
+  --accent-foreground: 0 0% 100%;
+  --border: 275 20% 84%;
+  --input: 275 20% 84%;
+  --ring: 275 62% 32%;
+}
+[data-accent="aurora"].dark {
+  --background: 268 48% 7%;
+  --foreground: 290 20% 90%;
+  --card: 268 42% 11%;
+  --card-foreground: 290 20% 90%;
+  --primary: 290 70% 65%;
+  --primary-foreground: 268 55% 8%;
+  --secondary: 330 45% 30%;
+  --secondary-foreground: 290 20% 90%;
+  --muted: 268 28% 15%;
+  --muted-foreground: 275 18% 62%;
+  --accent: 330 72% 62%;
+  --accent-foreground: 268 55% 8%;
+  --border: 268 28% 19%;
+  --input: 268 28% 19%;
+  --ring: 290 70% 65%;
+}
+
+/* ══════════════════════════════════════
+   3. MIDNIGHT — كحلي + أزرق كهربائي
+══════════════════════════════════════ */
+[data-accent="midnight"]:root,
+[data-accent="midnight"] {
+  --background: 230 25% 98%;
+  --foreground: 230 50% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 230 50% 14%;
+  --primary: 232 70% 28%;
+  --primary-foreground: 215 85% 94%;
+  --secondary: 210 80% 48%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 228 18% 90%;
+  --muted-foreground: 230 22% 47%;
+  --accent: 215 88% 52%;
+  --accent-foreground: 0 0% 100%;
+  --border: 228 22% 84%;
+  --input: 228 22% 84%;
+  --ring: 232 70% 28%;
+}
+[data-accent="midnight"].dark {
+  --background: 228 52% 7%;
+  --foreground: 215 22% 90%;
+  --card: 228 46% 11%;
+  --card-foreground: 215 22% 90%;
+  --primary: 215 88% 60%;
+  --primary-foreground: 228 60% 8%;
+  --secondary: 228 38% 27%;
+  --secondary-foreground: 215 22% 90%;
+  --muted: 228 30% 14%;
+  --muted-foreground: 225 20% 62%;
+  --accent: 210 90% 58%;
+  --accent-foreground: 228 60% 8%;
+  --border: 228 30% 18%;
+  --input: 228 30% 18%;
+  --ring: 215 88% 60%;
+}
+
+/* ══════════════════════════════════════
+   4. ROSE — وردي + فوشيا
+══════════════════════════════════════ */
+[data-accent="rose"]:root,
+[data-accent="rose"] {
+  --background: 345 22% 98%;
+  --foreground: 345 40% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 345 40% 14%;
+  --primary: 343 65% 33%;
+  --primary-foreground: 345 80% 95%;
+  --secondary: 322 68% 52%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 345 15% 90%;
+  --muted-foreground: 345 18% 47%;
+  --accent: 330 72% 52%;
+  --accent-foreground: 0 0% 100%;
+  --border: 345 20% 84%;
+  --input: 345 20% 84%;
+  --ring: 343 65% 33%;
+}
+[data-accent="rose"].dark {
+  --background: 342 48% 7%;
+  --foreground: 345 20% 90%;
+  --card: 342 42% 11%;
+  --card-foreground: 345 20% 90%;
+  --primary: 345 75% 65%;
+  --primary-foreground: 342 55% 8%;
+  --secondary: 340 38% 28%;
+  --secondary-foreground: 345 20% 90%;
+  --muted: 342 28% 14%;
+  --muted-foreground: 345 18% 62%;
+  --accent: 330 74% 63%;
+  --accent-foreground: 342 55% 8%;
+  --border: 342 28% 19%;
+  --input: 342 28% 19%;
+  --ring: 345 75% 65%;
+}
+
+/* ══════════════════════════════════════
+   5. SUNSET — برتقالي + عنبر
+══════════════════════════════════════ */
+[data-accent="sunset"]:root,
+[data-accent="sunset"] {
+  --background: 30 25% 98%;
+  --foreground: 25 45% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 25 45% 14%;
+  --primary: 24 80% 33%;
+  --primary-foreground: 35 80% 94%;
+  --secondary: 15 82% 50%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 28 18% 90%;
+  --muted-foreground: 26 22% 47%;
+  --accent: 18 85% 50%;
+  --accent-foreground: 0 0% 100%;
+  --border: 28 22% 84%;
+  --input: 28 22% 84%;
+  --ring: 24 80% 33%;
+}
+[data-accent="sunset"].dark {
+  --background: 22 48% 7%;
+  --foreground: 35 20% 90%;
+  --card: 22 42% 11%;
+  --card-foreground: 35 20% 90%;
+  --primary: 38 88% 58%;
+  --primary-foreground: 22 55% 8%;
+  --secondary: 24 40% 27%;
+  --secondary-foreground: 35 20% 90%;
+  --muted: 22 28% 14%;
+  --muted-foreground: 28 20% 62%;
+  --accent: 30 90% 55%;
+  --accent-foreground: 22 55% 8%;
+  --border: 22 28% 19%;
+  --input: 22 28% 19%;
+  --ring: 38 88% 58%;
+}
+
+/* ══════════════════════════════════════
+   6. SLATE — رمادي-أزرق + سماوي فاتح
+══════════════════════════════════════ */
+[data-accent="slate"]:root,
+[data-accent="slate"] {
+  --background: 215 22% 98%;
+  --foreground: 215 40% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 215 40% 14%;
+  --primary: 215 48% 27%;
+  --primary-foreground: 208 80% 94%;
+  --secondary: 205 72% 48%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 215 16% 90%;
+  --muted-foreground: 215 18% 47%;
+  --accent: 205 78% 48%;
+  --accent-foreground: 0 0% 100%;
+  --border: 215 20% 84%;
+  --input: 215 20% 84%;
+  --ring: 215 48% 27%;
+}
+[data-accent="slate"].dark {
+  --background: 218 38% 8%;
+  --foreground: 210 18% 90%;
+  --card: 218 33% 12%;
+  --card-foreground: 210 18% 90%;
+  --primary: 208 80% 60%;
+  --primary-foreground: 218 48% 8%;
+  --secondary: 215 30% 26%;
+  --secondary-foreground: 210 18% 90%;
+  --muted: 218 24% 15%;
+  --muted-foreground: 215 16% 62%;
+  --accent: 200 82% 58%;
+  --accent-foreground: 218 48% 8%;
+  --border: 218 26% 19%;
+  --input: 218 26% 19%;
+  --ring: 208 80% 60%;
+}
+
+/* ══════════════════════════════════════
+   7. MINT — نعناعي + فيروزي
+══════════════════════════════════════ */
+[data-accent="mint"]:root,
+[data-accent="mint"] {
+  --background: 168 22% 98%;
+  --foreground: 168 40% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 168 40% 13%;
+  --primary: 165 62% 23%;
+  --primary-foreground: 168 70% 92%;
+  --secondary: 178 62% 38%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 165 15% 90%;
+  --muted-foreground: 165 18% 47%;
+  --accent: 178 68% 38%;
+  --accent-foreground: 0 0% 100%;
+  --border: 165 20% 84%;
+  --input: 165 20% 84%;
+  --ring: 165 62% 23%;
+}
+[data-accent="mint"].dark {
+  --background: 168 45% 7%;
+  --foreground: 168 18% 90%;
+  --card: 168 40% 11%;
+  --card-foreground: 168 18% 90%;
+  --primary: 172 68% 52%;
+  --primary-foreground: 168 52% 7%;
+  --secondary: 168 32% 25%;
+  --secondary-foreground: 168 18% 90%;
+  --muted: 168 28% 14%;
+  --muted-foreground: 168 16% 62%;
+  --accent: 178 70% 50%;
+  --accent-foreground: 168 52% 7%;
+  --border: 168 28% 18%;
+  --input: 168 28% 18%;
+  --ring: 172 68% 52%;
 }
 
 @layer base {
@@ -108,7 +353,6 @@
     @apply bg-background text-foreground font-sans antialiased;
     direction: rtl;
     -webkit-tap-highlight-color: transparent;
-    /* Extend content to the very bottom on PWA fullscreen / edge-to-edge */
     padding-bottom: env(safe-area-inset-bottom, 0px);
     padding-top: env(safe-area-inset-top, 0px);
     min-height: 100dvh;
@@ -126,18 +370,12 @@
   @apply bg-clip-text text-transparent bg-gradient-to-l from-primary to-accent dark:from-accent dark:to-white;
 }
 
-/* Custom scrollbar for web */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  @apply bg-primary/20 rounded-full;
-}
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
 
-/* Quran text uses proper Mushaf font */
+/* Quran text */
 .quran-text {
   font-family: var(--font-quran);
   font-size: 1.25rem;
@@ -147,7 +385,7 @@
   unicode-bidi: bidi-override;
 }
 
-/* ── Siri-style Zaki button animations ── */
+/* ── Gemini-style Zaki button animations ── */
 @keyframes zaki-spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -157,13 +395,8 @@
   to   { transform: rotate(0deg); }
 }
 @keyframes zaki-pulse-glow {
-  0%, 100% { opacity: 0.55; transform: scale(1);   }
-  50%       { opacity: 0.85; transform: scale(1.18); }
-}
-@keyframes zaki-shimmer {
-  0%   { background-position: 0%   50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0%   50%; }
+  0%, 100% { opacity: 0.5;  transform: scale(1);    }
+  50%       { opacity: 0.82; transform: scale(1.22); }
 }
 
 .zaki-btn-siri {
@@ -172,65 +405,41 @@
   overflow: visible;
 }
 
-/* Outer pulsing glow ring — adapts to light/dark */
+/* Outer blurred glow ring */
 .zaki-btn-siri::before {
   content: '';
   position: absolute;
-  inset: -6px;
+  inset: -7px;
   border-radius: 9999px;
   background: conic-gradient(
     from 0deg,
-    hsl(153 60% 25%),
-    hsl(43 74% 49%),
-    hsl(160 55% 35%),
-    hsl(43 74% 60%),
-    hsl(153 60% 25%)
+    #4285f4,
+    #9c27b0,
+    #00bcd4,
+    #e91e63,
+    #4285f4
   );
-  filter: blur(8px);
-  animation: zaki-spin 4s linear infinite, zaki-pulse-glow 2.5s ease-in-out infinite;
+  filter: blur(10px);
+  animation: zaki-spin 3.5s linear infinite, zaki-pulse-glow 2.2s ease-in-out infinite;
   z-index: -1;
 }
 
-/* Inner rotating gradient face */
+/* Inner rotating face */
 .zaki-btn-siri::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 9999px;
   background: conic-gradient(
-    from 90deg,
-    hsl(153 60% 22%),
-    hsl(43 74% 50%),
-    hsl(160 65% 30%),
-    hsl(43 80% 58%),
-    hsl(153 55% 18%),
-    hsl(43 74% 50%),
-    hsl(153 60% 22%)
+    from 60deg,
+    #1a73e8,
+    #9334ea,
+    #06b6d4,
+    #ec4899,
+    #1a73e8,
+    #9334ea,
+    #1a73e8
   );
-  animation: zaki-spin-reverse 6s linear infinite;
+  animation: zaki-spin-reverse 5s linear infinite;
   z-index: 0;
-}
-
-/* Dark mode — gold-led palette */
-.dark .zaki-btn-siri::before {
-  background: conic-gradient(
-    from 0deg,
-    hsl(43 90% 50%),
-    hsl(153 55% 35%),
-    hsl(43 80% 65%),
-    hsl(160 60% 40%),
-    hsl(43 90% 50%)
-  );
-}
-.dark .zaki-btn-siri::after {
-  background: conic-gradient(
-    from 90deg,
-    hsl(43 90% 48%),
-    hsl(153 55% 30%),
-    hsl(43 80% 62%),
-    hsl(160 60% 38%),
-    hsl(43 85% 44%),
-    hsl(153 50% 25%),
-    hsl(43 90% 48%)
-  );
 }
