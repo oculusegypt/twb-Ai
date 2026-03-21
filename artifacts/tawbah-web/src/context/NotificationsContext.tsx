@@ -8,11 +8,11 @@ import {
   getPermission,
   registerSW,
   scheduleAll,
-  clearAll,
   buildScheduledNotifications,
   subscribeToPush,
+  showViaSW,
 } from "@/lib/notifications";
-import { hasFiredToday, markFiredToday } from "@/lib/app-notifications";
+import { hasFiredToday, markFiredToday, addToInboxApi } from "@/lib/app-notifications";
 
 const API_BASE = "/api";
 
@@ -45,7 +45,6 @@ async function loadSettingsFromApi(): Promise<NotificationSettings | null> {
       prayerLat?: string; prayerLng?: string;
     } | null;
     if (!row || !row.settingsJson) return null;
-    // Restore prayer location if not in localStorage
     if (row.prayerCity && !localStorage.getItem("prayerCity")) localStorage.setItem("prayerCity", row.prayerCity);
     if (row.prayerCountry && !localStorage.getItem("prayerCountry")) localStorage.setItem("prayerCountry", row.prayerCountry);
     if (row.prayerLat && !localStorage.getItem("prayerLat")) localStorage.setItem("prayerLat", row.prayerLat);
@@ -54,33 +53,6 @@ async function loadSettingsFromApi(): Promise<NotificationSettings | null> {
   } catch {
     return null;
   }
-}
-
-// Dispatch a custom event so AppNotificationsContext can add to inbox
-function dispatchNotificationFired(notif: {
-  id: string; type: "reminder"; title: string; body: string; icon?: string; color?: string;
-}) {
-  window.dispatchEvent(new CustomEvent("tawbah:notification:fired", { detail: notif }));
-}
-
-// Show a browser notification
-function showBrowserNotification(title: string, body: string, tag: string, url: string) {
-  if (Notification.permission !== "granted") return;
-  try {
-    const n = new Notification(title, {
-      body,
-      icon: "/images/logo.png",
-      badge: "/images/logo.png",
-      tag,
-      dir: "rtl",
-      lang: "ar",
-    });
-    n.onclick = () => {
-      window.focus();
-      if (url && url !== "/") window.location.href = url;
-      n.close();
-    };
-  } catch {}
 }
 
 interface NotificationsContextValue {
@@ -112,7 +84,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     });
   }, [supported]);
 
-  // Load settings from API on mount (overrides localStorage if found)
+  // Load settings from API on mount
   useEffect(() => {
     loadSettingsFromApi().then((apiSettings) => {
       if (apiSettings) {
@@ -131,7 +103,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     reschedule();
   }, [settings, reschedule]);
 
-  // Re-schedule when tab becomes visible
+  // Re-schedule server-side push when tab becomes visible (refresh subscription)
   useEffect(() => {
     if (!supported) return;
     const handleVisibility = () => {
@@ -141,27 +113,17 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [supported, reschedule]);
 
-  // Listen for RESCHEDULE_NEEDED from SW (midnight reset)
-  useEffect(() => {
-    if (!supported) return;
-    const handleSwMessage = (event: MessageEvent) => {
-      if (event.data?.type === "RESCHEDULE_NEEDED") reschedule();
-    };
-    navigator.serviceWorker.addEventListener("message", handleSwMessage);
-    return () => navigator.serviceWorker.removeEventListener("message", handleSwMessage);
-  }, [supported, reschedule]);
-
-  // ── Listen for SW-fired notifications → add to in-app inbox ──────────────────
+  // ── Listen for SW-fired notifications (push) → add to in-app inbox ───────────
   useEffect(() => {
     if (!supported) return;
     const handleSwMessage = (event: MessageEvent) => {
       if (event.data?.type === "NOTIFICATION_FIRED") {
-        const { tag, title, body, url } = event.data as {
+        const { tag, title, body } = event.data as {
           tag: string; title: string; body: string; url: string;
         };
         if (!hasFiredToday(tag)) {
           markFiredToday(tag);
-          dispatchNotificationFired({ id: `sw_${tag}_${Date.now()}`, type: "reminder", title, body, color: "#4A90B8" });
+          void addToInboxApi({ type: "reminder", title, body, icon: "bell", color: "#4A90B8" });
         }
       }
     };
@@ -169,48 +131,41 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     return () => navigator.serviceWorker.removeEventListener("message", handleSwMessage);
   }, [supported]);
 
-  // ── In-app polling (every 60s): reliable fallback when app is open ────────────
+  // ── In-app polling every 30s — works on ALL pages while app is open ───────────
+  // Uses SW showNotification() which works even in background tabs
   useEffect(() => {
-    if (!settings.enabled || permission !== "granted") return;
+    if (!settings.enabled || permission !== "granted" || !supported) return;
 
-    const WINDOW_MS = 90_000;
+    // Fire if notification time is within ±2 minutes
+    const WINDOW_MS = 120_000;
 
     const checkDue = async () => {
       const now = Date.now();
-      // Include notifications from past 90s to catch recently-missed ones
       const notifs = await buildScheduledNotifications(settings, WINDOW_MS);
-
       for (const n of notifs) {
         const diff = n.fireAt - now;
-        // Fire if within ±90s window
         if (diff >= -WINDOW_MS && diff <= WINDOW_MS) {
           if (!hasFiredToday(n.tag)) {
             markFiredToday(n.tag);
-            showBrowserNotification(n.title, n.body, n.tag, n.url ?? "/");
-            dispatchNotificationFired({
-              id: `poll_${n.tag}_${new Date().toDateString()}`,
-              type: "reminder",
-              title: n.title,
-              body: n.body,
-              color: "#4A90B8",
-            });
+            // Show via SW — works from ANY page, background tab, or minimized window
+            await showViaSW({ title: n.title, body: n.body, tag: n.tag, url: n.url ?? "/" });
+            // Also add to in-app inbox
+            void addToInboxApi({ type: "reminder", title: n.title, body: n.body, icon: "bell", color: "#4A90B8" });
           }
         }
       }
     };
 
-    // Check immediately on enable/settings change
     checkDue();
-    const interval = setInterval(checkDue, 60_000);
+    const interval = setInterval(checkDue, 30_000);
     return () => clearInterval(interval);
-  }, [settings, permission]);
+  }, [settings, permission, supported]);
 
   const updateSettings = useCallback((patch: Partial<NotificationSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...patch };
       if (patch.prayers) next.prayers = { ...prev.prayers, ...patch.prayers };
       saveSettings(next);
-      // Debounced API sync
       syncSettingsToApi(next);
       return next;
     });
@@ -221,14 +176,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     setPermission(perm);
     if (perm !== "granted") return false;
     await registerSW();
-    // Subscribe to server-side WebPush (enables notifications when app is closed)
+    // Subscribe to server-side WebPush so notifications fire when app is closed
     void subscribeToPush();
     updateSettings({ enabled: true });
     return true;
   }, [updateSettings]);
 
   const disableNotifications = useCallback(() => {
-    void clearAll();
     updateSettings({ enabled: false });
   }, [updateSettings]);
 

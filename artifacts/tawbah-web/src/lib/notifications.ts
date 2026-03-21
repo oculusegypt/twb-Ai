@@ -124,8 +124,6 @@ export async function registerSW(): Promise<ServiceWorkerRegistration | null> {
 }
 
 // Post a message to the active service worker reliably.
-// Using navigator.serviceWorker.ready guarantees we have an active SW,
-// avoiding the null-controller bug that happens on first page load.
 async function postToSW(message: unknown): Promise<void> {
   if (!("serviceWorker" in navigator)) return;
   try {
@@ -135,6 +133,23 @@ async function postToSW(message: unknown): Promise<void> {
   } catch {
     // SW unavailable — ignore silently
   }
+}
+
+// Show a notification via the Service Worker — works from ANY page/tab/background.
+// This is the correct way to show notifications reliably across all pages.
+export async function showViaSW(params: {
+  title: string;
+  body: string;
+  tag: string;
+  url?: string;
+}): Promise<void> {
+  await postToSW({
+    type: "SHOW_NOTIFICATION",
+    title: params.title,
+    body: params.body,
+    tag: params.tag,
+    url: params.url ?? "/",
+  });
 }
 
 // ── Scheduled notification type ───────────────────────────────────────────────
@@ -494,20 +509,13 @@ async function scheduleServerPush(notifs: { tag: string; title: string; body: st
 // ── Main scheduling entry point ───────────────────────────────────────────────
 
 export async function scheduleAll(settings: NotificationSettings): Promise<void> {
-  if (!settings.enabled || getPermission() !== "granted") {
-    // If disabled, make sure the SW clears any stale timers
-    await clearAll();
-    return;
-  }
+  if (!settings.enabled || getPermission() !== "granted") return;
   if (!("serviceWorker" in navigator)) return;
   await navigator.serviceWorker.ready;
   const notifs = await buildScheduledNotifications(settings);
-  // Schedule in-browser SW timers (works when app is open)
-  await postToSW({ type: "SCHEDULE_NOTIFICATIONS", notifications: notifs });
-  // Schedule server-side push jobs (works even when app is fully closed)
+  // Schedule server-side push jobs so notifications fire even when app is closed
   void scheduleServerPush(notifs);
 }
 
-export async function clearAll(): Promise<void> {
-  await postToSW({ type: "CLEAR_ALL" });
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+export async function clearAll(): Promise<void> {}
