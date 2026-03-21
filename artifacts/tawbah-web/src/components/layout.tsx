@@ -156,39 +156,59 @@ export function Layout({ children }: { children: ReactNode }) {
           <nav className="fixed bottom-0 inset-x-0 z-40 max-w-md mx-auto">
             <div className="relative">
 
-              {/* Flat nav bar — no SVG distortion */}
-              <div
-                className="bg-card/95 backdrop-blur-xl border-t border-border/50 pb-safe"
-                style={{ boxShadow: "0 -4px 20px rgba(0,0,0,0.07)" }}
+              {/*
+                SVG notch — uses ONLY cubic bezier curves (no arc/A command) so it
+                never distorts regardless of screen width.
+                ViewBox 400×80: x scales with screen width (proportional), y is fixed 1:1.
+                Notch: center x=200, spans x155→245 (90px), depth 42px.
+                Button center sits at nav-top (y=0); button bottom at y=30 → fits inside 42px notch.
+              */}
+              <svg
+                className="absolute inset-x-0 top-0 w-full pointer-events-none"
+                style={{ height: "80px" }}
+                viewBox="0 0 400 80"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <div className="flex items-center h-[68px]">
-                  {leftItems.map((item) => (
-                    <NavItem key={item.href} {...item} />
-                  ))}
+                {/* Nav bar fill with smooth bezier notch */}
+                <path
+                  d="M0,0 L155,0 C168,0 166,42 200,42 C234,42 232,0 245,0 L400,0 L400,80 L0,80 Z"
+                  className="fill-card/95"
+                  style={{ filter: "drop-shadow(0 -4px 16px rgba(0,0,0,0.09))" }}
+                />
+                {/* Border line following the same bezier curve */}
+                <path
+                  d="M0,0.5 L155,0.5 C168,0.5 166,42.5 200,42.5 C234,42.5 232,0.5 245,0.5 L400,0.5"
+                  fill="none"
+                  className="stroke-border/50"
+                  strokeWidth="0.8"
+                />
+              </svg>
 
-                  {/* Center spacer — sized to match button + ring clearance */}
-                  <div className="w-[82px] flex-shrink-0" />
+              {/* Nav content sits on top of the SVG */}
+              <div className="relative flex items-center h-[68px] pb-safe" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+                {leftItems.map((item) => (
+                  <NavItem key={item.href} {...item} />
+                ))}
 
-                  {rightItems.map((item) => (
-                    <NavItem key={item.href} {...item} />
-                  ))}
-                </div>
+                {/* Center spacer — matches notch width (90px) */}
+                <div className="w-[90px] flex-shrink-0" />
+
+                {rightItems.map((item) => (
+                  <NavItem key={item.href} {...item} />
+                ))}
               </div>
 
-              {/* Zaki button — the ring shadow creates a perfect circular notch */}
-              {/* Button: 60px. Ring: 9px. Center at -30+9 = -21px above nav top → visually in notch */}
+              {/* Zaki button — center at nav-top (y=0), sits in the notch */}
               <div className="absolute left-1/2 -translate-x-1/2 -top-[30px] z-50">
                 <Link href={zakiHref} className="block tap-highlight-transparent">
                   <motion.div
                     whileTap={{ scale: 0.92 }}
                     whileHover={{ scale: 1.04 }}
                   >
-                    {/* The ring shadow matches card bg — creates perfect circular notch */}
                     <div
                       className="zaki-btn-siri w-[60px] h-[60px]"
-                      style={{
-                        boxShadow: "0 0 0 9px hsl(var(--card) / 0.95), 0 4px 20px rgba(0,0,0,0.18)",
-                      }}
+                      style={{ boxShadow: "0 6px 24px rgba(0,0,0,0.22)" }}
                     />
                   </motion.div>
                 </Link>
