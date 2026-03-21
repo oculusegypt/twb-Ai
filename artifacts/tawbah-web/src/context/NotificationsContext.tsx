@@ -10,6 +10,7 @@ import {
   scheduleAll,
   clearAll,
   buildScheduledNotifications,
+  subscribeToPush,
 } from "@/lib/notifications";
 import { hasFiredToday, markFiredToday } from "@/lib/app-notifications";
 
@@ -99,10 +100,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [permission, setPermission] = useState<NotificationPermission>(() => getPermission());
   const supported = "Notification" in window && "serviceWorker" in navigator;
 
-  // Register SW on mount
+  // Register SW on mount and re-subscribe to push if already enabled
   useEffect(() => {
     if (!supported) return;
-    registerSW().then(() => setPermission(getPermission()));
+    registerSW().then(() => {
+      setPermission(getPermission());
+      const s = loadSettings();
+      if (s.enabled && getPermission() === "granted") {
+        void subscribeToPush();
+      }
+    });
   }, [supported]);
 
   // Load settings from API on mount (overrides localStorage if found)
@@ -214,6 +221,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     setPermission(perm);
     if (perm !== "granted") return false;
     await registerSW();
+    // Subscribe to server-side WebPush (enables notifications when app is closed)
+    void subscribeToPush();
     updateSettings({ enabled: true });
     return true;
   }, [updateSettings]);

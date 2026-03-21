@@ -420,6 +420,77 @@ export async function buildScheduledNotifications(
   return notifs;
 }
 
+// ── Server-side WebPush subscription ─────────────────────────────────────────
+
+const API_BASE = "/api";
+
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const arr = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; i++) arr[i] = rawData.charCodeAt(i);
+  return arr.buffer;
+}
+
+export async function subscribeToPush(): Promise<boolean> {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  try {
+    // Fetch VAPID public key from server
+    const res = await fetch(`${API_BASE}/push/vapid-public-key`);
+    if (!res.ok) return false;
+    const { key } = await res.json() as { key: string };
+    if (!key) return false;
+
+    const reg = await navigator.serviceWorker.ready;
+    let subscription = await reg.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key),
+      });
+    }
+
+    const sessionId = localStorage.getItem("tawbah_session") ?? "guest";
+    await fetch(`${API_BASE}/push/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, subscription }),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Schedule server-side push jobs so notifications fire even when app is closed
+async function scheduleServerPush(notifs: { tag: string; title: string; body: string; fireAt: number; url?: string }[]): Promise<void> {
+  try {
+    const sessionId = localStorage.getItem("tawbah_session") ?? "guest";
+    // Clear old pending jobs first
+    await fetch(`${API_BASE}/push/jobs`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId }),
+    });
+    if (notifs.length === 0) return;
+    const jobs = notifs.map((n) => ({
+      type: "reminder",
+      title: n.title,
+      body: n.body,
+      url: n.url ?? "/",
+      fireAt: new Date(n.fireAt).toISOString(),
+    }));
+    await fetch(`${API_BASE}/push/schedule`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId, jobs }),
+    });
+  } catch {
+    // Non-critical — local SW will still handle timers when app is open
+  }
+}
+
 // ── Main scheduling entry point ───────────────────────────────────────────────
 
 export async function scheduleAll(settings: NotificationSettings): Promise<void> {
@@ -431,7 +502,10 @@ export async function scheduleAll(settings: NotificationSettings): Promise<void>
   if (!("serviceWorker" in navigator)) return;
   await navigator.serviceWorker.ready;
   const notifs = await buildScheduledNotifications(settings);
+  // Schedule in-browser SW timers (works when app is open)
   await postToSW({ type: "SCHEDULE_NOTIFICATIONS", notifications: notifs });
+  // Schedule server-side push jobs (works even when app is fully closed)
+  void scheduleServerPush(notifs);
 }
 
 export async function clearAll(): Promise<void> {
