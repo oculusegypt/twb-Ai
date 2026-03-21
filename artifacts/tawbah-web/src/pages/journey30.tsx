@@ -234,69 +234,107 @@ function SurahReaderModal({
                 </div>
               )}
 
-              {/* Mushaf-style flowing text */}
-              <div
-                dir="rtl"
-                className="leading-[3] text-[18px] text-right"
-                style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif", textAlign: "justify" }}
-              >
-                {ayahs.map((ayah, idx) => {
-                  const isCurrent = currentIdx === idx;
-                  return (
-                    <span key={ayah.number}>
-                      <span
-                        ref={(el) => { ayahRefs.current[idx] = el; }}
-                        onClick={() => playFromIdx(idx)}
-                        className={`cursor-pointer rounded transition-colors ${
-                          isCurrent
-                            ? "bg-primary/20 text-primary"
-                            : "hover:bg-muted/60"
-                        }`}
-                      >
-                        {ayah.text}
-                      </span>
-                      {" "}
-                      <span
-                        onClick={() => playFromIdx(idx)}
-                        title={`الآية ${ayah.numberInSurah}`}
-                        className={`cursor-pointer transition-colors ${
-                          isCurrent ? "text-primary" : "text-primary/70 hover:text-primary"
-                        }`}
-                        style={{
-                          fontFamily: "'Amiri Quran', 'Amiri', serif",
-                          fontSize: "1em",
-                          position: "relative",
-                          top: "-0.12em",
-                          display: "inline-block",
-                        }}
-                      >
-                        {"\u06DD"}{toArabicIndic(ayah.numberInSurah)}
-                      </span>
-                      {" "}
-                    </span>
-                  );
-                })}
-              </div>
-
-              {/* Tafseer section (shows below each ayah as separate blocks) */}
-              {showTafseer && tafseerAyahs.length > 0 && (
-                <div className="mt-6 flex flex-col gap-3 border-t border-border pt-5">
-                  <h3 className="text-xs font-bold text-muted-foreground text-center mb-1">التفسير الميسّر</h3>
-                  {tafseerAyahs.map((t, idx) => (
-                    <div key={t.number} className={`rounded-xl p-3 border text-right ${currentIdx === idx ? "bg-primary/5 border-primary/20" : "bg-muted/20 border-border/40"}`}>
-                      <div className="flex items-start gap-2">
+              {/* وضع القراءة: النص المتدفق بأسلوب المصحف */}
+              {!showTafseer && (
+                <div
+                  dir="rtl"
+                  className="leading-[3] text-[18px] text-right"
+                  style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif", textAlign: "justify" }}
+                >
+                  {ayahs.map((ayah, idx) => {
+                    const isCurrent = currentIdx === idx;
+                    return (
+                      <span key={ayah.number}>
                         <span
-                          className="text-primary shrink-0 mt-0.5"
-                          style={{ fontFamily: "'Amiri Quran', 'Amiri', serif", fontSize: "15px" }}
+                          ref={(el) => { ayahRefs.current[idx] = el; }}
+                          onClick={() => playFromIdx(idx)}
+                          className={`cursor-pointer rounded transition-colors ${
+                            isCurrent
+                              ? "bg-primary/20 text-primary"
+                              : "hover:bg-muted/60"
+                          }`}
                         >
-                          {"\u06DD"}{toArabicIndic(ayahs[idx]?.numberInSurah ?? idx + 1)}
+                          {ayah.text}
                         </span>
-                        <p className="text-[12px] text-muted-foreground leading-relaxed flex-1" dir="rtl">
-                          {t.text}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                        {" "}
+                        <span
+                          onClick={() => playFromIdx(idx)}
+                          title={`الآية ${ayah.numberInSurah}`}
+                          className={`cursor-pointer transition-colors ${
+                            isCurrent ? "text-primary" : "text-primary/70 hover:text-primary"
+                          }`}
+                          style={{
+                            fontFamily: "'Amiri Quran', 'Amiri', serif",
+                            fontSize: "1em",
+                            position: "relative",
+                            top: "-0.12em",
+                            display: "inline-block",
+                          }}
+                        >
+                          {"\u06DD"}{toArabicIndic(ayah.numberInSurah)}
+                        </span>
+                        {" "}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* وضع التفسير: كل آية مع تفسيرها */}
+              {showTafseer && (
+                <div className="flex flex-col gap-3">
+                  {tafseerAyahs.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">جاري تحميل التفسير...</p>
+                  ) : (
+                    ayahs.map((ayah, idx) => {
+                      const isCurrent = currentIdx === idx;
+                      const tafseer = tafseerAyahs[idx];
+                      return (
+                        <div
+                          key={ayah.number}
+                          ref={(el) => { ayahRefs.current[idx] = el; }}
+                          className={`rounded-xl border overflow-hidden transition-all ${
+                            isCurrent ? "border-primary/40 shadow-sm" : "border-border/50"
+                          }`}
+                        >
+                          {/* نص الآية */}
+                          <div
+                            className={`px-4 py-3 cursor-pointer ${isCurrent ? "bg-primary/10" : "bg-muted/20 hover:bg-muted/40"}`}
+                            onClick={() => playFromIdx(idx)}
+                            dir="rtl"
+                          >
+                            <span
+                              className="leading-[2.8] text-[17px]"
+                              style={{ fontFamily: "'Amiri Quran', 'Amiri', serif" }}
+                            >
+                              {ayah.text}
+                              {" "}
+                              <span
+                                className={isCurrent ? "text-primary" : "text-primary/70"}
+                                style={{
+                                  fontFamily: "'Amiri Quran', 'Amiri', serif",
+                                  fontSize: "1em",
+                                  position: "relative",
+                                  top: "-0.12em",
+                                  display: "inline-block",
+                                }}
+                              >
+                                {"\u06DD"}{toArabicIndic(ayah.numberInSurah)}
+                              </span>
+                            </span>
+                          </div>
+                          {/* التفسير */}
+                          {tafseer && (
+                            <div className="px-4 py-2.5 border-t border-border/40 bg-card/60" dir="rtl">
+                              <p className="text-[12px] text-muted-foreground leading-relaxed">
+                                {tafseer.text}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               )}
             </div>
