@@ -13,7 +13,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const navItems = [
     { href: "/", label: t.nav.home, icon: Home },
     { href: "/plan", label: t.nav.plan, icon: Calendar },
-    { href: "/dhikr", label: t.nav.dhikr, icon: CircleDot },
+    { href: "/zakiy", label: "الزكي", icon: Sparkles },
     { href: "/progress", label: "تقدمي", icon: BarChart2 },
     { href: "/account", label: "حسابي", icon: User2 },
   ];
@@ -41,12 +41,12 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {!isSos && (
         <>
-          {/* Help button — expands to show SOS + Zakiy */}
-          <div className="fixed bottom-[90px] left-4 z-50 flex flex-col items-center gap-2">
+          {/* Help button — expands to show SOS + Dhikr */}
+          <div className="fixed bottom-[90px] right-4 z-50 flex flex-col items-center gap-2">
             <AnimatePresence>
               {helpOpen && (
                 <>
-                  {/* Zakiy AI button */}
+                  {/* Dhikr button */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.5, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -54,12 +54,12 @@ export function Layout({ children }: { children: ReactNode }) {
                     transition={{ delay: 0.05 }}
                   >
                     <Link
-                      href="/zakiy"
+                      href="/dhikr"
                       onClick={() => setHelpOpen(false)}
                       className="flex items-center gap-2 px-3.5 py-2.5 bg-primary text-primary-foreground rounded-full shadow-lg shadow-primary/30 hover:scale-105 active:scale-95 transition-all text-xs font-bold whitespace-nowrap"
                     >
-                      <Sparkles size={16} strokeWidth={2} />
-                      <span>الزكي — المرشد</span>
+                      <CircleDot size={16} strokeWidth={2} />
+                      <span>الذكر</span>
                     </Link>
                   </motion.div>
 

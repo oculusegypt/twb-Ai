@@ -577,18 +577,27 @@ function SuggestionCards({ suggestions, loading, onSelect }: {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-1.5">
-          {suggestions!.map((q, i) => (
-            <motion.button
-              key={i}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
-              onClick={() => onSelect(q)}
-              className="text-right text-xs px-3 py-2 rounded-xl border border-border/60 bg-card hover:bg-teal-50 dark:hover:bg-teal-950/20 hover:border-teal-400/50 text-foreground transition-all active:scale-95 shadow-sm leading-snug font-medium"
-            >
-              {q}
-            </motion.button>
-          ))}
+          {suggestions!.map((q, i) => {
+            const isContinueBtn = q === "أكمل →";
+            return (
+              <motion.button
+                key={i}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                onClick={() => onSelect(q)}
+                className={cn(
+                  "text-right text-xs px-3 py-2 rounded-xl border transition-all active:scale-95 shadow-sm leading-snug font-medium",
+                  isContinueBtn
+                    ? "col-span-2 bg-teal-600 hover:bg-teal-700 text-white border-teal-500 shadow-teal-300/30 dark:shadow-teal-900/30 flex items-center justify-center gap-1.5"
+                    : "border-border/60 bg-card hover:bg-teal-50 dark:hover:bg-teal-950/20 hover:border-teal-400/50 text-foreground"
+                )}
+              >
+                {isContinueBtn && <span className="text-sm">▶</span>}
+                {q}
+              </motion.button>
+            );
+          })}
         </div>
       )}
     </motion.div>
@@ -914,6 +923,50 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 // ══════════════════════════════════════════
+// LONG RESPONSE SPLITTING
+// ══════════════════════════════════════════
+
+const PART_MAX_CHARS = 700;
+
+function splitIntoParts(text: string): string[] {
+  if (text.length <= PART_MAX_CHARS) return [text];
+
+  const tryParagraphs = text.split("\n\n").filter((p) => p.trim());
+  const parts: string[] = [];
+  let current = "";
+
+  for (const para of tryParagraphs) {
+    if (current && current.length + para.length + 2 > PART_MAX_CHARS) {
+      parts.push(current.trim());
+      current = para;
+    } else {
+      current = current ? current + "\n\n" + para : para;
+    }
+  }
+  if (current.trim()) parts.push(current.trim());
+
+  const result: string[] = [];
+  for (const part of parts) {
+    if (part.length <= PART_MAX_CHARS) {
+      result.push(part);
+    } else {
+      const lines = part.split("\n");
+      let cur = "";
+      for (const line of lines) {
+        if (cur && cur.length + line.length + 1 > PART_MAX_CHARS) {
+          result.push(cur.trim());
+          cur = line;
+        } else {
+          cur = cur ? cur + "\n" + line : line;
+        }
+      }
+      if (cur.trim()) result.push(cur.trim());
+    }
+  }
+  return result.filter((p) => p.length > 0);
+}
+
+// ══════════════════════════════════════════
 // MAIN PAGE
 // ══════════════════════════════════════════
 
@@ -927,6 +980,7 @@ export default function ZakiyPage() {
   const [riskAlert, setRiskAlert] = useState<{ level: "medium" | "high"; message: string; sign: string | null } | null>(null);
   const [riskDismissed, setRiskDismissed] = useState(false);
   const [anniversaryMilestone, setAnniversaryMilestone] = useState<string | null>(null);
+  const [pendingParts, setPendingParts] = useState<string[]>([]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -1039,6 +1093,51 @@ export default function ZakiyPage() {
     fetchSuggestions([...currentHistory, { role: "assistant", content: text }], msg.id);
   }
 
+  function handleBotResponse(text: string, segments?: MessageSegment[]) {
+    const parts = splitIntoParts(text);
+    if (parts.length <= 1) {
+      addBotMessage(text, segments);
+      return;
+    }
+    const totalParts = parts.length;
+    const preamble = `الإجابة طويلة — سأردّ عليك في **${totalParts} رسائل**:\n\n`;
+    const firstText = preamble + parts[0];
+    const msgId = Date.now().toString();
+    const partMsg: Message = {
+      id: msgId,
+      role: "bot",
+      text: firstText,
+      segments: [],
+      timestamp: new Date(),
+      suggestions: ["أكمل →"],
+      suggestionsLoading: false,
+    };
+    setMessages((prev) => [...prev, partMsg]);
+    setPendingParts(parts.slice(1));
+  }
+
+  function showNextPendingPart() {
+    const [nextPart, ...remaining] = pendingParts;
+    if (!nextPart) return;
+    setPendingParts(remaining);
+    const isLast = remaining.length === 0;
+    const msgId = Date.now().toString();
+    const partMsg: Message = {
+      id: msgId,
+      role: "bot",
+      text: nextPart,
+      segments: [],
+      timestamp: new Date(),
+      suggestions: isLast ? [] : ["أكمل →"],
+      suggestionsLoading: isLast,
+    };
+    setMessages((prev) => [...prev, partMsg]);
+    if (isLast) {
+      const currentHistory = buildHistory();
+      fetchSuggestions([...currentHistory, { role: "assistant", content: nextPart }], msgId);
+    }
+  }
+
   function addUserMessage(text: string) {
     setMessages((prev) => [
       ...prev,
@@ -1048,20 +1147,31 @@ export default function ZakiyPage() {
 
   async function sendMessage(text: string) {
     if (!text.trim() || loading) return;
+
+    const trimmed = text.trim();
+    const isContinue = ["أكمل", "أكمل →", "أكمل ←", "كمّل", "التالي"].includes(trimmed);
+    if (isContinue && pendingParts.length > 0) {
+      addUserMessage(trimmed);
+      setInput("");
+      showNextPendingPart();
+      return;
+    }
+
     const history = buildHistory();
-    addUserMessage(text);
+    addUserMessage(trimmed);
     setInput("");
+    setPendingParts([]);
     setLoading(true);
 
     try {
       const res = await fetch("/api/zakiy/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text.trim(), history, sessionId }),
+        body: JSON.stringify({ message: trimmed, history, sessionId }),
       });
       if (!res.ok) throw new Error();
       const data = await res.json();
-      addBotMessage(data.response, data.segments);
+      handleBotResponse(data.response, data.segments);
     } catch {
       addBotMessage("عذراً يا صاحبي، في مشكلة تقنية. جرّب تاني بعد شوية.");
     } finally {
@@ -1087,7 +1197,7 @@ export default function ZakiyPage() {
       const data = await res.json();
 
       addUserMessage(data.transcript || "🎤 رسالة صوتية");
-      addBotMessage(data.response, data.segments);
+      handleBotResponse(data.response, data.segments);
     } catch {
       addBotMessage("مش قدرت أفهم التسجيل كويس — جرّب تاني أو اكتبلي.");
     } finally {
