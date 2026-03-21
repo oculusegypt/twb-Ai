@@ -186,6 +186,9 @@ export function Layout({ children }: { children: ReactNode }) {
             <div className="relative">
 
               {/* Nav bar with SVG-shaped background that has a circular notch */}
+              {/* Math: button center = -2px from nav top (button at -top-34, height 64).
+                  Arc radius 42, so gap = 42-32 = 10px uniform. Arc center must be at y=-2.
+                  Arc endpoints at y = -2 + sqrt(42²-38²) ≈ 16. Smooth bezier from y=0→16 at edges. */}
               <svg
                 className="absolute inset-x-0 top-0 w-full pointer-events-none"
                 style={{ height: "80px" }}
@@ -194,30 +197,12 @@ export function Layout({ children }: { children: ReactNode }) {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
-                  d="
-                    M0,0
-                    L155,0
-                    Q160,0 162,5
-                    A42,42 0 0,0 238,5
-                    Q240,0 245,0
-                    L400,0
-                    L400,80
-                    L0,80
-                    Z
-                  "
+                  d="M0,0 L155,0 Q160,0 162,16 A42,42 0 0,0 238,16 Q240,0 245,0 L400,0 L400,80 L0,80 Z"
                   className="fill-card/95"
-                  style={{ filter: "drop-shadow(0 -4px 12px rgba(0,0,0,0.08))" }}
+                  style={{ filter: "drop-shadow(0 -4px 16px rgba(0,0,0,0.10))" }}
                 />
-                {/* Top border line matching the card bg shape */}
                 <path
-                  d="
-                    M0,1
-                    L155,1
-                    Q160,1 162,6
-                    A42,42 0 0,0 238,6
-                    Q240,1 245,1
-                    L400,1
-                  "
+                  d="M0,0.5 L155,0.5 Q160,0.5 162.5,16 A42,42 0 0,0 237.5,16 Q240,0.5 245,0.5 L400,0.5"
                   fill="none"
                   className="stroke-border/50"
                   strokeWidth="0.8"
@@ -250,12 +235,11 @@ export function Layout({ children }: { children: ReactNode }) {
                   >
                     {/* Circle button */}
                     <div className={cn(
-                      "w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-xl transition-all duration-300",
+                      "w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-xl transition-all duration-300 relative",
                       isZakiActive
                         ? "bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-500 shadow-indigo-400/50"
                         : "bg-card border-2 border-border/40 shadow-black/15"
                     )}>
-                      {/* Active glow ring */}
                       {isZakiActive && (
                         <motion.div
                           initial={{ opacity: 0 }}
@@ -265,14 +249,6 @@ export function Layout({ children }: { children: ReactNode }) {
                       )}
                       <ZakiIcon size={30} active={isZakiActive} />
                     </div>
-
-                    {/* Label */}
-                    <span className={cn(
-                      "text-[10px] font-semibold mt-1 leading-none transition-colors",
-                      isZakiActive ? "text-primary" : "text-muted-foreground"
-                    )}>
-                      زكي
-                    </span>
                   </motion.div>
                 </Link>
               </div>
