@@ -160,7 +160,7 @@ export function Layout({ children }: { children: ReactNode }) {
                 SVG notch — uses ONLY cubic bezier curves (no arc/A command) so it
                 never distorts regardless of screen width.
                 ViewBox 400×80: x scales with screen width (proportional), y is fixed 1:1.
-                Notch: center x=200, spans x155→245 (90px), depth 42px.
+                Notch: center x=200, spans x135→265 (130px), depth 44px.
                 Button center sits at nav-top (y=0); button bottom at y=30 → fits inside 42px notch.
               */}
               <svg
@@ -170,15 +170,15 @@ export function Layout({ children }: { children: ReactNode }) {
                 preserveAspectRatio="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                {/* Nav bar fill with smooth bezier notch */}
+                {/* Nav bar fill with smooth bezier notch — notch spans x=135→265 (130px) for even margins */}
                 <path
-                  d="M0,0 L155,0 C168,0 166,42 200,42 C234,42 232,0 245,0 L400,0 L400,80 L0,80 Z"
+                  d="M0,0 L135,0 C150,0 185,44 200,44 C215,44 250,0 265,0 L400,0 L400,80 L0,80 Z"
                   className="fill-card/95"
                   style={{ filter: "drop-shadow(0 -4px 16px rgba(0,0,0,0.09))" }}
                 />
                 {/* Border line following the same bezier curve */}
                 <path
-                  d="M0,0.5 L155,0.5 C168,0.5 166,42.5 200,42.5 C234,42.5 232,0.5 245,0.5 L400,0.5"
+                  d="M0,0.5 L135,0.5 C150,0.5 185,44.5 200,44.5 C215,44.5 250,0.5 265,0.5 L400,0.5"
                   fill="none"
                   className="stroke-border/50"
                   strokeWidth="0.8"
@@ -191,8 +191,8 @@ export function Layout({ children }: { children: ReactNode }) {
                   <NavItem key={item.href} {...item} />
                 ))}
 
-                {/* Center spacer — matches notch width (90px) */}
-                <div className="w-[90px] flex-shrink-0" />
+                {/* Center spacer — 32.5% matches notch width (130/400) */}
+                <div className="flex-none" style={{ width: "32.5%" }} />
 
                 {rightItems.map((item) => (
                   <NavItem key={item.href} {...item} />
