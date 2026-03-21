@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
 
-function ZakiIcon({ size = 28, active = false }: { size?: number; active?: boolean }) {
-  const color = active ? "#ffffff" : "#6366f1";
+function ZakiIcon({ size = 28 }: { size?: number; active?: boolean }) {
+  const color = "#ffffff";
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Crescent moon */}
@@ -233,21 +233,14 @@ export function Layout({ children }: { children: ReactNode }) {
                     whileHover={{ scale: 1.06 }}
                     className="flex flex-col items-center"
                   >
-                    {/* Circle button */}
-                    <div className={cn(
-                      "w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-xl transition-all duration-300 relative",
-                      isZakiActive
-                        ? "bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-500 shadow-indigo-400/50"
-                        : "bg-card border-2 border-border/40 shadow-black/15"
-                    )}>
-                      {isZakiActive && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="absolute inset-0 rounded-full bg-indigo-400/30 blur-lg scale-125"
-                        />
-                      )}
-                      <ZakiIcon size={30} active={isZakiActive} />
+                    {/* Siri-style circle button */}
+                    <div className="zaki-btn-siri w-[64px] h-[64px] shadow-2xl">
+                      {/* Glass frost overlay sits above the rotating gradient (::after z-index:0) */}
+                      <div className="absolute inset-0 rounded-full bg-white/20 dark:bg-black/25 backdrop-blur-[2px] z-10" />
+                      {/* Icon on top */}
+                      <div className="absolute inset-0 rounded-full flex items-center justify-center z-20">
+                        <ZakiIcon size={30} active={true} />
+                      </div>
                     </div>
                   </motion.div>
                 </Link>

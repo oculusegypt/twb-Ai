@@ -146,3 +146,91 @@
   direction: rtl;
   unicode-bidi: bidi-override;
 }
+
+/* ── Siri-style Zaki button animations ── */
+@keyframes zaki-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes zaki-spin-reverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+@keyframes zaki-pulse-glow {
+  0%, 100% { opacity: 0.55; transform: scale(1);   }
+  50%       { opacity: 0.85; transform: scale(1.18); }
+}
+@keyframes zaki-shimmer {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+.zaki-btn-siri {
+  position: relative;
+  border-radius: 9999px;
+  overflow: visible;
+}
+
+/* Outer pulsing glow ring — adapts to light/dark */
+.zaki-btn-siri::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    hsl(153 60% 25%),
+    hsl(43 74% 49%),
+    hsl(160 55% 35%),
+    hsl(43 74% 60%),
+    hsl(153 60% 25%)
+  );
+  filter: blur(8px);
+  animation: zaki-spin 4s linear infinite, zaki-pulse-glow 2.5s ease-in-out infinite;
+  z-index: -1;
+}
+
+/* Inner rotating gradient face */
+.zaki-btn-siri::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 90deg,
+    hsl(153 60% 22%),
+    hsl(43 74% 50%),
+    hsl(160 65% 30%),
+    hsl(43 80% 58%),
+    hsl(153 55% 18%),
+    hsl(43 74% 50%),
+    hsl(153 60% 22%)
+  );
+  animation: zaki-spin-reverse 6s linear infinite;
+  z-index: 0;
+}
+
+/* Dark mode — gold-led palette */
+.dark .zaki-btn-siri::before {
+  background: conic-gradient(
+    from 0deg,
+    hsl(43 90% 50%),
+    hsl(153 55% 35%),
+    hsl(43 80% 65%),
+    hsl(160 60% 40%),
+    hsl(43 90% 50%)
+  );
+}
+.dark .zaki-btn-siri::after {
+  background: conic-gradient(
+    from 90deg,
+    hsl(43 90% 48%),
+    hsl(153 55% 30%),
+    hsl(43 80% 62%),
+    hsl(160 60% 38%),
+    hsl(43 85% 44%),
+    hsl(153 50% 25%),
+    hsl(43 90% 48%)
+  );
+}
