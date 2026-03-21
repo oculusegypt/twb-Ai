@@ -5,54 +5,29 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
 
-function ZakiAIIcon({ size = 28, active = false }: { size?: number; active?: boolean }) {
+function ZakiIcon({ size = 28, active = false }: { size?: number; active?: boolean }) {
+  const color = active ? "#ffffff" : "#6366f1";
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 32 32"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Outer glow ring */}
-      <circle cx="16" cy="16" r="15" stroke={active ? "#10b981" : "#6366f1"} strokeWidth="0.5" strokeDasharray="2 2" opacity="0.6" />
-
-      {/* Robot head */}
-      <rect x="8" y="10" width="16" height="13" rx="4" fill={active ? "#10b981" : "#6366f1"} />
-
-      {/* Antenna */}
-      <line x1="16" y1="6" x2="16" y2="10" stroke={active ? "#10b981" : "#6366f1"} strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="16" cy="5.5" r="1.8" fill={active ? "#10b981" : "#6366f1"} />
-
-      {/* Eyes */}
-      <circle cx="12.5" cy="15" r="2" fill="white" />
-      <circle cx="19.5" cy="15" r="2" fill="white" />
-      <circle cx="12.5" cy="15" r="1" fill={active ? "#10b981" : "#6366f1"} />
-      <circle cx="19.5" cy="15" r="1" fill={active ? "#10b981" : "#6366f1"} />
-      {/* Eye shine */}
-      <circle cx="13" cy="14.5" r="0.4" fill="white" />
-      <circle cx="20" cy="14.5" r="0.4" fill="white" />
-
-      {/* Islamic crescent on forehead */}
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Crescent moon */}
       <path
-        d="M16 11.5 C14.8 11.5 13.9 12.2 13.9 12.2 C14.5 11.8 15.2 11.6 16 11.6 C17.5 11.6 18.8 12.5 18.8 12.5 C18.2 11.9 17.2 11.5 16 11.5Z"
-        fill="white"
-        opacity="0.7"
+        d="M22 7C17.5 7 13 11 13 16.5C13 22 17.5 26 22 26C18.5 25 15.5 21.5 15.5 16.5C15.5 11.5 18.5 8.5 22 7Z"
+        fill={color}
+        opacity="0.9"
       />
-
-      {/* Star (Islamic motif) */}
-      <path d="M16 12.2 L16.3 13 L17.1 13 L16.5 13.5 L16.7 14.3 L16 13.8 L15.3 14.3 L15.5 13.5 L14.9 13 L15.7 13 Z" fill="white" opacity="0.9" />
-
-      {/* Mouth / signal bars */}
-      <rect x="12" y="19.5" width="2" height="1.5" rx="0.5" fill="white" opacity="0.8" />
-      <rect x="15" y="18.5" width="2" height="2.5" rx="0.5" fill="white" opacity="0.9" />
-      <rect x="18" y="19.5" width="2" height="1.5" rx="0.5" fill="white" opacity="0.8" />
-
-      {/* Circuit dots on sides */}
-      <circle cx="7" cy="14" r="1" fill={active ? "#10b981" : "#6366f1"} opacity="0.5" />
-      <circle cx="25" cy="14" r="1" fill={active ? "#10b981" : "#6366f1"} opacity="0.5" />
-      <line x1="8" y1="14" x2="8.5" y2="14" stroke={active ? "#10b981" : "#6366f1"} strokeWidth="1" opacity="0.5" />
-      <line x1="23.5" y1="14" x2="24" y2="14" stroke={active ? "#10b981" : "#6366f1"} strokeWidth="1" opacity="0.5" />
+      {/* Large star */}
+      <path
+        d="M23.5 9L24.3 11.5L27 11.5L24.9 13.1L25.7 15.5L23.5 13.9L21.3 15.5L22.1 13.1L20 11.5L22.7 11.5Z"
+        fill={color}
+      />
+      {/* Small dot stars */}
+      <circle cx="19" cy="19" r="1" fill={color} opacity="0.7" />
+      <circle cx="11" cy="14" r="0.8" fill={color} opacity="0.5" />
+      {/* Neural/circuit lines */}
+      <line x1="10" y1="16" x2="13" y2="16" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.5" />
+      <line x1="10" y1="19" x2="12" y2="19" stroke={color} strokeWidth="1" strokeLinecap="round" opacity="0.4" />
+      <circle cx="10" cy="16" r="1" fill={color} opacity="0.5" />
+      <circle cx="10" cy="19" r="0.8" fill={color} opacity="0.4" />
     </svg>
   );
 }
@@ -74,8 +49,36 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const zakiHref = "/zakiy";
   const isZakiActive = location === zakiHref;
-
   const isSos = location === "/sos";
+
+  const NavItem = ({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Home }) => {
+    const isActive = location === href;
+    return (
+      <Link
+        href={href}
+        className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 tap-highlight-transparent"
+      >
+        {isActive && (
+          <motion.div
+            layoutId="nav-indicator"
+            className="absolute top-0 inset-x-2 h-[3px] bg-primary rounded-b-full"
+            transition={{ type: "spring", stiffness: 500, damping: 35 }}
+          />
+        )}
+        <Icon
+          size={22}
+          strokeWidth={isActive ? 2.5 : 1.8}
+          className={cn("transition-colors duration-200", isActive ? "text-primary" : "text-muted-foreground")}
+        />
+        <span className={cn(
+          "text-[10px] font-medium transition-colors leading-none",
+          isActive ? "text-primary font-semibold" : "text-muted-foreground"
+        )}>
+          {label}
+        </span>
+      </Link>
+    );
+  };
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background relative pb-[80px] max-w-md mx-auto shadow-2xl shadow-black/5 overflow-hidden ring-1 ring-border/50">
@@ -178,116 +181,103 @@ export function Layout({ children }: { children: ReactNode }) {
 
           {/* Bottom Navigation Bar */}
           <nav className="fixed bottom-0 inset-x-0 z-40 max-w-md mx-auto">
-            {/* Nav bar background with curved notch in center */}
-            <div className="relative bg-card/95 backdrop-blur-xl border-t border-border/50 pb-safe shadow-[0_-4px_24px_rgba(0,0,0,0.08)]">
-              <div className="flex items-center h-[68px] px-2">
 
-                {/* Left side items */}
-                {leftItems.map((item) => {
-                  const isActive = location === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 tap-highlight-transparent"
-                    >
-                      <div className={cn(
-                        "p-1.5 rounded-full transition-all duration-300",
-                        isActive ? "text-primary" : "text-muted-foreground"
-                      )}>
-                        <item.icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
-                      </div>
-                      <span className={cn(
-                        "text-[10px] font-medium transition-colors leading-none",
-                        isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                      )}>
-                        {item.label}
-                      </span>
-                      {isActive && (
+            {/* SVG notch shape for the nav bar background */}
+            <div className="relative">
+
+              {/* Nav bar with SVG-shaped background that has a circular notch */}
+              <svg
+                className="absolute inset-x-0 top-0 w-full pointer-events-none"
+                style={{ height: "80px" }}
+                viewBox="0 0 400 80"
+                preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="
+                    M0,0
+                    L155,0
+                    Q160,0 162,5
+                    A42,42 0 0,0 238,5
+                    Q240,0 245,0
+                    L400,0
+                    L400,80
+                    L0,80
+                    Z
+                  "
+                  className="fill-card/95"
+                  style={{ filter: "drop-shadow(0 -4px 12px rgba(0,0,0,0.08))" }}
+                />
+                {/* Top border line matching the card bg shape */}
+                <path
+                  d="
+                    M0,1
+                    L155,1
+                    Q160,1 162,6
+                    A42,42 0 0,0 238,6
+                    Q240,1 245,1
+                    L400,1
+                  "
+                  fill="none"
+                  className="stroke-border/50"
+                  strokeWidth="0.8"
+                />
+              </svg>
+
+              {/* Nav content */}
+              <div className="relative flex items-center h-[68px] pb-safe" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+                {/* Left items */}
+                {leftItems.map((item) => (
+                  <NavItem key={item.href} {...item} />
+                ))}
+
+                {/* Center spacer for notch */}
+                <div className="w-[88px] flex-shrink-0" />
+
+                {/* Right items */}
+                {rightItems.map((item) => (
+                  <NavItem key={item.href} {...item} />
+                ))}
+              </div>
+
+              {/* Raised Zaki button — sits in the notch */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-[34px] z-50">
+                <Link href={zakiHref} className="block tap-highlight-transparent">
+                  <motion.div
+                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ scale: 1.06 }}
+                    className="flex flex-col items-center"
+                  >
+                    {/* Circle button */}
+                    <div className={cn(
+                      "w-[64px] h-[64px] rounded-full flex items-center justify-center shadow-xl transition-all duration-300",
+                      isZakiActive
+                        ? "bg-gradient-to-br from-indigo-500 via-purple-500 to-emerald-500 shadow-indigo-400/50"
+                        : "bg-card border-2 border-border/40 shadow-black/15"
+                    )}>
+                      {/* Active glow ring */}
+                      {isZakiActive && (
                         <motion.div
-                          layoutId="nav-indicator"
-                          className="absolute top-0 inset-x-3 h-0.5 bg-primary rounded-b-full"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="absolute inset-0 rounded-full bg-indigo-400/30 blur-lg scale-125"
                         />
                       )}
-                    </Link>
-                  );
-                })}
+                      <ZakiIcon size={30} active={isZakiActive} />
+                    </div>
 
-                {/* Center spacer for the raised Zaki button */}
-                <div className="w-16 flex-shrink-0" />
-
-                {/* Right side items */}
-                {rightItems.map((item) => {
-                  const isActive = location === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 tap-highlight-transparent"
-                    >
-                      <div className={cn(
-                        "p-1.5 rounded-full transition-all duration-300",
-                        isActive ? "text-primary" : "text-muted-foreground"
-                      )}>
-                        <item.icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
-                      </div>
-                      <span className={cn(
-                        "text-[10px] font-medium transition-colors leading-none",
-                        isActive ? "text-primary font-semibold" : "text-muted-foreground"
-                      )}>
-                        {item.label}
-                      </span>
-                      {isActive && (
-                        <motion.div
-                          layoutId="nav-indicator"
-                          className="absolute top-0 inset-x-3 h-0.5 bg-primary rounded-b-full"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                    </Link>
-                  );
-                })}
+                    {/* Label */}
+                    <span className={cn(
+                      "text-[10px] font-semibold mt-1 leading-none transition-colors",
+                      isZakiActive ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      زكي
+                    </span>
+                  </motion.div>
+                </Link>
               </div>
             </div>
 
-            {/* Raised center Zaki button */}
-            <div className="absolute left-1/2 -translate-x-1/2 -top-7 z-50">
-              <Link href={zakiHref} className="block tap-highlight-transparent">
-                <motion.div
-                  whileTap={{ scale: 0.92 }}
-                  whileHover={{ scale: 1.05 }}
-                  className="relative flex flex-col items-center"
-                >
-                  {/* Outer ring glow when active */}
-                  {isZakiActive && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      className="absolute inset-0 rounded-full bg-primary/20 blur-md scale-125"
-                    />
-                  )}
-
-                  {/* The raised circle button */}
-                  <div className={cn(
-                    "w-[62px] h-[62px] rounded-full flex items-center justify-center shadow-xl transition-all duration-300",
-                    isZakiActive
-                      ? "bg-gradient-to-br from-emerald-500 to-indigo-600 shadow-emerald-500/40"
-                      : "bg-white dark:bg-card shadow-black/20 border-2 border-border/30"
-                  )}>
-                    <ZakiAIIcon size={30} active={isZakiActive} />
-                  </div>
-
-                  {/* Label below */}
-                  <span className={cn(
-                    "text-[10px] font-semibold mt-1 leading-none transition-colors",
-                    isZakiActive ? "text-primary" : "text-muted-foreground"
-                  )}>
-                    زكي
-                  </span>
-                </motion.div>
-              </Link>
-            </div>
           </nav>
         </>
       )}
