@@ -714,6 +714,21 @@ router.post("/zakiy/message", async (req, res) => {
   }
 });
 
+router.post("/zakiy/tts", async (req, res) => {
+  try {
+    const { text } = req.body as { text: string };
+    if (!text?.trim()) {
+      res.status(400).json({ error: "text is required" });
+      return;
+    }
+    const segments = await generateSegmentedAudio(text);
+    res.json({ segments });
+  } catch (err) {
+    console.error("Zakiy TTS error:", err);
+    res.status(500).json({ error: "Failed to generate audio" });
+  }
+});
+
 router.post("/zakiy/suggestions", async (req, res) => {
   try {
     const { history = [], sessionId = "" } = req.body as {

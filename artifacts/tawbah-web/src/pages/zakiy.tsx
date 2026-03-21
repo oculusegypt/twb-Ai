@@ -1085,49 +1085,58 @@ export default function ZakiyPage() {
     fetchSuggestions([...currentHistory, { role: "assistant", content: text }], msg.id);
   }
 
+  async function fetchTtsSegments(text: string): Promise<MessageSegment[]> {
+    try {
+      const res = await fetch(`${base}/api/zakiy/tts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return data.segments ?? [];
+    } catch {
+      return [];
+    }
+  }
+
   function handleBotResponse(text: string, segments?: MessageSegment[]) {
     const parts = splitIntoParts(text);
     if (parts.length <= 1) {
       addBotMessage(text, segments);
       return;
     }
-    const totalParts = parts.length;
-    const preamble = `الإجابة طويلة — سأردّ عليك في **${totalParts} رسائل**:\n\n`;
-    const firstText = preamble + parts[0];
-    const msgId = Date.now().toString();
-    const partMsg: Message = {
-      id: msgId,
-      role: "bot",
-      text: firstText,
-      segments: [],
-      timestamp: new Date(),
-      suggestions: ["أكمل →"],
-      suggestionsLoading: false,
-    };
-    setMessages((prev) => [...prev, partMsg]);
+
     setPendingParts(parts.slice(1));
+
+    parts.forEach((part, idx) => {
+      const isLast = idx === parts.length - 1;
+      setTimeout(async () => {
+        const partSegments = idx === 0 && parts.length === 1
+          ? (segments ?? [])
+          : await fetchTtsSegments(part);
+        const msgId = (Date.now() + idx).toString();
+        const partMsg: Message = {
+          id: msgId,
+          role: "bot",
+          text: part,
+          segments: partSegments,
+          timestamp: new Date(),
+          suggestions: [],
+          suggestionsLoading: isLast,
+        };
+        setMessages((prev) => [...prev, partMsg]);
+        setPendingParts((prev) => prev.slice(1));
+        if (isLast) {
+          const currentHistory = buildHistory();
+          fetchSuggestions([...currentHistory, { role: "assistant", content: part }], msgId);
+        }
+      }, idx * 800);
+    });
   }
 
   function showNextPendingPart() {
-    const [nextPart, ...remaining] = pendingParts;
-    if (!nextPart) return;
-    setPendingParts(remaining);
-    const isLast = remaining.length === 0;
-    const msgId = Date.now().toString();
-    const partMsg: Message = {
-      id: msgId,
-      role: "bot",
-      text: nextPart,
-      segments: [],
-      timestamp: new Date(),
-      suggestions: isLast ? [] : ["أكمل →"],
-      suggestionsLoading: isLast,
-    };
-    setMessages((prev) => [...prev, partMsg]);
-    if (isLast) {
-      const currentHistory = buildHistory();
-      fetchSuggestions([...currentHistory, { role: "assistant", content: nextPart }], msgId);
-    }
+    // No-op: parts are now auto-delivered
   }
 
   function addUserMessage(text: string) {
