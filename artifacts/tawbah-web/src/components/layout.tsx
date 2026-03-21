@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, HelpCircle, User2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +9,10 @@ export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { t, lang } = useSettings();
   const [helpOpen, setHelpOpen] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+  }, [location]);
 
   const leftItems = [
     { href: "/", label: t.nav.home, icon: Home },
