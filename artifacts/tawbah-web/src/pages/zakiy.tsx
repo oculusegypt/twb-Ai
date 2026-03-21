@@ -1400,7 +1400,7 @@ export default function ZakiyPage() {
               rows={1}
               className={cn(
                 "w-full resize-none rounded-2xl border border-border/60 bg-background px-4 py-2.5 text-sm text-foreground",
-                "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50",
+                "placeholder:text-muted-foreground placeholder:text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50",
                 "max-h-32 overflow-y-auto leading-relaxed transition-all",
                 (loading || recording) && "opacity-60"
               )}

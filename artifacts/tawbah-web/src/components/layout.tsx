@@ -5,28 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
 
-/* Gemini-style 4-pointed star */
-function GeminiStar({ size = 28 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M14 2C14 2 15.5 9.5 22 11C15.5 12.5 14 20 14 20C14 20 12.5 12.5 6 11C12.5 9.5 14 2 14 2Z"
-        fill="white"
-      />
-      <path
-        d="M14 20C14 20 14.8 23.8 17.5 25C14.8 26.2 14 30 14 30C14 30 13.2 26.2 10.5 25C13.2 23.8 14 20 14 20Z"
-        fill="white"
-        opacity="0.7"
-      />
-      <path
-        d="M22 6C22 6 22.5 8.2 24.5 9C22.5 9.8 22 12 22 12C22 12 21.5 9.8 19.5 9C21.5 8.2 22 6 22 6Z"
-        fill="white"
-        opacity="0.6"
-      />
-    </svg>
-  );
-}
-
 export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { t, lang } = useSettings();
@@ -96,8 +74,8 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {!isSos && (
         <>
-          {/* Help button — expands to show SOS + Dhikr */}
-          <div className="fixed bottom-[90px] right-4 z-50 flex flex-col items-center gap-2">
+          {/* Help button — moved to LEFT side, raised higher to clear chat controls */}
+          <div className="fixed bottom-[110px] left-4 z-50 flex flex-col items-center gap-2">
             <AnimatePresence>
               {helpOpen && (
                 <>
@@ -176,70 +154,47 @@ export function Layout({ children }: { children: ReactNode }) {
 
           {/* Bottom Navigation Bar */}
           <nav className="fixed bottom-0 inset-x-0 z-40 max-w-md mx-auto">
-
-            {/* SVG notch shape for the nav bar background */}
             <div className="relative">
 
-              {/* Nav bar with SVG-shaped background that has a circular notch */}
-              {/* Math: button center = -2px from nav top (button at -top-34, height 64).
-                  Arc radius 42, so gap = 42-32 = 10px uniform. Arc center must be at y=-2.
-                  Arc endpoints at y = -2 + sqrt(42²-38²) ≈ 16. Smooth bezier from y=0→16 at edges. */}
-              <svg
-                className="absolute inset-x-0 top-0 w-full pointer-events-none"
-                style={{ height: "80px" }}
-                viewBox="0 0 400 80"
-                preserveAspectRatio="none"
-                xmlns="http://www.w3.org/2000/svg"
+              {/* Flat nav bar — no SVG distortion */}
+              <div
+                className="bg-card/95 backdrop-blur-xl border-t border-border/50 pb-safe"
+                style={{ boxShadow: "0 -4px 20px rgba(0,0,0,0.07)" }}
               >
-                <path
-                  d="M0,0 L155,0 Q160,0 162,16 A42,42 0 0,0 238,16 Q240,0 245,0 L400,0 L400,80 L0,80 Z"
-                  className="fill-card/95"
-                  style={{ filter: "drop-shadow(0 -4px 16px rgba(0,0,0,0.10))" }}
-                />
-                <path
-                  d="M0,0.5 L155,0.5 Q160,0.5 162.5,16 A42,42 0 0,0 237.5,16 Q240,0.5 245,0.5 L400,0.5"
-                  fill="none"
-                  className="stroke-border/50"
-                  strokeWidth="0.8"
-                />
-              </svg>
+                <div className="flex items-center h-[68px]">
+                  {leftItems.map((item) => (
+                    <NavItem key={item.href} {...item} />
+                  ))}
 
-              {/* Nav content */}
-              <div className="relative flex items-center h-[68px] pb-safe" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-                {/* Left items */}
-                {leftItems.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
+                  {/* Center spacer — sized to match button + ring clearance */}
+                  <div className="w-[82px] flex-shrink-0" />
 
-                {/* Center spacer for notch */}
-                <div className="w-[88px] flex-shrink-0" />
-
-                {/* Right items */}
-                {rightItems.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
+                  {rightItems.map((item) => (
+                    <NavItem key={item.href} {...item} />
+                  ))}
+                </div>
               </div>
 
-              {/* Raised Zaki button — sits in the notch */}
-              <div className="absolute left-1/2 -translate-x-1/2 -top-[34px] z-50">
+              {/* Zaki button — the ring shadow creates a perfect circular notch */}
+              {/* Button: 60px. Ring: 9px. Center at -30+9 = -21px above nav top → visually in notch */}
+              <div className="absolute left-1/2 -translate-x-1/2 -top-[30px] z-50">
                 <Link href={zakiHref} className="block tap-highlight-transparent">
                   <motion.div
-                    whileTap={{ scale: 0.9 }}
-                    whileHover={{ scale: 1.06 }}
-                    className="flex flex-col items-center"
+                    whileTap={{ scale: 0.92 }}
+                    whileHover={{ scale: 1.04 }}
                   >
-                    {/* Gemini-style circle button */}
-                    <div className="zaki-btn-siri w-[64px] h-[64px] shadow-2xl">
-                      <div className="absolute inset-0 rounded-full bg-white/10 backdrop-blur-[1px] z-10" />
-                      <div className="absolute inset-0 rounded-full flex items-center justify-center z-20">
-                        <GeminiStar size={28} />
-                      </div>
-                    </div>
+                    {/* The ring shadow matches card bg — creates perfect circular notch */}
+                    <div
+                      className="zaki-btn-siri w-[60px] h-[60px]"
+                      style={{
+                        boxShadow: "0 0 0 9px hsl(var(--card) / 0.95), 0 4px 20px rgba(0,0,0,0.18)",
+                      }}
+                    />
                   </motion.div>
                 </Link>
               </div>
-            </div>
 
+            </div>
           </nav>
         </>
       )}

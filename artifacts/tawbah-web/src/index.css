@@ -385,7 +385,7 @@
   unicode-bidi: bidi-override;
 }
 
-/* ── Gemini-style Zaki button animations ── */
+/* ── Zaki button animations ── */
 @keyframes zaki-spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -395,51 +395,56 @@
   to   { transform: rotate(0deg); }
 }
 @keyframes zaki-pulse-glow {
-  0%, 100% { opacity: 0.5;  transform: scale(1);    }
-  50%       { opacity: 0.82; transform: scale(1.22); }
+  0%, 100% { opacity: 0.38; transform: scale(1);    }
+  50%       { opacity: 0.65; transform: scale(1.18); }
 }
 
 .zaki-btn-siri {
   position: relative;
   border-radius: 9999px;
-  overflow: visible;
+  overflow: visible; /* allow ::before glow to extend outside */
 }
 
-/* Outer blurred glow ring */
+/* Outer blurred glow — uses theme primary/accent */
 .zaki-btn-siri::before {
   content: '';
   position: absolute;
-  inset: -7px;
+  inset: -8px;
   border-radius: 9999px;
   background: conic-gradient(
     from 0deg,
-    #4285f4,
-    #9c27b0,
-    #00bcd4,
-    #e91e63,
-    #4285f4
+    hsl(var(--primary)),
+    hsl(var(--accent) / 0.9),
+    hsl(var(--primary) / 0.7),
+    hsl(var(--accent)),
+    hsl(var(--primary) / 0.8),
+    hsl(var(--accent) / 0.6),
+    hsl(var(--primary))
   );
-  filter: blur(10px);
-  animation: zaki-spin 3.5s linear infinite, zaki-pulse-glow 2.2s ease-in-out infinite;
+  filter: blur(9px);
+  animation: zaki-spin 9s linear infinite, zaki-pulse-glow 3s ease-in-out infinite;
   z-index: -1;
+  overflow: visible;
 }
 
-/* Inner rotating face */
+/* Inner rotating face — smooth theme gradient */
 .zaki-btn-siri::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 9999px;
   background: conic-gradient(
-    from 60deg,
-    #1a73e8,
-    #9334ea,
-    #06b6d4,
-    #ec4899,
-    #1a73e8,
-    #9334ea,
-    #1a73e8
+    from 0deg,
+    hsl(var(--primary)),
+    hsl(var(--primary) / 0.5),
+    hsl(var(--accent)),
+    hsl(var(--accent) / 0.6),
+    hsl(var(--primary) / 0.8),
+    hsl(var(--accent) / 0.4),
+    hsl(var(--primary) / 0.6),
+    hsl(var(--accent) / 0.8),
+    hsl(var(--primary))
   );
-  animation: zaki-spin-reverse 5s linear infinite;
+  animation: zaki-spin-reverse 13s linear infinite;
   z-index: 0;
 }
