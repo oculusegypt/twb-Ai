@@ -174,6 +174,7 @@ export default function Account() {
         <LinkRow href="/journal" icon={<PenLine size={18} />} label="يوميات التوبة" description="مساحتك السرية الخاصة" iconBg="bg-violet-500/10" iconColor="text-violet-500" />
         <LinkRow href="/danger-times" icon={<Clock size={18} />} label="أوقات الخطر" description="تذكيرات وقائية ذكية" iconBg="bg-orange-500/10" iconColor="text-orange-500" />
         <LinkRow href="/prayer-times" icon={<Bell size={18} />} label="مواقيت الصلاة" description="تذكيرات قبل كل صلاة" iconBg="bg-indigo-500/10" iconColor="text-indigo-500" />
+        <LinkRow href="/notifications" icon={<Settings2 size={18} />} label="إعدادات الإشعارات" description="تخصيص وقت وأنواع التذكيرات" iconBg="bg-violet-500/10" iconColor="text-violet-500" />
         <LinkRow href="/kaffarah" icon={<ScrollText size={18} />} label="الكفارات الشرعية" description="خطوات مفصّلة لكل ذنب" iconBg="bg-destructive/10" iconColor="text-destructive" />
       </motion.div>
 
