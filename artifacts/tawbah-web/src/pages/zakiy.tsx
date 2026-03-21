@@ -912,15 +912,6 @@ function BotMessageBody({
 // AUDIO HELPERS
 // ══════════════════════════════════════════
 
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
 
 // ══════════════════════════════════════════
 // LONG RESPONSE SPLITTING
@@ -982,10 +973,11 @@ export default function ZakiyPage() {
   const [anniversaryMilestone, setAnniversaryMilestone] = useState<string | null>(null);
   const [pendingParts, setPendingParts] = useState<string[]>([]);
 
+  const [interimText, setInterimText] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const sessionId = getSessionId();
   const hasUserMessages = messages.some((m) => m.role === "user");
@@ -1179,61 +1171,51 @@ export default function ZakiyPage() {
     }
   }
 
-  async function sendVoice(audioBlob: Blob) {
-    if (loading) return;
-    const history = buildHistory();
-    setLoading(true);
-
-    try {
-      const arrayBuffer = await audioBlob.arrayBuffer();
-      const audioBase64 = arrayBufferToBase64(arrayBuffer);
-
-      const res = await fetch("/api/zakiy/voice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audioBase64, history, sessionId }),
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-
-      addUserMessage(data.transcript || "🎤 رسالة صوتية");
-      handleBotResponse(data.response, data.segments);
-    } catch {
-      addBotMessage("مش قدرت أفهم التسجيل كويس — جرّب تاني أو اكتبلي.");
-    } finally {
-      setLoading(false);
+  function startVoiceInput() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      addBotMessage("متصفحك لا يدعم الإدخال الصوتي — جرّب Chrome أو Edge.");
+      return;
     }
+
+    const recognition: SpeechRecognition = new SR();
+    recognitionRef.current = recognition;
+    recognition.lang = "ar-SA";
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setRecording(true);
+    recognition.onend = () => { setRecording(false); setInterimText(""); };
+    recognition.onerror = (e: SpeechRecognitionErrorEvent) => {
+      setRecording(false);
+      setInterimText("");
+      const err = e.error as string;
+      if (err !== "aborted" && err !== "no-speech") {
+        addBotMessage("ما قدرت أسمعك — تأكد من السماح بالميكروفون وجرّب مرة ثانية.");
+      }
+    };
+    recognition.onresult = (e: SpeechRecognitionEvent) => {
+      let interim = "";
+      let final = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) final += t;
+        else interim += t;
+      }
+      if (interim) setInterimText(interim);
+      if (final.trim()) {
+        setInterimText("");
+        setInput(final.trim());
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
+    };
+
+    recognition.start();
   }
 
-  async function startRecording() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      audioChunksRef.current = [];
-
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : "audio/mp4";
-
-      const mr = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = mr;
-
-      mr.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
-      mr.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        sendVoice(new Blob(audioChunksRef.current, { type: mr.mimeType }));
-      };
-      mr.start(200);
-      setRecording(true);
-    } catch {
-      alert("يرجى السماح بالوصول إلى الميكروفون");
-    }
-  }
-
-  function stopRecording() {
-    mediaRecorderRef.current?.stop();
-    setRecording(false);
+  function stopVoiceInput() {
+    recognitionRef.current?.stop();
   }
 
   return (
@@ -1369,18 +1351,21 @@ export default function ZakiyPage() {
       {/* Input */}
       <div className="px-3 py-3 border-t border-border/50 bg-card/60 backdrop-blur-sm">
         {recording && (
-          <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-red-50 dark:bg-red-950/30 rounded-full">
-            <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse" />
-            <span className="text-xs text-red-600 dark:text-red-400 font-medium">جارٍ التسجيل... اضغط للإيقاف</span>
+          <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-primary/10 rounded-xl border border-primary/20">
+            <span className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
+            <span className="text-xs text-primary font-medium flex-1 truncate">
+              {interimText || "استمع... تكلّم الآن"}
+            </span>
+            <span className="text-[10px] text-muted-foreground">اضغط للإيقاف</span>
           </div>
         )}
         <div className="flex items-end gap-2">
           <button
-            onClick={recording ? stopRecording : startRecording}
+            onClick={recording ? stopVoiceInput : startVoiceInput}
             disabled={loading}
             className={cn(
               "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm",
-              recording ? "bg-red-500 text-white" : "bg-muted text-muted-foreground hover:text-foreground",
+              recording ? "bg-primary text-primary-foreground scale-110 ring-2 ring-primary/30" : "bg-muted text-muted-foreground hover:text-foreground",
               loading && "opacity-50 cursor-not-allowed"
             )}
           >
