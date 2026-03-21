@@ -157,10 +157,10 @@ export function Layout({ children }: { children: ReactNode }) {
             <div className="relative">
 
               {/*
-                SVG notch — true circular arc via cubic bezier (k=0.5523).
-                ViewBox 400×80. Button diameter=60px (r=30). Notch r=36 → 6px gap all around.
-                Center x=200. Arc from (164,0) → (200,36) → (236,0).
-                Spacer = 72/400 = 18% of nav width to match notch span.
+                SVG notch — circular arc (k=0.5523) + rounded shoulders (Q curves) + inner shadow.
+                ViewBox 400×80. Button r=30, notch r=36 → 6px even gap.
+                Shoulders: flat → Q curve at x=152/248 → arc at x=164/236.
+                Spacer = 25% to cover full shoulder-to-shoulder width.
               */}
               <svg
                 className="absolute inset-x-0 top-0 w-full pointer-events-none"
@@ -169,18 +169,33 @@ export function Layout({ children }: { children: ReactNode }) {
                 preserveAspectRatio="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                {/* Nav bar fill — circular notch: left quarter C(164,20 180,36) + right quarter C(220,36 236,20) */}
+                <defs>
+                  <filter id="notch-inner-blur" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" />
+                  </filter>
+                </defs>
+
+                {/* Nav bar fill — rounded shoulders via Q curves, circular arc in center */}
                 <path
-                  d="M0,0 L164,0 C164,20 180,36 200,36 C220,36 236,20 236,0 L400,0 L400,80 L0,80 Z"
+                  d="M0,0 L152,0 Q164,0 164,14 C164,26 180,36 200,36 C220,36 236,26 236,14 Q236,0 248,0 L400,0 L400,80 L0,80 Z"
                   className="fill-card/95"
                   style={{ filter: "drop-shadow(0 -4px 16px rgba(0,0,0,0.09))" }}
                 />
-                {/* Border line — same circular arc */}
+                {/* Border line — same shape */}
                 <path
-                  d="M0,0.5 L164,0.5 C164,20.5 180,36.5 200,36.5 C220,36.5 236,20.5 236,0.5 L400,0.5"
+                  d="M0,0.5 L152,0.5 Q164,0.5 164,14.5 C164,26.5 180,36.5 200,36.5 C220,36.5 236,26.5 236,14.5 Q236,0.5 248,0.5 L400,0.5"
                   fill="none"
                   className="stroke-border/50"
                   strokeWidth="0.8"
+                />
+                {/* Inner shadow — subtle blurred stroke following the notch edge */}
+                <path
+                  d="M154,1 Q164,1 164,13 C165,25 181,35 200,35 C219,35 235,25 236,13 Q236,1 246,1"
+                  fill="none"
+                  stroke="black"
+                  strokeWidth="5"
+                  strokeOpacity="0.07"
+                  filter="url(#notch-inner-blur)"
                 />
               </svg>
 
@@ -190,8 +205,8 @@ export function Layout({ children }: { children: ReactNode }) {
                   <NavItem key={item.href} {...item} />
                 ))}
 
-                {/* Center spacer — 18% matches notch span (72/400) */}
-                <div className="flex-none" style={{ width: "18%" }} />
+                {/* Center spacer — 25% covers shoulder-to-shoulder (152→248 = 96/400) */}
+                <div className="flex-none" style={{ width: "25%" }} />
 
                 {rightItems.map((item) => (
                   <NavItem key={item.href} {...item} />
