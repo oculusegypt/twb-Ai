@@ -1,18 +1,36 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart, Moon, Sun, Star, BookMarked, MessageCircle, Volume2, X, BookText, Share2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart, Moon, Sun, Star, BookMarked, MessageCircle, Volume2, X, BookText, Share2, GripVertical, Settings2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useAppNotifications } from "@/context/AppNotificationsContext";
 import { IslamicHero } from "@/components/IslamicHero";
 import { getEidStatus } from "@/lib/eid-utils";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type BannerType = "season" | "nafl" | "ayah" | "hadith" | "dua" | "wisdom";
-
 type AyahRef = { surah: number; ayah: number };
-
 type BannerItem = {
   type: BannerType;
   label: string;
@@ -22,6 +40,56 @@ type BannerItem = {
   ayahRef?: AyahRef;
   tafsir?: string;
 };
+
+// ─── Section IDs ─────────────────────────────────────────────────────────────
+
+type SectionId =
+  | "tawbah-card"
+  | "challenge"
+  | "map"
+  | "journey30"
+  | "dhikr-rooms"
+  | "ameen"
+  | "invite"
+  | "live-stats"
+  | "spiritual-tools"
+  | "personal-tools";
+
+const DEFAULT_ORDER: SectionId[] = [
+  "tawbah-card",
+  "challenge",
+  "map",
+  "journey30",
+  "dhikr-rooms",
+  "ameen",
+  "invite",
+  "live-stats",
+  "spiritual-tools",
+  "personal-tools",
+];
+
+const STORAGE_KEY = "home_section_order";
+
+function loadOrder(): SectionId[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed: SectionId[] = JSON.parse(saved);
+      const valid = parsed.filter((id) => DEFAULT_ORDER.includes(id));
+      const missing = DEFAULT_ORDER.filter((id) => !valid.includes(id));
+      return [...valid, ...missing];
+    }
+  } catch {}
+  return DEFAULT_ORDER;
+}
+
+function saveOrder(order: SectionId[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
+  } catch {}
+}
+
+// ─── Banner data ──────────────────────────────────────────────────────────────
 
 const TYPE_STYLES: Record<BannerType, { gradient: string; border: string; iconColor: string }> = {
   ayah:    { gradient: "from-emerald-600/20 to-emerald-300/5",    border: "border-emerald-500/20",  iconColor: "text-emerald-600" },
@@ -51,7 +119,6 @@ const BANNER_POOL: BannerItem[] = [
 
 function getSeasonBanner(): BannerItem | null {
   const eid = getEidStatus();
-
   if (eid.period === "eid_fitr")
     return { type: "season", label: "🌙 عيد الفطر المبارك", content: `عيد فطر مبارك — تقبّل الله منا ومنكم. اليوم ${eid.eidDay === 1 ? "الأول" : eid.eidDay === 2 ? "الثاني" : "الثالث"} من أيام العيد.`, icon: "star", seasonColor: "from-violet-600/25 to-purple-300/5 border-violet-400/25" };
   if (eid.period === "eid_adha")
@@ -66,12 +133,10 @@ function getSeasonBanner(): BannerItem | null {
     const d = eid.daysUntilEid;
     return { type: "season", label: "✨ العشر من ذي الحجة", content: `أفضل أيام السنة — صيامٌ وذكرٌ وتوبة. عيد الأضحى ${d === 1 ? "غداً" : `بعد ${d} أيام`}.`, icon: "sparkles", seasonColor: "from-amber-600/25 to-yellow-400/5 border-amber-500/25" };
   }
-
   const now = new Date();
   const month = now.getMonth() + 1;
   const day = now.getDate();
   const dayOfWeek = now.getDay();
-
   if (month === 3 && day >= 10 && day <= 19)
     return { type: "season", label: "رمضان يودّعنا", content: "اغتنم ما بقي من رمضان — هي لحظات. العشر الأواخر فرصة لا تتكرر.", icon: "moon", seasonColor: "from-emerald-600/25 to-teal-400/5 border-emerald-500/25" };
   if (month === 8 && day >= 1 && day <= 15)
@@ -80,18 +145,14 @@ function getSeasonBanner(): BannerItem | null {
     return { type: "season", label: "الأشهر الحرم", content: "ذو القعدة وذو الحجة والمحرم ورجب — أشهر عظّمها الله. الحسنات مضاعفة والسيئات مثقّلة.", icon: "sparkles", seasonColor: "from-sky-600/25 to-blue-400/5 border-sky-400/25" };
   if (dayOfWeek === 5)
     return { type: "season", label: "يوم الجمعة المبارك", content: "أكثر من الصلاة على النبي ﷺ اليوم — اقرأ سورة الكهف وادعُ في ساعة الإجابة.", icon: "sun", seasonColor: "from-green-600/25 to-emerald-400/5 border-green-400/25" };
-
   return null;
 }
 
 const ICON_MAP = {
-  sparkles: Sparkles,
-  moon: Moon,
-  sun: Sun,
-  star: Star,
-  book: BookMarked,
-  chat: MessageCircle,
+  sparkles: Sparkles, moon: Moon, sun: Sun, star: Star, book: BookMarked, chat: MessageCircle,
 };
+
+// ─── TafsirSheet ─────────────────────────────────────────────────────────────
 
 function TafsirSheet({ item, onClose }: { item: BannerItem; onClose: () => void }) {
   const styles = TYPE_STYLES[item.type];
@@ -112,42 +173,25 @@ function TafsirSheet({ item, onClose }: { item: BannerItem; onClose: () => void 
           className="w-full max-w-md bg-card rounded-t-3xl shadow-2xl overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Handle bar */}
           <div className="flex justify-center pt-3 pb-1">
             <div className="w-10 h-1 bg-muted-foreground/25 rounded-full" />
           </div>
-
-          {/* Header */}
           <div className={`flex items-center justify-between px-5 py-3 bg-gradient-to-r ${styles.gradient} border-b ${styles.border}`}>
             <div className="flex items-center gap-2">
               <BookText size={16} className={styles.iconColor} />
               <span className={`font-bold text-sm ${styles.iconColor}`}>التفسير الميسر</span>
             </div>
-            <button
-              onClick={onClose}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-background/60 hover:bg-background/90 transition-colors"
-            >
+            <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-full bg-background/60 hover:bg-background/90 transition-colors">
               <X size={14} className="text-muted-foreground" />
             </button>
           </div>
-
-          {/* Ayah text */}
           <div className="px-5 pt-4 pb-2">
-            <p className="text-sm font-semibold text-foreground leading-loose text-center font-arabic mb-3">
-              {item.content}
-            </p>
+            <p className="text-sm font-semibold text-foreground leading-loose text-center font-arabic mb-3">{item.content}</p>
             <div className="h-px bg-border/60 my-3" />
-            <p className="text-sm text-foreground/80 leading-relaxed text-right" dir="rtl">
-              {item.tafsir}
-            </p>
+            <p className="text-sm text-foreground/80 leading-relaxed text-right" dir="rtl">{item.tafsir}</p>
           </div>
-
-          {/* Footer */}
           <div className="px-5 py-4 flex justify-end">
-            <button
-              onClick={onClose}
-              className={`px-5 py-2 rounded-xl text-xs font-bold ${styles.iconColor} bg-gradient-to-r ${styles.gradient} border ${styles.border}`}
-            >
+            <button onClick={onClose} className={`px-5 py-2 rounded-xl text-xs font-bold ${styles.iconColor} bg-gradient-to-r ${styles.gradient} border ${styles.border}`}>
               حفظ الله قلبك
             </button>
           </div>
@@ -157,16 +201,16 @@ function TafsirSheet({ item, onClose }: { item: BannerItem; onClose: () => void 
   );
 }
 
+// ─── DynamicBanner ────────────────────────────────────────────────────────────
+
 function DynamicBanner() {
   const seasonBanner = getSeasonBanner();
   const { quranReciterId } = useSettings();
-
   const getPoolIndex = () => {
     const slotMinutes = 30;
     const slotIndex = Math.floor(Date.now() / (slotMinutes * 60 * 1000));
     return slotIndex % BANNER_POOL.length;
   };
-
   const [poolIndex, setPoolIndex] = useState(getPoolIndex);
   const [manualIndex, setManualIndex] = useState<number | null>(null);
   const [showSeason, setShowSeason] = useState(!!seasonBanner);
@@ -175,77 +219,38 @@ function DynamicBanner() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setPoolIndex(getPoolIndex());
-      setManualIndex(null);
-    }, 30 * 60 * 1000);
+    const interval = setInterval(() => { setPoolIndex(getPoolIndex()); setManualIndex(null); }, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
-
-  // Stop audio when banner changes
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    setAudioState("idle");
-    setShowTafsir(false);
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    setAudioState("idle"); setShowTafsir(false);
   }, [poolIndex, manualIndex, showSeason]);
 
-  const currentItem: BannerItem = showSeason && seasonBanner
-    ? seasonBanner
-    : BANNER_POOL[manualIndex !== null ? manualIndex : poolIndex];
-
+  const currentItem: BannerItem = showSeason && seasonBanner ? seasonBanner : BANNER_POOL[manualIndex !== null ? manualIndex : poolIndex];
   const IconComp = ICON_MAP[currentItem.icon];
-
   const handleNext = () => {
-    if (showSeason) {
-      setShowSeason(false);
-      setManualIndex(poolIndex);
-    } else {
-      const next = ((manualIndex !== null ? manualIndex : poolIndex) + 1) % BANNER_POOL.length;
-      setManualIndex(next);
-    }
+    if (showSeason) { setShowSeason(false); setManualIndex(poolIndex); }
+    else { const next = ((manualIndex !== null ? manualIndex : poolIndex) + 1) % BANNER_POOL.length; setManualIndex(next); }
   };
-
   const handleListen = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentItem.ayahRef) return;
-
-    // If already playing, stop
-    if (audioState === "playing" && audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-      setAudioState("idle");
-      return;
-    }
-
+    if (audioState === "playing" && audioRef.current) { audioRef.current.pause(); audioRef.current = null; setAudioState("idle"); return; }
     setAudioState("loading");
     try {
       const { surah, ayah } = currentItem.ayahRef;
-      const res = await fetch(
-        `https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/${quranReciterId}`
-      );
+      const res = await fetch(`https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/${quranReciterId}`);
       const json = await res.json();
       const audioUrl: string = json?.data?.audio;
       if (!audioUrl) throw new Error("No audio URL");
-
       const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      audio.play();
-      setAudioState("playing");
-      audio.onended = () => setAudioState("idle");
-      audio.onerror = () => setAudioState("idle");
-    } catch {
-      setAudioState("idle");
-    }
+      audioRef.current = audio; audio.play(); setAudioState("playing");
+      audio.onended = () => setAudioState("idle"); audio.onerror = () => setAudioState("idle");
+    } catch { setAudioState("idle"); }
   };
-
   const styles = TYPE_STYLES[currentItem.type];
-  const gradientClass = currentItem.type === "season" && currentItem.seasonColor
-    ? currentItem.seasonColor
-    : `${styles.gradient} ${styles.border}`;
-
+  const gradientClass = currentItem.type === "season" && currentItem.seasonColor ? currentItem.seasonColor : `${styles.gradient} ${styles.border}`;
   const isAyah = currentItem.type === "ayah" && !!currentItem.ayahRef;
 
   return (
@@ -253,9 +258,7 @@ function DynamicBanner() {
       <AnimatePresence mode="wait">
         <motion.div
           key={currentItem.label + currentItem.content.slice(0, 20)}
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
           transition={{ duration: 0.35 }}
           className={`bg-gradient-to-r ${gradientClass} rounded-2xl p-4 border shadow-sm cursor-pointer select-none`}
           onClick={handleNext}
@@ -268,51 +271,28 @@ function DynamicBanner() {
             <span className="text-[10px] text-muted-foreground/60">اضغط للتالي ›</span>
           </div>
           <p className="text-xs text-foreground/80 leading-relaxed">{currentItem.content}</p>
-
-          {/* Ayah action buttons */}
           {isAyah && (
             <div className="flex gap-2 mt-3 pt-3 border-t border-current/10" onClick={(e) => e.stopPropagation()}>
-              {/* Listen button */}
-              <button
-                onClick={handleListen}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all
-                  ${audioState === "playing"
-                    ? "bg-emerald-500 text-white shadow-md"
-                    : "bg-background/70 hover:bg-background text-foreground/80 border border-current/10"
-                  }`}
-              >
-                {audioState === "loading" ? (
-                  <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin inline-block" />
-                ) : (
-                  <Volume2 size={12} className={audioState === "playing" ? "animate-pulse" : ""} />
-                )}
+              <button onClick={handleListen} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${audioState === "playing" ? "bg-emerald-500 text-white shadow-md" : "bg-background/70 hover:bg-background text-foreground/80 border border-current/10"}`}>
+                {audioState === "loading" ? <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin inline-block" /> : <Volume2 size={12} className={audioState === "playing" ? "animate-pulse" : ""} />}
                 {audioState === "playing" ? "إيقاف" : "استمع"}
               </button>
-
-              {/* Tafsir button */}
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowTafsir(true); }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-background/70 hover:bg-background text-foreground/80 border border-current/10 transition-all"
-              >
-                <BookText size={12} />
-                تفسير ميسر
+              <button onClick={(e) => { e.stopPropagation(); setShowTafsir(true); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-background/70 hover:bg-background text-foreground/80 border border-current/10 transition-all">
+                <BookText size={12} />تفسير ميسر
               </button>
             </div>
           )}
         </motion.div>
       </AnimatePresence>
-
-      {/* Tafsir floating sheet */}
-      {showTafsir && currentItem.tafsir && (
-        <TafsirSheet item={currentItem} onClose={() => setShowTafsir(false)} />
-      )}
+      {showTafsir && currentItem.tafsir && <TafsirSheet item={currentItem} onClose={() => setShowTafsir(false)} />}
     </>
   );
 }
 
+// ─── InviteFriendCard ─────────────────────────────────────────────────────────
+
 function InviteFriendCard() {
   const [shared, setShared] = useState(false);
-
   const handleInvite = async () => {
     const text = "اكتشفت تطبيقاً يساعدك على التوبة الصادقة 🌿\nرحلة 40 يوماً مع خطة يومية وذكر وإرشاد روحي.\n\nابدأ رحلتك الآن 👇";
     const url = window.location.origin;
@@ -320,16 +300,11 @@ function InviteFriendCard() {
       try { await navigator.share({ title: "دليل التوبة النصوح", text, url }); } catch {}
     } else {
       await navigator.clipboard.writeText(`${text}\n${url}`).catch(() => {});
-      setShared(true);
-      setTimeout(() => setShared(false), 2500);
+      setShared(true); setTimeout(() => setShared(false), 2500);
     }
   };
-
   return (
-    <button
-      onClick={handleInvite}
-      className="w-full flex items-center gap-4 bg-gradient-to-l from-primary/15 to-primary/5 border border-primary/30 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all text-right"
-    >
+    <button onClick={handleInvite} className="w-full flex items-center gap-4 bg-gradient-to-l from-primary/15 to-primary/5 border border-primary/30 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all text-right">
       <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-md shrink-0">
         <HeartHandshake size={20} className="text-white" />
       </div>
@@ -338,105 +313,33 @@ function InviteFriendCard() {
         <p className="text-[11px] text-muted-foreground">شارك التطبيق — الدال على الخير كفاعله</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
-        {shared
-          ? <span className="text-xs font-bold text-primary">تم! ✓</span>
-          : <Share2 size={16} className="text-primary" />
-        }
+        {shared ? <span className="text-xs font-bold text-primary">تم! ✓</span> : <Share2 size={16} className="text-primary" />}
       </div>
     </button>
   );
 }
 
-function getTimeGreeting(): { greeting: string; sub: string } {
-  const hour = new Date().getHours();
-  if (hour >= 4 && hour < 12) return { greeting: "صباح النور يا تائب 🌅", sub: "ابدأ يومك بذكر الله" };
-  if (hour >= 12 && hour < 16) return { greeting: "طاب ظهرك بطاعة الله ☀️", sub: "استمر — الله يراك ويُحبّ مداومتك" };
-  if (hour >= 16 && hour < 20) return { greeting: "مساء الخير والإيمان 🌇", sub: "لا تنسَ سيد الاستغفار مساءً" };
-  return { greeting: "الله يثبّتك في ليلتك 🌙", sub: "هذا وقت الوتر وسيد الاستغفار" };
-}
-
-function SosReturnToast({ onDismiss }: { onDismiss: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onDismiss, 5000);
-    return () => clearTimeout(t);
-  }, [onDismiss]);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="fixed top-4 inset-x-4 z-50 max-w-md mx-auto"
-    >
-      <div
-        className="bg-emerald-600 text-white rounded-2xl px-5 py-3.5 shadow-xl flex items-center gap-3"
-        onClick={onDismiss}
-      >
-        <span className="text-xl shrink-0">🌿</span>
-        <div className="flex-1">
-          <p className="font-bold text-sm">أحسنت — الله يثبّتك</p>
-          <p className="text-emerald-100 text-xs">قاومت ونجحت. استمر في رحلتك.</p>
-        </div>
-        <button onClick={onDismiss} className="text-white/70 hover:text-white text-lg leading-none">×</button>
-      </div>
-    </motion.div>
-  );
-}
+// ─── EidEntryCard ─────────────────────────────────────────────────────────────
 
 function EidEntryCard() {
   const eid = getEidStatus();
-
   const dismissKey = `eid_banner_dismissed_${eid.period}`;
-  const [dismissed, setDismissed] = useState(() => {
-    try { return localStorage.getItem(dismissKey) === "1"; } catch { return false; }
-  });
-
+  const [dismissed, setDismissed] = useState(() => { try { return localStorage.getItem(dismissKey) === "1"; } catch { return false; } });
   if (!eid.isActive && (eid.daysUntilEid === null || eid.daysUntilEid > 14)) return null;
   if (dismissed) return null;
-
   const isEidDay = eid.period === "eid_fitr" || eid.period === "eid_adha";
   const isAdha = eid.eidType === "adha";
   const isPreAdha = eid.period === "pre_adha_dhul_hijja" || eid.period === "arafah";
-
-  const gradientClass = isAdha
-    ? "from-emerald-600/15 to-teal-500/5 border-emerald-500/30"
-    : "from-violet-600/15 to-purple-500/5 border-violet-400/30";
-
+  const gradientClass = isAdha ? "from-emerald-600/15 to-teal-500/5 border-emerald-500/30" : "from-violet-600/15 to-purple-500/5 border-violet-400/30";
   const iconBg = isAdha ? "bg-emerald-500" : "bg-violet-600";
-
-  const title = isEidDay
-    ? isAdha ? "عيد الأضحى المبارك 🐑" : "عيد الفطر المبارك 🌙"
-    : eid.period === "arafah"
-    ? "يوم عرفة اليوم 🤲"
-    : isPreAdha
-    ? `العشر من ذي الحجة — ${eid.daysUntilEid === 1 ? "العيد غداً" : `العيد بعد ${eid.daysUntilEid} أيام`}`
-    : `العيد ${eid.daysUntilEid === 1 ? "غداً" : `بعد ${eid.daysUntilEid} أيام`} 🌙`;
-
-  const subtitle = isEidDay
-    ? "تقبّل الله منا ومنكم — اضغط لصفحة العيد الكاملة"
-    : eid.period === "arafah"
-    ? "صُم واستغفر وادعُ — اكتشف صفحة العيد"
-    : isPreAdha
-    ? "أفضل أيام السنة — أكثر من الطاعة والتوبة"
-    : "استعد وأخرج زكاة الفطر — اكتشف صفحة العيد";
-
-  const handleDismiss = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDismissed(true);
-    try { localStorage.setItem(dismissKey, "1"); } catch {}
-  };
-
+  const title = isEidDay ? (isAdha ? "عيد الأضحى المبارك 🐑" : "عيد الفطر المبارك 🌙") : eid.period === "arafah" ? "يوم عرفة اليوم 🤲" : isPreAdha ? `العشر من ذي الحجة — ${eid.daysUntilEid === 1 ? "العيد غداً" : `العيد بعد ${eid.daysUntilEid} أيام`}` : `العيد ${eid.daysUntilEid === 1 ? "غداً" : `بعد ${eid.daysUntilEid} أيام`} 🌙`;
+  const subtitle = isEidDay ? "تقبّل الله منا ومنكم — اضغط لصفحة العيد الكاملة" : eid.period === "arafah" ? "صُم واستغفر وادعُ — اكتشف صفحة العيد" : isPreAdha ? "أفضل أيام السنة — أكثر من الطاعة والتوبة" : "استعد وأخرج زكاة الفطر — اكتشف صفحة العيد";
+  const handleDismiss = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setDismissed(true); try { localStorage.setItem(dismissKey, "1"); } catch {} };
   return (
     <AnimatePresence>
       {!dismissed && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-          transition={{ duration: 0.35 }}
-          className={`flex items-center gap-3 bg-gradient-to-l ${gradientClass} border rounded-2xl p-3.5 shadow-sm`}
-        >
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }} transition={{ duration: 0.35 }}
+          className={`flex items-center gap-3 bg-gradient-to-l ${gradientClass} border rounded-2xl p-3.5 shadow-sm`}>
           <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center shadow-md shrink-0`}>
             <span className="text-lg">{isAdha ? "🐑" : isPreAdha ? "✨" : "🌙"}</span>
           </div>
@@ -445,20 +348,8 @@ function EidEntryCard() {
             <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{subtitle}</p>
           </Link>
           <div className="flex items-center gap-1.5 shrink-0">
-            <Link
-              href="/eid"
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-background/60 hover:bg-background border border-border/40 text-foreground/70 hover:text-foreground transition-colors"
-              aria-label="الذهاب لصفحة العيد"
-            >
-              <ArrowLeft size={15} />
-            </Link>
-            <button
-              onClick={handleDismiss}
-              aria-label="إغلاق"
-              className="w-8 h-8 flex items-center justify-center rounded-xl bg-background/40 hover:bg-background/80 border border-border/30 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <X size={13} />
-            </button>
+            <Link href="/eid" className="w-8 h-8 flex items-center justify-center rounded-xl bg-background/60 hover:bg-background border border-border/40 text-foreground/70 hover:text-foreground transition-colors" aria-label="الذهاب لصفحة العيد"><ArrowLeft size={15} /></Link>
+            <button onClick={handleDismiss} aria-label="إغلاق" className="w-8 h-8 flex items-center justify-center rounded-xl bg-background/40 hover:bg-background/80 border border-border/30 text-muted-foreground hover:text-foreground transition-colors"><X size={13} /></button>
           </div>
         </motion.div>
       )}
@@ -466,24 +357,18 @@ function EidEntryCard() {
   );
 }
 
+// ─── HeroBellButton ───────────────────────────────────────────────────────────
+
 function HeroBellButton() {
   const [, setLocation] = useLocation();
   const { unreadCount } = useAppNotifications();
-
   return (
-    <button
-      onClick={() => setLocation("/inbox")}
-      aria-label="صندوق الإشعارات"
-      className="absolute top-3 left-3 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 active:scale-95 transition-all"
-    >
+    <button onClick={() => setLocation("/inbox")} aria-label="صندوق الإشعارات"
+      className="absolute top-3 left-3 z-20 flex items-center justify-center w-10 h-10 rounded-full bg-black/20 backdrop-blur-sm hover:bg-black/30 active:scale-95 transition-all">
       <Bell size={20} className="text-white drop-shadow" />
       {unreadCount > 0 && (
-        <motion.span
-          key={unreadCount}
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-sm"
-        >
+        <motion.span key={unreadCount} initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 shadow-sm">
           {unreadCount > 9 ? "9+" : unreadCount}
         </motion.span>
       )}
@@ -491,9 +376,227 @@ function HeroBellButton() {
   );
 }
 
+// ─── SosReturnToast ───────────────────────────────────────────────────────────
+
+function SosReturnToast({ onDismiss }: { onDismiss: () => void }) {
+  useEffect(() => { const t = setTimeout(onDismiss, 5000); return () => clearTimeout(t); }, [onDismiss]);
+  return (
+    <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="fixed top-4 inset-x-4 z-50 max-w-md mx-auto">
+      <div className="bg-emerald-600 text-white rounded-2xl px-5 py-3.5 shadow-xl flex items-center gap-3" onClick={onDismiss}>
+        <span className="text-xl shrink-0">🌿</span>
+        <div className="flex-1"><p className="font-bold text-sm">أحسنت — الله يثبّتك</p><p className="text-emerald-100 text-xs">قاومت ونجحت. استمر في رحلتك.</p></div>
+        <button onClick={onDismiss} className="text-white/70 hover:text-white text-lg leading-none">×</button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─── Section renderers ────────────────────────────────────────────────────────
+
+function SectionTawbahCard() {
+  return (
+    <Link href="/card" className="flex items-center gap-4 bg-gradient-to-l from-amber-500/10 to-primary/10 border border-amber-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all">
+      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shrink-0"><ImageIcon size={20} className="text-white" /></div>
+      <div className="flex-1"><h3 className="font-bold text-sm">بطاقة توبتي</h3><p className="text-[11px] text-muted-foreground">اصنع بطاقة جميلة وشاركها مع الناس</p></div>
+      <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+    </Link>
+  );
+}
+
+function SectionChallenge() {
+  return (
+    <Link href="/challenge/create" className="flex items-center gap-4 bg-gradient-to-l from-emerald-500/10 to-primary/10 border border-emerald-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all">
+      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-md shrink-0"><Swords size={20} className="text-white" /></div>
+      <div className="flex-1"><h3 className="font-bold text-sm">تحدي التوبة</h3><p className="text-[11px] text-muted-foreground">ابدأ تحدياً وشارك رابطه — ليدعو لك الناس</p></div>
+      <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+    </Link>
+  );
+}
+
+function SectionMap() {
+  return (
+    <Link href="/map" className="flex items-center gap-4 bg-gradient-to-l from-blue-500/10 to-primary/10 border border-blue-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all">
+      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-md shrink-0"><Globe size={20} className="text-white" /></div>
+      <div className="flex-1"><h3 className="font-bold text-sm">خريطة التوبة العالمية</h3><p className="text-[11px] text-muted-foreground">من أي دول يتوب المسلمون الآن؟</p></div>
+      <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+    </Link>
+  );
+}
+
+function SectionJourney30() {
+  return (
+    <Link href="/journey" className="flex items-center gap-4 bg-gradient-to-l from-violet-500/10 to-primary/10 border border-violet-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all">
+      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-md shrink-0"><CalendarDays size={20} className="text-white" /></div>
+      <div className="flex-1"><h3 className="font-bold text-sm">رحلة ٣٠ يوماً</h3><p className="text-[11px] text-muted-foreground">برنامج تدريجي يومي للتوبة والاستقامة</p></div>
+      <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+    </Link>
+  );
+}
+
+function SectionDhikrRooms() {
+  return (
+    <Link href="/dhikr-rooms" className="flex items-center gap-4 bg-gradient-to-l from-teal-500/10 to-primary/10 border border-teal-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all">
+      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-md shrink-0"><Users size={20} className="text-white" /></div>
+      <div className="flex-1"><h3 className="font-bold text-sm">غرف الذكر الجماعي</h3><p className="text-[11px] text-muted-foreground">سبّح مع آلاف المسلمين الآن</p></div>
+      <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+    </Link>
+  );
+}
+
+function SectionAmeen() {
+  return (
+    <Link href="/ameen" className="flex items-center gap-4 bg-gradient-to-l from-rose-500/10 to-pink-500/5 border border-rose-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all">
+      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-md shrink-0"><HandHeart size={20} className="text-white" /></div>
+      <div className="flex-1"><h3 className="font-bold text-sm">قل آمين 🤲</h3><p className="text-[11px] text-muted-foreground">ادعُ لأخٍ مجهول — وقل آمين لدعائه</p></div>
+      <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
+    </Link>
+  );
+}
+
+function SectionInvite() {
+  return <InviteFriendCard />;
+}
+
+function SectionLiveStats() {
+  return <LiveStats />;
+}
+
+function SectionSpiritualTools() {
+  return (
+    <div>
+      <h3 className="text-xs font-bold text-muted-foreground mb-3 px-1">الأدوات الروحية</h3>
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/kaffarah" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center"><ScrollText size={20} /></div>
+          <div><h3 className="font-bold text-sm">الكفارات الشرعية</h3><p className="text-[11px] text-muted-foreground">خطوات مفصّلة لكل ذنب</p></div>
+        </Link>
+        <Link href="/rajaa" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><BookOpen size={20} /></div>
+          <div><h3 className="font-bold text-sm">مكتبة الرجاء</h3><p className="text-[11px] text-muted-foreground">آيات وأحاديث وقصص</p></div>
+        </Link>
+        <Link href="/dhikr" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center"><CircleDot size={20} /></div>
+          <div><h3 className="font-bold text-sm">مسبحة الذكر</h3><p className="text-[11px] text-muted-foreground">استغفار وتسبيح</p></div>
+        </Link>
+        <Link href="/signs" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center"><HeartHandshake size={20} /></div>
+          <div><h3 className="font-bold text-sm">تباشير القبول</h3><p className="text-[11px] text-muted-foreground">علامات قبول التوبة</p></div>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function SectionPersonalTools() {
+  return (
+    <div>
+      <h3 className="text-xs font-bold text-muted-foreground mb-3 px-1">أدوات شخصية</h3>
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/journal" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center"><PenLine size={20} /></div>
+          <div><h3 className="font-bold text-sm">يوميات التوبة</h3><p className="text-[11px] text-muted-foreground">مساحة سرية خاصة بك</p></div>
+        </Link>
+        <Link href="/progress" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center"><BarChart2 size={20} /></div>
+          <div><h3 className="font-bold text-sm">خريطة التقدم</h3><p className="text-[11px] text-muted-foreground">إحصاءاتك الروحية</p></div>
+        </Link>
+        <Link href="/danger-times" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center"><Clock size={20} /></div>
+          <div><h3 className="font-bold text-sm">أوقات الخطر</h3><p className="text-[11px] text-muted-foreground">تذكيرات وقائية ذكية</p></div>
+        </Link>
+        <Link href="/relapse" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><Heart size={20} /></div>
+          <div><h3 className="font-bold text-sm">ضعفت وعدت؟</h3><p className="text-[11px] text-muted-foreground">اقرأ هذا فوراً</p></div>
+        </Link>
+        <Link href="/hadi-tasks" className="bg-card p-4 rounded-2xl border border-emerald-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5 col-span-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0"><ListChecks size={20} /></div>
+            <div><h3 className="font-bold text-sm">مهام هادي</h3><p className="text-[11px] text-muted-foreground">نصائح الزكي تتحول لمهام تتابعها خطوة بخطوة</p></div>
+          </div>
+        </Link>
+        <Link href="/secret-dua" className="bg-card p-4 rounded-2xl border border-rose-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center"><Heart size={20} /></div>
+          <div><h3 className="font-bold text-sm">الصديق السري</h3><p className="text-[11px] text-muted-foreground">ادعُ لأخٍ مجهول بلا أسماء</p></div>
+        </Link>
+        <Link href="/prayer-times" className="bg-card p-4 rounded-2xl border border-indigo-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center"><Clock size={20} /></div>
+          <div><h3 className="font-bold text-sm">مواقيت الصلاة</h3><p className="text-[11px] text-muted-foreground">تذكيرات ذكية قبل كل صلاة</p></div>
+        </Link>
+        <Link href="/notifications" className="bg-card p-4 rounded-2xl border border-amber-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center"><Bell size={20} /></div>
+          <div><h3 className="font-bold text-sm">الإشعارات</h3><p className="text-[11px] text-muted-foreground">ضبط تنبيهات الصلاة والأذكار</p></div>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ─── Section label map ────────────────────────────────────────────────────────
+
+const SECTION_LABELS: Record<SectionId, string> = {
+  "tawbah-card":     "بطاقة توبتي",
+  "challenge":       "تحدي التوبة",
+  "map":             "خريطة التوبة",
+  "journey30":       "رحلة ٣٠ يوماً",
+  "dhikr-rooms":     "غرف الذكر",
+  "ameen":           "قل آمين",
+  "invite":          "ادعُ رفيقاً",
+  "live-stats":      "إحصاءات حية",
+  "spiritual-tools": "الأدوات الروحية",
+  "personal-tools":  "أدوات شخصية",
+};
+
+function renderSection(id: SectionId) {
+  switch (id) {
+    case "tawbah-card":     return <SectionTawbahCard />;
+    case "challenge":       return <SectionChallenge />;
+    case "map":             return <SectionMap />;
+    case "journey30":       return <SectionJourney30 />;
+    case "dhikr-rooms":     return <SectionDhikrRooms />;
+    case "ameen":           return <SectionAmeen />;
+    case "invite":          return <SectionInvite />;
+    case "live-stats":      return <SectionLiveStats />;
+    case "spiritual-tools": return <SectionSpiritualTools />;
+    case "personal-tools":  return <SectionPersonalTools />;
+  }
+}
+
+// ─── SortableItem ─────────────────────────────────────────────────────────────
+
+function SortableItem({ id, editMode, children }: { id: SectionId; editMode: boolean; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : "auto",
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      {editMode && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute top-1/2 -translate-y-1/2 -right-1 z-10 w-10 h-10 flex items-center justify-center rounded-xl bg-background/90 border border-border shadow-md cursor-grab active:cursor-grabbing touch-none"
+          style={{ right: "-0.25rem" }}
+        >
+          <GripVertical size={18} className="text-muted-foreground" />
+        </div>
+      )}
+      <div className={editMode ? "pr-10" : ""}>{children}</div>
+    </div>
+  );
+}
+
+// ─── Home ─────────────────────────────────────────────────────────────────────
+
 export default function Home() {
   const { data: progress, isLoading } = useAppUserProgress();
   const [showSosToast, setShowSosToast] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [order, setOrder] = useState<SectionId[]>(loadOrder);
+  const [activeId, setActiveId] = useState<SectionId | null>(null);
 
   useEffect(() => {
     try {
@@ -502,6 +605,29 @@ export default function Home() {
         setShowSosToast(true);
       }
     } catch {}
+  }, []);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 8 } })
+  );
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as SectionId);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (over && active.id !== over.id) {
+      setOrder((prev) => {
+        const oldIndex = prev.indexOf(active.id as SectionId);
+        const newIndex = prev.indexOf(over.id as SectionId);
+        const next = arrayMove(prev, oldIndex, newIndex);
+        saveOrder(next);
+        return next;
+      });
+    }
   }, []);
 
   if (isLoading) {
@@ -530,47 +656,27 @@ export default function Home() {
       <div className="px-5 mt-4 relative z-10 flex flex-col gap-4">
 
         <EidEntryCard />
-
         <DynamicBanner />
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="bg-card rounded-2xl p-6 shadow-xl shadow-black/5 border border-border"
-        >
+        {/* Main covenant card — fixed, not sortable */}
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
+          className="bg-card rounded-2xl p-6 shadow-xl shadow-black/5 border border-border">
           {!hasCovenant ? (
             <div className="text-center flex flex-col items-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary">
-                <Heart size={32} />
-              </div>
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary"><Heart size={32} /></div>
               <h2 className="text-xl font-bold mb-2">رحلة العودة إلى الله</h2>
-              <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك. هل أنت مستعد لاتخاذ القرار؟
-              </p>
-              <Link
-                href="/covenant"
-                className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2"
-              >
-                <span>ابدأ رحلة التوبة الآن</span>
-                <ArrowLeft size={18} />
+              <p className="text-muted-foreground text-sm mb-6 leading-relaxed">التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك. هل أنت مستعد لاتخاذ القرار؟</p>
+              <Link href="/covenant" className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
+                <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={18} />
               </Link>
             </div>
           ) : !dayOneDone ? (
             <div className="text-center flex flex-col items-center">
-              <div className="w-16 h-16 bg-accent/20 text-accent rounded-full flex items-center justify-center mb-4">
-                <Activity size={32} />
-              </div>
+              <div className="w-16 h-16 bg-accent/20 text-accent rounded-full flex items-center justify-center mb-4"><Activity size={32} /></div>
               <h2 className="text-xl font-bold mb-2">لقد عاهدت الله</h2>
-              <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
-                بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة تماماً.
-              </p>
-              <Link
-                href="/day-one"
-                className="w-full py-3.5 bg-accent text-accent-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2"
-              >
-                <span>أكمل مهام اللحظة الأولى</span>
-                <CheckCircle2 size={18} />
+              <p className="text-muted-foreground text-sm mb-6 leading-relaxed">بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة تماماً.</p>
+              <Link href="/day-one" className="w-full py-3.5 bg-accent text-accent-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
+                <span>أكمل مهام اللحظة الأولى</span><CheckCircle2 size={18} />
               </Link>
             </div>
           ) : (
@@ -578,291 +684,75 @@ export default function Home() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-xl font-bold">خطة الـ 40 يوماً</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    أنت في اليوم <span className="text-primary font-bold">{progress.day40Progress || 1}</span>
-                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">أنت في اليوم <span className="text-primary font-bold">{progress.day40Progress || 1}</span></p>
                 </div>
                 <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                   <span className="text-xl font-bold">{progress.streakDays || 0}</span>
                   <span className="text-[10px] ml-0.5">يوم</span>
                 </div>
               </div>
-              <Link
-                href="/plan"
-                className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2"
-              >
-                <span>متابعة مهام اليوم</span>
-                <ArrowLeft size={18} />
+              <Link href="/plan" className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
+                <span>متابعة مهام اليوم</span><ArrowLeft size={18} />
               </Link>
             </div>
           )}
         </motion.div>
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.15 }}
-        >
-          <Link
-            href="/card"
-            className="flex items-center gap-4 bg-gradient-to-l from-amber-500/10 to-primary/10 border border-amber-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
-          >
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shrink-0">
-              <ImageIcon size={20} className="text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">بطاقة توبتي</h3>
-              <p className="text-[11px] text-muted-foreground">اصنع بطاقة جميلة وشاركها مع الناس</p>
-            </div>
-            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
-          </Link>
-        </motion.div>
+        {/* Edit mode toggle bar */}
+        <AnimatePresence>
+          {editMode && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+              className="flex items-center justify-between bg-primary/10 border border-primary/25 rounded-2xl px-4 py-3"
+            >
+              <p className="text-xs font-bold text-primary">اسحب البطاقات لإعادة الترتيب</p>
+              <button
+                onClick={() => setEditMode(false)}
+                className="text-xs font-bold text-primary bg-primary/15 hover:bg-primary/25 px-3 py-1.5 rounded-xl transition-colors"
+              >
+                تم ✓
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.175 }}
-        >
-          <Link
-            href="/challenge/create"
-            className="flex items-center gap-4 bg-gradient-to-l from-emerald-500/10 to-primary/10 border border-emerald-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
-          >
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center shadow-md shrink-0">
-              <Swords size={20} className="text-white" />
+        {/* Sortable sections */}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+          <SortableContext items={order} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-4">
+              {order.map((id) => (
+                <SortableItem key={id} id={id} editMode={editMode}>
+                  {renderSection(id)}
+                </SortableItem>
+              ))}
             </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">تحدي التوبة</h3>
-              <p className="text-[11px] text-muted-foreground">ابدأ تحدياً وشارك رابطه — ليدعو لك الناس</p>
-            </div>
-            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
-          </Link>
-        </motion.div>
+          </SortableContext>
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.18 }}
-        >
-          <Link
-            href="/map"
-            className="flex items-center gap-4 bg-gradient-to-l from-blue-500/10 to-primary/10 border border-blue-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
-          >
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-md shrink-0">
-              <Globe size={20} className="text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">خريطة التوبة العالمية</h3>
-              <p className="text-[11px] text-muted-foreground">من أي دول يتوب المسلمون الآن؟</p>
-            </div>
-            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.19 }}
-        >
-          <Link
-            href="/journey"
-            className="flex items-center gap-4 bg-gradient-to-l from-violet-500/10 to-primary/10 border border-violet-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
-          >
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center shadow-md shrink-0">
-              <CalendarDays size={20} className="text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">رحلة ٣٠ يوماً</h3>
-              <p className="text-[11px] text-muted-foreground">برنامج تدريجي يومي للتوبة والاستقامة</p>
-            </div>
-            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.195 }}
-        >
-          <Link
-            href="/dhikr-rooms"
-            className="flex items-center gap-4 bg-gradient-to-l from-teal-500/10 to-primary/10 border border-teal-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
-          >
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 flex items-center justify-center shadow-md shrink-0">
-              <Users size={20} className="text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">غرف الذكر الجماعي</h3>
-              <p className="text-[11px] text-muted-foreground">سبّح مع آلاف المسلمين الآن</p>
-            </div>
-            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.197 }}
-        >
-          <Link
-            href="/ameen"
-            className="flex items-center gap-4 bg-gradient-to-l from-rose-500/10 to-pink-500/5 border border-rose-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all"
-          >
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 flex items-center justify-center shadow-md shrink-0">
-              <HandHeart size={20} className="text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-bold text-sm">قل آمين 🤲</h3>
-              <p className="text-[11px] text-muted-foreground">ادعُ لأخٍ مجهول — وقل آمين لدعائه</p>
-            </div>
-            <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
-          </Link>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.183 }}
-        >
-          <InviteFriendCard />
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.185 }}
-        >
-          <LiveStats />
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h3 className="text-xs font-bold text-muted-foreground mb-3 px-1">الأدوات الروحية</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/kaffarah" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-destructive/10 text-destructive flex items-center justify-center">
-                <ScrollText size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">الكفارات الشرعية</h3>
-                <p className="text-[11px] text-muted-foreground">خطوات مفصّلة لكل ذنب</p>
-              </div>
-            </Link>
-            <Link href="/rajaa" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
-                <BookOpen size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">مكتبة الرجاء</h3>
-                <p className="text-[11px] text-muted-foreground">آيات وأحاديث وقصص</p>
-              </div>
-            </Link>
-            <Link href="/dhikr" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center">
-                <CircleDot size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">مسبحة الذكر</h3>
-                <p className="text-[11px] text-muted-foreground">استغفار وتسبيح</p>
-              </div>
-            </Link>
-            <Link href="/signs" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-green-500/10 text-green-500 flex items-center justify-center">
-                <HeartHandshake size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">تباشير القبول</h3>
-                <p className="text-[11px] text-muted-foreground">علامات قبول التوبة</p>
-              </div>
-            </Link>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h3 className="text-xs font-bold text-muted-foreground mb-3 px-1">أدوات شخصية</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <Link href="/journal" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center">
-                <PenLine size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">يوميات التوبة</h3>
-                <p className="text-[11px] text-muted-foreground">مساحة سرية خاصة بك</p>
-              </div>
-            </Link>
-            <Link href="/progress" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                <BarChart2 size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">خريطة التقدم</h3>
-                <p className="text-[11px] text-muted-foreground">إحصاءاتك الروحية</p>
-              </div>
-            </Link>
-            <Link href="/danger-times" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center">
-                <Clock size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">أوقات الخطر</h3>
-                <p className="text-[11px] text-muted-foreground">تذكيرات وقائية ذكية</p>
-              </div>
-            </Link>
-            <Link href="/relapse" className="bg-card p-4 rounded-2xl border border-border shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
-                <Heart size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">ضعفت وعدت؟</h3>
-                <p className="text-[11px] text-muted-foreground">اقرأ هذا فوراً</p>
-              </div>
-            </Link>
-            <Link href="/hadi-tasks" className="bg-card p-4 rounded-2xl border border-emerald-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5 col-span-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-                  <ListChecks size={20} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-sm">مهام هادي</h3>
-                  <p className="text-[11px] text-muted-foreground">نصائح الزكي تتحول لمهام تتابعها خطوة بخطوة</p>
+          <DragOverlay>
+            {activeId ? (
+              <div className="rounded-2xl shadow-2xl border border-primary/30 bg-card/95 backdrop-blur-sm p-1 opacity-95 rotate-1 scale-[1.02]">
+                <div className="px-3 py-2 flex items-center gap-2">
+                  <GripVertical size={16} className="text-primary" />
+                  <span className="text-sm font-bold text-primary">{SECTION_LABELS[activeId]}</span>
                 </div>
               </div>
-            </Link>
-            <Link href="/secret-dua" className="bg-card p-4 rounded-2xl border border-rose-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-500 flex items-center justify-center">
-                <Heart size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">الصديق السري</h3>
-                <p className="text-[11px] text-muted-foreground">ادعُ لأخٍ مجهول بلا أسماء</p>
-              </div>
-            </Link>
-            <Link href="/prayer-times" className="bg-card p-4 rounded-2xl border border-indigo-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center">
-                <Clock size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">مواقيت الصلاة</h3>
-                <p className="text-[11px] text-muted-foreground">تذكيرات ذكية قبل كل صلاة</p>
-              </div>
-            </Link>
-            <Link href="/notifications" className="bg-card p-4 rounded-2xl border border-amber-300/40 shadow-sm hover:shadow-md transition-all active:scale-[0.98] flex flex-col gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                <Bell size={20} />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm">الإشعارات</h3>
-                <p className="text-[11px] text-muted-foreground">ضبط تنبيهات الصلاة والأذكار</p>
-              </div>
-            </Link>
-          </div>
-        </motion.div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+
+        {/* Reorganize button — fixed at bottom */}
+        <motion.button
+          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          onClick={() => setEditMode((v) => !v)}
+          className={`flex items-center justify-center gap-2 w-full py-3 rounded-2xl border text-sm font-bold transition-all ${
+            editMode
+              ? "bg-primary text-primary-foreground border-primary shadow-lg"
+              : "bg-card text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
+          }`}
+        >
+          <Settings2 size={16} />
+          {editMode ? "إنهاء التنظيم" : "إعادة ترتيب البطاقات"}
+        </motion.button>
 
       </div>
     </div>
