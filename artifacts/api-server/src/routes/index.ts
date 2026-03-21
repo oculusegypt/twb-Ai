@@ -8,6 +8,7 @@ import journeyRouter from "./journey";
 import dhikrRoomsRouter from "./dhikr-rooms";
 import adminRouter from "./admin";
 import heroRouter from "./hero";
+import pushRouter from "./push";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(hadiTasksRouter);
 router.use(journeyRouter);
 router.use(dhikrRoomsRouter);
 router.use("/admin", adminRouter);
+router.use("/push", pushRouter);
 
 export default router;

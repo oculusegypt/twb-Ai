@@ -8,6 +8,38 @@ let midnightTimer = null;
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
 
+// ── Web Push: server-sent notifications (works when app is closed) ────────────
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: 'تذكير', body: event.data.text(), url: '/' };
+  }
+  const { title = 'دليل التوبة', body = '', url = '/', tag = 'push' } = data;
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: ICON,
+      badge: BADGE,
+      tag,
+      dir: 'rtl',
+      lang: 'ar',
+      vibrate: [200, 100, 200],
+      data: { url },
+      silent: false,
+    }).then(() => {
+      // Notify open windows to update in-app inbox
+      return clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+        for (const client of windowClients) {
+          client.postMessage({ type: 'NOTIFICATION_FIRED', tag, title, body, url });
+        }
+      });
+    })
+  );
+});
+
 // ── Handle messages from the app ─────────────────────────────────────────────
 self.addEventListener('message', (event) => {
   const { type } = event.data || {};

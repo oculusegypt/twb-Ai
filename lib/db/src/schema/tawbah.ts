@@ -196,3 +196,24 @@ export const appInboxTable = pgTable("app_inbox", {
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const pushSubscriptionsTable = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  endpoint: text("endpoint").notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const pushJobsTable = pgTable("push_jobs", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull(),
+  type: text("type").notNull().default("custom"),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  url: text("url").notNull().default("/"),
+  fireAt: timestamp("fire_at").notNull(),
+  sent: boolean("sent").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
