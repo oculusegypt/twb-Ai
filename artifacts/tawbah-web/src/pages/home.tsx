@@ -3,10 +3,11 @@ import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, Bo
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useAppNotifications } from "@/context/AppNotificationsContext";
-import { IslamicHero } from "@/components/IslamicHero";
+import { AppHero } from "@/components/AppHero";
+import { KnowledgeSlider } from "@/components/KnowledgeSlider";
 import { getEidStatus } from "@/lib/eid-utils";
 import { getSessionId } from "@/lib/session";
 import { useQuery } from "@tanstack/react-query";
@@ -386,7 +387,7 @@ function EidEntryCard() {
   const eid = getEidStatus();
   const dismissKey = `eid_banner_dismissed_${eid.period}`;
   const [dismissed, setDismissed] = useState(() => { try { return localStorage.getItem(dismissKey) === "1"; } catch { return false; } });
-  if (!eid.isActive && (eid.daysUntilEid === null || eid.daysUntilEid > 14)) return null;
+  if (eid.period !== "eid_fitr" && eid.period !== "eid_adha") return null;
   if (dismissed) return null;
   const isEidDay = eid.period === "eid_fitr" || eid.period === "eid_adha";
   const isAdha = eid.eidType === "adha";
@@ -894,7 +895,7 @@ export default function Home() {
 
       {/* Hero + bell overlay */}
       <div className="relative">
-        <IslamicHero />
+        <AppHero />
         <HeroBellButton />
       </div>
 
@@ -964,12 +965,18 @@ export default function Home() {
           <SortableContext items={combinedOrder} strategy={rectSortingStrategy}>
             <div className="flex flex-wrap gap-3">
               {combinedOrder.map((id) => (
-                <div
-                  key={id}
-                  className={isGridItem(id) ? "w-[calc(50%-6px)]" : "w-full"}
-                >
-                  <SortableUnifiedItem id={id} editMode={editMode} />
-                </div>
+                <Fragment key={id}>
+                  {id === "live-stats" && (
+                    <div className="w-full">
+                      <KnowledgeSlider />
+                    </div>
+                  )}
+                  <div
+                    className={isGridItem(id) ? "w-[calc(50%-6px)]" : "w-full"}
+                  >
+                    <SortableUnifiedItem id={id} editMode={editMode} />
+                  </div>
+                </Fragment>
               ))}
             </div>
           </SortableContext>
