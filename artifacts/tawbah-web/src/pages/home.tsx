@@ -166,6 +166,111 @@ const TYPE_STYLES: Record<BannerType, { gradient: string; border: string; iconCo
   season:  { gradient: "from-teal-500/20 to-emerald-300/5",       border: "border-teal-400/20",     iconColor: "text-teal-600" },
 };
 
+// ─── 10 عصرية بألوان مخصصة ─────────────────────────────────────────────────
+
+interface BannerSlide {
+  label: string;
+  icon: keyof typeof ICON_MAP;
+  text: string;
+  bg: string;
+  borderColor: string;
+  accent: string;
+  labelColor: string;
+}
+
+const BANNER_SLIDES: BannerSlide[] = [
+  {
+    label: "آية كريمة",
+    icon: "book",
+    text: "﴿قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنفُسِهِمْ لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ﴾ — الزمر: 53",
+    bg: "linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(5,150,105,0.08) 100%)",
+    borderColor: "rgba(16,185,129,0.3)",
+    accent: "#059669",
+    labelColor: "#047857",
+  },
+  {
+    label: "حديث شريف",
+    icon: "chat",
+    text: "«التائبُ من الذنبِ كمَن لا ذنبَ له» — رواه ابن ماجه",
+    bg: "linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(217,119,6,0.08) 100%)",
+    borderColor: "rgba(245,158,11,0.35)",
+    accent: "#d97706",
+    labelColor: "#b45309",
+  },
+  {
+    label: "ذكر مأثور",
+    icon: "star",
+    text: "سبحان الله وبحمده — سبحان الله العظيم. خفيفتان على اللسان، ثقيلتان في الميزان، حبيبتان إلى الرحمن.",
+    bg: "linear-gradient(135deg, rgba(14,165,233,0.18) 0%, rgba(2,132,199,0.08) 100%)",
+    borderColor: "rgba(14,165,233,0.3)",
+    accent: "#0284c7",
+    labelColor: "#0369a1",
+  },
+  {
+    label: "نصيحة روحية",
+    icon: "sparkles",
+    text: "الذنب الذي يُورِث الإنكسار خيرٌ من طاعة تُورِث الكِبر — ابن عطاء الله السكندري",
+    bg: "linear-gradient(135deg, rgba(236,72,153,0.16) 0%, rgba(219,39,119,0.07) 100%)",
+    borderColor: "rgba(236,72,153,0.28)",
+    accent: "#db2777",
+    labelColor: "#be185d",
+  },
+  {
+    label: "آية كريمة",
+    icon: "book",
+    text: "﴿وَإِنِّي لَغَفَّارٌ لِّمَن تَابَ وَآمَنَ وَعَمِلَ صَالِحًا ثُمَّ اهْتَدَى﴾ — طه: 82",
+    bg: "linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(79,70,229,0.08) 100%)",
+    borderColor: "rgba(99,102,241,0.3)",
+    accent: "#4f46e5",
+    labelColor: "#4338ca",
+  },
+  {
+    label: "حديث شريف",
+    icon: "chat",
+    text: "«إنَّ اللهَ يَقبلُ توبةَ العبدِ ما لم يُغَرْغِر» — رواه الترمذي",
+    bg: "linear-gradient(135deg, rgba(249,115,22,0.18) 0%, rgba(234,88,12,0.08) 100%)",
+    borderColor: "rgba(249,115,22,0.3)",
+    accent: "#ea580c",
+    labelColor: "#c2410c",
+  },
+  {
+    label: "دعاء مأثور",
+    icon: "star",
+    text: "«اللهم أنتَ ربي لا إله إلا أنتَ، خلقتني وأنا عبدُك، وأنا على عهدك ووعدك ما استطعتُ، أبوءُ لك بنعمتك وأبوءُ بذنبي فاغفر لي» — سيد الاستغفار",
+    bg: "linear-gradient(135deg, rgba(139,92,246,0.18) 0%, rgba(109,40,217,0.08) 100%)",
+    borderColor: "rgba(139,92,246,0.3)",
+    accent: "#7c3aed",
+    labelColor: "#6d28d9",
+  },
+  {
+    label: "نافلة وسنة",
+    icon: "sun",
+    text: "صلاة الضحى ركعتان — تُصلَّى بعد شروق الشمس بربع ساعة حتى قُبيل الظهر. من داوم عليها فُتحت له أبواب الرزق.",
+    bg: "linear-gradient(135deg, rgba(20,184,166,0.18) 0%, rgba(13,148,136,0.08) 100%)",
+    borderColor: "rgba(20,184,166,0.3)",
+    accent: "#0d9488",
+    labelColor: "#0f766e",
+  },
+  {
+    label: "آية كريمة",
+    icon: "book",
+    text: "﴿وَمَن يَعْمَلْ سُوءًا أَوْ يَظْلِمْ نَفْسَهُ ثُمَّ يَسْتَغْفِرِ اللَّهَ يَجِدِ اللَّهَ غَفُورًا رَّحِيمًا﴾ — النساء: 110",
+    bg: "linear-gradient(135deg, rgba(59,130,246,0.18) 0%, rgba(37,99,235,0.08) 100%)",
+    borderColor: "rgba(59,130,246,0.3)",
+    accent: "#2563eb",
+    labelColor: "#1d4ed8",
+  },
+  {
+    label: "نصيحة روحية",
+    icon: "sparkles",
+    text: "أعظم ما تفعله بعد المعصية: أن تسارع للصلاة والاستغفار فورَ السقوط — لا تُمَكِّن الشيطان من إقناعك بالتأجيل.",
+    bg: "linear-gradient(135deg, rgba(244,63,94,0.16) 0%, rgba(225,29,72,0.07) 100%)",
+    borderColor: "rgba(244,63,94,0.28)",
+    accent: "#e11d48",
+    labelColor: "#be123c",
+  },
+];
+
 const BANNER_POOL: BannerItem[] = [
   { type: "ayah",   label: "آية كريمة",        icon: "book",     content: "﴿قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَى أَنْفُسِهِمْ لَا تَقْنَطُوا مِنْ رَحْمَةِ اللَّهِ﴾ — الزمر: 53", ayahRef: { surah: 39, ayah: 53 }, tafsir: "قل يا محمد لعبادي الذين أكثروا من الذنوب والمعاصي: لا تيأسوا من رحمة الله ومغفرته، فإن الله يغفر الذنوب جميعًا لمن تاب وأناب — صغيرها وكبيرها. إنه هو الغفور الذي يستر الذنوب، الرحيم الذي يعطف على عباده التائبين. هذه الآية هي أوسع آية في القرآن في باب الرحمة والمغفرة." },
   { type: "hadith", label: "حديث شريف",        icon: "chat",     content: "«إنَّ اللهَ يَقبلُ توبةَ العبدِ ما لم يُغَرْغِر» — رواه الترمذي" },
@@ -269,172 +374,89 @@ function TafsirSheet({ item, onClose }: { item: BannerItem; onClose: () => void 
 
 // ─── DynamicBanner ────────────────────────────────────────────────────────────
 
-const BANNER_DURATION = 8000;
+const SLIDE_DURATION = 8; // seconds
 
 function DynamicBanner() {
-  const seasonBanner = getSeasonBanner();
-  const { quranReciterId } = useSettings();
-
   const [idx, setIdx] = useState(0);
-  const [showSeason, setShowSeason] = useState(!!seasonBanner);
-  const [showTafsir, setShowTafsir] = useState(false);
   const [dismissed, setDismissed] = useState(false);
-  const [audioState, setAudioState] = useState<"idle" | "loading" | "playing">("idle");
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const advance = useCallback(() => {
-    setIdx(i => (i + 1) % BANNER_POOL.length);
-    setProgress(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIdx(i => (i + 1) % BANNER_SLIDES.length);
+    }, SLIDE_DURATION * 1000);
+    return () => clearInterval(timer);
   }, []);
-
-  const startAuto = useCallback(() => {
-    if (autoRef.current) clearInterval(autoRef.current);
-    if (progressRef.current) clearInterval(progressRef.current);
-    setProgress(0);
-    const step = 100 / (BANNER_DURATION / 50);
-    progressRef.current = setInterval(() => setProgress(p => Math.min(p + step, 100)), 50);
-    autoRef.current = setInterval(advance, BANNER_DURATION);
-  }, [advance]);
-
-  useEffect(() => {
-    if (!showSeason) startAuto();
-    return () => {
-      if (autoRef.current) clearInterval(autoRef.current);
-      if (progressRef.current) clearInterval(progressRef.current);
-    };
-  }, [showSeason, startAuto]);
-
-  useEffect(() => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-    setAudioState("idle");
-    setShowTafsir(false);
-  }, [idx, showSeason]);
-
-  const currentItem: BannerItem = showSeason && seasonBanner
-    ? seasonBanner
-    : BANNER_POOL[idx];
-  const IconComp = ICON_MAP[currentItem.icon];
-
-  const handleDismissSeason = () => { setShowSeason(false); startAuto(); };
-
-  const handleListen = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!currentItem.ayahRef) return;
-    if (audioState === "playing" && audioRef.current) {
-      audioRef.current.pause(); audioRef.current = null; setAudioState("idle"); return;
-    }
-    setAudioState("loading");
-    try {
-      const { surah, ayah } = currentItem.ayahRef;
-      const res = await fetch(`https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/${quranReciterId}`);
-      const json = await res.json();
-      const audioUrl: string = json?.data?.audio;
-      if (!audioUrl) throw new Error("No audio URL");
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio; audio.play(); setAudioState("playing");
-      audio.onended = () => setAudioState("idle");
-      audio.onerror = () => setAudioState("idle");
-    } catch { setAudioState("idle"); }
-  };
-
-  const styles = TYPE_STYLES[currentItem.type];
-  const gradientClass = currentItem.type === "season" && currentItem.seasonColor
-    ? currentItem.seasonColor
-    : `${styles.gradient} ${styles.border}`;
-  const isAyah = currentItem.type === "ayah" && !!currentItem.ayahRef;
 
   if (dismissed) return null;
 
+  const slide = BANNER_SLIDES[idx];
+  const IconComp = ICON_MAP[slide.icon];
+
   return (
-    <>
-      <div className={`bg-gradient-to-r ${gradientClass} rounded-2xl border shadow-sm overflow-hidden select-none`}>
-        {/* Header row */}
-        <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentItem.label}
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.25 }}
-              className="flex items-center gap-1.5"
-            >
-              <IconComp size={14} className={`${styles.iconColor} shrink-0`} />
-              <span className={`font-bold text-xs ${styles.iconColor}`}>{currentItem.label}</span>
-            </motion.div>
-          </AnimatePresence>
-
-          <button
-            onClick={() => setDismissed(true)}
-            className="w-6 h-6 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 active:scale-90 transition-all shrink-0"
-            aria-label="إغلاق"
+    <div
+      className="rounded-2xl overflow-hidden shadow-sm"
+      style={{ background: slide.bg, border: `1px solid ${slide.borderColor}` }}
+    >
+      {/* Label row */}
+      <div className="flex items-center gap-1.5 px-4 pt-3 pb-1.5">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, x: 6 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -6 }}
+            transition={{ duration: 0.22 }}
+            className="flex items-center gap-1.5 flex-1"
           >
-            <X size={12} className="text-foreground/50" />
-          </button>
-        </div>
-
-        {/* Content area with clip to prevent layout shift */}
-        <div className="relative overflow-hidden min-h-[44px] px-4 pb-3">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentItem.content.slice(0, 30)}
-              initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -14, filter: "blur(4px)" }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <p className="text-xs text-foreground/80 leading-relaxed">{currentItem.content}</p>
-              {isAyah && (
-                <div className="flex gap-2 mt-2.5 pt-2.5 border-t border-current/10">
-                  <button
-                    onClick={handleListen}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${audioState === "playing" ? "bg-emerald-500 text-white shadow-md" : "bg-background/70 hover:bg-background text-foreground/80 border border-current/10"}`}
-                  >
-                    {audioState === "loading"
-                      ? <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin inline-block" />
-                      : <Volume2 size={12} className={audioState === "playing" ? "animate-pulse" : ""} />
-                    }
-                    {audioState === "playing" ? "إيقاف" : "استمع"}
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowTafsir(true); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-background/70 hover:bg-background text-foreground/80 border border-current/10 transition-all"
-                  >
-                    <BookText size={12} />تفسير ميسر
-                  </button>
-                  {showSeason && (
-                    <button
-                      onClick={handleDismissSeason}
-                      className="mr-auto flex items-center gap-1 px-2 py-1.5 rounded-xl text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
-                    >
-                      التالي ›
-                    </button>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Progress bar — only shown for auto-rotating (non-season) */}
-        {!showSeason && (
-          <div className="h-[2px] bg-black/5 w-full">
-            <motion.div
-              className={`h-full ${styles.iconColor.replace("text-", "bg-").replace("/80", "/40").replace("/60", "/40")}`}
-              style={{ width: `${progress}%` }}
-              transition={{ ease: "linear" }}
-            />
-          </div>
-        )}
+            <IconComp size={13} style={{ color: slide.accent }} className="shrink-0" />
+            <span className="font-bold text-[11px]" style={{ color: slide.labelColor }}>
+              {slide.label}
+            </span>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      {showTafsir && currentItem.tafsir && (
-        <TafsirSheet item={currentItem} onClose={() => setShowTafsir(false)} />
-      )}
-    </>
+      {/* Content row — text + X button on same line */}
+      <div className="flex items-start gap-3 px-4 pb-3">
+        <div className="flex-1 overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={idx}
+              initial={{ opacity: 0, y: 12, filter: "blur(6px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -12, filter: "blur(6px)" }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              className="text-[12.5px] leading-relaxed text-foreground/80"
+              dir="rtl"
+            >
+              {slide.text}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+
+        {/* X button — vertically centered with content */}
+        <button
+          onClick={() => setDismissed(true)}
+          aria-label="إغلاق"
+          className="mt-0.5 w-6 h-6 flex items-center justify-center rounded-full shrink-0 transition-all active:scale-90"
+          style={{ background: "rgba(0,0,0,0.08)" }}
+        >
+          <X size={11} className="text-foreground/50" />
+        </button>
+      </div>
+
+      {/* Progress bar — framer-motion resets automatically on key change */}
+      <div className="h-[3px] w-full" style={{ background: "rgba(0,0,0,0.07)" }}>
+        <motion.div
+          key={idx}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ duration: SLIDE_DURATION, ease: "linear" }}
+          className="h-full origin-right"
+          style={{ background: slide.accent, opacity: 0.55 }}
+        />
+      </div>
+    </div>
   );
 }
 
