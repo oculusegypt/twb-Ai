@@ -255,14 +255,6 @@ export function IslamicHero() {
         }}
       />
 
-      {/* Subtle noise/grain texture */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
-          backgroundSize: "200px 200px",
-        }}
-      />
 
       {/* Islamic geometric SVG */}
       <IslamicGeometry />
@@ -282,12 +274,21 @@ export function IslamicHero() {
         style={{ background: "linear-gradient(to bottom, rgba(251,191,36,0.04) 0%, transparent 100%)" }}
       />
 
-      {/* Bottom fade — matches page background color seamlessly */}
+      {/* Bottom fade — long & gradual so it never looks like a hard edge */}
       <div
         className="absolute bottom-0 inset-x-0 pointer-events-none z-20"
         style={{
-          height: 90,
-          background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%)",
+          height: 180,
+          background: [
+            "linear-gradient(to bottom,",
+            "  transparent 0%,",
+            "  hsl(var(--background) / 0.08) 25%,",
+            "  hsl(var(--background) / 0.30) 50%,",
+            "  hsl(var(--background) / 0.65) 72%,",
+            "  hsl(var(--background) / 0.88) 88%,",
+            "  hsl(var(--background)) 100%",
+            ")",
+          ].join(""),
         }}
       />
 
@@ -358,9 +359,8 @@ export function IslamicHero() {
           <div
             className="rounded-2xl overflow-hidden"
             style={{
-              background: "rgba(255,255,255,0.04)",
+              background: "rgba(255,255,255,0.06)",
               border: "1px solid rgba(251,191,36,0.18)",
-              backdropFilter: "blur(16px)",
               boxShadow: "0 4px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(251,191,36,0.12)",
             }}
           >
