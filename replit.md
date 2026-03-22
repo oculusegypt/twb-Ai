@@ -27,7 +27,7 @@
 
 1. **عهد التوبة (Covenant)** - User selects sin category and signs a repentance covenant
 2. **مهام اليوم الأول (First Day Tasks)** - Mandatory checklist of 4 immediate actions
-3. **خطة الـ 40 يوماً (40-Day Plan)** - Daily habit tracker with 5 recurring habits
+3. **رحلة الـ 30 يوماً (30-Day Journey)** - Primary journey: day-by-day task list with individual task toggling, sin integration panel, and streak tracking. Replaces the 40-day plan as the main hero card.
 4. **عداد الذكر (Dhikr Counter)** - Three counters (Istighfar/100, Tasbih/33, Sayyid al-Istighfar)
 5. **زر الطوارئ SOS المطور** - 3-phase emergency: Alert → Breathing exercise (animated) → Emergency duas
 6. **علامات قبول التوبة (Signs of Accepted Repentance)** - 5 spiritual signs

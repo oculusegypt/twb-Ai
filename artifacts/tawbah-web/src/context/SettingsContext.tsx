@@ -124,7 +124,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
   const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
-    return (localStorage.getItem("tawbah_accent") as AccentColor) || "forest";
+    return (localStorage.getItem("tawbah_accent") as AccentColor) || "mint";
   });
   const [autoPlayBotAudio, setAutoPlayBotAudioState] = useState<boolean>(() => {
     const stored = localStorage.getItem("tawbah_autoplay_bot");
