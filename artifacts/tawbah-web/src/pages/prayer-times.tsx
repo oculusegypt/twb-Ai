@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Bell, BellOff, MapPin, RefreshCw, Moon, Sun, Sunset, Sunrise } from "lucide-react";
+import { Bell, BellOff, MapPin, RefreshCw, Moon, Sun, Sunset, Sunrise } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface PrayerTimings {
   Fajr: string;
@@ -319,17 +320,11 @@ export default function PrayerTimes() {
 
   return (
     <div className="flex-1 flex flex-col bg-background" dir="rtl">
+      <PageHeader title="مواقيت الصلاة" subtitle="تذكيرات الصلاة والأذكار الذكية" icon={<Bell size={16} />} />
       {/* Sky header with animated sun arc */}
       <PrayerSkyHeader />
 
       <div className="p-6 pb-4">
-        <button
-          onClick={() => setLocation("/")}
-          className="flex items-center gap-1 text-muted-foreground text-sm mb-6"
-        >
-          <ArrowRight size={16} /> رجوع
-        </button>
-
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
             <Bell size={22} />

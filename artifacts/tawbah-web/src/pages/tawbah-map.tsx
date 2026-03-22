@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, MapPin, Globe } from "lucide-react";
+import { MapPin, Globe } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 type CountryEntry = { countryCode: string; count: number };
 
@@ -108,25 +109,7 @@ export default function TawbahMap() {
 
   return (
     <div className="flex-1 flex flex-col bg-background" dir="rtl">
-      <div className="p-6 pb-4">
-        <button
-          onClick={() => setLocation("/")}
-          className="flex items-center gap-1 text-muted-foreground text-sm mb-6"
-        >
-          <ArrowRight size={16} /> رجوع
-        </button>
-
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-            <Globe size={22} />
-          </div>
-          <div>
-            <h1 className="text-xl font-display font-bold text-foreground">خريطة التوبة العالمية</h1>
-            <p className="text-xs text-muted-foreground">أين المتوبون في آخر ٧ أيام؟</p>
-          </div>
-        </div>
-      </div>
-
+      <PageHeader title="خريطة التوبة العالمية" subtitle="أين المتوبون في آخر ٧ أيام؟" icon={<Globe size={16} />} />
       <AnimatePresence>
         {justPinned && (
           <motion.div

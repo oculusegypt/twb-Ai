@@ -1,13 +1,14 @@
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowRight, Bell, BellOff, Clock, Moon, Sun, BookOpen,
+  Bell, BellOff, Clock, Moon, Sun, BookOpen,
   Flame, Calendar, Star, RefreshCw, CheckCircle, XCircle,
   ChevronDown, Shield, Sparkles
 } from "lucide-react";
 import { useState } from "react";
 import { useNotifications } from "@/context/NotificationsContext";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/PageHeader";
 
 // ── Toggle ────────────────────────────────────────────────────────────────────
 
@@ -169,22 +170,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-background min-h-screen" dir="rtl">
-
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border/40 px-5 py-3.5 flex items-center gap-3">
-        <button onClick={() => setLocation("/")} className="p-1.5 -mr-1 text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowRight size={20} />
-        </button>
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-            <Bell size={17} />
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-foreground leading-tight">الإشعارات</h1>
-            <p className="text-[11px] text-muted-foreground">إدارة وتخصيص جميع التذكيرات</p>
-          </div>
-        </div>
-      </div>
+      <PageHeader title="الإشعارات" subtitle="إدارة وتخصيص جميع التذكيرات" icon={<Bell size={16} />} />
 
       <div className="flex-1 overflow-y-auto px-5 pb-10">
 

@@ -344,6 +344,27 @@ router.post("/dhikr/increment", async (req, res) => {
   });
 });
 
+router.post("/dhikr/reset", async (req, res) => {
+  const sessionId = req.body.sessionId as string;
+  const dhikrType = req.body.dhikrType as "istighfar" | "tasbih" | "sayyid" | undefined;
+  if (!sessionId) return res.status(400).json({ error: "sessionId required" });
+  const dateStr = todayStr();
+
+  const resetData: Record<string, number> = dhikrType
+    ? { [dhikrType]: 0 }
+    : { istighfar: 0, tasbih: 0, sayyid: 0 };
+
+  await db
+    .update(dhikrCountTable)
+    .set(resetData)
+    .where(and(
+      eq(dhikrCountTable.sessionId, sessionId),
+      eq(dhikrCountTable.date, dateStr)
+    ));
+
+  res.json({ success: true });
+});
+
 // ==================== KAFFARAH ROUTES ====================
 
 router.get("/kaffarah", async (req, res) => {

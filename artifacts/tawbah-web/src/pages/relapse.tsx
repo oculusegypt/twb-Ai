@@ -1,15 +1,13 @@
 import { Link } from "wouter";
-import { ArrowRight, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { motion } from "framer-motion";
+import { PageHeader } from "@/components/PageHeader";
 
 export default function Relapse() {
   return (
-    <div className="flex-1 flex flex-col bg-background p-6">
-      <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground mb-6">
-        <ArrowRight size={20} className="ml-2" />
-        <span className="font-bold">رجوع</span>
-      </Link>
-
+    <>
+      <PageHeader title="ضعفت وعدت؟" subtitle="لا تيأس — التوبة باب مفتوح" icon={<RefreshCcw size={16} />} />
+      <div className="flex-1 flex flex-col bg-background p-6">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -54,6 +52,7 @@ export default function Relapse() {
           </Link>
         </div>
       </motion.div>
-    </div>
+      </div>
+    </>
   );
 }

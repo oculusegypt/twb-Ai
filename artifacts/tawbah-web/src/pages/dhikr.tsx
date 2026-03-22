@@ -5,6 +5,8 @@ import type { IncrementDhikrRequestDhikrType } from "@workspace/api-client-react
 import { recordEvent } from "@/components/live-stats";
 import { RotateCcw, CircleDot } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { getSessionId } from "@/lib/session";
 
 type DhikrTab = {
   id: IncrementDhikrRequestDhikrType;
@@ -103,10 +105,26 @@ export default function Dhikr() {
   const [activeTab, setActiveTab] = useState<IncrementDhikrRequestDhikrType>("istighfar");
   const { data: counts } = useAppDhikrCount();
   const increment = useAppIncrementDhikr();
+  const queryClient = useQueryClient();
   const [clickEffect, setClickEffect] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [showCompletion, setShowCompletion] = useState(false);
   const [celebratedAt, setCelebratedAt] = useState<Record<string, number>>({});
+
+  const reset = useMutation({
+    mutationFn: async () => {
+      const BASE = (import.meta.env.BASE_URL || "/").replace(/\/$/, "");
+      await fetch(`${BASE}/api/dhikr/reset`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: getSessionId(), dhikrType: activeTab }),
+      });
+    },
+    onSuccess: () => {
+      setCelebratedAt(prev => ({ ...prev, [activeTab]: -1 }));
+      queryClient.invalidateQueries({ queryKey: ["/api/dhikr/count"] });
+    },
+  });
 
   const currentTab = TABS.find(t => t.id === activeTab)!;
   const currentCount = counts?.[activeTab] || 0;
@@ -148,7 +166,22 @@ export default function Dhikr() {
         )}
       </AnimatePresence>
 
-      <PageHeader title="مسبحة الذكر" subtitle="استغفار وتسبيح وذكر الله" icon={<CircleDot size={16} />} />
+      <PageHeader
+        title="مسبحة الذكر"
+        subtitle="استغفار وتسبيح وذكر الله"
+        icon={<CircleDot size={16} />}
+        right={
+          <button
+            onClick={() => reset.mutate()}
+            disabled={reset.isPending || (counts?.[activeTab] ?? 0) === 0}
+            className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-muted/70 active:scale-95 transition-all text-muted-foreground hover:text-destructive disabled:opacity-30"
+            aria-label="تصفير العداد"
+            title="تصفير العداد"
+          >
+            <RotateCcw size={18} />
+          </button>
+        }
+      />
       <div className="flex-1 flex flex-col bg-background p-6">
 
         <div className="flex bg-muted/50 p-1.5 rounded-xl mb-8">

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Heart, Send, Sparkles, Lock } from "lucide-react";
+import { Heart, Send, Sparkles, Lock } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { getSessionId } from "@/lib/session";
 import { useQuery } from "@tanstack/react-query";
 
@@ -62,25 +63,8 @@ export default function SecretDua() {
 
   return (
     <div className="flex-1 flex flex-col bg-background" dir="rtl">
+      <PageHeader title="الصديق السري" subtitle="ادعُ لأخٍ مجهول — سيبلغه دعاؤك بلا أسماء" icon={<Heart size={16} />} />
       <div className="p-6 pb-4">
-        <button
-          onClick={() => setLocation("/")}
-          className="flex items-center gap-1 text-muted-foreground text-sm mb-6"
-        >
-          <ArrowRight size={16} /> رجوع
-        </button>
-
-        <div className="flex items-center gap-3 mb-1">
-          <div className="w-10 h-10 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500">
-            <Heart size={22} />
-          </div>
-          <div>
-            <h1 className="text-xl font-display font-bold text-foreground">الصديق السري</h1>
-            <p className="text-xs text-muted-foreground">
-              ادعُ لأخٍ مجهول — سيبلغه دعاؤك بلا أسماء
-            </p>
-          </div>
-        </div>
 
         {stats && stats.total > 0 && (
           <motion.div

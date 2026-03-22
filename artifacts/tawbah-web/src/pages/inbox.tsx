@@ -1,9 +1,10 @@
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowRight, Bell, BellOff, Award, Star, BookOpen,
-  AlertCircle, Sun, RefreshCw, Heart, X,
+  Bell, BellOff, Award, Star, BookOpen,
+  AlertCircle, Sun, RefreshCw, Heart, X, Settings2,
 } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useEffect } from "react";
 import { useAppNotifications } from "@/context/AppNotificationsContext";
 import { type AppNotification } from "@/lib/app-notifications";
@@ -117,34 +118,20 @@ export default function InboxPage() {
 
   return (
     <div className="flex-1 flex flex-col bg-background min-h-screen" dir="rtl">
-      {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border/40 px-5 py-3.5 flex items-center gap-3">
-        <button
-          onClick={() => setLocation("/")}
-          className="p-1.5 -mr-1 text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowRight size={20} />
-        </button>
-        <div className="flex items-center gap-2 flex-1">
-          <div className="w-8 h-8 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-            <Bell size={17} />
-          </div>
-          <div>
-            <h1 className="text-base font-bold text-foreground leading-tight">صندوق الإشعارات</h1>
-            <p className="text-[11px] text-muted-foreground">
-              {unread > 0 ? `${unread} إشعار غير مقروء` : "كل شيء مقروء ✓"}
-            </p>
-          </div>
-        </div>
-        {notifications.length > 0 && (
+      <PageHeader
+        title="صندوق الإشعارات"
+        subtitle={unread > 0 ? `${unread} إشعار غير مقروء` : "كل شيء مقروء ✓"}
+        icon={<Bell size={16} />}
+        right={notifications.length > 0 ? (
           <button
             onClick={() => setLocation("/notifications")}
-            className="text-xs text-primary hover:underline"
+            className="flex items-center justify-center w-10 h-10 rounded-xl hover:bg-muted/70 active:scale-95 transition-all text-muted-foreground hover:text-foreground"
+            aria-label="إعدادات الإشعارات"
           >
-            إعدادات
+            <Settings2 size={18} />
           </button>
-        )}
-      </div>
+        ) : undefined}
+      />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 pb-24">
         {notifications.length === 0 ? (

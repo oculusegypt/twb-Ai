@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Swords, ArrowRight } from "lucide-react";
+import { Swords } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { recordEvent } from "@/components/live-stats";
 
 const DURATIONS = [
@@ -42,20 +43,12 @@ export default function ChallengeCreate() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-background p-6" dir="rtl">
-      <button
-        onClick={() => setLocation("/")}
-        className="flex items-center gap-1 text-muted-foreground text-sm mb-6 self-start"
-      >
-        <ArrowRight size={16} /> رجوع
-      </button>
+    <>
+      <PageHeader title="تحدي التوبة" subtitle="ألزم نفسك بالاستقامة وشارك رحلتك" icon={<Swords size={16} />} />
+      <div className="flex-1 flex flex-col bg-background p-6" dir="rtl">
 
-      <div className="text-center mb-8">
-        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-          <Swords size={32} />
-        </div>
-        <h1 className="text-2xl font-display font-bold text-foreground mb-2">تحدي التوبة</h1>
-        <p className="text-muted-foreground text-sm leading-relaxed">
+      <div className="mb-4 bg-primary/5 border border-primary/15 rounded-2xl p-4 text-center">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           ابدأ تحدياً وشارك رابطه مع من تثق به ليشهد على تحوّلك ويشجّعك بدعاء
         </p>
       </div>
@@ -108,6 +101,7 @@ export default function ChallengeCreate() {
       <p className="text-xs text-muted-foreground text-center mt-4">
         لا يُحفظ اسمك — التحدي مجهول الهوية تماماً
       </p>
-    </div>
+      </div>
+    </>
   );
 }

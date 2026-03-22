@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "wouter";
-import { CheckSquare, Square, Trash2, ArrowRight, ListChecks, Loader2, Bot } from "lucide-react";
+import { CheckSquare, Square, Trash2, ListChecks, Loader2, Bot } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
 
@@ -195,13 +196,8 @@ export default function HadiTasksPage() {
 
   return (
     <div className="flex flex-col flex-1 pb-8">
-      <div className="relative bg-gradient-to-b from-emerald-600 to-emerald-700 px-5 pt-6 pb-8 rounded-b-[2rem] shadow-lg">
-        <Link href="/">
-          <button className="flex items-center gap-1 text-emerald-100 text-sm mb-4">
-            <ArrowRight size={16} />
-            رجوع
-          </button>
-        </Link>
+      <PageHeader title="مهام هادي" subtitle="خطواتك نحو التوبة والاستقامة" icon={<ListChecks size={16} />} />
+      <div className="relative bg-gradient-to-b from-emerald-600 to-emerald-700 px-5 pt-5 pb-8 rounded-b-[2rem] shadow-lg">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
             <ListChecks size={24} className="text-white" />

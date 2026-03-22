@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Zap, Moon, Sun, Clock, Star, Heart, Droplets, BookOpen, Wind } from "lucide-react";
-import { Link } from "wouter";
+import { Zap, Moon, Sun, Clock, Star, Heart, Droplets, BookOpen, Wind } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface DuaWindow {
   id: string;
@@ -301,16 +301,8 @@ export default function DuaTiming() {
     "from-slate-400 to-slate-500";
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b border-border/40 px-4 py-3 flex items-center gap-3">
-        <Link href="/" className="w-9 h-9 rounded-xl border border-border/50 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowRight size={18} />
-        </Link>
-        <div>
-          <h1 className="font-bold text-base leading-tight">لحظة الإجابة</h1>
-          <p className="text-[11px] text-muted-foreground">أوقات إجابة الدعاء الآن</p>
-        </div>
-      </div>
+    <div className="flex flex-col flex-1 pb-24">
+      <PageHeader title="لحظة الإجابة" subtitle="أوقات إجابة الدعاء الآن" icon={<Clock size={16} />} />
 
       <div className="px-4 pt-5 space-y-5">
 

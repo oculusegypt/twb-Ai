@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRoute, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Heart, Share2, ArrowRight, CheckCircle2, Clock } from "lucide-react";
+import { Heart, Share2, CheckCircle2, Clock, Swords } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 type ChallengeData = {
   slug: string;
@@ -87,13 +88,9 @@ export default function ChallengeView() {
   const remaining = data.duration - data.daysPassed;
 
   return (
-    <div className="flex-1 flex flex-col bg-background p-6" dir="rtl">
-      <button
-        onClick={() => setLocation("/")}
-        className="flex items-center gap-1 text-muted-foreground text-sm mb-6 self-start"
-      >
-        <ArrowRight size={16} /> رجوع
-      </button>
+    <>
+      <PageHeader title="تحدي التوبة" subtitle="استمر في رحلتك نحو الاستقامة" icon={<Swords size={16} />} />
+      <div className="flex-1 flex flex-col bg-background p-6" dir="rtl">
 
       <div className="text-center mb-8">
         <motion.div
@@ -178,6 +175,7 @@ export default function ChallengeView() {
           أنشئ تحدياً جديداً لنفسك
         </button>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
