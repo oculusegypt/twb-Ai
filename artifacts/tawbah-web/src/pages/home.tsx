@@ -26,6 +26,7 @@ import {
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -45,71 +46,105 @@ type BannerItem = {
 
 // ─── Section IDs ─────────────────────────────────────────────────────────────
 
-type SectionId =
-  | "tawbah-card"
-  | "challenge"
-  | "map"
-  | "journey30"
-  | "dhikr-rooms"
-  | "ameen"
-  | "invite"
-  | "live-stats"
-  | "kaffarah"
+type GridId =
   | "rajaa"
   | "dhikr"
-  | "signs"
   | "journal"
-  | "progress-map"
-  | "danger-times"
-  | "relapse"
   | "hadi-tasks"
-  | "secret-dua"
+  | "dhikr-rooms"
+  | "challenge"
+  | "kaffarah"
   | "prayer-times"
-  | "notifications";
+  | "relapse"
+  | "progress-map";
 
-const DEFAULT_ORDER: SectionId[] = [
-  "tawbah-card",
-  "challenge",
-  "map",
-  "journey30",
-  "dhikr-rooms",
-  "ameen",
-  "invite",
-  "live-stats",
-  "kaffarah",
-  "rajaa",
-  "dhikr",
-  "signs",
-  "journal",
-  "progress-map",
-  "danger-times",
-  "relapse",
-  "hadi-tasks",
-  "secret-dua",
-  "prayer-times",
-  "notifications",
+type ListId =
+  | "journey30"
+  | "invite"
+  | "ameen"
+  | "notifications"
+  | "danger-times"
+  | "secret-dua"
+  | "tawbah-card"
+  | "signs"
+  | "map"
+  | "live-stats";
+
+type SectionId = GridId | ListId;
+
+const GRID_DEFAULT: GridId[] = [
+  "rajaa", "dhikr", "journal", "hadi-tasks",
+  "dhikr-rooms", "challenge", "kaffarah", "prayer-times",
+  "relapse", "progress-map",
 ];
 
-const STORAGE_KEY = "home_section_order_v2";
+const LIST_DEFAULT: ListId[] = [
+  "journey30", "invite", "ameen", "notifications",
+  "danger-times", "secret-dua", "tawbah-card", "signs",
+  "map", "live-stats",
+];
 
-function loadOrder(): SectionId[] {
+const GRID_STORAGE_KEY = "home_grid_order_v1";
+const LIST_STORAGE_KEY = "home_list_order_v1";
+
+function loadGridOrder(): GridId[] {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(GRID_STORAGE_KEY);
     if (saved) {
-      const parsed: SectionId[] = JSON.parse(saved);
-      const valid = parsed.filter((id) => DEFAULT_ORDER.includes(id));
-      const missing = DEFAULT_ORDER.filter((id) => !valid.includes(id));
+      const parsed: GridId[] = JSON.parse(saved);
+      const valid = parsed.filter((id) => GRID_DEFAULT.includes(id));
+      const missing = GRID_DEFAULT.filter((id) => !valid.includes(id));
       return [...valid, ...missing];
     }
   } catch {}
-  return DEFAULT_ORDER;
+  return GRID_DEFAULT;
 }
 
-function saveOrder(order: SectionId[]) {
+function loadListOrder(): ListId[] {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(order));
+    const saved = localStorage.getItem(LIST_STORAGE_KEY);
+    if (saved) {
+      const parsed: ListId[] = JSON.parse(saved);
+      const valid = parsed.filter((id) => LIST_DEFAULT.includes(id));
+      const missing = LIST_DEFAULT.filter((id) => !valid.includes(id));
+      return [...valid, ...missing];
+    }
   } catch {}
+  return LIST_DEFAULT;
 }
+
+function saveGridOrder(order: GridId[]) {
+  try { localStorage.setItem(GRID_STORAGE_KEY, JSON.stringify(order)); } catch {}
+}
+
+function saveListOrder(order: ListId[]) {
+  try { localStorage.setItem(LIST_STORAGE_KEY, JSON.stringify(order)); } catch {}
+}
+
+// ─── Grid card metadata ───────────────────────────────────────────────────────
+
+type GridCardMeta = {
+  href: string;
+  label: string;
+  sub: string;
+  icon: React.ReactNode;
+  bg: string;
+  border: string;
+  iconBg: string;
+};
+
+const GRID_META: Record<GridId, GridCardMeta> = {
+  "rajaa":        { href: "/rajaa",        label: "مكتبة الرجاء",    sub: "آيات وأحاديث",      icon: <BookOpen size={22} />,    bg: "from-primary/10 to-primary/5",        border: "border-primary/20",      iconBg: "bg-primary/10 text-primary" },
+  "dhikr":        { href: "/dhikr",        label: "مسبحة الذكر",     sub: "استغفار وتسبيح",    icon: <CircleDot size={22} />,   bg: "from-secondary/10 to-secondary/5",    border: "border-border",           iconBg: "bg-secondary/10 text-secondary-foreground" },
+  "journal":      { href: "/journal",      label: "يوميات التوبة",   sub: "مساحة سرية",        icon: <PenLine size={22} />,     bg: "from-violet-500/10 to-violet-400/5",  border: "border-violet-400/25",    iconBg: "bg-violet-500/10 text-violet-500" },
+  "hadi-tasks":   { href: "/hadi-tasks",   label: "مهام هادي",       sub: "نصائح الزكي",       icon: <ListChecks size={22} />,  bg: "from-emerald-500/10 to-emerald-400/5",border: "border-emerald-300/40",   iconBg: "bg-emerald-500/10 text-emerald-600" },
+  "dhikr-rooms":  { href: "/dhikr-rooms",  label: "غرف الذكر",       sub: "مع آلاف المسلمين",  icon: <Users size={22} />,       bg: "from-teal-500/10 to-teal-400/5",      border: "border-teal-400/25",      iconBg: "bg-teal-500/10 text-teal-600" },
+  "challenge":    { href: "/challenge/create", label: "تحدي التوبة", sub: "شارك رابطه",        icon: <Swords size={22} />,      bg: "from-emerald-500/10 to-emerald-400/5",border: "border-emerald-400/25",   iconBg: "bg-emerald-500/10 text-emerald-700" },
+  "kaffarah":     { href: "/kaffarah",     label: "الكفارات",        sub: "خطوات مفصّلة",      icon: <ScrollText size={22} />,  bg: "from-destructive/5 to-destructive/0", border: "border-destructive/20",   iconBg: "bg-destructive/10 text-destructive" },
+  "prayer-times": { href: "/prayer-times", label: "مواقيت الصلاة",  sub: "تذكيرات ذكية",      icon: <Clock size={22} />,       bg: "from-indigo-500/10 to-indigo-400/5",  border: "border-indigo-300/40",    iconBg: "bg-indigo-500/10 text-indigo-500" },
+  "relapse":      { href: "/relapse",      label: "ضعفت وعدت؟",     sub: "لا تيأس",           icon: <Heart size={22} />,       bg: "from-rose-500/10 to-rose-400/5",      border: "border-rose-400/25",      iconBg: "bg-rose-500/10 text-rose-500" },
+  "progress-map": { href: "/progress",     label: "خريطة التقدم",   sub: "إحصاءاتك",          icon: <BarChart2 size={22} />,   bg: "from-blue-500/10 to-blue-400/5",      border: "border-blue-400/25",      iconBg: "bg-blue-500/10 text-blue-500" },
+};
 
 // ─── Banner data ──────────────────────────────────────────────────────────────
 
@@ -701,57 +736,37 @@ function SectionNotifications() {
 
 // ─── Section label map ────────────────────────────────────────────────────────
 
-const SECTION_LABELS: Record<SectionId, string> = {
-  "tawbah-card":   "بطاقة توبتي",
-  "challenge":     "تحدي التوبة",
-  "map":           "خريطة التوبة",
+const SECTION_LABELS: Record<ListId, string> = {
   "journey30":     "رحلة ٣٠ يوماً",
-  "dhikr-rooms":   "غرف الذكر",
-  "ameen":         "قل آمين",
   "invite":        "ادعُ رفيقاً",
-  "live-stats":    "إحصاءات حية",
-  "kaffarah":      "الكفارات الشرعية",
-  "rajaa":         "مكتبة الرجاء",
-  "dhikr":         "مسبحة الذكر",
-  "signs":         "تباشير القبول",
-  "journal":       "يوميات التوبة",
-  "progress-map":  "خريطة التقدم",
-  "danger-times":  "أوقات الخطر",
-  "relapse":       "ضعفت وعدت؟",
-  "hadi-tasks":    "مهام هادي",
-  "secret-dua":    "الصديق السري",
-  "prayer-times":  "مواقيت الصلاة",
+  "ameen":         "قل آمين",
   "notifications": "الإشعارات",
+  "danger-times":  "أوقات الخطر",
+  "secret-dua":    "الصديق السري",
+  "tawbah-card":   "بطاقة توبتي",
+  "signs":         "تباشير القبول",
+  "map":           "خريطة التوبة",
+  "live-stats":    "إحصاءات حية",
 };
 
-function renderSection(id: SectionId) {
+function renderSection(id: ListId) {
   switch (id) {
-    case "tawbah-card":   return <SectionTawbahCard />;
-    case "challenge":     return <SectionChallenge />;
-    case "map":           return <SectionMap />;
     case "journey30":     return <SectionJourney30 />;
-    case "dhikr-rooms":   return <SectionDhikrRooms />;
-    case "ameen":         return <SectionAmeen />;
     case "invite":        return <SectionInvite />;
-    case "live-stats":    return <SectionLiveStats />;
-    case "kaffarah":      return <SectionKaffarah />;
-    case "rajaa":         return <SectionRajaa />;
-    case "dhikr":         return <SectionDhikr />;
-    case "signs":         return <SectionSigns />;
-    case "journal":       return <SectionJournal />;
-    case "progress-map":  return <SectionProgressMap />;
-    case "danger-times":  return <SectionDangerTimes />;
-    case "relapse":       return <SectionRelapse />;
-    case "hadi-tasks":    return <SectionHadiTasks />;
-    case "secret-dua":    return <SectionSecretDua />;
-    case "prayer-times":  return <SectionPrayerTimes />;
+    case "ameen":         return <SectionAmeen />;
     case "notifications": return <SectionNotifications />;
+    case "danger-times":  return <SectionDangerTimes />;
+    case "secret-dua":    return <SectionSecretDua />;
+    case "tawbah-card":   return <SectionTawbahCard />;
+    case "signs":         return <SectionSigns />;
+    case "map":           return <SectionMap />;
+    case "live-stats":    return <SectionLiveStats />;
   }
 }
 
-// ─── SortableItem ─────────────────────────────────────────────────────────────
+// ─── SortableListItem ─────────────────────────────────────────────────────────
 
-function SortableItem({ id, editMode, children }: { id: SectionId; editMode: boolean; children: React.ReactNode }) {
+function SortableListItem({ id, editMode, children }: { id: ListId; editMode: boolean; children: React.ReactNode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -759,7 +774,6 @@ function SortableItem({ id, editMode, children }: { id: SectionId; editMode: boo
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 50 : "auto" as const,
   };
-
   return (
     <div ref={setNodeRef} style={style} className="relative">
       {editMode && (
@@ -778,14 +792,58 @@ function SortableItem({ id, editMode, children }: { id: SectionId; editMode: boo
   );
 }
 
+// ─── SortableGridItem ─────────────────────────────────────────────────────────
+
+function SortableGridItem({ id, editMode }: { id: GridId; editMode: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const meta = GRID_META[id];
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.35 : 1,
+    zIndex: isDragging ? 50 : "auto" as const,
+  };
+  return (
+    <div ref={setNodeRef} style={style} className="relative">
+      <Link
+        href={meta.href}
+        className={`flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${meta.bg} border ${meta.border} rounded-2xl p-3.5 hover:shadow-md active:scale-[0.97] transition-all aspect-square text-center`}
+      >
+        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${meta.iconBg}`}>
+          {meta.icon}
+        </div>
+        <div>
+          <p className="font-bold text-[12px] leading-tight">{meta.label}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{meta.sub}</p>
+        </div>
+      </Link>
+      {editMode && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          {...attributes}
+          {...listeners}
+          className="absolute top-1.5 right-1.5 z-10 w-7 h-7 flex items-center justify-center rounded-lg bg-background/95 border border-primary/30 shadow-md cursor-grab active:cursor-grabbing touch-none"
+        >
+          <GripVertical size={13} className="text-primary/70" />
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
   const { data: progress, isLoading } = useAppUserProgress();
   const [showSosToast, setShowSosToast] = useState(false);
   const [editMode, setEditMode] = useState(false);
-  const [order, setOrder] = useState<SectionId[]>(loadOrder);
-  const [activeId, setActiveId] = useState<SectionId | null>(null);
+
+  // Separate orders for grid and list
+  const [gridOrder, setGridOrder] = useState<GridId[]>(loadGridOrder);
+  const [listOrder, setListOrder] = useState<ListId[]>(loadListOrder);
+  const [activeGridId, setActiveGridId] = useState<GridId | null>(null);
+  const [activeListId, setActiveListId] = useState<ListId | null>(null);
 
   useEffect(() => {
     try {
@@ -801,19 +859,37 @@ export default function Home() {
     useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 8 } })
   );
 
-  const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as SectionId);
+  const handleGridDragStart = useCallback((event: DragStartEvent) => {
+    setActiveGridId(event.active.id as GridId);
   }, []);
 
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
+  const handleGridDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-    setActiveId(null);
+    setActiveGridId(null);
     if (over && active.id !== over.id) {
-      setOrder((prev) => {
-        const oldIndex = prev.indexOf(active.id as SectionId);
-        const newIndex = prev.indexOf(over.id as SectionId);
+      setGridOrder((prev) => {
+        const oldIndex = prev.indexOf(active.id as GridId);
+        const newIndex = prev.indexOf(over.id as GridId);
         const next = arrayMove(prev, oldIndex, newIndex);
-        saveOrder(next);
+        saveGridOrder(next);
+        return next;
+      });
+    }
+  }, []);
+
+  const handleListDragStart = useCallback((event: DragStartEvent) => {
+    setActiveListId(event.active.id as ListId);
+  }, []);
+
+  const handleListDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveListId(null);
+    if (over && active.id !== over.id) {
+      setListOrder((prev) => {
+        const oldIndex = prev.indexOf(active.id as ListId);
+        const newIndex = prev.indexOf(over.id as ListId);
+        const next = arrayMove(prev, oldIndex, newIndex);
+        saveListOrder(next);
         return next;
       });
     }
@@ -898,24 +974,56 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* Sortable sections — every card individually sortable */}
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-          <SortableContext items={order} strategy={verticalListSortingStrategy}>
+        {/* ── Grid section (square cards) ─────────────────────────── */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleGridDragStart}
+          onDragEnd={handleGridDragEnd}
+        >
+          <SortableContext items={gridOrder} strategy={rectSortingStrategy}>
+            <div className="grid grid-cols-2 gap-3">
+              {gridOrder.map((id) => (
+                <SortableGridItem key={id} id={id} editMode={editMode} />
+              ))}
+            </div>
+          </SortableContext>
+
+          <DragOverlay dropAnimation={{ duration: 180, easing: "ease" }}>
+            {activeGridId ? (
+              <div className="rounded-2xl shadow-2xl border-2 border-primary/40 bg-card/95 backdrop-blur-sm rotate-2 scale-[1.05] flex flex-col items-center justify-center gap-2 p-4 aspect-square w-full">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${GRID_META[activeGridId].iconBg}`}>
+                  {GRID_META[activeGridId].icon}
+                </div>
+                <p className="text-xs font-bold text-primary">{GRID_META[activeGridId].label}</p>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+
+        {/* ── List section (full-width cards) ─────────────────────── */}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleListDragStart}
+          onDragEnd={handleListDragEnd}
+        >
+          <SortableContext items={listOrder} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-3">
-              {order.map((id) => (
-                <SortableItem key={id} id={id} editMode={editMode}>
+              {listOrder.map((id) => (
+                <SortableListItem key={id} id={id} editMode={editMode}>
                   {renderSection(id)}
-                </SortableItem>
+                </SortableListItem>
               ))}
             </div>
           </SortableContext>
 
           <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
-            {activeId ? (
+            {activeListId ? (
               <div className="rounded-2xl shadow-2xl border-2 border-primary/40 bg-card/98 backdrop-blur-sm overflow-hidden rotate-1 scale-[1.03]">
                 <div className="px-4 py-3 flex items-center gap-3 bg-primary/5">
                   <GripVertical size={16} className="text-primary" />
-                  <span className="text-sm font-bold text-primary">{SECTION_LABELS[activeId]}</span>
+                  <span className="text-sm font-bold text-primary">{SECTION_LABELS[activeListId]}</span>
                 </div>
               </div>
             ) : null}
