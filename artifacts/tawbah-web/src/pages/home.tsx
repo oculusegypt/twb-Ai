@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart, Moon, Sun, Star, BookMarked, MessageCircle, Volume2, X, BookText, Share2, GripVertical, Settings2, Flame, TrendingUp } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Heart, Activity, CircleDot, HeartHandshake, BookOpen, PenLine, ScrollText, Clock, BarChart2, Sparkles, ListChecks, ImageIcon, Swords, Globe, Users, CalendarDays, Bell, HandHeart, Moon, Sun, Star, BookMarked, MessageCircle, Volume2, X, BookText, Share2, GripVertical, Settings2, Flame, TrendingUp, Zap, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
@@ -55,15 +55,16 @@ type GridId =
   | "kaffarah"
   | "prayer-times"
   | "relapse"
-  | "progress-map";
+  | "progress-map"
+  | "notifications"
+  | "danger-times"
+  | "secret-dua"
+  | "dua-timing";
 
 type ListId =
   | "journey30"
   | "invite"
   | "ameen"
-  | "notifications"
-  | "danger-times"
-  | "secret-dua"
   | "tawbah-card"
   | "signs"
   | "map"
@@ -74,24 +75,25 @@ type SectionId = GridId | ListId;
 const GRID_IDS = new Set<SectionId>([
   "rajaa", "dhikr", "journal", "hadi-tasks",
   "dhikr-rooms", "challenge", "kaffarah", "prayer-times",
-  "relapse", "progress-map",
+  "relapse", "progress-map", "notifications", "danger-times",
+  "secret-dua", "dua-timing",
 ]);
 
 const GRID_DEFAULT: GridId[] = [
   "rajaa", "dhikr", "journal", "hadi-tasks",
   "dhikr-rooms", "challenge", "kaffarah", "prayer-times",
-  "relapse", "progress-map",
+  "relapse", "progress-map", "notifications", "danger-times",
+  "secret-dua", "dua-timing",
 ];
 
 const LIST_DEFAULT: ListId[] = [
-  "journey30", "invite", "ameen", "notifications",
-  "danger-times", "secret-dua", "tawbah-card", "signs",
+  "journey30", "invite", "ameen", "tawbah-card", "signs",
   "map", "live-stats",
 ];
 
 const ALL_SECTIONS: SectionId[] = [...GRID_DEFAULT, ...LIST_DEFAULT];
 
-const COMBINED_STORAGE_KEY = "home_combined_order_v2";
+const COMBINED_STORAGE_KEY = "home_combined_order_v3";
 
 function loadCombinedOrder(): SectionId[] {
   try {
@@ -127,16 +129,20 @@ type GridCardMeta = {
 };
 
 const GRID_META: Record<GridId, GridCardMeta> = {
-  "rajaa":        { href: "/rajaa",        label: "مكتبة الرجاء",    sub: "آيات وأحاديث",      icon: <BookOpen size={22} />,    bg: "from-primary/10 to-primary/5",        border: "border-primary/20",      iconBg: "bg-primary/10 text-primary" },
-  "dhikr":        { href: "/dhikr",        label: "مسبحة الذكر",     sub: "استغفار وتسبيح",    icon: <CircleDot size={22} />,   bg: "from-secondary/10 to-secondary/5",    border: "border-border",           iconBg: "bg-secondary/10 text-secondary-foreground" },
-  "journal":      { href: "/journal",      label: "يوميات التوبة",   sub: "مساحة سرية",        icon: <PenLine size={22} />,     bg: "from-violet-500/10 to-violet-400/5",  border: "border-violet-400/25",    iconBg: "bg-violet-500/10 text-violet-500" },
-  "hadi-tasks":   { href: "/hadi-tasks",   label: "مهام هادي",       sub: "نصائح الزكي",       icon: <ListChecks size={22} />,  bg: "from-emerald-500/10 to-emerald-400/5",border: "border-emerald-300/40",   iconBg: "bg-emerald-500/10 text-emerald-600" },
-  "dhikr-rooms":  { href: "/dhikr-rooms",  label: "غرف الذكر",       sub: "مع آلاف المسلمين",  icon: <Users size={22} />,       bg: "from-teal-500/10 to-teal-400/5",      border: "border-teal-400/25",      iconBg: "bg-teal-500/10 text-teal-600" },
-  "challenge":    { href: "/challenge/create", label: "تحدي التوبة", sub: "شارك رابطه",        icon: <Swords size={22} />,      bg: "from-emerald-500/10 to-emerald-400/5",border: "border-emerald-400/25",   iconBg: "bg-emerald-500/10 text-emerald-700" },
-  "kaffarah":     { href: "/kaffarah",     label: "الكفارات",        sub: "خطوات مفصّلة",      icon: <ScrollText size={22} />,  bg: "from-destructive/5 to-destructive/0", border: "border-destructive/20",   iconBg: "bg-destructive/10 text-destructive" },
-  "prayer-times": { href: "/prayer-times", label: "مواقيت الصلاة",  sub: "تذكيرات ذكية",      icon: <Clock size={22} />,       bg: "from-indigo-500/10 to-indigo-400/5",  border: "border-indigo-300/40",    iconBg: "bg-indigo-500/10 text-indigo-500" },
-  "relapse":      { href: "/relapse",      label: "ضعفت وعدت؟",     sub: "لا تيأس",           icon: <Heart size={22} />,       bg: "from-rose-500/10 to-rose-400/5",      border: "border-rose-400/25",      iconBg: "bg-rose-500/10 text-rose-500" },
-  "progress-map": { href: "/progress",     label: "خريطة التقدم",   sub: "إحصاءاتك",          icon: <BarChart2 size={22} />,   bg: "from-blue-500/10 to-blue-400/5",      border: "border-blue-400/25",      iconBg: "bg-blue-500/10 text-blue-500" },
+  "rajaa":        { href: "/rajaa",           label: "مكتبة الرجاء",    sub: "آيات وأحاديث",       icon: <BookOpen size={22} />,     bg: "from-emerald-500/15 to-teal-400/5",      border: "border-emerald-400/30",    iconBg: "bg-emerald-500/15 text-emerald-500" },
+  "dhikr":        { href: "/dhikr",           label: "مسبحة الذكر",     sub: "استغفار وتسبيح",     icon: <CircleDot size={22} />,    bg: "from-amber-500/15 to-yellow-400/5",      border: "border-amber-400/30",      iconBg: "bg-amber-500/15 text-amber-600" },
+  "journal":      { href: "/journal",         label: "يوميات التوبة",   sub: "مساحة سرية",         icon: <PenLine size={22} />,      bg: "from-violet-600/15 to-purple-400/5",     border: "border-violet-400/30",     iconBg: "bg-violet-600/15 text-violet-500" },
+  "hadi-tasks":   { href: "/hadi-tasks",      label: "مهام هادي",       sub: "نصائح الزكي",        icon: <ListChecks size={22} />,   bg: "from-cyan-500/15 to-sky-400/5",          border: "border-cyan-400/30",       iconBg: "bg-cyan-500/15 text-cyan-600" },
+  "dhikr-rooms":  { href: "/dhikr-rooms",     label: "غرف الذكر",       sub: "مع آلاف المسلمين",   icon: <Users size={22} />,        bg: "from-teal-600/15 to-emerald-400/5",      border: "border-teal-400/30",       iconBg: "bg-teal-600/15 text-teal-600" },
+  "challenge":    { href: "/challenge/create",label: "تحدي التوبة",     sub: "شارك رابطه",         icon: <Swords size={22} />,       bg: "from-orange-500/15 to-red-400/5",        border: "border-orange-400/30",     iconBg: "bg-orange-500/15 text-orange-500" },
+  "kaffarah":     { href: "/kaffarah",        label: "الكفارات",        sub: "خطوات مفصّلة",       icon: <ScrollText size={22} />,   bg: "from-red-500/15 to-rose-400/5",          border: "border-red-400/30",        iconBg: "bg-red-500/15 text-red-500" },
+  "prayer-times": { href: "/prayer-times",    label: "مواقيت الصلاة",   sub: "تذكيرات ذكية",       icon: <Clock size={22} />,        bg: "from-indigo-600/15 to-blue-500/5",       border: "border-indigo-400/30",     iconBg: "bg-indigo-600/15 text-indigo-500" },
+  "relapse":      { href: "/relapse",         label: "ضعفت وعدت؟",      sub: "لا تيأس",            icon: <Heart size={22} />,        bg: "from-pink-500/15 to-rose-400/5",         border: "border-pink-400/30",       iconBg: "bg-pink-500/15 text-pink-500" },
+  "progress-map": { href: "/progress",        label: "خريطة التقدم",    sub: "إحصاءاتك",           icon: <BarChart2 size={22} />,    bg: "from-blue-600/15 to-sky-400/5",          border: "border-blue-400/30",       iconBg: "bg-blue-600/15 text-blue-500" },
+  "notifications":{ href: "/notifications",   label: "الإشعارات",       sub: "ضبط تنبيهات الصلاة", icon: <Bell size={22} />,         bg: "from-amber-600/15 to-orange-400/5",      border: "border-amber-500/30",      iconBg: "bg-amber-600/15 text-amber-600" },
+  "danger-times": { href: "/danger-times",    label: "أوقات الخطر",     sub: "تذكيرات وقائية",     icon: <ShieldAlert size={22} />,  bg: "from-red-600/15 to-orange-500/5",        border: "border-red-500/30",        iconBg: "bg-red-600/15 text-red-500" },
+  "secret-dua":   { href: "/secret-dua",      label: "الصديق السري",    sub: "ادعُ لأخٍ مجهول",   icon: <HeartHandshake size={22} />,bg: "from-rose-600/15 to-pink-400/5",        border: "border-rose-400/30",       iconBg: "bg-rose-600/15 text-rose-500" },
+  "dua-timing":   { href: "/dua-timing",      label: "لحظة الإجابة",    sub: "أقوى أوقات الدعاء",  icon: <Zap size={22} />,          bg: "from-yellow-500/15 to-amber-400/5",      border: "border-yellow-400/30",     iconBg: "bg-yellow-500/15 text-yellow-600" },
 };
 
 // ─── Banner data ──────────────────────────────────────────────────────────────
@@ -733,9 +739,6 @@ const SECTION_LABELS: Record<ListId, string> = {
   "journey30":     "رحلة ٣٠ يوماً",
   "invite":        "ادعُ رفيقاً",
   "ameen":         "قل آمين",
-  "notifications": "الإشعارات",
-  "danger-times":  "أوقات الخطر",
-  "secret-dua":    "الصديق السري",
   "tawbah-card":   "بطاقة توبتي",
   "signs":         "تباشير القبول",
   "map":           "خريطة التوبة",
@@ -744,16 +747,13 @@ const SECTION_LABELS: Record<ListId, string> = {
 
 function renderSection(id: ListId) {
   switch (id) {
-    case "journey30":     return <SectionJourney30 />;
-    case "invite":        return <SectionInvite />;
-    case "ameen":         return <SectionAmeen />;
-    case "notifications": return <SectionNotifications />;
-    case "danger-times":  return <SectionDangerTimes />;
-    case "secret-dua":    return <SectionSecretDua />;
-    case "tawbah-card":   return <SectionTawbahCard />;
-    case "signs":         return <SectionSigns />;
-    case "map":           return <SectionMap />;
-    case "live-stats":    return <SectionLiveStats />;
+    case "journey30":   return <SectionJourney30 />;
+    case "invite":      return <SectionInvite />;
+    case "ameen":       return <SectionAmeen />;
+    case "tawbah-card": return <SectionTawbahCard />;
+    case "signs":       return <SectionSigns />;
+    case "map":         return <SectionMap />;
+    case "live-stats":  return <SectionLiveStats />;
   }
 }
 

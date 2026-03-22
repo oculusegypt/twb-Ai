@@ -83,7 +83,7 @@ export default function DayOne() {
           disabled={!allDone || updateProgress.isPending}
           className="w-full py-4 rounded-xl font-bold text-base bg-primary text-primary-foreground shadow-lg disabled:opacity-50 disabled:bg-muted disabled:text-muted-foreground hover:-translate-y-0.5 transition-all duration-300 active:translate-y-0 flex items-center justify-center gap-2"
         >
-          <span>انطلق في رحلة الـ 40 يوماً</span>
+          <span>انطلق في رحلة الـ 30 يوماً</span>
           <ArrowLeft size={18} />
         </button>
       </div>

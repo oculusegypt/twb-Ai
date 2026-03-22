@@ -37,6 +37,7 @@ import SinsList from "@/pages/sins-list";
 import EidPage from "@/pages/eid";
 import NotificationsPage from "@/pages/notifications";
 import InboxPage from "@/pages/inbox";
+import DuaTiming from "@/pages/dua-timing";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -81,6 +82,7 @@ function Router() {
         <Route path="/eid" component={EidPage} />
         <Route path="/notifications" component={NotificationsPage} />
         <Route path="/inbox" component={InboxPage} />
+        <Route path="/dua-timing" component={DuaTiming} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
