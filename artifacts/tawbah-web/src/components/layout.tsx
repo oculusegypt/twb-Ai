@@ -15,21 +15,21 @@ export function Layout({ children }: { children: ReactNode }) {
   }, [location]);
 
   const leftItems = [
-    { href: "/", label: t.nav.home, icon: Home, aliases: [] as string[] },
-    { href: "/plan", label: "عاداتي", icon: Calendar, aliases: ["/habits"] },
+    { href: "/", label: t.nav.home, icon: Home },
+    { href: "/journey", label: "رحلتي", icon: Calendar },
   ];
 
   const rightItems = [
-    { href: "/progress", label: "تقدمي", icon: BarChart2, aliases: [] as string[] },
-    { href: "/account", label: "حسابي", icon: User2, aliases: [] as string[] },
+    { href: "/progress", label: "تقدمي", icon: BarChart2 },
+    { href: "/account", label: "حسابي", icon: User2 },
   ];
 
   const zakiHref = "/zakiy";
   const isZakiActive = location === zakiHref;
   const isSos = location === "/sos";
 
-  const NavItem = ({ href, label, icon: Icon, aliases = [] }: { href: string; label: string; icon: typeof Home; aliases?: string[] }) => {
-    const isActive = location === href || aliases.includes(location);
+  const NavItem = ({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Home }) => {
+    const isActive = location === href;
     return (
       <Link
         href={href}

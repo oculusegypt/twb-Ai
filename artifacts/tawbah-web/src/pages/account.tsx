@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   User2, Settings2, Moon, Sun, Languages, Volume2, BookOpen,
   ChevronDown, Check, BarChart2, Calendar, Clock,
-  ScrollText, PenLine, Bell, ChevronLeft, Shield, Palette,
+  ScrollText, PenLine, Bell, ChevronLeft, Shield, Palette, CheckSquare,
 } from "lucide-react";
 import { useSettings, QURAN_RECITERS, ACCENT_OPTIONS, type AccentColor } from "@/context/SettingsContext";
 import { useAppUserProgress } from "@/hooks/use-app-data";
@@ -170,6 +170,7 @@ export default function Account() {
       >
         <SectionLabel>معلوماتي</SectionLabel>
         <LinkRow href="/progress" icon={<BarChart2 size={18} />} label="خريطة التقدم" description="إحصاءاتك الروحية والمسار اليومي" />
+        <LinkRow href="/plan" icon={<CheckSquare size={18} />} label="عاداتي اليومية" description="تتبّع عاداتك الروحية ومكتبة العادات" iconBg="bg-emerald-500/10" iconColor="text-emerald-600" />
         <LinkRow href="/journey" icon={<Calendar size={18} />} label="رحلة التوبة ٣٠ يوماً" description="برنامج يومي تدريجي" />
         <LinkRow href="/journal" icon={<PenLine size={18} />} label="يوميات التوبة" description="مساحتك السرية الخاصة" iconBg="bg-violet-500/10" iconColor="text-violet-500" />
         <LinkRow href="/danger-times" icon={<Clock size={18} />} label="أوقات الخطر" description="تذكيرات وقائية ذكية" iconBg="bg-orange-500/10" iconColor="text-orange-500" />
