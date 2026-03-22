@@ -895,12 +895,18 @@ export default function Home() {
       </AnimatePresence>
 
       {/* Hero + bell overlay */}
-      <div className="relative">
+      <div
+        className="relative"
+        style={{
+          maskImage: "linear-gradient(to bottom, black 72%, transparent 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, black 72%, transparent 100%)",
+        }}
+      >
         <IslamicHero />
         <HeroBellButton />
       </div>
 
-      <div className="px-5 mt-4 relative z-10 flex flex-col gap-4">
+      <div className="px-5 -mt-10 relative z-10 flex flex-col gap-4">
 
         <EidEntryCard />
         <DynamicBanner />
