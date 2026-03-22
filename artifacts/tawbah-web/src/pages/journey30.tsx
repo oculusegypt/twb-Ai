@@ -40,6 +40,12 @@ function toArabicIndic(n: number): string {
   return n.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]!);
 }
 
+function isBismillahAyah(text: string, surahNumber: number): boolean {
+  if (surahNumber === 1) return false;
+  const normalized = text.replace(/[\u0610-\u061A\u064B-\u065F\u0670]/g, "").replace(/\s+/g, "");
+  return normalized.startsWith("بسماللهالرحمن") || normalized.startsWith("بِسْمِاللَّهِ") || /^بِسۡمِ/.test(text.trim());
+}
+
 const SURAH_TASK_MAP: Array<{ pattern: RegExp; surahs: Array<{ number: number; name: string }> }> = [
   { pattern: /سورة التوبة/,       surahs: [{ number: 9,   name: "سورة التوبة" }] },
   { pattern: /قصة يوسف/,          surahs: [{ number: 12,  name: "سورة يوسف" }] },
@@ -217,7 +223,7 @@ function SurahReaderModal({
           )}
           {!loading && !error && (
             <div className="pb-4">
-              {/* Bismillah (not for Surah At-Tawbah = 9) */}
+              {/* Bismillah header (not for Surah At-Tawbah = 9) — shown above ayahs like Mushaf */}
               {surahNumber !== 9 && (
                 <div className="flex flex-col items-center my-5">
                   <div className="flex items-center w-full gap-3 mb-1">
@@ -245,13 +251,14 @@ function SurahReaderModal({
                   className="leading-[3] text-[18px] text-right"
                   style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif", textAlign: "justify" }}
                 >
-                  {ayahs.map((ayah, idx) => {
-                    const isCurrent = currentIdx === idx;
+                  {ayahs.filter(a => !isBismillahAyah(a.text, surahNumber)).map((ayah) => {
+                    const originalIdx = ayahs.indexOf(ayah);
+                    const isCurrent = currentIdx === originalIdx;
                     return (
                       <span key={ayah.number}>
                         <span
-                          ref={(el) => { ayahRefs.current[idx] = el; }}
-                          onClick={() => playFromIdx(idx)}
+                          ref={(el) => { ayahRefs.current[originalIdx] = el; }}
+                          onClick={() => playFromIdx(originalIdx)}
                           className={`cursor-pointer rounded transition-colors ${
                             isCurrent
                               ? "bg-primary/20 text-primary"
@@ -262,7 +269,7 @@ function SurahReaderModal({
                         </span>
                         {" "}
                         <span
-                          onClick={() => playFromIdx(idx)}
+                          onClick={() => playFromIdx(originalIdx)}
                           title={`الآية ${ayah.numberInSurah}`}
                           className={`cursor-pointer transition-colors ${
                             isCurrent ? "text-primary" : "text-primary/70 hover:text-primary"
@@ -290,13 +297,14 @@ function SurahReaderModal({
                   {tafseerAyahs.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-6">جاري تحميل التفسير...</p>
                   ) : (
-                    ayahs.map((ayah, idx) => {
-                      const isCurrent = currentIdx === idx;
-                      const tafseer = tafseerAyahs[idx];
+                    ayahs.filter(a => !isBismillahAyah(a.text, surahNumber)).map((ayah) => {
+                      const originalIdx = ayahs.indexOf(ayah);
+                      const isCurrent = currentIdx === originalIdx;
+                      const tafseer = tafseerAyahs[originalIdx];
                       return (
                         <div
                           key={ayah.number}
-                          ref={(el) => { ayahRefs.current[idx] = el; }}
+                          ref={(el) => { ayahRefs.current[originalIdx] = el; }}
                           className={`rounded-xl border overflow-hidden transition-all ${
                             isCurrent ? "border-primary/40 shadow-sm" : "border-border/50"
                           }`}
@@ -304,7 +312,7 @@ function SurahReaderModal({
                           {/* نص الآية */}
                           <div
                             className={`px-4 py-3 cursor-pointer ${isCurrent ? "bg-primary/10" : "bg-muted/20 hover:bg-muted/40"}`}
-                            onClick={() => playFromIdx(idx)}
+                            onClick={() => playFromIdx(originalIdx)}
                             dir="rtl"
                           >
                             <span
@@ -478,6 +486,18 @@ function isIstighfarTask(task: string): boolean {
   return /استغفر|الاستغفار|أستغفر/.test(task) && !/سورة/.test(task);
 }
 
+function isDhikrCounterTask(task: string): boolean {
+  return /(\d+|مائة|مئة|سبعين|ثمانين|خمسين|أربعين|ثلاثين|عشرين|عشرة)\s*مرة/.test(task) && !/سورة|صفحت|صفحتين/.test(task);
+}
+
+function getDhikrLabel(task: string): string {
+  if (/استغفر|أستغفر|الاستغفار/.test(task)) return "اضغط للاستغفار";
+  if (/سبحان الله/.test(task)) return "اضغط للتسبيح";
+  if (/الحمد لله/.test(task)) return "اضغط للتحميد";
+  if (/الله أكبر/.test(task)) return "اضغط للتكبير";
+  return "اضغط للذكر";
+}
+
 function isPrayerTask(task: string): boolean {
   return /صلاة (الفجر|الظهر|العصر|المغرب|العشاء)|أدِّ صلاة|أدّ صلاة|صلِّ الفريضة|صلّ الفريضة/.test(task);
 }
@@ -506,10 +526,11 @@ function generatePagePairs(): [number, number][] {
 
 // ─── IstighfarCounter ─────────────────────────────────────────────────────────
 
-function IstighfarCounter({ count, done, onDone }: { count: number; done: boolean; onDone: () => void }) {
+function IstighfarCounter({ count, done, onDone, label }: { count: number; done: boolean; onDone: () => void; label?: string }) {
   const [current, setCurrent] = useState(done ? count : 0);
   const finished = current >= count || done;
   const pct = Math.min((current / count) * 100, 100);
+  const tapLabel = label ?? "اضغط للاستغفار";
 
   const tap = () => {
     if (finished) return;
@@ -530,7 +551,7 @@ function IstighfarCounter({ count, done, onDone }: { count: number; done: boolea
               : "bg-gradient-to-r from-primary/10 to-primary/5 border-primary/25 hover:from-primary/15"
           }`}
         >
-          <span className="text-xs text-muted-foreground">{finished ? "✓ اكتملت التسبيحة" : "اضغط للاستغفار"}</span>
+          <span className="text-xs text-muted-foreground">{finished ? "✓ اكتمل الذكر" : tapLabel}</span>
           <span className="text-primary font-bold tabular-nums">
             {toArabicIndic(current)} / {toArabicIndic(count)}
           </span>
@@ -806,7 +827,7 @@ function DayTaskList({
       <div className="flex flex-col gap-2.5">
         {day.tasks.map((task, i) => {
           const surahsForTask = extractSurahsFromTask(task);
-          const isIstighfar = isIstighfarTask(task);
+          const isCounter = isDhikrCounterTask(task);
           const isPrayer = isPrayerTask(task);
           const isPages = isQuranPagesTask(task);
           return (
@@ -822,11 +843,12 @@ function DayTaskList({
               {/* Task-specific interactive widgets */}
               {!day.completed && (
                 <div className="px-2.5 pb-2.5 flex flex-col gap-1.5">
-                  {isIstighfar && (
+                  {isCounter && (
                     <IstighfarCounter
                       count={parseIstighfarCount(task)}
                       done={optimistic[i] ?? false}
                       onDone={() => toggle(i)}
+                      label={getDhikrLabel(task)}
                     />
                   )}
                   {isPrayer && <PrayerReminderButton task={task} />}
