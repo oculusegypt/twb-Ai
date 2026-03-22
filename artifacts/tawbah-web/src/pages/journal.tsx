@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PenLine, Trash2, Lock, ChevronDown, ChevronUp, Smile, Meh, Frown, Heart, Star } from "lucide-react";
 import { getSessionId } from "@/lib/session";
+import { PageHeader } from "@/components/PageHeader";
 
 type Mood = "great" | "good" | "neutral" | "sad" | "struggling";
 
@@ -88,16 +89,17 @@ export default function Journal() {
 
   return (
     <div className="flex flex-col flex-1 pb-8">
-      <div className="px-5 pt-4 mb-4">
-        <div className="flex items-center gap-2 mb-1">
-          <h1 className="text-2xl font-display font-bold">يوميات التوبة</h1>
-          <div className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-            <Lock size={12} />
+      <PageHeader
+        title="يوميات التوبة"
+        subtitle="مساحتك السرية مع الله"
+        icon={<Lock size={14} />}
+        right={
+          <div className="flex items-center gap-1 bg-primary/10 text-primary px-2 py-0.5 rounded-full ml-2">
+            <Lock size={11} />
             <span className="text-[10px] font-bold">سرية</span>
           </div>
-        </div>
-        <p className="text-sm text-muted-foreground">مساحتك الخاصة - سجّل مشاعرك ورحلتك مع الله</p>
-      </div>
+        }
+      />
 
       <div className="px-5 mb-4">
         <AnimatePresence>

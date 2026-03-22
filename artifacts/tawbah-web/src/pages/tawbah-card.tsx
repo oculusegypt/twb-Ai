@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { Download, Share2, RefreshCw, ImageIcon, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import html2canvas from "html2canvas";
+import { PageHeader } from "@/components/PageHeader";
 
 const VERSES = [
   { arabic: "قُلْ يَا عِبَادِيَ الَّذِينَ أَسْرَفُوا عَلَىٰ أَنفُسِهِمْ لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ", source: "الزمر: ٥٣" },
@@ -172,11 +173,9 @@ export default function TawbahCard() {
   };
 
   return (
-    <div className="flex flex-col flex-1 pb-10 px-5 pt-5">
-      <div className="mb-5">
-        <h1 className="text-2xl font-display font-bold">بطاقة توبتي</h1>
-        <p className="text-sm text-muted-foreground mt-1">اصنع بطاقتك وشاركها مع من تحب</p>
-      </div>
+    <div className="flex flex-col flex-1 pb-10">
+      <PageHeader title="بطاقة توبتي" subtitle="اصنع بطاقتك وشاركها" icon={<ImageIcon size={16} />} />
+      <div className="px-5 pt-5">
 
       {/* Card Preview */}
       <div className="flex justify-center mb-5">
@@ -445,6 +444,7 @@ export default function TawbahCard() {
             شارك بطاقتك على السوشيال ميديا وأوقد في قلوب من حولك شعلة التوبة
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Heart, Smile, Users, EyeOff, ShieldCheck } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 const SIGNS = [
   {
@@ -31,16 +32,9 @@ const SIGNS = [
 
 export default function Signs() {
   return (
-    <div className="flex-1 flex flex-col bg-background p-6">
-      <div className="mb-8 mt-4 text-center">
-        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 text-primary">
-          <Heart size={32} />
-        </div>
-        <h1 className="text-3xl font-display font-bold text-foreground mb-3">تباشير القبول</h1>
-        <p className="text-muted-foreground text-sm leading-relaxed">
-          علامات تطمئن قلبك أن الله سبحانه قد تقبل توبتك وغفر ذنبك.
-        </p>
-      </div>
+    <div className="flex-1 flex flex-col bg-background">
+      <PageHeader title="تباشير القبول" subtitle="علامات قبول التوبة" icon={<Heart size={16} />} />
+      <div className="p-6">
 
       <div className="flex-1 flex flex-col gap-4">
         {SIGNS.map((sign, i) => (
@@ -60,6 +54,7 @@ export default function Signs() {
             </div>
           </motion.div>
         ))}
+      </div>
       </div>
     </div>
   );

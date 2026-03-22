@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Users } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Room {
   type: string;
@@ -159,17 +160,9 @@ export default function DhikrRooms() {
   });
 
   return (
-    <div className="flex flex-col flex-1 pb-8 px-5 pt-6 gap-5">
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <h1 className="text-2xl font-bold mb-1">غرف الذكر الجماعي</h1>
-        <p className="text-sm text-muted-foreground">
-          سبّح مع آلاف المسلمين حول العالم — لا يُعرف هويتك
-        </p>
-      </motion.div>
+    <div className="flex flex-col flex-1 pb-8">
+      <PageHeader title="غرف الذكر الجماعي" subtitle="سبّح مع آلاف المسلمين — بلا هوية" icon={<Users size={16} />} />
+      <div className="px-5 pt-4 gap-5 flex flex-col">
 
       <motion.div
         initial={{ opacity: 0 }}
@@ -200,6 +193,7 @@ export default function DhikrRooms() {
         <p className="text-xs text-muted-foreground leading-relaxed">
           ﴿وَالذَّاكِرِينَ اللَّهَ كَثِيرًا وَالذَّاكِرَاتِ أَعَدَّ اللَّهُ لَهُم مَّغْفِرَةً وَأَجْرًا عَظِيمًا﴾
         </p>
+      </div>
       </div>
     </div>
   );

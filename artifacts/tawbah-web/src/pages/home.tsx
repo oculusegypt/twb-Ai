@@ -8,6 +8,7 @@ import { useSettings } from "@/context/SettingsContext";
 import { useAppNotifications } from "@/context/AppNotificationsContext";
 import { IslamicHero } from "@/components/IslamicHero";
 import { KnowledgeSlider } from "@/components/KnowledgeSlider";
+import { SoulMeter } from "@/components/SoulMeter";
 import { getEidStatus } from "@/lib/eid-utils";
 import { getSessionId } from "@/lib/session";
 import { useQuery } from "@tanstack/react-query";
@@ -903,6 +904,7 @@ export default function Home() {
 
         <EidEntryCard />
         <DynamicBanner />
+        <SoulMeter />
 
         {/* Main journey card — fixed, not sortable */}
         <motion.div

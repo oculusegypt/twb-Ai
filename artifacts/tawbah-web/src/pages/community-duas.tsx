@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Send, RefreshCw, Loader2, HandHeart, Clock, Sparkles } from "lucide-react";
 import { getSessionId } from "@/lib/session";
 import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/PageHeader";
 
 interface Dua {
   id: number;
@@ -170,7 +171,8 @@ export default function CommunityDuas() {
 
   return (
     <div className="flex flex-col flex-1 pb-8">
-      <div className="relative overflow-hidden bg-gradient-to-b from-rose-600 to-rose-800 dark:from-rose-900 dark:to-rose-950 px-6 pt-12 pb-10 rounded-b-[2.5rem] shadow-xl mb-6">
+      <PageHeader title="قل آمين" subtitle="ادعُ لإخوانك في الله بلا هويات" icon={<HandHeart size={16} />} />
+      <div className="relative overflow-hidden bg-gradient-to-b from-rose-600 to-rose-800 dark:from-rose-900 dark:to-rose-950 px-6 pt-8 pb-10 rounded-b-[2.5rem] shadow-xl mb-6">
         <div className="absolute inset-0 opacity-10">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="absolute rounded-full bg-white"

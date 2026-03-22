@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Clock, Bell, BellOff, Plus, Trash2, Shield } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 interface DangerTime {
   id: string;
@@ -84,11 +85,9 @@ export default function DangerTimes() {
   };
 
   return (
-    <div className="flex flex-col flex-1 pb-8 px-5 pt-4">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-        <h1 className="text-2xl font-display font-bold mb-1">أوقات الخطر الذكية</h1>
-        <p className="text-sm text-muted-foreground">حدد أوقات ضعفك لتتلقى تذكيرات وقائية قبلها</p>
-      </motion.div>
+    <div className="flex flex-col flex-1 pb-8">
+      <PageHeader title="أوقات الخطر الذكية" subtitle="حدد أوقات ضعفك لتتلقى تذكيرات وقائية" icon={<Shield size={16} />} />
+      <div className="px-5 pt-4">
 
       {notifPermission !== "granted" && (
         <motion.div
@@ -225,6 +224,7 @@ export default function DangerTimes() {
           <li>التذكير يتضمن آية أو دعاء يقويك على الصمود</li>
           <li>يُحفظ كل شيء على جهازك فقط لخصوصيتك</li>
         </ul>
+      </div>
       </div>
     </div>
   );

@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppDhikrCount, useAppIncrementDhikr } from "@/hooks/use-app-data";
 import type { IncrementDhikrRequestDhikrType } from "@workspace/api-client-react";
 import { recordEvent } from "@/components/live-stats";
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, CircleDot } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 
 type DhikrTab = {
   id: IncrementDhikrRequestDhikrType;
@@ -147,8 +148,8 @@ export default function Dhikr() {
         )}
       </AnimatePresence>
 
+      <PageHeader title="مسبحة الذكر" subtitle="استغفار وتسبيح وذكر الله" icon={<CircleDot size={16} />} />
       <div className="flex-1 flex flex-col bg-background p-6">
-        <h1 className="text-2xl font-display font-bold text-center mt-4 mb-6">مسبحة الذكر</h1>
 
         <div className="flex bg-muted/50 p-1.5 rounded-xl mb-8">
           {TABS.map(tab => {

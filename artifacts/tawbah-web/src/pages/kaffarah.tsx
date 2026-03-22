@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, Circle, ChevronDown, ChevronUp, AlertTriangle, Info, Plus, X, Scale, ChevronLeft, Shuffle } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { getSessionId } from "@/lib/session";
 import { getSelectedSins, type Sin } from "@/lib/sins-data";
@@ -460,10 +461,7 @@ export default function Kaffarah() {
 
   return (
     <div className="flex flex-col flex-1 pb-8">
-      <div className="px-5 pt-4 mb-4">
-        <h1 className="text-2xl font-display font-bold mb-1">الكفارات الشرعية</h1>
-        <p className="text-sm text-muted-foreground">تتبّع خطوات الكفارة حتى تبرأ الذمة</p>
-      </div>
+      <PageHeader title="الكفارات الشرعية" subtitle="تتبّع خطوات الكفارة حتى تبرأ الذمة" icon={<Scale size={16} />} />
 
       <div className="px-5 mb-4">
         <div className="flex gap-2 bg-muted/50 p-1 rounded-xl">
