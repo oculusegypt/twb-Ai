@@ -657,7 +657,7 @@ function HeroContent({
                     style={{ color: textColor }}
                     dir="rtl"
                   >
-                    {item.type === "ayah" ? `﴿${item.text}﴾` : item.text}
+                    {item.type === "ayah" ? (item.text.startsWith("﴿") ? item.text : `﴿${item.text}﴾`) : item.text}
                   </p>
                 </motion.div>
               ) : null}

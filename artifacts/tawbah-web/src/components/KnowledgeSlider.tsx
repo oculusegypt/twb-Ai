@@ -213,7 +213,7 @@ export function KnowledgeSlider() {
                 className="text-[13.5px] leading-[1.9] font-medium text-foreground text-center"
                 dir="rtl"
               >
-                {item.type === "ayah" ? `﴿${item.text}﴾` : item.text}
+                {item.type === "ayah" ? (item.text.startsWith("﴿") ? item.text : `﴿${item.text}﴾`) : item.text}
               </p>
             </motion.div>
           ) : null}
