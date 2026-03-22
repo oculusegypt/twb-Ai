@@ -441,6 +441,34 @@
   to { --rb-angle: 360deg; }
 }
 
+/* Circular rainbow border — for the Zakiy nav orb */
+.rainbow-border-orb {
+  --rb-border: 2.5px;
+  position: relative;
+  border-radius: 50%;
+}
+
+.rainbow-border-orb::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--rb-border) * -1);
+  border-radius: 50%;
+  background: conic-gradient(
+    from var(--rb-angle),
+    #06b6d4 0%,
+    #3b82f6 16%,
+    #818cf8 28%,
+    #a855f7 38%,
+    #ec4899 50%,
+    #f97316 62%,
+    #eab308 74%,
+    #22c55e 86%,
+    #06b6d4 100%
+  );
+  animation: rb-spin 5s linear infinite;
+  z-index: 0;
+}
+
 .rainbow-border {
   --rb-border: 1.5px;
   --rb-radius: 1rem;

@@ -281,7 +281,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   <motion.div
                     whileTap={{ scale: 0.92 }}
                     whileHover={{ scale: 1.06 }}
-                    className="relative"
+                    className="relative rainbow-border-orb"
                   >
                     <ZakiyNavOrb isActive={isZakiActive} />
                   </motion.div>
