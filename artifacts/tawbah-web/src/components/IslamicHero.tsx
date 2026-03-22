@@ -274,6 +274,23 @@ export function IslamicHero() {
         style={{ background: "linear-gradient(to bottom, rgba(251,191,36,0.04) 0%, transparent 100%)" }}
       />
 
+      {/* Bottom fade — long & gradual so it never looks like a hard edge */}
+      <div
+        className="absolute bottom-0 inset-x-0 pointer-events-none z-20"
+        style={{
+          height: 180,
+          background: [
+            "linear-gradient(to bottom,",
+            "  transparent 0%,",
+            "  hsl(var(--background) / 0.08) 25%,",
+            "  hsl(var(--background) / 0.30) 50%,",
+            "  hsl(var(--background) / 0.65) 72%,",
+            "  hsl(var(--background) / 0.88) 88%,",
+            "  hsl(var(--background)) 100%",
+            ")",
+          ].join(""),
+        }}
+      />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center pt-7 pb-5 px-5">
