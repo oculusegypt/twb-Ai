@@ -40,27 +40,43 @@ function toArabicIndic(n: number): string {
   return n.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]!);
 }
 
+// تُزيل هذه الدالة نص البسملة من مطلع الآية إن وُجد، وتُبقي على ما بعدها
+function stripBismillahPrefix(text: string): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= 4) return text;
+  const norm = (s: string) =>
+    s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\uFE70-\uFEFF]/g, "")
+     .replace(/[أإآٱ]/g, "ا");
+  const w = [norm(words[0]||""), norm(words[1]||""), norm(words[2]||""), norm(words[3]||"")];
+  const isBism = w[0].includes("بسم") && w[1].includes("الله") && w[2].includes("الرحمن") && w[3].includes("الرحيم");
+  if (!isBism) return text;
+  return words.slice(4).join(" ").trim();
+}
+
 function isBismillahAyah(ayah: SurahAyah, surahNumber: number): boolean {
   // الفاتحة: البسملة هي الآية الأولى الحقيقية — لا تُحذف
   // التوبة: لا بسملة أصلاً
   if (surahNumber === 1 || surahNumber === 9) return false;
-  // البسملة دائماً هي الآية الأولى (numberInSurah === 1) في سائر السور
   if (ayah.numberInSurah !== 1) return false;
   const normalized = ayah.text.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "").replace(/\s+/g, "");
-  return normalized.startsWith("بسماللهالرحمن") || normalized.startsWith("بسمالله");
+  if (!normalized.startsWith("بسماللهالرحمن") && !normalized.startsWith("بسمالله")) return false;
+  // تُحذف فقط إذا كانت الآية بسملة خالصة (≤ 5 كلمات)
+  return ayah.text.trim().split(/\s+/).length <= 5;
 }
 
-const SURAH_TASK_MAP: Array<{ pattern: RegExp; surahs: Array<{ number: number; name: string }> }> = [
+interface SurahRef { number: number; name: string; startAyah?: number; endAyah?: number; }
+
+const SURAH_TASK_MAP: Array<{ pattern: RegExp; surahs: SurahRef[] }> = [
   { pattern: /سورة التوبة/,       surahs: [{ number: 9,   name: "سورة التوبة" }] },
   { pattern: /قصة يوسف/,          surahs: [{ number: 12,  name: "سورة يوسف" }] },
   { pattern: /المعوذتين/,          surahs: [{ number: 113, name: "سورة الفلق" }, { number: 114, name: "سورة الناس" }] },
   { pattern: /الكهف/,              surahs: [{ number: 18,  name: "سورة الكهف" }] },
   { pattern: /الفاتحة/,            surahs: [{ number: 1,   name: "سورة الفاتحة" }] },
   { pattern: /البقرة/,             surahs: [{ number: 2,   name: "سورة البقرة" }] },
-  { pattern: /آية الكرسي/,        surahs: [{ number: 2,   name: "سورة البقرة (آية الكرسي)" }] },
+  { pattern: /آية الكرسي/,        surahs: [{ number: 2,   name: "آية الكرسي", startAyah: 255, endAyah: 255 }] },
 ];
 
-function extractSurahsFromTask(task: string): Array<{ number: number; name: string }> | null {
+function extractSurahsFromTask(task: string): SurahRef[] | null {
   for (const entry of SURAH_TASK_MAP) {
     if (entry.pattern.test(task)) return entry.surahs;
   }
@@ -70,10 +86,10 @@ function extractSurahsFromTask(task: string): Array<{ number: number; name: stri
 interface SurahAyah { number: number; numberInSurah: number; text: string; }
 
 function SurahReaderModal({
-  surahNumber, surahName, onClose
-}: { surahNumber: number; surahName: string; onClose: () => void }) {
-  const [ayahs, setAyahs] = useState<SurahAyah[]>([]);
-  const [tafseerAyahs, setTafseerAyahs] = useState<SurahAyah[]>([]);
+  surahNumber, surahName, onClose, startAyah, endAyah,
+}: { surahNumber: number; surahName: string; onClose: () => void; startAyah?: number; endAyah?: number; }) {
+  const [allAyahs, setAllAyahs] = useState<SurahAyah[]>([]);
+  const [tafseerAllAyahs, setTafseerAllAyahs] = useState<SurahAyah[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [showTafseer, setShowTafseer] = useState(false);
@@ -88,7 +104,7 @@ function SurahReaderModal({
       try {
         const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`);
         const json = await res.json();
-        setAyahs(json?.data?.ayahs ?? []);
+        setAllAyahs(json?.data?.ayahs ?? []);
       } catch {
         setError(true);
       } finally {
@@ -101,9 +117,18 @@ function SurahReaderModal({
     return () => { audioRef.current?.pause(); };
   }, []);
 
+  // الآيات المُرشَّحة للعرض (البسملة الخالصة محذوفة، مع دعم نطاق الآيات)
+  const isRanged = startAyah !== undefined || endAyah !== undefined;
+  const displayAyahs = allAyahs
+    .filter(a => !isBismillahAyah(a, surahNumber))
+    .filter(a => (!startAyah || a.numberInSurah >= startAyah) && (!endAyah || a.numberInSurah <= endAyah));
+  const tafseerDisplayAyahs = tafseerAllAyahs
+    .filter(a => !isBismillahAyah(a, surahNumber))
+    .filter(a => (!startAyah || a.numberInSurah >= startAyah) && (!endAyah || a.numberInSurah <= endAyah));
+
   const playFromIdx = (idx: number) => {
-    if (!ayahs[idx]) return;
-    const ayah = ayahs[idx]!;
+    if (!displayAyahs[idx]) return;
+    const ayah = displayAyahs[idx]!;
     const globalNum = toGlobalAyah(surahNumber, ayah.numberInSurah);
     const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${globalNum}.mp3`;
 
@@ -118,7 +143,7 @@ function SurahReaderModal({
 
     audio.onended = () => {
       const next = idx + 1;
-      if (next < ayahs.length) {
+      if (next < displayAyahs.length) {
         setCurrentIdx(next);
         playFromIdx(next);
         ayahRefs.current[next]?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -148,12 +173,12 @@ function SurahReaderModal({
   };
 
   const loadTafseer = async () => {
-    if (tafseerAyahs.length > 0) { setShowTafseer(true); return; }
+    if (tafseerAllAyahs.length > 0) { setShowTafseer(true); return; }
     setTafseerLoading(true);
     try {
       const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}/ar.muyassar`);
       const json = await res.json();
-      setTafseerAyahs(json?.data?.ayahs ?? []);
+      setTafseerAllAyahs(json?.data?.ayahs ?? []);
       setShowTafseer(true);
     } catch {
     } finally {
@@ -164,7 +189,7 @@ function SurahReaderModal({
   const hideTafseer = () => setShowTafseer(false);
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ paddingBottom: "80px" }} onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
         className="relative mt-auto mx-auto w-full max-w-lg bg-card rounded-t-2xl border border-border shadow-2xl flex flex-col"
@@ -182,8 +207,8 @@ function SurahReaderModal({
               >
                 {surahName.replace("سورة ", "")}
               </p>
-              {ayahs.length > 0 && (
-                <p className="text-[10px] text-muted-foreground mt-0.5">{ayahs.length} آية</p>
+              {displayAyahs.length > 0 && !isRanged && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">{displayAyahs.length} آية</p>
               )}
             </div>
             <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50">
@@ -227,8 +252,8 @@ function SurahReaderModal({
           )}
           {!loading && !error && (
             <div className="pb-4">
-              {/* Bismillah header (not for Surah At-Tawbah = 9) — shown above ayahs like Mushaf */}
-              {surahNumber !== 9 && (
+              {/* البسملة — تُعرض فقط للسور الكاملة (لا لنطاق الآيات) وليس سورة التوبة */}
+              {!isRanged && surahNumber !== 9 && (
                 <div className="flex flex-col items-center my-5">
                   <div className="flex items-center w-full gap-3 mb-1">
                     <div className="flex-1 h-px bg-border/60" />
@@ -255,25 +280,28 @@ function SurahReaderModal({
                   className="leading-[3] text-[18px] text-right"
                   style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif", textAlign: "justify" }}
                 >
-                  {ayahs.filter(a => !isBismillahAyah(a, surahNumber)).map((ayah) => {
-                    const originalIdx = ayahs.indexOf(ayah);
-                    const isCurrent = currentIdx === originalIdx;
+                  {displayAyahs.map((ayah, displayIdx) => {
+                    const isCurrent = currentIdx === displayIdx;
+                    // إزالة البسملة من الآية الأولى إن كانت مضمّنة فيها
+                    const displayText = displayIdx === 0 && !isRanged && surahNumber !== 1 && surahNumber !== 9
+                      ? stripBismillahPrefix(ayah.text)
+                      : ayah.text;
                     return (
                       <span key={ayah.number}>
                         <span
-                          ref={(el) => { ayahRefs.current[originalIdx] = el; }}
-                          onClick={() => playFromIdx(originalIdx)}
+                          ref={(el) => { ayahRefs.current[displayIdx] = el; }}
+                          onClick={() => playFromIdx(displayIdx)}
                           className={`cursor-pointer rounded transition-colors ${
                             isCurrent
                               ? "bg-primary/20 text-primary"
                               : "hover:bg-muted/60"
                           }`}
                         >
-                          {ayah.text}
+                          {displayText}
                         </span>
                         {" "}
                         <span
-                          onClick={() => playFromIdx(originalIdx)}
+                          onClick={() => playFromIdx(displayIdx)}
                           title={`الآية ${ayah.numberInSurah}`}
                           className={`cursor-pointer transition-colors ${
                             isCurrent ? "text-primary" : "text-primary/70 hover:text-primary"
@@ -298,17 +326,16 @@ function SurahReaderModal({
               {/* وضع التفسير: كل آية مع تفسيرها */}
               {showTafseer && (
                 <div className="flex flex-col gap-3">
-                  {tafseerAyahs.length === 0 ? (
+                  {tafseerDisplayAyahs.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-6">جاري تحميل التفسير...</p>
                   ) : (
-                    ayahs.filter(a => !isBismillahAyah(a, surahNumber)).map((ayah) => {
-                      const originalIdx = ayahs.indexOf(ayah);
-                      const isCurrent = currentIdx === originalIdx;
-                      const tafseer = tafseerAyahs[originalIdx];
+                    displayAyahs.map((ayah, displayIdx) => {
+                      const isCurrent = currentIdx === displayIdx;
+                      const tafseer = tafseerDisplayAyahs[displayIdx];
                       return (
                         <div
                           key={ayah.number}
-                          ref={(el) => { ayahRefs.current[originalIdx] = el; }}
+                          ref={(el) => { ayahRefs.current[displayIdx] = el; }}
                           className={`rounded-xl border overflow-hidden transition-all ${
                             isCurrent ? "border-primary/40 shadow-sm" : "border-border/50"
                           }`}
@@ -316,7 +343,7 @@ function SurahReaderModal({
                           {/* نص الآية */}
                           <div
                             className={`px-4 py-3 cursor-pointer ${isCurrent ? "bg-primary/10" : "bg-muted/20 hover:bg-muted/40"}`}
-                            onClick={() => playFromIdx(originalIdx)}
+                            onClick={() => playFromIdx(displayIdx)}
                             dir="rtl"
                           >
                             <span
@@ -358,7 +385,7 @@ function SurahReaderModal({
         </div>
 
         {/* Player bar */}
-        {ayahs.length > 0 && !loading && (
+        {displayAyahs.length > 0 && !loading && (
           <div className="shrink-0 border-t border-border bg-card/95 backdrop-blur px-5 py-3">
             <div className="flex items-center gap-3">
               <button
@@ -379,12 +406,12 @@ function SurahReaderModal({
                 {currentIdx !== null ? (
                   <>
                     <p className="text-xs font-bold truncate">
-                      {isPlaying ? "يُشغَّل الآن" : "متوقف"} — الآية {ayahs[currentIdx]?.numberInSurah}
+                      {isPlaying ? "يُشغَّل الآن" : "متوقف"} — الآية {displayAyahs[currentIdx]?.numberInSurah}
                     </p>
                     <div className="w-full bg-primary/10 rounded-full h-1 mt-1.5 overflow-hidden">
                       <div
                         className="h-full bg-primary rounded-full transition-all duration-300"
-                        style={{ width: `${((currentIdx + 1) / ayahs.length) * 100}%` }}
+                        style={{ width: `${((currentIdx + 1) / displayAyahs.length) * 100}%` }}
                       />
                     </div>
                   </>
@@ -403,8 +430,8 @@ function SurahReaderModal({
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
                 </button>
                 <button
-                  onClick={() => currentIdx !== null && currentIdx < ayahs.length - 1 && playFromIdx(currentIdx + 1)}
-                  disabled={currentIdx === null || currentIdx === ayahs.length - 1}
+                  onClick={() => currentIdx !== null && currentIdx < displayAyahs.length - 1 && playFromIdx(currentIdx + 1)}
+                  disabled={currentIdx === null || currentIdx === displayAyahs.length - 1}
                   className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-all"
                   title="الآية التالية"
                 >
@@ -420,7 +447,7 @@ function SurahReaderModal({
 }
 
 function SurahButton({ task }: { task: string }) {
-  const [openSurah, setOpenSurah] = useState<{ number: number; name: string } | null>(null);
+  const [openSurah, setOpenSurah] = useState<SurahRef | null>(null);
   const surahs = extractSurahsFromTask(task);
   if (!surahs) return null;
 
@@ -432,12 +459,14 @@ function SurahButton({ task }: { task: string }) {
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all"
         >
           <BookOpen size={12} />
-          قراءة السورة
+          {surahs[0]?.startAyah ? surahs[0].name : "قراءة السورة"}
         </button>
         {openSurah && (
           <SurahReaderModal
             surahNumber={openSurah.number}
             surahName={openSurah.name}
+            startAyah={openSurah.startAyah}
+            endAyah={openSurah.endAyah}
             onClose={() => setOpenSurah(null)}
           />
         )}
@@ -463,6 +492,8 @@ function SurahButton({ task }: { task: string }) {
         <SurahReaderModal
           surahNumber={openSurah.number}
           surahName={openSurah.name}
+          startAyah={openSurah.startAyah}
+          endAyah={openSurah.endAyah}
           onClose={() => setOpenSurah(null)}
         />
       )}
@@ -871,17 +902,17 @@ function DayTaskList({
         })}
       </div>
 
-      {/* Inline completion congratulations */}
+      {/* Inline completion congratulations — رسالة مؤقتة تختفي */}
       <AnimatePresence>
         {(showCongrats || (allDoneOptimistic && !day.completed && !showCongrats && calledDone.current)) && (
           <motion.div
             initial={{ opacity: 0, y: 8, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="mt-4 bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-2xl p-4 text-center"
+            className="mt-4 bg-muted/40 border border-border rounded-2xl p-3 text-center"
           >
-            <p className="text-lg font-bold text-primary">🎉 أحسنت! اليوم {day.day} مكتمل</p>
-            <p className="text-xs text-muted-foreground mt-1">تم حفظ تقدمك — سيُفتح اليوم التالي بعد لحظات</p>
+            <p className="text-sm font-bold text-muted-foreground">أُنجز بحمد الله ✓</p>
+            <p className="text-xs text-muted-foreground/70 mt-0.5">سيُفتح اليوم التالي بعد لحظات</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -1309,9 +1340,9 @@ export default function Journey30() {
                       />
 
                       {day.completed && (
-                        <div className="flex items-center justify-center gap-2 py-2 text-primary">
-                          <CheckCircle2 size={18} />
-                          <span className="font-bold text-sm">أُنجز بحمد الله</span>
+                        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-2xl text-primary">
+                          <span className="text-lg">🎉</span>
+                          <span className="font-bold text-sm">أحسنت! اليوم {day.day} مكتمل</span>
                         </div>
                       )}
                     </div>

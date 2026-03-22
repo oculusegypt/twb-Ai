@@ -610,11 +610,23 @@ function HeroContent({
             className="flex items-center justify-between px-4 py-2.5"
             style={{ borderBottom: `1px solid ${headerBorder}`, background: headerBg }}
           >
-            <div className="flex items-center gap-2">
-              <Sparkles size={12} style={{ color: labelColor }} />
-              <span className="text-[11px] font-bold" style={{ color: labelColor }}>
-                زكي يُذكّرك
-              </span>
+            <div className="flex items-center gap-2 min-w-0">
+              {meta ? (
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                  style={{ background: meta.bg, color: meta.color }}
+                >
+                  {meta.icon}
+                  {meta.label}
+                </span>
+              ) : (
+                <Sparkles size={12} style={{ color: labelColor }} />
+              )}
+              {item?.source && (
+                <span className="text-[10px] truncate" style={{ color: subColor }}>
+                  {item.source}
+                </span>
+              )}
             </div>
             {items.length > 1 && (
               <div className="flex items-center gap-2">
@@ -668,24 +680,7 @@ function HeroContent({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -14 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="flex flex-col gap-2"
                 >
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {meta && (
-                      <span
-                        className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full"
-                        style={{ background: meta.bg, color: meta.color }}
-                      >
-                        {meta.icon}
-                        {meta.label}
-                      </span>
-                    )}
-                    {item.source && (
-                      <span className="text-[10px]" style={{ color: subColor }}>
-                        {item.source}
-                      </span>
-                    )}
-                  </div>
                   <p
                     className="text-[13px] leading-[1.9] font-medium"
                     style={{ color: textColor }}
