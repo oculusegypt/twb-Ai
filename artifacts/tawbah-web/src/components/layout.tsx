@@ -25,10 +25,10 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
       <div
         className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
         style={{
-          background: "conic-gradient(from 120deg, hsl(var(--primary)), hsl(var(--accent)/0.85), hsl(var(--primary)/0.7), hsl(var(--accent)), hsl(var(--primary)))",
+          background: "conic-gradient(from 120deg, hsl(var(--primary)/0.75), hsl(var(--accent)/0.6), hsl(var(--primary)/0.55), hsl(var(--accent)/0.65), hsl(var(--primary)/0.75))",
           boxShadow: isActive
-            ? "0 0 0 3px hsl(var(--primary)/0.4), 0 0 20px hsl(var(--primary)/0.55), 0 6px 20px rgba(0,0,0,0.3)"
-            : "0 0 0 2px hsl(var(--primary)/0.25), 0 0 14px hsl(var(--primary)/0.35), 0 5px 18px rgba(0,0,0,0.28)",
+            ? "0 0 0 2px hsl(var(--primary)/0.25), 0 0 12px hsl(var(--primary)/0.3), 0 5px 16px rgba(0,0,0,0.25)"
+            : "0 0 0 1.5px hsl(var(--primary)/0.15), 0 0 8px hsl(var(--primary)/0.2), 0 4px 14px rgba(0,0,0,0.22)",
         }}
       >
         {/* Rotating shine arc */}
@@ -42,7 +42,7 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
         {/* Gloss */}
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.32) 0%, transparent 60%)" }}
+          style={{ background: "radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.16) 0%, transparent 60%)" }}
         />
 
         {/* Sound wave bars */}
@@ -281,7 +281,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   <motion.div
                     whileTap={{ scale: 0.92 }}
                     whileHover={{ scale: 1.06 }}
-                    className="relative rainbow-border-orb"
+                    className="relative"
                   >
                     <ZakiyNavOrb isActive={isZakiActive} />
                   </motion.div>
