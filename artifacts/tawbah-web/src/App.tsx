@@ -38,6 +38,7 @@ import EidPage from "@/pages/eid";
 import NotificationsPage from "@/pages/notifications";
 import InboxPage from "@/pages/inbox";
 import DuaTiming from "@/pages/dua-timing";
+import HabitsPage from "@/pages/habits";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -56,7 +57,8 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/covenant" component={Covenant} />
         <Route path="/day-one" component={DayOne} />
-        <Route path="/plan">{() => { window.location.replace("/journey"); return null; }}</Route>
+        <Route path="/plan" component={HabitsPage} />
+        <Route path="/habits" component={HabitsPage} />
         <Route path="/dhikr" component={Dhikr} />
         <Route path="/sos" component={Sos} />
         <Route path="/signs" component={Signs} />
