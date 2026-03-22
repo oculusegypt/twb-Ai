@@ -121,7 +121,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem("tawbah_theme") as Theme | null;
     if (stored) return stored;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return "dark";
   });
   const [accentColor, setAccentColorState] = useState<AccentColor>(() => {
     return (localStorage.getItem("tawbah_accent") as AccentColor) || "mint";

@@ -3,8 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp, Flame, CheckCircle2, BookOpen, Moon, Star, Brain, ShieldAlert,
   TrendingDown, Target, Award, Calendar, Zap, Sparkles, BarChart3, Heart,
-  ChevronRight, Trophy, Activity
+  ChevronRight, Trophy, Activity, ListChecks, Plus
 } from "lucide-react";
+import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { useAppUserProgress, useAppDhikrCount, useAppHabits } from "@/hooks/use-app-data";
 import { getSessionId } from "@/lib/session";
 import { BadgesSection } from "@/components/badges";
@@ -39,11 +41,11 @@ function getSosStats(): { count: number; lastDate: string | null } {
   }
 }
 
-// مستوى التوبة بناءً على الإنجازات
-function getSpiritualLevel(streak: number, avgRate: number, covenantDays: number): {
+// مستوى التوبة بناءً على رحلة الـ30 يوم والأوسمة والإنجازات
+function getSpiritualLevel(streak: number, avgRate: number, journey30Days: number, badgeCount: number): {
   level: number; title: string; icon: string; color: string; nextTitle: string; progress: number;
 } {
-  const score = streak * 2 + avgRate * 50 + covenantDays;
+  const score = streak * 2 + avgRate * 50 + journey30Days * 3 + badgeCount * 5;
   if (score >= 200) return { level: 5, title: "تائب نصوح", icon: "🌟", color: "text-yellow-500", nextTitle: "—", progress: 100 };
   if (score >= 120) return { level: 4, title: "السالك", icon: "🌿", color: "text-emerald-500", nextTitle: "تائب نصوح", progress: Math.round(((score - 120) / 80) * 100) };
   if (score >= 60)  return { level: 3, title: "المجتهد", icon: "💪", color: "text-blue-500", nextTitle: "السالك", progress: Math.round(((score - 60) / 60) * 100) };
@@ -51,8 +53,8 @@ function getSpiritualLevel(streak: number, avgRate: number, covenantDays: number
   return { level: 1, title: "أول الطريق", icon: "🤲", color: "text-primary", nextTitle: "المبتدئ", progress: Math.round((score / 20) * 100) };
 }
 
-function SpiritualLevelCard({ streak, avgRate, covenantDays }: { streak: number; avgRate: number; covenantDays: number }) {
-  const level = getSpiritualLevel(streak, avgRate, covenantDays);
+function SpiritualLevelCard({ streak, avgRate, journey30Days, badgeCount }: { streak: number; avgRate: number; journey30Days: number; badgeCount: number }) {
+  const level = getSpiritualLevel(streak, avgRate, journey30Days, badgeCount);
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -230,9 +232,38 @@ function WeekBarChart({ weekData, type }: {
 }
 
 function HabitBreakdownSection({ habits }: { habits: Array<{ habitKey: string; habitNameAr: string; completed: boolean }> }) {
-  if (!habits.length) return null;
   const completed = habits.filter(h => h.completed);
   const pending = habits.filter(h => !h.completed);
+
+  if (!habits.length) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="bg-card rounded-2xl border border-border border-dashed p-4 mb-4"
+      >
+        <div className="flex items-center gap-2 mb-3">
+          <ListChecks size={15} className="text-primary" />
+          <h2 className="font-bold text-sm">عاداتي اليومية</h2>
+        </div>
+        <div className="flex flex-col items-center text-center py-3 gap-3">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            لم تُضف عادات بعد.<br />أضف عاداتك من خطة اليوم لتظهر إحصائياتها هنا.
+          </p>
+          <Link href="/plan">
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground rounded-full text-xs font-bold shadow-sm shadow-primary/25"
+            >
+              <Plus size={13} />
+              ابدأ عاداتي
+            </motion.button>
+          </Link>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div
@@ -246,9 +277,16 @@ function HabitBreakdownSection({ habits }: { habits: Array<{ habitKey: string; h
           <CheckCircle2 size={15} className="text-primary" />
           <h2 className="font-bold text-sm">عادات اليوم</h2>
         </div>
-        <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
-          {completed.length} / {habits.length}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+            {completed.length} / {habits.length}
+          </span>
+          <Link href="/plan">
+            <span className="text-[10px] text-muted-foreground hover:text-primary transition-colors flex items-center gap-0.5">
+              إدارة <ChevronRight size={10} />
+            </span>
+          </Link>
+        </div>
       </div>
 
       {/* Progress ring visual */}
@@ -294,8 +332,8 @@ function HabitBreakdownSection({ habits }: { habits: Array<{ habitKey: string; h
   );
 }
 
-function Journey30Track({ covenantDays }: { covenantDays: number }) {
-  const days = Math.min(covenantDays, 30);
+function Journey30Track({ journey30Days }: { journey30Days: number }) {
+  const days = Math.min(journey30Days, 30);
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -349,10 +387,37 @@ function Journey30Track({ covenantDays }: { covenantDays: number }) {
   );
 }
 
+function useJourney30Data() {
+  return useQuery({
+    queryKey: ["/api/journey30-progress"],
+    queryFn: async () => {
+      const sessionId = getSessionId();
+      const res = await fetch(`/api/journey30?sessionId=${encodeURIComponent(sessionId)}`);
+      if (!res.ok) return { completedCount: 0, currentDay: 1 };
+      return res.json() as Promise<{ completedCount: number; currentDay: number }>;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+function getBadgeCount(streakDays: number, journey30Days: number, avgHabits: number): number {
+  let count = 0;
+  if (streakDays >= 1) count++;
+  if (streakDays >= 7) count++;
+  if (streakDays >= 30) count++;
+  if (journey30Days >= 1) count++;
+  if (journey30Days >= 7) count++;
+  if (journey30Days >= 30) count++;
+  if (avgHabits >= 50) count++;
+  if (avgHabits >= 80) count++;
+  return count;
+}
+
 export default function ProgressChart() {
   const { data: progress } = useAppUserProgress();
   const { data: dhikr } = useAppDhikrCount();
   const { data: habits } = useAppHabits();
+  const { data: journey30 } = useJourney30Data();
   const [weekData, setWeekData] = useState<DayRecord[]>([]);
   const [activeTab, setActiveTab] = useState<"habits" | "istighfar">("habits");
   const [quote] = useState(() => MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)]);
@@ -389,12 +454,13 @@ export default function ProgressChart() {
   const todayHabits = habits || [];
   const completedToday = todayHabits.filter((h) => h.completed).length;
   const totalHabits = todayHabits.length || 5;
-  const covenantDays = progress?.day40Progress || 0;
+  const journey30Days = journey30?.completedCount || 0;
   const streakDays = progress?.streakDays || 0;
   const totalIstighfar = weekData.reduce((s, d) => s + d.istighfar, 0);
   const avgHabits = weekData.length > 0
     ? Math.round((weekData.reduce((s, d) => s + (d.habitsTotal > 0 ? d.habitsCompleted / d.habitsTotal : 0), 0) / weekData.length) * 100)
     : 0;
+  const badgeCount = getBadgeCount(streakDays, journey30Days, avgHabits);
 
   const dayRates = weekData.map(d => d.habitsTotal > 0 ? d.habitsCompleted / d.habitsTotal : 0);
   const lastHalf = dayRates.slice(3);
@@ -413,18 +479,18 @@ export default function ProgressChart() {
       </motion.div>
 
       {/* Spiritual Level */}
-      <SpiritualLevelCard streak={streakDays} avgRate={avgHabits / 100} covenantDays={covenantDays} />
+      <SpiritualLevelCard streak={streakDays} avgRate={avgHabits / 100} journey30Days={journey30Days} badgeCount={badgeCount} />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2.5 mb-4">
-        <StatCard icon={<Flame size={18} />}       value={streakDays}        label="يوم متواصل"       color="text-orange-500"  bg="bg-orange-500/10"  delay={0.12} />
-        <StatCard icon={<TrendingUp size={18} />}  value={`${covenantDays}/40`} label="يوم في خطة الـ٤٠" color="text-primary"    bg="bg-primary/10"    delay={0.17} />
+        <StatCard icon={<Flame size={18} />}       value={streakDays}        label="يوم متواصل"        color="text-orange-500"  bg="bg-orange-500/10"  delay={0.12} />
+        <StatCard icon={<BookOpen size={18} />}    value={totalIstighfar}    label="استغفارة هذا الأسبوع" color="text-violet-500" bg="bg-violet-500/10" delay={0.17} />
         <StatCard icon={<CheckCircle2 size={18} />} value={`${completedToday}/${totalHabits}`} label="عادات اليوم" color="text-emerald-500" bg="bg-emerald-500/10" delay={0.22} />
-        <StatCard icon={<Star size={18} />}        value={`${avgHabits}%`}   label="معدل الأسبوع"     color="text-amber-500"   bg="bg-amber-500/10"  delay={0.27} />
+        <StatCard icon={<Star size={18} />}        value={`${avgHabits}%`}   label="معدل الأسبوع"      color="text-amber-500"   bg="bg-amber-500/10"  delay={0.27} />
       </div>
 
-      {/* Habit breakdown */}
-      {todayHabits.length > 0 && <HabitBreakdownSection habits={todayHabits as Array<{ habitKey: string; habitNameAr: string; completed: boolean }>} />}
+      {/* Habit breakdown — always shown */}
+      <HabitBreakdownSection habits={todayHabits as Array<{ habitKey: string; habitNameAr: string; completed: boolean }>} />
 
       {/* Badges */}
       <div className="mb-4">
@@ -515,7 +581,7 @@ export default function ProgressChart() {
       <SmartInsights weekData={weekData} streakDays={streakDays} sosCount={sosStats.count} />
 
       {/* 30-day journey track */}
-      <Journey30Track covenantDays={covenantDays} />
+      <Journey30Track journey30Days={journey30Days} />
     </div>
   );
 }

@@ -234,7 +234,7 @@ export function Layout({ children }: { children: ReactNode }) {
                         size={28}
                         strokeWidth={2}
                         fill="none"
-                        style={{ color: "rgba(255,255,255,0.65)" }}
+                        style={{ color: "rgba(255,255,255,0.3)" }}
                       />
                     </div>
                   </motion.div>
