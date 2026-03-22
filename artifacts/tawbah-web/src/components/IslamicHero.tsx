@@ -2,7 +2,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, MessageCircle, Star, Sparkles, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
-import { useLocation } from "wouter";
 
 interface HeroItem {
   type: "ayah" | "hadith" | "dhikr" | "nafl" | "dua" | "wisdom";
@@ -77,134 +76,6 @@ function useTypingText(text: string, speed = 28) {
     return () => clearInterval(interval);
   }, [text, speed]);
   return { displayed, done };
-}
-
-// ── Zakiy AI Orb ────────────────────────────────────────────────────────────
-function ZakiyOrb({ isDark, onClick }: { isDark: boolean; onClick: () => void }) {
-  const bars = [0.4, 0.7, 1, 0.85, 0.55, 0.9, 0.65, 0.45, 0.75, 1, 0.6, 0.8, 0.5, 0.95, 0.7];
-
-  return (
-    <motion.button
-      onClick={onClick}
-      initial={{ scale: 0.8, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ duration: 0.7, ease: "backOut" }}
-      whileTap={{ scale: 0.95 }}
-      className="relative flex flex-col items-center gap-2 cursor-pointer group"
-      aria-label="تحدث مع زكي"
-    >
-      {/* Outer glow ring */}
-      <div className="relative">
-        {/* Animated pulse rings */}
-        {[1, 2, 3].map((i) => (
-          <motion.div
-            key={i}
-            className="absolute inset-0 rounded-full"
-            style={{
-              border: `1.5px solid ${isDark ? "rgba(99,179,237,0.4)" : "rgba(59,130,246,0.35)"}`,
-              margin: -(i * 10),
-            }}
-            animate={{ scale: [1, 1.18, 1], opacity: [0.6, 0, 0.6] }}
-            transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.55, ease: "easeInOut" }}
-          />
-        ))}
-
-        {/* Main orb container */}
-        <div
-          className="relative w-[90px] h-[90px] rounded-full flex items-center justify-center overflow-hidden"
-          style={{
-            background: isDark
-              ? "radial-gradient(circle at 35% 30%, #60a5fa 0%, #3b82f6 30%, #1d4ed8 60%, #1e3a8a 100%)"
-              : "radial-gradient(circle at 35% 30%, #93c5fd 0%, #3b82f6 30%, #1d4ed8 60%, #1e40af 100%)",
-            boxShadow: isDark
-              ? "0 0 0 2px rgba(96,165,250,0.3), 0 0 30px rgba(59,130,246,0.6), 0 0 60px rgba(59,130,246,0.25), 0 8px 32px rgba(0,0,0,0.5)"
-              : "0 0 0 2px rgba(59,130,246,0.25), 0 0 24px rgba(59,130,246,0.45), 0 0 48px rgba(59,130,246,0.2), 0 6px 20px rgba(0,0,0,0.15)",
-          }}
-        >
-          {/* Gloss overlay */}
-          <div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(ellipse at 35% 25%, rgba(255,255,255,0.35) 0%, transparent 60%)" }}
-          />
-
-          {/* Inner shimmer ring */}
-          <motion.div
-            className="absolute inset-2 rounded-full"
-            style={{ border: "1px solid rgba(255,255,255,0.2)" }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-          />
-
-          {/* Sound wave bars */}
-          <div className="relative z-10 flex items-center gap-[2.5px]">
-            {bars.map((h, i) => (
-              <motion.div
-                key={i}
-                className="rounded-full"
-                style={{
-                  width: 2.5,
-                  background: "rgba(255,255,255,0.9)",
-                  originY: "50%",
-                }}
-                animate={{ scaleY: [h * 0.3, h, h * 0.5, h * 0.8, h * 0.3] }}
-                transition={{
-                  duration: 1.2 + (i % 4) * 0.15,
-                  repeat: Infinity,
-                  delay: i * 0.06,
-                  ease: "easeInOut",
-                }}
-                initial={{ height: Math.round(h * 30) }}
-              />
-            ))}
-          </div>
-
-          {/* Rotating arc */}
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            style={{
-              background: "conic-gradient(from 0deg, transparent 70%, rgba(255,255,255,0.15) 100%)",
-            }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          />
-        </div>
-
-        {/* AI badge on orb */}
-        <motion.div
-          className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wide whitespace-nowrap"
-          style={{
-            background: isDark ? "rgba(30,58,138,0.9)" : "rgba(29,78,216,0.9)",
-            color: "#bfdbfe",
-            border: "1px solid rgba(96,165,250,0.4)",
-            backdropFilter: "blur(4px)",
-          }}
-          animate={{ opacity: [0.8, 1, 0.8] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          AI ✦
-        </motion.div>
-      </div>
-
-      {/* Label */}
-      <motion.div className="flex flex-col items-center gap-0.5">
-        <span
-          className="text-[13px] font-bold tracking-wide"
-          style={{
-            color: isDark ? "#93c5fd" : "#1d4ed8",
-            textShadow: isDark ? "0 0 16px rgba(59,130,246,0.6)" : "none",
-          }}
-        >
-          تحدث مع زكي
-        </span>
-        <span
-          className="text-[10px]"
-          style={{ color: isDark ? "rgba(147,197,253,0.6)" : "rgba(29,78,216,0.55)" }}
-        >
-          مرشدك بالذكاء الاصطناعي
-        </span>
-      </motion.div>
-    </motion.button>
-  );
 }
 
 // ── Islamic geometry SVGs ───────────────────────────────────────────────────
@@ -348,7 +219,6 @@ export function IslamicHero() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { theme, accentColor } = useSettings();
   const isDark = theme === "dark";
-  const [, navigate] = useLocation();
 
   const fetchContent = useCallback(async () => {
     const cached = loadCache();
@@ -443,37 +313,37 @@ export function IslamicHero() {
           </div>
         </motion.div>
 
-        {/* App logo (small) + title */}
+        {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="flex items-center gap-2 mb-4"
+          initial={{ scale: 0.75, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.6, ease: "backOut", delay: 0.1 }}
+          className="mb-3"
         >
           <div
-            className="w-8 h-8 rounded-lg overflow-hidden shrink-0"
+            className="w-[96px] h-[96px] rounded-full overflow-hidden"
             style={isDark
-              ? { border: "1px solid rgba(251,191,36,0.3)", boxShadow: "0 0 12px rgba(251,191,36,0.2)" }
-              : { border: `1px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 10px ${lightCfg.glowColor}` }
+              ? { border: "2px solid rgba(251,191,36,0.5)", boxShadow: "0 0 0 4px rgba(251,191,36,0.08), 0 0 28px rgba(251,191,36,0.3), 0 0 56px rgba(251,191,36,0.12), 0 6px 24px rgba(0,0,0,0.5)" }
+              : { border: `2px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 0 4px ${lightCfg.glowColor}, 0 0 20px ${lightCfg.glowColor}, 0 4px 16px rgba(0,0,0,0.12)` }
             }
           >
             <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
           </div>
-          <h1
-            className="text-[16px] font-bold tracking-wide"
-            style={isDark
-              ? { color: "#f5c842", textShadow: "0 0 20px rgba(251,191,36,0.4)" }
-              : { color: lightCfg.textColor }
-            }
-          >
-            دليل التوبة النصوح
-          </h1>
         </motion.div>
 
-        {/* Zakiy AI Orb */}
-        <div className="mb-5">
-          <ZakiyOrb isDark={isDark} onClick={() => navigate("/zakiy")} />
-        </div>
+        {/* App name */}
+        <motion.h1
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
+          className="text-[17px] font-bold tracking-widest mb-1"
+          style={isDark
+            ? { color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }
+            : { color: lightCfg.textColor, letterSpacing: "0.06em" }
+          }
+        >
+          دليل التوبة النصوح
+        </motion.h1>
 
         {/* Divider */}
         <motion.div

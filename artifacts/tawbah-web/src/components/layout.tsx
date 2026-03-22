@@ -1,9 +1,67 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, HelpCircle, User2, X, Heart } from "lucide-react";
+import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, HelpCircle, User2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
+
+const WAVE_BARS = [0.35, 0.65, 1, 0.8, 0.5, 0.9, 0.6, 0.4, 0.75, 0.95, 0.55, 0.7, 0.45, 0.85, 0.6];
+
+function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
+  return (
+    <div className="relative w-[60px] h-[60px]">
+      {/* Pulse rings */}
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="absolute inset-0 rounded-full"
+          style={{ border: "1.5px solid var(--color-primary)", opacity: 0.35 }}
+          animate={{ scale: [1, 1.22, 1], opacity: [0.35, 0, 0.35] }}
+          transition={{ duration: 2.6, repeat: Infinity, delay: i * 0.7, ease: "easeInOut" }}
+        />
+      ))}
+
+      {/* Main orb */}
+      <div
+        className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
+        style={{
+          background: "conic-gradient(from 120deg, hsl(var(--primary)), hsl(var(--accent)/0.85), hsl(var(--primary)/0.7), hsl(var(--accent)), hsl(var(--primary)))",
+          boxShadow: isActive
+            ? "0 0 0 3px hsl(var(--primary)/0.4), 0 0 20px hsl(var(--primary)/0.55), 0 6px 20px rgba(0,0,0,0.3)"
+            : "0 0 0 2px hsl(var(--primary)/0.25), 0 0 14px hsl(var(--primary)/0.35), 0 5px 18px rgba(0,0,0,0.28)",
+        }}
+      >
+        {/* Rotating shine arc */}
+        <motion.div
+          className="absolute inset-0 rounded-full"
+          style={{ background: "conic-gradient(from 0deg, transparent 75%, rgba(255,255,255,0.18) 100%)" }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        />
+
+        {/* Gloss */}
+        <div
+          className="absolute inset-0 rounded-full pointer-events-none"
+          style={{ background: "radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.32) 0%, transparent 60%)" }}
+        />
+
+        {/* Sound wave bars */}
+        <div className="relative z-10 flex items-center gap-[2px]">
+          {WAVE_BARS.map((h, i) => (
+            <motion.div
+              key={i}
+              className="rounded-full"
+              style={{ width: 2, background: "hsl(var(--primary-foreground)/0.9)", originY: "50%" }}
+              animate={{ scaleY: [h * 0.25, h, h * 0.45, h * 0.7, h * 0.25] }}
+              transition={{ duration: 1.1 + (i % 5) * 0.12, repeat: Infinity, delay: i * 0.055, ease: "easeInOut" }}
+              initial={{ height: Math.round(h * 24) }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
@@ -222,21 +280,10 @@ export function Layout({ children }: { children: ReactNode }) {
                 <Link href={zakiHref} className="block tap-highlight-transparent">
                   <motion.div
                     whileTap={{ scale: 0.92 }}
-                    whileHover={{ scale: 1.04 }}
+                    whileHover={{ scale: 1.06 }}
                     className="relative"
                   >
-                    <div
-                      className="zaki-btn-siri w-[60px] h-[60px]"
-                      style={{ boxShadow: "0 6px 24px rgba(0,0,0,0.22)" }}
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                      <Heart
-                        size={28}
-                        strokeWidth={2}
-                        fill="none"
-                        style={{ color: "rgba(255,255,255,0.3)" }}
-                      />
-                    </div>
+                    <ZakiyNavOrb isActive={isZakiActive} />
                   </motion.div>
                 </Link>
               </div>
