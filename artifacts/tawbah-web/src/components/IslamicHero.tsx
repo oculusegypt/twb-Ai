@@ -241,8 +241,6 @@ export function IslamicHero() {
           "  #040c11 100%",
           ")",
         ].join(""),
-        maskImage: "linear-gradient(to bottom, black 55%, rgba(0,0,0,0.6) 78%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to bottom, black 55%, rgba(0,0,0,0.6) 78%, transparent 100%)",
       }}
     >
       {/* Ambient glow layers */}
@@ -282,6 +280,15 @@ export function IslamicHero() {
       <div
         className="absolute top-0 inset-x-0 h-20 pointer-events-none"
         style={{ background: "linear-gradient(to bottom, rgba(251,191,36,0.04) 0%, transparent 100%)" }}
+      />
+
+      {/* Bottom fade — matches page background color seamlessly */}
+      <div
+        className="absolute bottom-0 inset-x-0 pointer-events-none z-20"
+        style={{
+          height: 90,
+          background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%)",
+        }}
       />
 
       {/* Content */}

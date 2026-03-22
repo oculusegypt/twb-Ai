@@ -232,8 +232,9 @@ export function Layout({ children }: { children: ReactNode }) {
                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                       <Heart
                         size={28}
-                        className={isZakiActive ? "fill-white text-white" : "fill-white/90 text-white/90"}
-                        strokeWidth={1.5}
+                        className="text-white"
+                        strokeWidth={2}
+                        fill="none"
                       />
                     </div>
                   </motion.div>
