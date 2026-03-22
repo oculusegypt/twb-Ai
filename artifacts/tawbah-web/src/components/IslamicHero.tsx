@@ -2,8 +2,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, MessageCircle, Star, Sparkles, Sun, Moon, ChevronLeft, ChevronRight } from "lucide-react";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
 interface HeroItem {
   type: "ayah" | "hadith" | "dhikr" | "nafl" | "dua" | "wisdom";
   text: string;
@@ -18,8 +16,6 @@ const TYPE_META: Record<HeroItem["type"], { label: string; icon: React.ReactNode
   dua:     { label: "دعاء مأثور", icon: <Moon size={10} />,          color: "#c4b5fd", bg: "rgba(196,181,253,0.18)" },
   wisdom:  { label: "نصيحة",      icon: <Sparkles size={10} />,     color: "#fda4af", bg: "rgba(253,164,175,0.18)" },
 };
-
-// ── Cache ─────────────────────────────────────────────────────────────────────
 
 const CACHE_KEY = "hero_content_cache_v3";
 const CACHE_TTL = 60 * 60 * 1000;
@@ -48,90 +44,123 @@ const FALLBACK: HeroItem[] = [
   { type: "ayah",    text: "وَإِنِّي لَغَفَّارٌ لِّمَن تَابَ وَآمَنَ وَعَمِلَ صَالِحًا ثُمَّ اهْتَدَىٰ", source: "طه: 82" },
 ];
 
-// ── SVG Decorations ───────────────────────────────────────────────────────────
-
-function IslamicStars() {
+function IslamicGeometry() {
   return (
     <svg
-      viewBox="0 0 400 260"
+      viewBox="0 0 400 300"
       preserveAspectRatio="xMidYMid slice"
       className="absolute inset-0 w-full h-full pointer-events-none"
       aria-hidden
     >
-      {/* Large 8-point star — top left */}
-      <g transform="translate(44,54)" opacity="0.18">
-        {[0,45,90,135,180,225,270,315].map((a, i) => {
-          const r1 = 32, r2 = 14;
+      <defs>
+        <radialGradient id="goldGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#fbbf24" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      {/* ── Arabesque border top ── */}
+      <g opacity="0.18" stroke="#fbbf24" strokeWidth="0.7" fill="none">
+        <path d="M0,8 Q50,2 100,8 Q150,14 200,8 Q250,2 300,8 Q350,14 400,8" />
+        <path d="M0,14 Q50,8 100,14 Q150,20 200,14 Q250,8 300,14 Q350,20 400,14" />
+      </g>
+
+      {/* ── Large 12-point star — far left ── */}
+      <g transform="translate(38,68)" opacity="0.13">
+        {Array.from({ length: 12 }, (_, i) => {
+          const a = i * 30;
+          const r1 = 36, r2 = 16;
           const toRad = (d: number) => (d - 90) * Math.PI / 180;
           const x1 = r1 * Math.cos(toRad(a)), y1 = r1 * Math.sin(toRad(a));
-          const x2 = r2 * Math.cos(toRad(a + 22.5)), y2 = r2 * Math.sin(toRad(a + 22.5));
-          return <line key={i} x1="0" y1="0" x2={x1} y2={y1} stroke="#fbbf24" strokeWidth="1.2" />;
+          const x2 = r2 * Math.cos(toRad(a + 15)), y2 = r2 * Math.sin(toRad(a + 15));
+          return <line key={i} x1="0" y1="0" x2={x1} y2={y1} stroke="#fbbf24" strokeWidth="0.8" />;
         })}
         <polygon
-          points={[0,45,90,135,180,225,270,315].flatMap((a) => {
-            const r1 = 32, r2 = 14;
+          points={Array.from({ length: 12 }, (_, i) => {
+            const a = i * 30;
+            const r1 = 36, r2 = 16;
             const toRad = (d: number) => (d - 90) * Math.PI / 180;
-            const x1 = r1 * Math.cos(toRad(a)), y1 = r1 * Math.sin(toRad(a));
-            const x2 = r2 * Math.cos(toRad(a + 22.5)), y2 = r2 * Math.sin(toRad(a + 22.5));
-            return [`${x1},${y1}`, `${x2},${y2}`];
+            return [
+              `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))}`,
+              `${r2 * Math.cos(toRad(a + 15))},${r2 * Math.sin(toRad(a + 15))}`,
+            ].join(" ");
           }).join(" ")}
-          fill="none" stroke="#fbbf24" strokeWidth="1"
+          fill="rgba(251,191,36,0.06)" stroke="#fbbf24" strokeWidth="0.8"
         />
-        <circle cx="0" cy="0" r="4" fill="#fbbf24" opacity="0.5" />
+        <circle cx="0" cy="0" r="5" fill="none" stroke="#fbbf24" strokeWidth="0.8" />
+        <circle cx="0" cy="0" r="2" fill="#fbbf24" opacity="0.6" />
       </g>
 
-      {/* Medium star — top right */}
-      <g transform="translate(356,40)" opacity="0.15">
+      {/* ── 8-point star — top right ── */}
+      <g transform="translate(362,52)" opacity="0.12">
         <polygon
-          points={[0,45,90,135,180,225,270,315].flatMap((a) => {
-            const r1 = 22, r2 = 9;
+          points={Array.from({ length: 8 }, (_, i) => {
+            const a = i * 45;
+            const r1 = 26, r2 = 11;
             const toRad = (d: number) => (d - 90) * Math.PI / 180;
             return [
               `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))}`,
               `${r2 * Math.cos(toRad(a + 22.5))},${r2 * Math.sin(toRad(a + 22.5))}`,
-            ];
+            ].join(" ");
           }).join(" ")}
-          fill="none" stroke="#fbbf24" strokeWidth="1"
+          fill="rgba(251,191,36,0.08)" stroke="#fbbf24" strokeWidth="0.9"
         />
-        <circle cx="0" cy="0" r="3" fill="#fbbf24" opacity="0.4" />
+        <circle cx="0" cy="0" r="3.5" fill="none" stroke="#fbbf24" strokeWidth="0.7" />
+        <circle cx="0" cy="0" r="1.5" fill="#fbbf24" opacity="0.5" />
       </g>
 
-      {/* Small star — center */}
-      <g transform="translate(200,34)" opacity="0.12">
+      {/* ── Small star — upper center ── */}
+      <g transform="translate(200,28)" opacity="0.10">
         <polygon
-          points={[0,45,90,135,180,225,270,315].flatMap((a) => {
-            const r1 = 14, r2 = 6;
+          points={Array.from({ length: 6 }, (_, i) => {
+            const a = i * 60;
+            const r1 = 16, r2 = 7;
             const toRad = (d: number) => (d - 90) * Math.PI / 180;
             return [
               `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))}`,
-              `${r2 * Math.cos(toRad(a + 22.5))},${r2 * Math.sin(toRad(a + 22.5))}`,
-            ];
+              `${r2 * Math.cos(toRad(a + 30))},${r2 * Math.sin(toRad(a + 30))}`,
+            ].join(" ");
           }).join(" ")}
-          fill="none" stroke="#6ee7b7" strokeWidth="0.9"
+          fill="none" stroke="#6ee7b7" strokeWidth="0.8"
         />
       </g>
 
-      {/* Geometric lattice lines */}
-      <g opacity="0.07" stroke="#fbbf24" strokeWidth="0.6" fill="none">
-        <line x1="44" y1="54" x2="200" y2="34" />
-        <line x1="200" y1="34" x2="356" y2="40" />
-        <line x1="44" y1="54" x2="80" y2="160" />
-        <line x1="356" y1="40" x2="320" y2="160" />
-        <line x1="80" y1="160" x2="200" y2="140" />
-        <line x1="200" y1="140" x2="320" y2="160" />
+      {/* ── Geometric lattice / muqarnas grid ── */}
+      <g opacity="0.055" stroke="#fbbf24" strokeWidth="0.5" fill="none">
+        <line x1="38" y1="68" x2="200" y2="28" />
+        <line x1="200" y1="28" x2="362" y2="52" />
+        <line x1="38" y1="68" x2="90" y2="170" />
+        <line x1="362" y1="52" x2="310" y2="170" />
+        <line x1="90" y1="170" x2="200" y2="150" />
+        <line x1="200" y1="150" x2="310" y2="170" />
+        <line x1="0" y1="130" x2="400" y2="130" strokeDasharray="3,8" strokeOpacity="0.5" />
       </g>
 
-      {/* Dot sparkles */}
+      {/* ── Crescent — right ── */}
+      <g transform="translate(375,120)" opacity="0.16">
+        <path d="M0,-20 a20,20 0 1,1 14,34 a14,14 0 1,0 -14,-34" fill="#fbbf24" />
+      </g>
+
+      {/* ── Tiny dot sparkles ── */}
       {[
-        [120, 18, 1.4], [280, 22, 1.0], [80, 78, 0.8],
-        [330, 68, 1.2], [160, 46, 0.7], [240, 50, 0.9],
+        [118, 16, 1.6], [284, 20, 1.1], [74, 88, 0.9],
+        [336, 74, 1.3], [158, 44, 0.8], [242, 52, 1.0],
+        [310, 100, 0.7], [66, 140, 0.6], [180, 18, 0.9],
       ].map(([cx, cy, r], i) => (
-        <circle key={i} cx={cx} cy={cy} r={r} fill="#fbbf24" opacity="0.35" />
+        <circle key={i} cx={cx} cy={cy} r={r} fill="#fbbf24" opacity="0.28" />
       ))}
 
-      {/* Crescent — right side */}
-      <g transform="translate(370,110)" opacity="0.14">
-        <path d="M0,-18 a18,18 0 1,1 13,31 a13,13 0 1,0 -13,-31" fill="#fbbf24" />
+      {/* ── Radial glow center ── */}
+      <ellipse cx="200" cy="80" rx="180" ry="100" fill="url(#goldGlow)" opacity="0.07" />
+
+      {/* ── Corner arabesque motifs ── */}
+      <g transform="translate(0,0)" opacity="0.08" stroke="#fbbf24" strokeWidth="0.6" fill="none">
+        <path d="M0,40 Q20,20 40,0" />
+        <path d="M0,55 Q28,28 55,0" />
+      </g>
+      <g transform="translate(400,0) scale(-1,1)" opacity="0.08" stroke="#fbbf24" strokeWidth="0.6" fill="none">
+        <path d="M0,40 Q20,20 40,0" />
+        <path d="M0,55 Q28,28 55,0" />
       </g>
     </svg>
   );
@@ -148,13 +177,11 @@ function MosqueSilhouette() {
         alt=""
         aria-hidden
         className="w-full h-full object-cover object-bottom"
-        style={{ opacity: 0.13, filter: "brightness(0) invert(1)" }}
+        style={{ opacity: 0.10, filter: "brightness(0) invert(1)" }}
       />
     </div>
   );
 }
-
-// ── Main Component ─────────────────────────────────────────────────────────────
 
 export function IslamicHero() {
   const [items, setItems]     = useState<HeroItem[]>([]);
@@ -203,31 +230,62 @@ export function IslamicHero() {
     <div
       className="relative w-full overflow-hidden select-none"
       style={{
-        minHeight: 280,
-        background: "linear-gradient(160deg, #0d2e1a 0%, #142f1c 40%, #0f2417 70%, #0a1e14 100%)",
-        maskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to bottom, black 70%, transparent 100%)",
+        minHeight: 290,
+        background: [
+          "linear-gradient(175deg,",
+          "  #06111e 0%,",
+          "  #071620 18%,",
+          "  #091c1a 42%,",
+          "  #081917 65%,",
+          "  #060f14 85%,",
+          "  #040c11 100%",
+          ")",
+        ].join(""),
+        maskImage: "linear-gradient(to bottom, black 55%, rgba(0,0,0,0.6) 78%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 55%, rgba(0,0,0,0.6) 78%, transparent 100%)",
       }}
     >
-      {/* Subtle texture overlay */}
+      {/* Ambient glow layers */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(ellipse at 20% 50%, rgba(251,191,36,0.06) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(110,231,183,0.05) 0%, transparent 50%)",
+          backgroundImage: [
+            "radial-gradient(ellipse 70% 60% at 15% 40%, rgba(251,191,36,0.07) 0%, transparent 70%)",
+            "radial-gradient(ellipse 60% 50% at 85% 25%, rgba(110,231,183,0.05) 0%, transparent 65%)",
+            "radial-gradient(ellipse 50% 40% at 50% 85%, rgba(251,191,36,0.04) 0%, transparent 60%)",
+          ].join(", "),
         }}
       />
 
-      {/* Islamic geometric SVG decoration */}
-      <IslamicStars />
+      {/* Subtle noise/grain texture */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.03]"
+        style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+          backgroundSize: "200px 200px",
+        }}
+      />
+
+      {/* Islamic geometric SVG */}
+      <IslamicGeometry />
 
       {/* Mosque silhouette */}
       <MosqueSilhouette />
 
-      {/* Top shimmer line */}
-      <div className="absolute top-0 inset-x-0 h-px" style={{ background: "linear-gradient(to right, transparent, rgba(251,191,36,0.5), transparent)" }} />
+      {/* Top gold shimmer line */}
+      <div
+        className="absolute top-0 inset-x-0 h-[1.5px] pointer-events-none"
+        style={{ background: "linear-gradient(to right, transparent 0%, rgba(251,191,36,0.6) 30%, rgba(251,191,36,0.8) 50%, rgba(251,191,36,0.6) 70%, transparent 100%)" }}
+      />
 
-      {/* ── Content ── */}
-      <div className="relative z-10 flex flex-col items-center pt-7 pb-4 px-5">
+      {/* Subtle inner glow border */}
+      <div
+        className="absolute top-0 inset-x-0 h-20 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, rgba(251,191,36,0.04) 0%, transparent 100%)" }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center pt-7 pb-5 px-5">
 
         {/* Logo */}
         <motion.div
@@ -237,10 +295,15 @@ export function IslamicHero() {
           className="mb-3"
         >
           <div
-            className="w-[68px] h-[68px] rounded-full overflow-hidden"
+            className="w-[70px] h-[70px] rounded-full overflow-hidden"
             style={{
-              border: "2.5px solid rgba(251,191,36,0.55)",
-              boxShadow: "0 0 22px rgba(251,191,36,0.35), 0 0 44px rgba(251,191,36,0.15), 0 4px 20px rgba(0,0,0,0.4)",
+              border: "2px solid rgba(251,191,36,0.5)",
+              boxShadow: [
+                "0 0 0 4px rgba(251,191,36,0.08)",
+                "0 0 28px rgba(251,191,36,0.3)",
+                "0 0 56px rgba(251,191,36,0.12)",
+                "0 6px 24px rgba(0,0,0,0.5)",
+              ].join(", "),
             }}
           >
             <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
@@ -252,28 +315,35 @@ export function IslamicHero() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-[17px] font-bold tracking-wide"
-          style={{ color: "#fbbf24", textShadow: "0 0 20px rgba(251,191,36,0.4)" }}
+          className="text-[17px] font-bold tracking-widest"
+          style={{
+            color: "#f5c842",
+            textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)",
+            letterSpacing: "0.06em",
+          }}
         >
           دليل التوبة النصوح
         </motion.h1>
 
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.35, duration: 0.5 }}
-          className="text-[11px] mt-1 mb-4 flex items-center gap-2"
-          style={{ color: "rgba(200,230,210,0.6)" }}
+        {/* Decorative divider */}
+        <motion.div
+          initial={{ opacity: 0, scaleX: 0.4 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="flex items-center gap-2 mt-2 mb-4"
         >
-          <span className="inline-block w-8 h-px" style={{ background: "rgba(251,191,36,0.35)" }} />
-          رحلتك نحو الله تبدأ هنا
-          <span className="inline-block w-8 h-px" style={{ background: "rgba(251,191,36,0.35)" }} />
-        </motion.p>
+          <div style={{ width: 28, height: 1, background: "linear-gradient(to left, rgba(251,191,36,0.5), transparent)" }} />
+          <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(251,191,36,0.55)", boxShadow: "0 0 6px rgba(251,191,36,0.4)" }} />
+          <span className="text-[11px] font-medium" style={{ color: "rgba(200,230,215,0.55)", letterSpacing: "0.04em" }}>
+            رحلتك نحو الله تبدأ هنا
+          </span>
+          <div style={{ width: 5, height: 5, borderRadius: "50%", background: "rgba(251,191,36,0.55)", boxShadow: "0 0 6px rgba(251,191,36,0.4)" }} />
+          <div style={{ width: 28, height: 1, background: "linear-gradient(to right, rgba(251,191,36,0.5), transparent)" }} />
+        </motion.div>
 
         {/* Content card */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.45, duration: 0.5 }}
           className="w-full max-w-sm"
@@ -281,15 +351,19 @@ export function IslamicHero() {
           <div
             className="rounded-2xl overflow-hidden"
             style={{
-              background: "rgba(255,255,255,0.06)",
-              border: "1px solid rgba(251,191,36,0.2)",
-              backdropFilter: "blur(10px)",
+              background: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(251,191,36,0.18)",
+              backdropFilter: "blur(16px)",
+              boxShadow: "0 4px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(251,191,36,0.12)",
             }}
           >
             {/* Card header */}
             <div
               className="flex items-center justify-between px-4 py-2.5"
-              style={{ borderBottom: "1px solid rgba(251,191,36,0.12)" }}
+              style={{
+                borderBottom: "1px solid rgba(251,191,36,0.1)",
+                background: "linear-gradient(to right, rgba(251,191,36,0.06), transparent)",
+              }}
             >
               <div className="flex items-center gap-2">
                 <Sparkles size={12} style={{ color: "#fbbf24" }} />
@@ -351,7 +425,6 @@ export function IslamicHero() {
                     transition={{ duration: 0.35, ease: "easeOut" }}
                     className="flex flex-col gap-2"
                   >
-                    {/* Badge + source */}
                     <div className="flex items-center gap-2 flex-wrap">
                       {meta && (
                         <span
@@ -368,8 +441,6 @@ export function IslamicHero() {
                         </span>
                       )}
                     </div>
-
-                    {/* Text */}
                     <p
                       className="text-[13px] leading-[1.9] font-medium"
                       style={{ color: "rgba(240,255,245,0.92)" }}
@@ -393,7 +464,7 @@ export function IslamicHero() {
                     style={{
                       width: i === idx ? 18 : 5,
                       height: 5,
-                      background: i === idx ? "#fbbf24" : "rgba(251,191,36,0.25)",
+                      background: i === idx ? "#fbbf24" : "rgba(251,191,36,0.22)",
                     }}
                     aria-label={`الانتقال إلى ${i + 1}`}
                   />

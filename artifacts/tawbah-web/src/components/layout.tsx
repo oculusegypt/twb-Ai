@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, HelpCircle, User2, X } from "lucide-react";
+import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, HelpCircle, User2, X, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
@@ -223,11 +223,19 @@ export function Layout({ children }: { children: ReactNode }) {
                   <motion.div
                     whileTap={{ scale: 0.92 }}
                     whileHover={{ scale: 1.04 }}
+                    className="relative"
                   >
                     <div
                       className="zaki-btn-siri w-[60px] h-[60px]"
                       style={{ boxShadow: "0 6px 24px rgba(0,0,0,0.22)" }}
                     />
+                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+                      <Heart
+                        size={28}
+                        className={isZakiActive ? "fill-white text-white" : "fill-white/90 text-white/90"}
+                        strokeWidth={1.5}
+                      />
+                    </div>
                   </motion.div>
                 </Link>
               </div>
