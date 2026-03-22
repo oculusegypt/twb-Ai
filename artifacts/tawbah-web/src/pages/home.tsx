@@ -269,41 +269,63 @@ function TafsirSheet({ item, onClose }: { item: BannerItem; onClose: () => void 
 
 // ─── DynamicBanner ────────────────────────────────────────────────────────────
 
+const BANNER_DURATION = 8000;
+
 function DynamicBanner() {
   const seasonBanner = getSeasonBanner();
   const { quranReciterId } = useSettings();
-  const getPoolIndex = () => {
-    const slotMinutes = 30;
-    const slotIndex = Math.floor(Date.now() / (slotMinutes * 60 * 1000));
-    return slotIndex % BANNER_POOL.length;
-  };
-  const [poolIndex, setPoolIndex] = useState(getPoolIndex);
-  const [manualIndex, setManualIndex] = useState<number | null>(null);
+
+  const [idx, setIdx] = useState(0);
   const [showSeason, setShowSeason] = useState(!!seasonBanner);
   const [showTafsir, setShowTafsir] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [audioState, setAudioState] = useState<"idle" | "loading" | "playing">("idle");
+  const [progress, setProgress] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const autoRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const advance = useCallback(() => {
+    setIdx(i => (i + 1) % BANNER_POOL.length);
+    setProgress(0);
+  }, []);
+
+  const startAuto = useCallback(() => {
+    if (autoRef.current) clearInterval(autoRef.current);
+    if (progressRef.current) clearInterval(progressRef.current);
+    setProgress(0);
+    const step = 100 / (BANNER_DURATION / 50);
+    progressRef.current = setInterval(() => setProgress(p => Math.min(p + step, 100)), 50);
+    autoRef.current = setInterval(advance, BANNER_DURATION);
+  }, [advance]);
 
   useEffect(() => {
-    const interval = setInterval(() => { setPoolIndex(getPoolIndex()); setManualIndex(null); }, 30 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+    if (!showSeason) startAuto();
+    return () => {
+      if (autoRef.current) clearInterval(autoRef.current);
+      if (progressRef.current) clearInterval(progressRef.current);
+    };
+  }, [showSeason, startAuto]);
+
   useEffect(() => {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
-    setAudioState("idle"); setShowTafsir(false);
-  }, [poolIndex, manualIndex, showSeason]);
+    setAudioState("idle");
+    setShowTafsir(false);
+  }, [idx, showSeason]);
 
-  const currentItem: BannerItem = showSeason && seasonBanner ? seasonBanner : BANNER_POOL[manualIndex !== null ? manualIndex : poolIndex];
+  const currentItem: BannerItem = showSeason && seasonBanner
+    ? seasonBanner
+    : BANNER_POOL[idx];
   const IconComp = ICON_MAP[currentItem.icon];
-  const handleNext = () => {
-    if (showSeason) { setShowSeason(false); setManualIndex(poolIndex); }
-    else { const next = ((manualIndex !== null ? manualIndex : poolIndex) + 1) % BANNER_POOL.length; setManualIndex(next); }
-  };
+
+  const handleDismissSeason = () => { setShowSeason(false); startAuto(); };
+
   const handleListen = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!currentItem.ayahRef) return;
-    if (audioState === "playing" && audioRef.current) { audioRef.current.pause(); audioRef.current = null; setAudioState("idle"); return; }
+    if (audioState === "playing" && audioRef.current) {
+      audioRef.current.pause(); audioRef.current = null; setAudioState("idle"); return;
+    }
     setAudioState("loading");
     try {
       const { surah, ayah } = currentItem.ayahRef;
@@ -313,56 +335,105 @@ function DynamicBanner() {
       if (!audioUrl) throw new Error("No audio URL");
       const audio = new Audio(audioUrl);
       audioRef.current = audio; audio.play(); setAudioState("playing");
-      audio.onended = () => setAudioState("idle"); audio.onerror = () => setAudioState("idle");
+      audio.onended = () => setAudioState("idle");
+      audio.onerror = () => setAudioState("idle");
     } catch { setAudioState("idle"); }
   };
+
   const styles = TYPE_STYLES[currentItem.type];
-  const gradientClass = currentItem.type === "season" && currentItem.seasonColor ? currentItem.seasonColor : `${styles.gradient} ${styles.border}`;
+  const gradientClass = currentItem.type === "season" && currentItem.seasonColor
+    ? currentItem.seasonColor
+    : `${styles.gradient} ${styles.border}`;
   const isAyah = currentItem.type === "ayah" && !!currentItem.ayahRef;
 
   if (dismissed) return null;
 
   return (
     <>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentItem.label + currentItem.content.slice(0, 20)}
-          initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.35 }}
-          className={`bg-gradient-to-r ${gradientClass} rounded-2xl p-4 border shadow-sm cursor-pointer select-none`}
-          onClick={handleNext}
-        >
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-2">
-              <IconComp size={15} className={`${styles.iconColor} shrink-0`} />
+      <div className={`bg-gradient-to-r ${gradientClass} rounded-2xl border shadow-sm overflow-hidden select-none`}>
+        {/* Header row */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentItem.label}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -8 }}
+              transition={{ duration: 0.25 }}
+              className="flex items-center gap-1.5"
+            >
+              <IconComp size={14} className={`${styles.iconColor} shrink-0`} />
               <span className={`font-bold text-xs ${styles.iconColor}`}>{currentItem.label}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-muted-foreground/60">اضغط للتالي ›</span>
-              <button
-                onClick={(e) => { e.stopPropagation(); setDismissed(true); }}
-                className="w-5 h-5 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition-colors shrink-0"
-                aria-label="إغلاق"
-              >
-                <X size={11} className="text-foreground/60" />
-              </button>
-            </div>
+            </motion.div>
+          </AnimatePresence>
+
+          <button
+            onClick={() => setDismissed(true)}
+            className="w-6 h-6 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 active:scale-90 transition-all shrink-0"
+            aria-label="إغلاق"
+          >
+            <X size={12} className="text-foreground/50" />
+          </button>
+        </div>
+
+        {/* Content area with clip to prevent layout shift */}
+        <div className="relative overflow-hidden min-h-[44px] px-4 pb-3">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentItem.content.slice(0, 30)}
+              initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={{ opacity: 0, y: -14, filter: "blur(4px)" }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <p className="text-xs text-foreground/80 leading-relaxed">{currentItem.content}</p>
+              {isAyah && (
+                <div className="flex gap-2 mt-2.5 pt-2.5 border-t border-current/10">
+                  <button
+                    onClick={handleListen}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${audioState === "playing" ? "bg-emerald-500 text-white shadow-md" : "bg-background/70 hover:bg-background text-foreground/80 border border-current/10"}`}
+                  >
+                    {audioState === "loading"
+                      ? <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin inline-block" />
+                      : <Volume2 size={12} className={audioState === "playing" ? "animate-pulse" : ""} />
+                    }
+                    {audioState === "playing" ? "إيقاف" : "استمع"}
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowTafsir(true); }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-background/70 hover:bg-background text-foreground/80 border border-current/10 transition-all"
+                  >
+                    <BookText size={12} />تفسير ميسر
+                  </button>
+                  {showSeason && (
+                    <button
+                      onClick={handleDismissSeason}
+                      className="mr-auto flex items-center gap-1 px-2 py-1.5 rounded-xl text-[10px] text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                    >
+                      التالي ›
+                    </button>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Progress bar — only shown for auto-rotating (non-season) */}
+        {!showSeason && (
+          <div className="h-[2px] bg-black/5 w-full">
+            <motion.div
+              className={`h-full ${styles.iconColor.replace("text-", "bg-").replace("/80", "/40").replace("/60", "/40")}`}
+              style={{ width: `${progress}%` }}
+              transition={{ ease: "linear" }}
+            />
           </div>
-          <p className="text-xs text-foreground/80 leading-relaxed">{currentItem.content}</p>
-          {isAyah && (
-            <div className="flex gap-2 mt-3 pt-3 border-t border-current/10" onClick={(e) => e.stopPropagation()}>
-              <button onClick={handleListen} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all ${audioState === "playing" ? "bg-emerald-500 text-white shadow-md" : "bg-background/70 hover:bg-background text-foreground/80 border border-current/10"}`}>
-                {audioState === "loading" ? <span className="w-3 h-3 border-2 border-current/30 border-t-current rounded-full animate-spin inline-block" /> : <Volume2 size={12} className={audioState === "playing" ? "animate-pulse" : ""} />}
-                {audioState === "playing" ? "إيقاف" : "استمع"}
-              </button>
-              <button onClick={(e) => { e.stopPropagation(); setShowTafsir(true); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-background/70 hover:bg-background text-foreground/80 border border-current/10 transition-all">
-                <BookText size={12} />تفسير ميسر
-              </button>
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-      {showTafsir && currentItem.tafsir && <TafsirSheet item={currentItem} onClose={() => setShowTafsir(false)} />}
+        )}
+      </div>
+
+      {showTafsir && currentItem.tafsir && (
+        <TafsirSheet item={currentItem} onClose={() => setShowTafsir(false)} />
+      )}
     </>
   );
 }
