@@ -64,6 +64,8 @@ type GridId =
   | "dua-timing";
 
 type ListId =
+  | "soul-meter"
+  | "journey-card"
   | "journey30"
   | "invite"
   | "ameen"
@@ -88,10 +90,11 @@ const GRID_DEFAULT: GridId[] = [
 ];
 
 const LIST_DEFAULT: ListId[] = [
-  "live-stats", "ameen", "invite", "signs", "journey30", "tawbah-card", "map",
+  "soul-meter", "journey-card", "live-stats", "ameen", "invite", "signs", "journey30", "tawbah-card", "map",
 ];
 
 const ALL_SECTIONS: SectionId[] = [
+  "soul-meter", "journey-card",
   "rajaa", "dhikr", "dua-timing", "dhikr-rooms", "hadi-tasks", "prayer-times",
   "live-stats",
   "kaffarah", "relapse", "journal", "progress-map", "challenge", "notifications",
@@ -100,7 +103,7 @@ const ALL_SECTIONS: SectionId[] = [
   "journey30", "tawbah-card", "map",
 ];
 
-const COMBINED_STORAGE_KEY = "home_combined_order_v4";
+const COMBINED_STORAGE_KEY = "home_combined_order_v5";
 
 function loadCombinedOrder(): SectionId[] {
   try {
@@ -743,7 +746,9 @@ function SectionNotifications() {
 // ─── Section label map ────────────────────────────────────────────────────────
 
 const SECTION_LABELS: Record<ListId, string> = {
-  "journey30":     "رحلة ٣٠ يوماً",
+  "soul-meter":    "مقياس الروح",
+  "journey-card":  "رحلة التوبة ٣٠ يوماً",
+  "journey30":     "رحلة ٣٠ يوماً (رابط)",
   "invite":        "ادعُ رفيقاً",
   "ameen":         "قل آمين",
   "tawbah-card":   "بطاقة توبتي",
@@ -752,8 +757,45 @@ const SECTION_LABELS: Record<ListId, string> = {
   "live-stats":    "إحصاءات حية",
 };
 
+function SectionSoulMeter() {
+  return <SoulMeter />;
+}
+
+function SectionJourneyCard() {
+  const { data: progress } = useAppUserProgress();
+  const hasCovenant = progress?.covenantSigned;
+  const dayOneDone = progress?.firstDayTasksCompleted;
+  return (
+    <div className="bg-card rounded-2xl p-5 shadow-xl shadow-black/5 border border-border">
+      {!hasCovenant ? (
+        <div className="text-center flex flex-col items-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary"><Heart size={32} /></div>
+          <h2 className="text-xl font-bold mb-2">رحلة العودة إلى الله</h2>
+          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك. هل أنت مستعد لاتخاذ القرار؟</p>
+          <Link href="/covenant" className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
+            <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={18} />
+          </Link>
+        </div>
+      ) : !dayOneDone ? (
+        <div className="text-center flex flex-col items-center">
+          <div className="w-16 h-16 bg-accent/20 text-accent rounded-full flex items-center justify-center mb-4"><Activity size={32} /></div>
+          <h2 className="text-xl font-bold mb-2">لقد عاهدت الله</h2>
+          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة تماماً.</p>
+          <Link href="/day-one" className="w-full py-3.5 bg-accent text-accent-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
+            <span>أكمل مهام اللحظة الأولى</span><CheckCircle2 size={18} />
+          </Link>
+        </div>
+      ) : (
+        <Journey30HeroCard />
+      )}
+    </div>
+  );
+}
+
 function renderSection(id: ListId) {
   switch (id) {
+    case "soul-meter":  return <SectionSoulMeter />;
+    case "journey-card":return <SectionJourneyCard />;
     case "journey30":   return <SectionJourney30 />;
     case "invite":      return <SectionInvite />;
     case "ameen":       return <SectionAmeen />;
@@ -837,7 +879,7 @@ function SortableUnifiedItem({ id, editMode }: { id: SectionId; editMode: boolea
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const { data: progress, isLoading } = useAppUserProgress();
+  const { isLoading } = useAppUserProgress();
   const [showSosToast, setShowSosToast] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
@@ -885,9 +927,6 @@ export default function Home() {
     );
   }
 
-  const hasCovenant = progress?.covenantSigned;
-  const dayOneDone = progress?.firstDayTasksCompleted;
-
   return (
     <div className="flex flex-col flex-1 pb-8">
       <AnimatePresence>
@@ -904,37 +943,6 @@ export default function Home() {
 
         <EidEntryCard />
         <DynamicBanner />
-        <SoulMeter />
-
-        {/* Main journey card — fixed, not sortable */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="bg-card rounded-2xl p-5 shadow-xl shadow-black/5 border border-border"
-        >
-          {!hasCovenant ? (
-            <div className="text-center flex flex-col items-center">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary"><Heart size={32} /></div>
-              <h2 className="text-xl font-bold mb-2">رحلة العودة إلى الله</h2>
-              <p className="text-muted-foreground text-sm mb-6 leading-relaxed">التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك. هل أنت مستعد لاتخاذ القرار؟</p>
-              <Link href="/covenant" className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
-                <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={18} />
-              </Link>
-            </div>
-          ) : !dayOneDone ? (
-            <div className="text-center flex flex-col items-center">
-              <div className="w-16 h-16 bg-accent/20 text-accent rounded-full flex items-center justify-center mb-4"><Activity size={32} /></div>
-              <h2 className="text-xl font-bold mb-2">لقد عاهدت الله</h2>
-              <p className="text-muted-foreground text-sm mb-6 leading-relaxed">بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة تماماً.</p>
-              <Link href="/day-one" className="w-full py-3.5 bg-accent text-accent-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
-                <span>أكمل مهام اللحظة الأولى</span><CheckCircle2 size={18} />
-              </Link>
-            </div>
-          ) : (
-            <Journey30HeroCard />
-          )}
-        </motion.div>
 
         {/* Edit mode banner */}
         <AnimatePresence>
