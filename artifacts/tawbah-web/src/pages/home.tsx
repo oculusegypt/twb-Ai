@@ -867,6 +867,19 @@ function SectionSoulMeter() {
 }
 
 function IslamicGateSVG() {
+  const star8 = (cx: number, cy: number, R: number, r: number) =>
+    Array.from({ length: 16 }, (_, i) => {
+      const a = (i * 22.5 - 90) * Math.PI / 180;
+      const rad = i % 2 === 0 ? R : r;
+      return `${(cx + rad * Math.cos(a)).toFixed(2)},${(cy + rad * Math.sin(a)).toFixed(2)}`;
+    }).join(" ");
+
+  const topStars    = Array.from({ length: 13 }, (_, i) => [22 + i * 30, 22] as [number, number]);
+  const bottomStars = Array.from({ length: 13 }, (_, i) => [22 + i * 30, 318] as [number, number]);
+  const leftStars   = Array.from({ length: 9  }, (_, i) => [22, 52 + i * 30] as [number, number]);
+  const rightStars  = Array.from({ length: 9  }, (_, i) => [378, 52 + i * 30] as [number, number]);
+  const allStars    = [...topStars, ...bottomStars, ...leftStars, ...rightStars];
+
   return (
     <svg
       viewBox="0 0 400 340"
@@ -876,177 +889,149 @@ function IslamicGateSVG() {
     >
       <defs>
         <radialGradient id="gateGlow" cx="50%" cy="38%" r="55%">
-          <stop offset="0%" stopColor="#c9a84c" stopOpacity="0.22" />
-          <stop offset="100%" stopColor="#c9a84c" stopOpacity="0" />
+          <stop offset="0%" stopColor="#d4a93a" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#d4a93a" stopOpacity="0" />
         </radialGradient>
-        <radialGradient id="archGlow" cx="50%" cy="0%" r="75%">
-          <stop offset="0%" stopColor="#7dd3b0" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#7dd3b0" stopOpacity="0" />
+        <radialGradient id="archInner" cx="50%" cy="30%" r="65%">
+          <stop offset="0%" stopColor="#0e8090" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#0e8090" stopOpacity="0" />
         </radialGradient>
-        <filter id="softGlow">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>
       </defs>
 
-      {/* ── Deep ambient glows ── */}
-      <ellipse cx="200" cy="130" rx="160" ry="120" fill="url(#gateGlow)" />
-      <ellipse cx="200" cy="0" rx="180" ry="120" fill="url(#archGlow)" />
+      {/* ── Ambient glows ── */}
+      <ellipse cx="200" cy="170" rx="180" ry="155" fill="url(#gateGlow)" />
+      <ellipse cx="200" cy="170" rx="140" ry="130" fill="url(#archInner)" />
 
-      {/* ── Outer ornamental frame ── */}
-      <rect x="12" y="12" width="376" height="316" rx="14" fill="none" stroke="#c9a84c" strokeWidth="0.6" strokeOpacity="0.28" />
-      <rect x="18" y="18" width="364" height="304" rx="11" fill="none" stroke="#c9a84c" strokeWidth="0.35" strokeOpacity="0.18" />
+      {/* ── Outer gold border frame (double line) ── */}
+      <rect x="6" y="6" width="388" height="328" rx="14" fill="none" stroke="#d4a93a" strokeWidth="2" strokeOpacity="0.7" />
+      <rect x="12" y="12" width="376" height="316" rx="11" fill="none" stroke="#d4a93a" strokeWidth="0.8" strokeOpacity="0.4" />
 
-      {/* ── Corner ornaments ── */}
-      {[
-        [28, 28, 1, 1], [372, 28, -1, 1], [28, 312, 1, -1], [372, 312, -1, -1]
-      ].map(([cx, cy, sx, sy], i) => (
-        <g key={i} transform={`translate(${cx},${cy}) scale(${sx},${sy})`} opacity="0.55">
-          <path d="M0,0 L22,0 L22,2 L2,2 L2,22 L0,22 Z" fill="#c9a84c" />
-          <path d="M4,4 L16,4 L16,6 L6,6 L6,16 L4,16 Z" fill="none" stroke="#c9a84c" strokeWidth="0.5" />
-          <circle cx="10" cy="10" r="2.5" fill="none" stroke="#c9a84c" strokeWidth="0.6" />
-          <circle cx="10" cy="10" r="1" fill="#c9a84c" />
+      {/* ── Geometric star border tiles ── */}
+      {allStars.map(([cx, cy], i) => (
+        <polygon key={i} points={star8(cx, cy, 9, 3.8)}
+          fill="#d4a93a" fillOpacity="0.75" stroke="#f5d060" strokeWidth="0.3" strokeOpacity="0.5" />
+      ))}
+
+      {/* ── Connecting dots between stars (border lattice) ── */}
+      {topStars.slice(0,-1).map(([cx, cy], i) => (
+        <circle key={`td${i}`} cx={cx + 15} cy={cy} r={1.5} fill="#d4a93a" fillOpacity="0.4" />
+      ))}
+      {bottomStars.slice(0,-1).map(([cx, cy], i) => (
+        <circle key={`bd${i}`} cx={cx + 15} cy={cy} r={1.5} fill="#d4a93a" fillOpacity="0.4" />
+      ))}
+      {leftStars.slice(0,-1).map(([cx, cy], i) => (
+        <circle key={`ld${i}`} cx={cx} cy={cy + 15} r={1.5} fill="#d4a93a" fillOpacity="0.4" />
+      ))}
+      {rightStars.slice(0,-1).map(([cx, cy], i) => (
+        <circle key={`rd${i}`} cx={cx} cy={cy + 15} r={1.5} fill="#d4a93a" fillOpacity="0.4" />
+      ))}
+
+      {/* ── Corner bracket ornaments ── */}
+      {([[6,6,1,1],[394,6,-1,1],[6,334,1,-1],[394,334,-1,-1]] as [number,number,number,number][]).map(([cx,cy,sx,sy],i) => (
+        <g key={`co${i}`} transform={`translate(${cx},${cy}) scale(${sx},${sy})`} opacity="0.9">
+          <path d="M0,0 L36,0 L36,4 L4,4 L4,36 L0,36 Z" fill="#d4a93a" />
+          <path d="M6,6 L24,6 L24,8 L8,8 L8,24 L6,24 Z" fill="none" stroke="#f5d060" strokeWidth="0.5" />
         </g>
       ))}
 
-      {/* ── Top arabesque border row ── */}
-      <g opacity="0.22" stroke="#c9a84c" strokeWidth="0.7" fill="none">
-        <path d="M28,28 Q100,20 200,28 Q300,36 372,28" />
-        <path d="M28,34 Q100,26 200,34 Q300,42 372,34" />
-      </g>
-      <g opacity="0.22" stroke="#c9a84c" strokeWidth="0.7" fill="none">
-        <path d="M28,306 Q100,314 200,306 Q300,298 372,306" />
-        <path d="M28,312 Q100,320 200,312 Q300,304 372,312" />
+      {/* ── Inner border (dashed accent) ── */}
+      <rect x="36" y="36" width="328" height="268" rx="6" fill="none"
+        stroke="#d4a93a" strokeWidth="0.5" strokeOpacity="0.25" strokeDasharray="5,4" />
+
+      {/* ── Main pointed arch (mihrab / iwan) ── */}
+      {/* Arch subtle fill */}
+      <path d="M108,310 L108,152 C108,68 148,32 200,26 C252,32 292,68 292,152 L292,310 Z"
+        fill="rgba(10,80,90,0.28)" />
+      {/* Outer arch stroke */}
+      <path d="M108,310 L108,152 C108,68 148,32 200,26 C252,32 292,68 292,152 L292,310 Z"
+        fill="none" stroke="#d4a93a" strokeWidth="2" strokeOpacity="0.7" />
+      {/* Inner arch stroke */}
+      <path d="M120,310 L120,155 C120,76 155,44 200,38 C245,44 280,76 280,155 L280,310 Z"
+        fill="none" stroke="#d4a93a" strokeWidth="0.8" strokeOpacity="0.4" />
+
+      {/* ── Muqarnas / stalactite row below keystone ── */}
+      {([-72,-54,-36,-18,0,18,36,54,72] as number[]).map((dx, i) => {
+        const tall = i % 2 === 0;
+        const w = tall ? 14 : 10;
+        const h = tall ? 20 : 14;
+        const y0 = tall ? 60 : 66;
+        return (
+          <g key={`mq${i}`} transform={`translate(${200+dx},${y0})`} opacity="0.5">
+            <path d={`M0,0 L${w/2},${h*0.6} L0,${h} L${-w/2},${h*0.6} Z`} fill="#d4a93a" />
+          </g>
+        );
+      })}
+
+      {/* ── Arch keystone diamond ── */}
+      <g transform="translate(200,27)" opacity="0.9">
+        <polygon points="0,-16 9,0 0,9 -9,0" fill="#d4a93a" />
+        <circle cx="0" cy="0" r="5.5" fill="none" stroke="#f5d060" strokeWidth="0.9" />
+        <circle cx="0" cy="0" r="2" fill="#f5d060" />
+        <line x1="-30" y1="0" x2="30" y2="0" stroke="#d4a93a" strokeWidth="0.8" strokeOpacity="0.55" />
       </g>
 
-      {/* ── Main Islamic arch (pointed horseshoe) ── */}
-      <g filter="url(#softGlow)">
-        <path
-          d="M118,295 L118,148 Q118,58 200,42 Q282,58 282,148 L282,295 Z"
-          fill="none"
-          stroke="#c9a84c"
-          strokeWidth="1.4"
-          strokeOpacity="0.55"
-        />
-        {/* Inner arch */}
-        <path
-          d="M128,295 L128,152 Q128,72 200,57 Q272,72 272,152 L272,295 Z"
-          fill="none"
-          stroke="#c9a84c"
-          strokeWidth="0.7"
-          strokeOpacity="0.3"
-        />
+      {/* ── 8-pointed star inside arch (center top) ── */}
+      <g transform="translate(200,105)" opacity="0.22">
+        <polygon points={star8(0, 0, 28, 12)} fill="#d4a93a" stroke="#f5d060" strokeWidth="0.5" />
+        <circle cx="0" cy="0" r="8" fill="none" stroke="#f5d060" strokeWidth="0.6" />
+        <circle cx="0" cy="0" r="3" fill="#f5d060" opacity="0.7" />
       </g>
 
-      {/* ── Arch keystone ornament ── */}
-      <g transform="translate(200,42)" opacity="0.7">
-        {/* Pointed muqarnas tip */}
-        <path d="M0,-14 L8,0 L0,6 L-8,0 Z" fill="#c9a84c" opacity="0.6" />
-        <path d="M0,-9 L5,0 L0,4 L-5,0 Z" fill="#c9a84c" opacity="0.4" />
-        {/* Horizontal bar */}
-        <line x1="-24" y1="0" x2="24" y2="0" stroke="#c9a84c" strokeWidth="0.8" strokeOpacity="0.45" />
-        <circle cx="0" cy="0" r="4.5" fill="none" stroke="#c9a84c" strokeWidth="0.9" strokeOpacity="0.6" />
-        <circle cx="0" cy="0" r="1.8" fill="#c9a84c" opacity="0.65" />
-      </g>
-
-      {/* ── Muqarnas row (stalactite vaults) just below keystone ── */}
-      {[-56,-40,-24,-8,8,24,40,56].map((x, i) => (
-        <g key={i} transform={`translate(${200 + x},68)`} opacity="0.35">
-          <path d={`M0,0 L${i % 2 === 0 ? 7 : 5},8 L0,14 L${i % 2 === 0 ? -7 : -5},8 Z`} fill="#c9a84c" />
-          <path d={`M0,14 L${i % 2 === 0 ? 5 : 3},20 L0,24 L${i % 2 === 0 ? -5 : -3},20 Z`} fill="#c9a84c" opacity="0.6" />
+      {/* ── Side 12-pointed stars (outside arch, wings) ── */}
+      {([[64,168],[336,168]] as [number,number][]).map(([cx,cy],i) => (
+        <g key={`wing${i}`} transform={`translate(${cx},${cy})`} opacity="0.28">
+          <polygon points={Array.from({length:24},(_,j) => {
+            const a=(j*15-90)*Math.PI/180; const r=j%2===0?30:13;
+            return `${(r*Math.cos(a)).toFixed(1)},${(r*Math.sin(a)).toFixed(1)}`;
+          }).join(" ")} fill="rgba(212,169,58,0.15)" stroke="#d4a93a" strokeWidth="0.7" />
+          <circle cx="0" cy="0" r="7" fill="none" stroke="#f5d060" strokeWidth="0.6" />
+          <circle cx="0" cy="0" r="2.5" fill="#d4a93a" opacity="0.6" />
         </g>
       ))}
 
-      {/* ── 12-pointed star — left wing ── */}
-      <g transform="translate(64,170)" opacity="0.25">
-        <polygon
-          points={Array.from({ length: 12 }, (_, i) => {
-            const a = i * 30; const r1 = 34, r2 = 14;
-            const toRad = (d: number) => (d - 90) * Math.PI / 180;
-            return `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))} ${r2 * Math.cos(toRad(a + 15))},${r2 * Math.sin(toRad(a + 15))}`;
-          }).join(" ")}
-          fill="rgba(201,168,76,0.12)" stroke="#c9a84c" strokeWidth="0.8"
-        />
-        <circle cx="0" cy="0" r="8" fill="none" stroke="#c9a84c" strokeWidth="0.7" />
-        <circle cx="0" cy="0" r="3" fill="#c9a84c" opacity="0.5" />
-        {/* petals */}
-        {[0,60,120,180,240,300].map((a, i) => {
-          const toRad = (d: number) => d * Math.PI / 180;
-          return <line key={i} x1="0" y1="0" x2={34 * Math.cos(toRad(a - 90))} y2={34 * Math.sin(toRad(a - 90))} stroke="#c9a84c" strokeWidth="0.4" strokeOpacity="0.4" />;
-        })}
-      </g>
-
-      {/* ── 12-pointed star — right wing ── */}
-      <g transform="translate(336,170)" opacity="0.25">
-        <polygon
-          points={Array.from({ length: 12 }, (_, i) => {
-            const a = i * 30; const r1 = 34, r2 = 14;
-            const toRad = (d: number) => (d - 90) * Math.PI / 180;
-            return `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))} ${r2 * Math.cos(toRad(a + 15))},${r2 * Math.sin(toRad(a + 15))}`;
-          }).join(" ")}
-          fill="rgba(201,168,76,0.12)" stroke="#c9a84c" strokeWidth="0.8"
-        />
-        <circle cx="0" cy="0" r="8" fill="none" stroke="#c9a84c" strokeWidth="0.7" />
-        <circle cx="0" cy="0" r="3" fill="#c9a84c" opacity="0.5" />
-        {[0,60,120,180,240,300].map((a, i) => {
-          const toRad = (d: number) => d * Math.PI / 180;
-          return <line key={i} x1="0" y1="0" x2={34 * Math.cos(toRad(a - 90))} y2={34 * Math.sin(toRad(a - 90))} stroke="#c9a84c" strokeWidth="0.4" strokeOpacity="0.4" />;
-        })}
-      </g>
-
-      {/* ── 8-pointed stars (small) top corners ── */}
-      {[[62, 62], [338, 62]].map(([cx, cy], i) => (
-        <g key={i} transform={`translate(${cx},${cy})`} opacity="0.3">
-          <polygon
-            points={Array.from({ length: 8 }, (_, j) => {
-              const a = j * 45; const r1 = 18, r2 = 8;
-              const toRad = (d: number) => (d - 90) * Math.PI / 180;
-              return `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))} ${r2 * Math.cos(toRad(a + 22.5))},${r2 * Math.sin(toRad(a + 22.5))}`;
-            }).join(" ")}
-            fill="rgba(201,168,76,0.1)" stroke="#c9a84c" strokeWidth="0.7"
-          />
-          <circle cx="0" cy="0" r="3" fill="#c9a84c" opacity="0.45" />
+      {/* ── Arch column capitals ── */}
+      {([108,292] as number[]).map((x,i) => (
+        <g key={`cap${i}`} opacity="0.5">
+          <rect x={x-14} y={142} width={28} height={6} rx="2" fill="#d4a93a" />
+          <rect x={x-10} y={136} width={20} height={8} rx="1.5" fill="none" stroke="#d4a93a" strokeWidth="0.9" />
+          <line x1={x-9} y1={140} x2={x+9} y2={140} stroke="#f5d060" strokeWidth="0.5" strokeOpacity="0.7" />
         </g>
       ))}
 
-      {/* ── Decorative lattice lines ── */}
-      <g opacity="0.1" stroke="#c9a84c" strokeWidth="0.5" fill="none">
-        <line x1="64" y1="136" x2="118" y2="170" />
-        <line x1="336" y1="136" x2="282" y2="170" />
-        <line x1="64" y1="204" x2="118" y2="240" />
-        <line x1="336" y1="204" x2="282" y2="240" />
-        <line x1="28" y1="170" x2="64" y2="170" />
-        <line x1="336" y1="170" x2="372" y2="170" />
+      {/* ── Mosque silhouette ── */}
+      <g transform="translate(200,312)" fill="#d4a93a" opacity="0.55">
+        {/* Main dome */}
+        <path d="M-32,-20 Q-32,-48 0,-52 Q32,-48 32,-20 Z" />
+        <rect x="-32" y="-20" width="64" height="8" />
+        {/* Building base */}
+        <rect x="-36" y="-12" width="72" height="12" rx="1" />
+        {/* Left minaret */}
+        <rect x="-58" y="-52" width="9" height="52" />
+        <path d="M-53.5,-52 L-58,-68 L-49,-68 Z" />
+        <rect x="-59" y="-57" width="11" height="6" rx="1" />
+        <rect x="-59" y="-35" width="11" height="4" rx="1" />
+        {/* Right minaret */}
+        <rect x="49" y="-52" width="9" height="52" />
+        <path d="M53.5,-52 L49,-68 L58,-68 Z" />
+        <rect x="48" y="-57" width="11" height="6" rx="1" />
+        <rect x="48" y="-35" width="11" height="4" rx="1" />
+        {/* Door arch */}
+        <path d="M-9,0 L-9,-12 Q-9,-19 0,-19 Q9,-19 9,-12 L9,0 Z"
+          fill="rgba(5,50,58,0.8)" />
+        {/* Small windows */}
+        <path d="M-20,-7 Q-20,-13 -15,-13 Q-10,-13 -10,-7 Z" fill="rgba(5,50,58,0.6)" />
+        <path d="M10,-7 Q10,-13 15,-13 Q20,-13 20,-7 Z" fill="rgba(5,50,58,0.6)" />
       </g>
 
-      {/* ── Crescent moon (right arch shoulder) ── */}
-      <g transform="translate(294,100)" opacity="0.35">
-        <path d="M0,-12 a12,12 0 1,1 8,21 a8,8 0 1,0 -8,-21" fill="#c9a84c" />
-      </g>
-      {/* ── Small star near crescent ── */}
-      <g transform="translate(307,84)" opacity="0.4">
-        <polygon points="0,-5 1.2,-1.8 4.8,-1.5 2.2,0.8 3,4.5 0,2.5 -3,4.5 -2.2,0.8 -4.8,-1.5 -1.2,-1.8" fill="#c9a84c" />
-      </g>
-
-      {/* ── Column capitals (arch feet) ── */}
-      {[118, 282].map((x, i) => (
-        <g key={i} transform={`translate(${x},295)`} opacity="0.4">
-          <rect x="-14" y="-6" width="28" height="6" rx="2" fill="#c9a84c" opacity="0.3" />
-          <rect x="-10" y="-12" width="20" height="7" rx="1.5" fill="none" stroke="#c9a84c" strokeWidth="0.7" />
-          <line x1="-10" y1="-8.5" x2="10" y2="-8.5" stroke="#c9a84c" strokeWidth="0.4" strokeOpacity="0.6" />
-        </g>
-      ))}
-
-      {/* ── Bottom tile row ── */}
-      <g opacity="0.15" stroke="#c9a84c" strokeWidth="0.5" fill="none">
-        {[0,1,2,3,4,5,6,7,8].map((i) => (
-          <rect key={i} x={28 + i * 40} y={285} width="38" height="14" rx="2" />
-        ))}
+      {/* ── Crescent on dome ── */}
+      <g transform="translate(200,257)" opacity="0.65">
+        <path d="M0,-9 a9,9 0 1,1 6.2,15.6 a6.2,6.2 0 1,0 -6.2,-15.6" fill="#d4a93a" />
+        <circle cx="8" cy="-12" r="1.4" fill="#d4a93a" />
       </g>
 
       {/* ── Dot sparkles ── */}
-      {[[80,95,1.4],[320,95,1.4],[50,200,1.1],[350,200,1.1],[145,52,1.2],[255,52,1.2],[200,30,1.8]].map(([cx, cy, r], i) => (
-        <circle key={i} cx={cx} cy={cy} r={r} fill="#c9a84c" opacity="0.35" />
+      {([[200,20,2],[52,168,1.3],[348,168,1.3],[138,48,1.1],[262,48,1.1]] as [number,number,number][]).map(([cx,cy,r],i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} fill="#f5d060" opacity="0.8" />
       ))}
     </svg>
   );
@@ -1060,9 +1045,9 @@ function SectionJourneyCard() {
     <div
       className="relative rounded-2xl overflow-hidden shadow-2xl"
       style={{
-        background: "linear-gradient(160deg, #071c2e 0%, #0b2a2a 30%, #091e20 60%, #070f1a 100%)",
-        border: "1px solid rgba(201,168,76,0.28)",
-        boxShadow: "0 8px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(201,168,76,0.15)",
+        background: "linear-gradient(160deg, #043840 0%, #065260 28%, #074858 55%, #052e38 100%)",
+        border: "1px solid rgba(212,169,58,0.4)",
+        boxShadow: "0 8px 40px rgba(0,0,0,0.5), inset 0 1px 0 rgba(212,169,58,0.18)",
       }}
     >
       <IslamicGateSVG />
