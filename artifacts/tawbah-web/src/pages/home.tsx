@@ -6,7 +6,7 @@ import { LiveStats } from "@/components/live-stats";
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { useSettings } from "@/context/SettingsContext";
 import { useAppNotifications } from "@/context/AppNotificationsContext";
-import { AppHero } from "@/components/AppHero";
+import { IslamicHero } from "@/components/IslamicHero";
 import { KnowledgeSlider } from "@/components/KnowledgeSlider";
 import { getEidStatus } from "@/lib/eid-utils";
 import { getSessionId } from "@/lib/session";
@@ -895,7 +895,7 @@ export default function Home() {
 
       {/* Hero + bell overlay */}
       <div className="relative">
-        <AppHero />
+        <IslamicHero />
         <HeroBellButton />
       </div>
 
@@ -966,7 +966,7 @@ export default function Home() {
             <div className="flex flex-wrap gap-3">
               {combinedOrder.map((id) => (
                 <Fragment key={id}>
-                  {id === "live-stats" && (
+                  {id === "tawbah-card" && (
                     <div className="w-full">
                       <KnowledgeSlider />
                     </div>
