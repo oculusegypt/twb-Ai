@@ -373,14 +373,16 @@ export function IslamicHero() {
   if (isDark) {
     return (
       <div
-        className="relative w-full overflow-hidden select-none"
+        className="relative w-full select-none"
         style={{
           minHeight: 380,
           background: [
             "linear-gradient(175deg,",
-            "  #06111e 0%, #071620 18%, #091c1a 42%, #081917 65%, #060f14 88%, hsl(var(--background)) 100%",
+            "  #06111e 0%, #071620 18%, #091c1a 42%, #081917 65%, #060f14 85%, #040c11 100%",
             ")",
           ].join(""),
+          WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 52%, transparent 100%)",
+          maskImage:        "linear-gradient(to bottom, black 0%, black 52%, transparent 100%)",
         }}
       >
         <div
@@ -402,14 +404,6 @@ export function IslamicHero() {
         <div
           className="absolute top-0 inset-x-0 h-20 pointer-events-none"
           style={{ background: "linear-gradient(to bottom, rgba(251,191,36,0.04) 0%, transparent 100%)" }}
-        />
-        {/* Bottom fade — hero gradient already ends at page background */}
-        <div
-          className="absolute bottom-0 inset-x-0 pointer-events-none z-20"
-          style={{
-            height: 100,
-            background: "linear-gradient(to bottom, transparent 0%, hsl(var(--background)) 100%)",
-          }}
         />
         <HeroContent
           item={item} meta={meta} loading={loading} items={items} idx={idx}
@@ -439,8 +433,13 @@ export function IslamicHero() {
   // ─── LIGHT MODE ───────────────────────────────────────────────────────────
   return (
     <div
-      className="relative w-full overflow-hidden select-none"
-      style={{ minHeight: 380, background: lightCfg.bg }}
+      className="relative w-full select-none"
+      style={{
+        minHeight: 380,
+        background: lightCfg.bg,
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 52%, transparent 100%)",
+        maskImage:        "linear-gradient(to bottom, black 0%, black 52%, transparent 100%)",
+      }}
     >
       {/* Subtle ambient glow */}
       <div
@@ -460,25 +459,6 @@ export function IslamicHero() {
       <div
         className="absolute top-0 inset-x-0 h-[1.5px] pointer-events-none"
         style={{ background: `linear-gradient(to right, transparent 0%, ${lightCfg.shimmer} 30%, ${lightCfg.shimmer} 70%, transparent 100%)` }}
-      />
-
-      {/* Bottom fade — blends into page background */}
-      <div
-        className="absolute bottom-0 inset-x-0 pointer-events-none z-20"
-        style={{
-          height: 220,
-          background: [
-            "linear-gradient(to bottom,",
-            "  transparent 0%,",
-            "  hsl(var(--background) / 0.06) 20%,",
-            "  hsl(var(--background) / 0.22) 42%,",
-            "  hsl(var(--background) / 0.52) 62%,",
-            "  hsl(var(--background) / 0.80) 80%,",
-            "  hsl(var(--background) / 0.96) 93%,",
-            "  hsl(var(--background)) 100%",
-            ")",
-          ].join(""),
-        }}
       />
 
       <HeroContent
