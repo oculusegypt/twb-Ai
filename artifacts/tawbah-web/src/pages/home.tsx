@@ -866,33 +866,271 @@ function SectionSoulMeter() {
   return <SoulMeter />;
 }
 
+function IslamicGateSVG() {
+  return (
+    <svg
+      viewBox="0 0 400 340"
+      preserveAspectRatio="xMidYMid slice"
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      aria-hidden
+    >
+      <defs>
+        <radialGradient id="gateGlow" cx="50%" cy="38%" r="55%">
+          <stop offset="0%" stopColor="#c9a84c" stopOpacity="0.22" />
+          <stop offset="100%" stopColor="#c9a84c" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="archGlow" cx="50%" cy="0%" r="75%">
+          <stop offset="0%" stopColor="#7dd3b0" stopOpacity="0.18" />
+          <stop offset="100%" stopColor="#7dd3b0" stopOpacity="0" />
+        </radialGradient>
+        <filter id="softGlow">
+          <feGaussianBlur stdDeviation="3" result="blur" />
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      {/* ── Deep ambient glows ── */}
+      <ellipse cx="200" cy="130" rx="160" ry="120" fill="url(#gateGlow)" />
+      <ellipse cx="200" cy="0" rx="180" ry="120" fill="url(#archGlow)" />
+
+      {/* ── Outer ornamental frame ── */}
+      <rect x="12" y="12" width="376" height="316" rx="14" fill="none" stroke="#c9a84c" strokeWidth="0.6" strokeOpacity="0.28" />
+      <rect x="18" y="18" width="364" height="304" rx="11" fill="none" stroke="#c9a84c" strokeWidth="0.35" strokeOpacity="0.18" />
+
+      {/* ── Corner ornaments ── */}
+      {[
+        [28, 28, 1, 1], [372, 28, -1, 1], [28, 312, 1, -1], [372, 312, -1, -1]
+      ].map(([cx, cy, sx, sy], i) => (
+        <g key={i} transform={`translate(${cx},${cy}) scale(${sx},${sy})`} opacity="0.55">
+          <path d="M0,0 L22,0 L22,2 L2,2 L2,22 L0,22 Z" fill="#c9a84c" />
+          <path d="M4,4 L16,4 L16,6 L6,6 L6,16 L4,16 Z" fill="none" stroke="#c9a84c" strokeWidth="0.5" />
+          <circle cx="10" cy="10" r="2.5" fill="none" stroke="#c9a84c" strokeWidth="0.6" />
+          <circle cx="10" cy="10" r="1" fill="#c9a84c" />
+        </g>
+      ))}
+
+      {/* ── Top arabesque border row ── */}
+      <g opacity="0.22" stroke="#c9a84c" strokeWidth="0.7" fill="none">
+        <path d="M28,28 Q100,20 200,28 Q300,36 372,28" />
+        <path d="M28,34 Q100,26 200,34 Q300,42 372,34" />
+      </g>
+      <g opacity="0.22" stroke="#c9a84c" strokeWidth="0.7" fill="none">
+        <path d="M28,306 Q100,314 200,306 Q300,298 372,306" />
+        <path d="M28,312 Q100,320 200,312 Q300,304 372,312" />
+      </g>
+
+      {/* ── Main Islamic arch (pointed horseshoe) ── */}
+      <g filter="url(#softGlow)">
+        <path
+          d="M118,295 L118,148 Q118,58 200,42 Q282,58 282,148 L282,295 Z"
+          fill="none"
+          stroke="#c9a84c"
+          strokeWidth="1.4"
+          strokeOpacity="0.55"
+        />
+        {/* Inner arch */}
+        <path
+          d="M128,295 L128,152 Q128,72 200,57 Q272,72 272,152 L272,295 Z"
+          fill="none"
+          stroke="#c9a84c"
+          strokeWidth="0.7"
+          strokeOpacity="0.3"
+        />
+      </g>
+
+      {/* ── Arch keystone ornament ── */}
+      <g transform="translate(200,42)" opacity="0.7">
+        {/* Pointed muqarnas tip */}
+        <path d="M0,-14 L8,0 L0,6 L-8,0 Z" fill="#c9a84c" opacity="0.6" />
+        <path d="M0,-9 L5,0 L0,4 L-5,0 Z" fill="#c9a84c" opacity="0.4" />
+        {/* Horizontal bar */}
+        <line x1="-24" y1="0" x2="24" y2="0" stroke="#c9a84c" strokeWidth="0.8" strokeOpacity="0.45" />
+        <circle cx="0" cy="0" r="4.5" fill="none" stroke="#c9a84c" strokeWidth="0.9" strokeOpacity="0.6" />
+        <circle cx="0" cy="0" r="1.8" fill="#c9a84c" opacity="0.65" />
+      </g>
+
+      {/* ── Muqarnas row (stalactite vaults) just below keystone ── */}
+      {[-56,-40,-24,-8,8,24,40,56].map((x, i) => (
+        <g key={i} transform={`translate(${200 + x},68)`} opacity="0.35">
+          <path d={`M0,0 L${i % 2 === 0 ? 7 : 5},8 L0,14 L${i % 2 === 0 ? -7 : -5},8 Z`} fill="#c9a84c" />
+          <path d={`M0,14 L${i % 2 === 0 ? 5 : 3},20 L0,24 L${i % 2 === 0 ? -5 : -3},20 Z`} fill="#c9a84c" opacity="0.6" />
+        </g>
+      ))}
+
+      {/* ── 12-pointed star — left wing ── */}
+      <g transform="translate(64,170)" opacity="0.25">
+        <polygon
+          points={Array.from({ length: 12 }, (_, i) => {
+            const a = i * 30; const r1 = 34, r2 = 14;
+            const toRad = (d: number) => (d - 90) * Math.PI / 180;
+            return `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))} ${r2 * Math.cos(toRad(a + 15))},${r2 * Math.sin(toRad(a + 15))}`;
+          }).join(" ")}
+          fill="rgba(201,168,76,0.12)" stroke="#c9a84c" strokeWidth="0.8"
+        />
+        <circle cx="0" cy="0" r="8" fill="none" stroke="#c9a84c" strokeWidth="0.7" />
+        <circle cx="0" cy="0" r="3" fill="#c9a84c" opacity="0.5" />
+        {/* petals */}
+        {[0,60,120,180,240,300].map((a, i) => {
+          const toRad = (d: number) => d * Math.PI / 180;
+          return <line key={i} x1="0" y1="0" x2={34 * Math.cos(toRad(a - 90))} y2={34 * Math.sin(toRad(a - 90))} stroke="#c9a84c" strokeWidth="0.4" strokeOpacity="0.4" />;
+        })}
+      </g>
+
+      {/* ── 12-pointed star — right wing ── */}
+      <g transform="translate(336,170)" opacity="0.25">
+        <polygon
+          points={Array.from({ length: 12 }, (_, i) => {
+            const a = i * 30; const r1 = 34, r2 = 14;
+            const toRad = (d: number) => (d - 90) * Math.PI / 180;
+            return `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))} ${r2 * Math.cos(toRad(a + 15))},${r2 * Math.sin(toRad(a + 15))}`;
+          }).join(" ")}
+          fill="rgba(201,168,76,0.12)" stroke="#c9a84c" strokeWidth="0.8"
+        />
+        <circle cx="0" cy="0" r="8" fill="none" stroke="#c9a84c" strokeWidth="0.7" />
+        <circle cx="0" cy="0" r="3" fill="#c9a84c" opacity="0.5" />
+        {[0,60,120,180,240,300].map((a, i) => {
+          const toRad = (d: number) => d * Math.PI / 180;
+          return <line key={i} x1="0" y1="0" x2={34 * Math.cos(toRad(a - 90))} y2={34 * Math.sin(toRad(a - 90))} stroke="#c9a84c" strokeWidth="0.4" strokeOpacity="0.4" />;
+        })}
+      </g>
+
+      {/* ── 8-pointed stars (small) top corners ── */}
+      {[[62, 62], [338, 62]].map(([cx, cy], i) => (
+        <g key={i} transform={`translate(${cx},${cy})`} opacity="0.3">
+          <polygon
+            points={Array.from({ length: 8 }, (_, j) => {
+              const a = j * 45; const r1 = 18, r2 = 8;
+              const toRad = (d: number) => (d - 90) * Math.PI / 180;
+              return `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))} ${r2 * Math.cos(toRad(a + 22.5))},${r2 * Math.sin(toRad(a + 22.5))}`;
+            }).join(" ")}
+            fill="rgba(201,168,76,0.1)" stroke="#c9a84c" strokeWidth="0.7"
+          />
+          <circle cx="0" cy="0" r="3" fill="#c9a84c" opacity="0.45" />
+        </g>
+      ))}
+
+      {/* ── Decorative lattice lines ── */}
+      <g opacity="0.1" stroke="#c9a84c" strokeWidth="0.5" fill="none">
+        <line x1="64" y1="136" x2="118" y2="170" />
+        <line x1="336" y1="136" x2="282" y2="170" />
+        <line x1="64" y1="204" x2="118" y2="240" />
+        <line x1="336" y1="204" x2="282" y2="240" />
+        <line x1="28" y1="170" x2="64" y2="170" />
+        <line x1="336" y1="170" x2="372" y2="170" />
+      </g>
+
+      {/* ── Crescent moon (right arch shoulder) ── */}
+      <g transform="translate(294,100)" opacity="0.35">
+        <path d="M0,-12 a12,12 0 1,1 8,21 a8,8 0 1,0 -8,-21" fill="#c9a84c" />
+      </g>
+      {/* ── Small star near crescent ── */}
+      <g transform="translate(307,84)" opacity="0.4">
+        <polygon points="0,-5 1.2,-1.8 4.8,-1.5 2.2,0.8 3,4.5 0,2.5 -3,4.5 -2.2,0.8 -4.8,-1.5 -1.2,-1.8" fill="#c9a84c" />
+      </g>
+
+      {/* ── Column capitals (arch feet) ── */}
+      {[118, 282].map((x, i) => (
+        <g key={i} transform={`translate(${x},295)`} opacity="0.4">
+          <rect x="-14" y="-6" width="28" height="6" rx="2" fill="#c9a84c" opacity="0.3" />
+          <rect x="-10" y="-12" width="20" height="7" rx="1.5" fill="none" stroke="#c9a84c" strokeWidth="0.7" />
+          <line x1="-10" y1="-8.5" x2="10" y2="-8.5" stroke="#c9a84c" strokeWidth="0.4" strokeOpacity="0.6" />
+        </g>
+      ))}
+
+      {/* ── Bottom tile row ── */}
+      <g opacity="0.15" stroke="#c9a84c" strokeWidth="0.5" fill="none">
+        {[0,1,2,3,4,5,6,7,8].map((i) => (
+          <rect key={i} x={28 + i * 40} y={285} width="38" height="14" rx="2" />
+        ))}
+      </g>
+
+      {/* ── Dot sparkles ── */}
+      {[[80,95,1.4],[320,95,1.4],[50,200,1.1],[350,200,1.1],[145,52,1.2],[255,52,1.2],[200,30,1.8]].map(([cx, cy, r], i) => (
+        <circle key={i} cx={cx} cy={cy} r={r} fill="#c9a84c" opacity="0.35" />
+      ))}
+    </svg>
+  );
+}
+
 function SectionJourneyCard() {
   const { data: progress } = useAppUserProgress();
   const hasCovenant = progress?.covenantSigned;
   const dayOneDone = progress?.firstDayTasksCompleted;
   return (
-    <div className="bg-card rounded-2xl p-5 shadow-xl shadow-black/5 border border-border">
-      {!hasCovenant ? (
-        <div className="text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary"><Heart size={32} /></div>
-          <h2 className="text-xl font-bold mb-2">رحلة العودة إلى الله</h2>
-          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك. هل أنت مستعد لاتخاذ القرار؟</p>
-          <Link href="/covenant" className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
-            <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={18} />
-          </Link>
-        </div>
-      ) : !dayOneDone ? (
-        <div className="text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-accent/20 text-accent rounded-full flex items-center justify-center mb-4"><Activity size={32} /></div>
-          <h2 className="text-xl font-bold mb-2">لقد عاهدت الله</h2>
-          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة تماماً.</p>
-          <Link href="/day-one" className="w-full py-3.5 bg-accent text-accent-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
-            <span>أكمل مهام اللحظة الأولى</span><CheckCircle2 size={18} />
-          </Link>
-        </div>
-      ) : (
-        <Journey30HeroCard />
-      )}
+    <div
+      className="relative rounded-2xl overflow-hidden shadow-2xl"
+      style={{
+        background: "linear-gradient(160deg, #071c2e 0%, #0b2a2a 30%, #091e20 60%, #070f1a 100%)",
+        border: "1px solid rgba(201,168,76,0.28)",
+        boxShadow: "0 8px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(201,168,76,0.15)",
+      }}
+    >
+      <IslamicGateSVG />
+      <div className="relative z-10 p-5">
+        {!hasCovenant ? (
+          <div className="text-center flex flex-col items-center">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+              style={{
+                background: "rgba(201,168,76,0.15)",
+                border: "1.5px solid rgba(201,168,76,0.35)",
+                boxShadow: "0 0 20px rgba(201,168,76,0.2)",
+              }}
+            >
+              <Heart size={30} style={{ color: "#c9a84c" }} />
+            </div>
+            <h2 className="text-xl font-bold mb-2" style={{ color: "#f0e6c8", textShadow: "0 0 20px rgba(201,168,76,0.4)" }}>
+              رحلة العودة إلى الله
+            </h2>
+            <p className="text-sm mb-6 leading-relaxed" style={{ color: "rgba(200,225,215,0.65)" }}>
+              التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك. هل أنت مستعد لاتخاذ القرار؟
+            </p>
+            <Link
+              href="/covenant"
+              className="w-full py-3.5 rounded-xl font-bold text-base active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              style={{
+                background: "linear-gradient(135deg, #c9a84c 0%, #a87c2a 100%)",
+                color: "#fff8e6",
+                boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
+              }}
+            >
+              <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={18} />
+            </Link>
+          </div>
+        ) : !dayOneDone ? (
+          <div className="text-center flex flex-col items-center">
+            <div
+              className="w-16 h-16 rounded-full flex items-center justify-center mb-4"
+              style={{
+                background: "rgba(125,211,176,0.15)",
+                border: "1.5px solid rgba(125,211,176,0.35)",
+                boxShadow: "0 0 20px rgba(125,211,176,0.18)",
+              }}
+            >
+              <Activity size={30} style={{ color: "#7dd3b0" }} />
+            </div>
+            <h2 className="text-xl font-bold mb-2" style={{ color: "#f0e6c8", textShadow: "0 0 20px rgba(201,168,76,0.4)" }}>
+              لقد عاهدت الله
+            </h2>
+            <p className="text-sm mb-6 leading-relaxed" style={{ color: "rgba(200,225,215,0.65)" }}>
+              بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة تماماً.
+            </p>
+            <Link
+              href="/day-one"
+              className="w-full py-3.5 rounded-xl font-bold text-base active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+              style={{
+                background: "linear-gradient(135deg, #c9a84c 0%, #a87c2a 100%)",
+                color: "#fff8e6",
+                boxShadow: "0 4px 20px rgba(201,168,76,0.35)",
+              }}
+            >
+              <span>أكمل مهام اللحظة الأولى</span><CheckCircle2 size={18} />
+            </Link>
+          </div>
+        ) : (
+          <Journey30HeroCard />
+        )}
+      </div>
     </div>
   );
 }
