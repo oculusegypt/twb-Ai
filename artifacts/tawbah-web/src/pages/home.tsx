@@ -531,7 +531,7 @@ function Journey30HeroCard() {
 
       {/* CTA Button */}
       <Link
-        href="/journey"
+        href="/plan"
         className="w-full py-3.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
       >
         {isFinished ? (
