@@ -1,0 +1,138 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "Tajawal",
+      "role": "body"
+    },
+    {
+      "family": "Cairo",
+      "role": "heading"
+    },
+    {
+      "family": "Amiri",
+      "role": "unknown"
+    }
+  ],
+  "colors": {
+    "primary": "#628D83",
+    "accent": "#165F4D",
+    "background": "#F9FBFB",
+    "textPrimary": "#142E29",
+    "link": "#142E29"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Tajawal",
+      "heading": "Cairo"
+    },
+    "fontStacks": {
+      "heading": [
+        "Tajawal",
+        "Cairo",
+        "sans-serif"
+      ],
+      "body": [
+        "Tajawal",
+        "Cairo",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Tajawal",
+        "Cairo",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "16px",
+      "h2": "20px",
+      "body": "11px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "16px"
+  },
+  "components": {
+    "buttonPrimary": {
+      "background": "#165F4D",
+      "textColor": "#DCF9F3",
+      "borderRadius": "12px",
+      "borderRadiusCorners": {
+        "topLeft": "12px",
+        "topRight": "12px",
+        "bottomRight": "12px",
+        "bottomLeft": "12px"
+      },
+      "shadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px"
+    },
+    "buttonSecondary": {
+      "background": "transparent",
+      "textColor": "#142E29",
+      "borderColor": "#E4DDFD",
+      "borderRadius": "16px",
+      "borderRadiusCorners": {
+        "topLeft": "16px",
+        "topRight": "16px",
+        "bottomRight": "16px",
+        "bottomLeft": "16px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "File saved at: attached_assets/logo.svg",
+    "favicon": "https://a6a1542b-c73c-47af-b014-e1d12f1c18fc-00-6bhn4q76ywb.worf.replit.dev/favicon.svg",
+    "ogImage": null,
+    "logoHref": "File saved at: attached_assets/logoHref.html"
+  },
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Selected #0 because it is in the header, visible, and links to the homepage, which is a strong indicator of being the main brand logo.",
+    "confidence": 0.85,
+    "source": "llm"
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": 0,
+      "text": "ابدأ رحلة التوبة الآن",
+      "reasoning": "Button #0 has a vibrant background color (#165F4D) and action-oriented text ('ابدأ رحلة التوبة الآن'), making it the primary CTA."
+    },
+    "secondary": {
+      "index": 2,
+      "text": "رحلة ٣٠ يوماًبرنامج تدريجي يومي للتوبة والاستقامة",
+      "reasoning": "Button #2 has a transparent background with a border, making it a suitable secondary button with a different color group than the primary."
+    },
+    "confidence": 0.95
+  },
+  "personality": {
+    "tone": "traditional",
+    "energy": "medium",
+    "targetAudience": "Arabic-speaking individuals interested in religious guidance"
+  },
+  "designSystem": {
+    "framework": "tailwind",
+    "componentLibrary": ""
+  },
+  "confidence": {
+    "buttons": 0.95,
+    "colors": 0.9,
+    "overall": 0.925
+  },
+  "__llm_metadata": {
+    "logoSelection": {
+      "llmCalled": true,
+      "llmSucceeded": true,
+      "finalSource": "llm",
+      "rawLogoSelection": {
+        "selectedLogoIndex": 0,
+        "selectedLogoReasoning": "Selected #0 because it is in the header, visible, and links to the homepage, which is a strong indicator of being the main brand logo.",
+        "confidence": 0.85
+      }
+    },
+    "buttonClassification": {
+      "llmCalled": true,
+      "llmSucceeded": true
+    }
+  }
+}

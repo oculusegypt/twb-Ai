@@ -1078,6 +1078,7 @@ export default function Journey30() {
   const queryClient = useQueryClient();
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [showRestoreCode, setShowRestoreCode] = useState(false);
+  const [justCompleted, setJustCompleted] = useState<number | null>(null);
 
   const { data, isLoading } = useQuery<JourneyData>({
     queryKey: ["journey30", sessionId],
@@ -1202,7 +1203,9 @@ export default function Journey30() {
           >
             <div
               className={`rounded-2xl border transition-all ${
-                day.completed
+                justCompleted === day.day
+                  ? "bg-primary/10 border-primary/40 shadow-lg shadow-primary/15"
+                  : day.completed
                   ? "bg-primary/5 border-primary/20 opacity-80"
                   : day.isCurrent
                   ? "bg-card border-primary/40 shadow-lg shadow-primary/10"
@@ -1272,6 +1275,7 @@ export default function Journey30() {
                         day={day}
                         sessionId={sessionId}
                         onAllDone={() => {
+                          completeMutation.mutate(day.day);
                           setJustCompleted(day.day);
                           setExpandedDay(null);
                           setTimeout(() => setJustCompleted(null), 4000);

@@ -25,7 +25,6 @@ import {
   arrayMove,
   SortableContext,
   useSortable,
-  verticalListSortingStrategy,
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -72,6 +71,12 @@ type ListId =
 
 type SectionId = GridId | ListId;
 
+const GRID_IDS = new Set<SectionId>([
+  "rajaa", "dhikr", "journal", "hadi-tasks",
+  "dhikr-rooms", "challenge", "kaffarah", "prayer-times",
+  "relapse", "progress-map",
+]);
+
 const GRID_DEFAULT: GridId[] = [
   "rajaa", "dhikr", "journal", "hadi-tasks",
   "dhikr-rooms", "challenge", "kaffarah", "prayer-times",
@@ -84,41 +89,29 @@ const LIST_DEFAULT: ListId[] = [
   "map", "live-stats",
 ];
 
-const GRID_STORAGE_KEY = "home_grid_order_v1";
-const LIST_STORAGE_KEY = "home_list_order_v1";
+const ALL_SECTIONS: SectionId[] = [...GRID_DEFAULT, ...LIST_DEFAULT];
 
-function loadGridOrder(): GridId[] {
+const COMBINED_STORAGE_KEY = "home_combined_order_v2";
+
+function loadCombinedOrder(): SectionId[] {
   try {
-    const saved = localStorage.getItem(GRID_STORAGE_KEY);
+    const saved = localStorage.getItem(COMBINED_STORAGE_KEY);
     if (saved) {
-      const parsed: GridId[] = JSON.parse(saved);
-      const valid = parsed.filter((id) => GRID_DEFAULT.includes(id));
-      const missing = GRID_DEFAULT.filter((id) => !valid.includes(id));
+      const parsed: SectionId[] = JSON.parse(saved);
+      const valid = parsed.filter((id) => ALL_SECTIONS.includes(id));
+      const missing = ALL_SECTIONS.filter((id) => !valid.includes(id));
       return [...valid, ...missing];
     }
   } catch {}
-  return GRID_DEFAULT;
+  return ALL_SECTIONS;
 }
 
-function loadListOrder(): ListId[] {
-  try {
-    const saved = localStorage.getItem(LIST_STORAGE_KEY);
-    if (saved) {
-      const parsed: ListId[] = JSON.parse(saved);
-      const valid = parsed.filter((id) => LIST_DEFAULT.includes(id));
-      const missing = LIST_DEFAULT.filter((id) => !valid.includes(id));
-      return [...valid, ...missing];
-    }
-  } catch {}
-  return LIST_DEFAULT;
+function saveCombinedOrder(order: SectionId[]) {
+  try { localStorage.setItem(COMBINED_STORAGE_KEY, JSON.stringify(order)); } catch {}
 }
 
-function saveGridOrder(order: GridId[]) {
-  try { localStorage.setItem(GRID_STORAGE_KEY, JSON.stringify(order)); } catch {}
-}
-
-function saveListOrder(order: ListId[]) {
-  try { localStorage.setItem(LIST_STORAGE_KEY, JSON.stringify(order)); } catch {}
+function isGridItem(id: SectionId): id is GridId {
+  return GRID_IDS.has(id);
 }
 
 // ─── Grid card metadata ───────────────────────────────────────────────────────
@@ -764,9 +757,9 @@ function renderSection(id: ListId) {
   }
 }
 
-// ─── SortableListItem ─────────────────────────────────────────────────────────
+// ─── SortableUnifiedItem ──────────────────────────────────────────────────────
 
-function SortableListItem({ id, editMode, children }: { id: ListId; editMode: boolean; children: React.ReactNode }) {
+function SortableUnifiedItem({ id, editMode }: { id: SectionId; editMode: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -774,8 +767,48 @@ function SortableListItem({ id, editMode, children }: { id: ListId; editMode: bo
     opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 50 : "auto" as const,
   };
+
+  if (isGridItem(id)) {
+    const meta = GRID_META[id];
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="relative"
+        /* each grid item takes 50% of the row, gap handled by parent */
+      >
+        <Link
+          href={meta.href}
+          className={`flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${meta.bg} border ${meta.border} rounded-2xl px-3 py-4 hover:shadow-md active:scale-[0.97] transition-all text-center`}
+          style={{ minHeight: "96px" }}
+        >
+          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${meta.iconBg}`}>
+            {meta.icon}
+          </div>
+          <div>
+            <p className="font-bold text-[11px] leading-tight">{meta.label}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{meta.sub}</p>
+          </div>
+        </Link>
+        {editMode && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            {...attributes}
+            {...listeners}
+            className="absolute top-1.5 right-1.5 z-10 w-7 h-7 flex items-center justify-center rounded-lg bg-background/95 border border-primary/30 shadow-md cursor-grab active:cursor-grabbing touch-none"
+          >
+            <GripVertical size={13} className="text-primary/70" />
+          </motion.div>
+        )}
+      </div>
+    );
+  }
+
+  // List item
+  const listId = id as ListId;
   return (
-    <div ref={setNodeRef} style={style} className="relative">
+    <div ref={setNodeRef} style={style} className="relative w-full">
       {editMode && (
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
@@ -787,47 +820,9 @@ function SortableListItem({ id, editMode, children }: { id: ListId; editMode: bo
           <GripVertical size={18} className="text-primary/70" />
         </motion.div>
       )}
-      <div className={editMode ? "pr-11 transition-all" : "transition-all"}>{children}</div>
-    </div>
-  );
-}
-
-// ─── SortableGridItem ─────────────────────────────────────────────────────────
-
-function SortableGridItem({ id, editMode }: { id: GridId; editMode: boolean }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const meta = GRID_META[id];
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.35 : 1,
-    zIndex: isDragging ? 50 : "auto" as const,
-  };
-  return (
-    <div ref={setNodeRef} style={style} className="relative">
-      <Link
-        href={meta.href}
-        className={`flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${meta.bg} border ${meta.border} rounded-2xl p-3.5 hover:shadow-md active:scale-[0.97] transition-all aspect-square text-center`}
-      >
-        <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${meta.iconBg}`}>
-          {meta.icon}
-        </div>
-        <div>
-          <p className="font-bold text-[12px] leading-tight">{meta.label}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{meta.sub}</p>
-        </div>
-      </Link>
-      {editMode && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          {...attributes}
-          {...listeners}
-          className="absolute top-1.5 right-1.5 z-10 w-7 h-7 flex items-center justify-center rounded-lg bg-background/95 border border-primary/30 shadow-md cursor-grab active:cursor-grabbing touch-none"
-        >
-          <GripVertical size={13} className="text-primary/70" />
-        </motion.div>
-      )}
+      <div className={editMode ? "pr-11 transition-all" : "transition-all"}>
+        {renderSection(listId)}
+      </div>
     </div>
   );
 }
@@ -839,11 +834,9 @@ export default function Home() {
   const [showSosToast, setShowSosToast] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // Separate orders for grid and list
-  const [gridOrder, setGridOrder] = useState<GridId[]>(loadGridOrder);
-  const [listOrder, setListOrder] = useState<ListId[]>(loadListOrder);
-  const [activeGridId, setActiveGridId] = useState<GridId | null>(null);
-  const [activeListId, setActiveListId] = useState<ListId | null>(null);
+  // Unified order for all sections (grid + list mixed freely)
+  const [combinedOrder, setCombinedOrder] = useState<SectionId[]>(loadCombinedOrder);
+  const [activeId, setActiveId] = useState<SectionId | null>(null);
 
   useEffect(() => {
     try {
@@ -859,37 +852,19 @@ export default function Home() {
     useSensor(TouchSensor,   { activationConstraint: { delay: 200, tolerance: 8 } })
   );
 
-  const handleGridDragStart = useCallback((event: DragStartEvent) => {
-    setActiveGridId(event.active.id as GridId);
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    setActiveId(event.active.id as SectionId);
   }, []);
 
-  const handleGridDragEnd = useCallback((event: DragEndEvent) => {
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-    setActiveGridId(null);
+    setActiveId(null);
     if (over && active.id !== over.id) {
-      setGridOrder((prev) => {
-        const oldIndex = prev.indexOf(active.id as GridId);
-        const newIndex = prev.indexOf(over.id as GridId);
+      setCombinedOrder((prev) => {
+        const oldIndex = prev.indexOf(active.id as SectionId);
+        const newIndex = prev.indexOf(over.id as SectionId);
         const next = arrayMove(prev, oldIndex, newIndex);
-        saveGridOrder(next);
-        return next;
-      });
-    }
-  }, []);
-
-  const handleListDragStart = useCallback((event: DragStartEvent) => {
-    setActiveListId(event.active.id as ListId);
-  }, []);
-
-  const handleListDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveListId(null);
-    if (over && active.id !== over.id) {
-      setListOrder((prev) => {
-        const oldIndex = prev.indexOf(active.id as ListId);
-        const newIndex = prev.indexOf(over.id as ListId);
-        const next = arrayMove(prev, oldIndex, newIndex);
-        saveListOrder(next);
+        saveCombinedOrder(next);
         return next;
       });
     }
@@ -962,7 +937,7 @@ export default function Home() {
             >
               <div>
                 <p className="text-xs font-bold text-primary">وضع الترتيب مفعّل</p>
-                <p className="text-[10px] text-primary/60 mt-0.5">اسحب أي بطاقة من مقبضها لإعادة ترتيبها</p>
+                <p className="text-[10px] text-primary/60 mt-0.5">اسحب أي بطاقة لتغيير مكانها — يمكنك خلط جميع الأنواع</p>
               </div>
               <button
                 onClick={() => setEditMode(false)}
@@ -974,58 +949,43 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* ── Grid section (square cards) ─────────────────────────── */}
+        {/* ── Unified sortable section (grid + list mixed freely) ─── */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
-          onDragStart={handleGridDragStart}
-          onDragEnd={handleGridDragEnd}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         >
-          <SortableContext items={gridOrder} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-2 gap-3">
-              {gridOrder.map((id) => (
-                <SortableGridItem key={id} id={id} editMode={editMode} />
-              ))}
-            </div>
-          </SortableContext>
-
-          <DragOverlay dropAnimation={{ duration: 180, easing: "ease" }}>
-            {activeGridId ? (
-              <div className="rounded-2xl shadow-2xl border-2 border-primary/40 bg-card/95 backdrop-blur-sm rotate-2 scale-[1.05] flex flex-col items-center justify-center gap-2 p-4 aspect-square w-full">
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${GRID_META[activeGridId].iconBg}`}>
-                  {GRID_META[activeGridId].icon}
+          <SortableContext items={combinedOrder} strategy={rectSortingStrategy}>
+            <div className="flex flex-wrap gap-3">
+              {combinedOrder.map((id) => (
+                <div
+                  key={id}
+                  className={isGridItem(id) ? "w-[calc(50%-6px)]" : "w-full"}
+                >
+                  <SortableUnifiedItem id={id} editMode={editMode} />
                 </div>
-                <p className="text-xs font-bold text-primary">{GRID_META[activeGridId].label}</p>
-              </div>
-            ) : null}
-          </DragOverlay>
-        </DndContext>
-
-        {/* ── List section (full-width cards) ─────────────────────── */}
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleListDragStart}
-          onDragEnd={handleListDragEnd}
-        >
-          <SortableContext items={listOrder} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-3">
-              {listOrder.map((id) => (
-                <SortableListItem key={id} id={id} editMode={editMode}>
-                  {renderSection(id)}
-                </SortableListItem>
               ))}
             </div>
           </SortableContext>
 
           <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
-            {activeListId ? (
-              <div className="rounded-2xl shadow-2xl border-2 border-primary/40 bg-card/98 backdrop-blur-sm overflow-hidden rotate-1 scale-[1.03]">
-                <div className="px-4 py-3 flex items-center gap-3 bg-primary/5">
-                  <GripVertical size={16} className="text-primary" />
-                  <span className="text-sm font-bold text-primary">{SECTION_LABELS[activeListId]}</span>
+            {activeId ? (
+              isGridItem(activeId) ? (
+                <div className="rounded-2xl shadow-2xl border-2 border-primary/40 bg-card/95 backdrop-blur-sm rotate-2 scale-[1.05] flex flex-col items-center justify-center gap-2 px-3 py-4 text-center" style={{ minHeight: "96px" }}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${GRID_META[activeId].iconBg}`}>
+                    {GRID_META[activeId].icon}
+                  </div>
+                  <p className="text-[11px] font-bold text-primary">{GRID_META[activeId].label}</p>
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-2xl shadow-2xl border-2 border-primary/40 bg-card/98 backdrop-blur-sm overflow-hidden rotate-1 scale-[1.03]">
+                  <div className="px-4 py-3 flex items-center gap-3 bg-primary/5">
+                    <GripVertical size={16} className="text-primary" />
+                    <span className="text-sm font-bold text-primary">{SECTION_LABELS[activeId as ListId]}</span>
+                  </div>
+                </div>
+              )
             ) : null}
           </DragOverlay>
         </DndContext>
