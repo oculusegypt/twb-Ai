@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2, Lock, Star, Trophy, Flame, ChevronDown, ChevronUp,
   BookOpen, BookText, X, Loader2, Play, Square, CheckSquare,
-  Scale, Sparkles, ChevronRight
+  Scale, Sparkles, ChevronRight, Bell, RotateCcw
 } from "lucide-react";
 import { Link } from "wouter";
 import { getSessionId } from "@/lib/session";
@@ -458,6 +458,295 @@ function SurahButton({ task }: { task: string }) {
   );
 }
 
+// ─── Task type helpers ────────────────────────────────────────────────────────
+
+function parseIstighfarCount(task: string): number {
+  const wordMap: Record<string, number> = {
+    "مائة": 100, "مئة": 100, "ثمانين": 80, "سبعين": 70,
+    "ستين": 60, "خمسين": 50, "أربعين": 40, "ثلاثين": 30,
+    "عشرين": 20, "خمسة عشر": 15, "عشرة": 10,
+  };
+  const numMatch = task.match(/(\d+)/);
+  if (numMatch) return parseInt(numMatch[1]!);
+  for (const [word, num] of Object.entries(wordMap)) {
+    if (task.includes(word)) return num;
+  }
+  return 33;
+}
+
+function isIstighfarTask(task: string): boolean {
+  return /استغفر|الاستغفار|أستغفر/.test(task) && !/سورة/.test(task);
+}
+
+function isPrayerTask(task: string): boolean {
+  return /صلاة (الفجر|الظهر|العصر|المغرب|العشاء)|أدِّ صلاة|أدّ صلاة|صلِّ الفريضة|صلّ الفريضة/.test(task);
+}
+
+function extractPrayerName(task: string): string {
+  const m = task.match(/صلاة (الفجر|الظهر|العصر|المغرب|العشاء)/);
+  return m ? m[1]! : "الصلاة";
+}
+
+function isQuranPagesTask(task: string): boolean {
+  return /صفحت|صفحتين|صفحات من القرآن/.test(task);
+}
+
+function generatePagePairs(): [number, number][] {
+  const used = new Set<number>();
+  const pairs: [number, number][] = [];
+  while (pairs.length < 4) {
+    const p = Math.floor(Math.random() * 602) + 1;
+    if (!used.has(p) && !used.has(p + 1)) {
+      used.add(p); used.add(p + 1);
+      pairs.push([p, p + 1]);
+    }
+  }
+  return pairs;
+}
+
+// ─── IstighfarCounter ─────────────────────────────────────────────────────────
+
+function IstighfarCounter({ count, done, onDone }: { count: number; done: boolean; onDone: () => void }) {
+  const [current, setCurrent] = useState(done ? count : 0);
+  const finished = current >= count || done;
+  const pct = Math.min((current / count) * 100, 100);
+
+  const tap = () => {
+    if (finished) return;
+    const next = current + 1;
+    setCurrent(next);
+    if (next >= count) onDone();
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5 mt-1.5">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={tap}
+          disabled={finished}
+          className={`flex-1 flex items-center justify-between px-3 py-2.5 rounded-xl border font-bold text-sm transition-all active:scale-[0.97] ${
+            finished
+              ? "bg-primary/10 border-primary/20 text-primary"
+              : "bg-gradient-to-r from-primary/10 to-primary/5 border-primary/25 hover:from-primary/15"
+          }`}
+        >
+          <span className="text-xs text-muted-foreground">{finished ? "✓ اكتملت التسبيحة" : "اضغط للاستغفار"}</span>
+          <span className="text-primary font-bold tabular-nums">
+            {toArabicIndic(current)} / {toArabicIndic(count)}
+          </span>
+        </button>
+        {current > 0 && !finished && (
+          <button onClick={() => setCurrent(0)} className="w-9 h-9 flex items-center justify-center rounded-xl border border-border text-muted-foreground hover:text-foreground transition-colors" title="إعادة">
+            <RotateCcw size={14} />
+          </button>
+        )}
+      </div>
+      <div className="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden">
+        <motion.div
+          className="h-full bg-primary rounded-full"
+          animate={{ width: `${pct}%` }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── PrayerReminderButton ─────────────────────────────────────────────────────
+
+function PrayerReminderButton({ task }: { task: string }) {
+  const prayerName = extractPrayerName(task);
+  const [showOptions, setShowOptions] = useState(false);
+  const [confirmed, setConfirmed] = useState(() => {
+    try { return !!localStorage.getItem(`prayer_remind_${prayerName}`); } catch { return false; }
+  });
+
+  const handleSet = (label: string) => {
+    try { localStorage.setItem(`prayer_remind_${prayerName}`, label); } catch {}
+    setConfirmed(true);
+    setShowOptions(false);
+  };
+
+  if (confirmed) {
+    return (
+      <div className="flex items-center gap-1.5 mt-1 text-[11px] text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-500/8 rounded-lg px-2.5 py-1.5 border border-indigo-300/30">
+        <Bell size={11} />
+        تذكير صلاة {prayerName} مضبوط
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative mt-1">
+      <button
+        onClick={() => setShowOptions(v => !v)}
+        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-300/40 hover:bg-indigo-500/15 transition-all"
+      >
+        <Bell size={12} />
+        ضبط تذكير لصلاة {prayerName}
+      </button>
+      <AnimatePresence>
+        {showOptions && (
+          <>
+            <div className="fixed inset-0 z-20" onClick={() => setShowOptions(false)} />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute top-full mt-1 right-0 z-30 bg-card border border-border rounded-xl shadow-xl overflow-hidden min-w-[190px]"
+            >
+              {[
+                { label: "قبل ٥ دقائق" },
+                { label: "قبل ١٠ دقائق" },
+                { label: "عند الأذان" },
+                { label: "وقت مخصص" },
+              ].map(opt => (
+                <button
+                  key={opt.label}
+                  onClick={() => handleSet(opt.label)}
+                  className="w-full text-right px-4 py-2.5 text-xs font-bold hover:bg-primary/5 transition-colors border-b border-border/50 last:border-0"
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─── QuranPageViewer ──────────────────────────────────────────────────────────
+
+interface PageAyah { number: number; numberInSurah: number; text: string; surah: { number: number; englishName: string; name: string }; }
+
+function QuranPagePanel({ page, onClose }: { page: number; onClose: () => void }) {
+  const [ayahs, setAyahs] = useState<PageAyah[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentIdx, setCurrentIdx] = useState<number | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`https://api.alquran.cloud/v1/page/${page}`);
+        const json = await res.json();
+        setAyahs(json?.data?.ayahs ?? []);
+      } catch {} finally { setLoading(false); }
+    })();
+    return () => { audioRef.current?.pause(); };
+  }, [page]);
+
+  const playFromIdx = (idx: number) => {
+    const ayah = ayahs[idx]; if (!ayah) return;
+    const globalNum = toGlobalAyah(ayah.surah.number, ayah.numberInSurah);
+    const url = `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${globalNum}.mp3`;
+    if (!audioRef.current) audioRef.current = new Audio();
+    const audio = audioRef.current;
+    audio.pause(); audio.src = url; audio.load(); audio.play().catch(() => {});
+    audio.onended = () => {
+      const next = idx + 1;
+      if (next < ayahs.length) { setCurrentIdx(next); playFromIdx(next); }
+      else { setIsPlaying(false); setCurrentIdx(null); }
+    };
+    setCurrentIdx(idx); setIsPlaying(true);
+  };
+
+  const togglePlay = () => {
+    if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); }
+    else { playFromIdx(currentIdx ?? 0); }
+  };
+
+  const surahName = ayahs[0]?.surah?.name ?? `صفحة ${page}`;
+
+  return (
+    <div className="mt-2 bg-card border border-primary/20 rounded-xl overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-primary/5">
+        <span className="text-[11px] font-bold text-primary">صفحة {toArabicIndic(page)} — {surahName}</span>
+        <div className="flex items-center gap-1.5">
+          <button onClick={togglePlay} className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 rounded-lg px-2 py-1">
+            {isPlaying ? <Square size={10} /> : <Play size={10} />}
+            {isPlaying ? "إيقاف" : "استمع"}
+          </button>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
+            <X size={14} />
+          </button>
+        </div>
+      </div>
+      <div className="max-h-52 overflow-y-auto px-3 py-3">
+        {loading ? (
+          <div className="flex justify-center py-6"><Loader2 size={20} className="animate-spin text-primary" /></div>
+        ) : (
+          <p
+            dir="rtl"
+            className="leading-[2.8] text-[16px] text-right"
+            style={{ fontFamily: "'Amiri Quran', 'Amiri', serif" }}
+          >
+            {ayahs.map((ayah, idx) => (
+              <span
+                key={ayah.number}
+                onClick={() => { setCurrentIdx(idx); playFromIdx(idx); }}
+                className={`cursor-pointer transition-colors ${currentIdx === idx ? "text-primary" : "hover:text-primary/70"}`}
+              >
+                {ayah.text}{" "}
+                <span className="text-primary/60 text-[13px]">﴿{toArabicIndic(ayah.numberInSurah)}﴾</span>{" "}
+              </span>
+            ))}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QuranPagesButton({ done, onDone }: { done: boolean; onDone: () => void }) {
+  const [pairs] = useState<[number, number][]>(generatePagePairs);
+  const [selected, setSelected] = useState<[number, number] | null>(null);
+  const [openPages, setOpenPages] = useState<number[]>([]);
+
+  const handleSelect = (pair: [number, number]) => {
+    setSelected(pair);
+    setOpenPages([pair[0], pair[1]]);
+    if (!done) onDone();
+  };
+
+  return (
+    <div className="mt-1.5">
+      {!selected ? (
+        <div>
+          <p className="text-[11px] text-muted-foreground mb-2 font-bold">اختر صفحتين لقراءتهما:</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {pairs.map(([p1, p2]) => (
+              <button
+                key={p1}
+                onClick={() => handleSelect([p1, p2])}
+                className="flex flex-col items-center justify-center gap-0.5 py-2 px-3 rounded-xl bg-primary/8 border border-primary/20 text-primary hover:bg-primary/15 transition-all"
+              >
+                <BookOpen size={14} />
+                <span className="text-[11px] font-bold">{toArabicIndic(p1)} – {toArabicIndic(p2)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-muted-foreground font-bold">قراءة الصفحتين:</span>
+            <button onClick={() => { setSelected(null); setOpenPages([]); }} className="text-[10px] text-primary underline">اختر غيرهما</button>
+          </div>
+          {openPages.map(pg => (
+            <QuranPagePanel key={pg} page={pg} onClose={() => setOpenPages(prev => prev.filter(p => p !== pg))} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── DayTaskList ──────────────────────────────────────────────────────────────
+
 function DayTaskList({
   day,
   sessionId,
@@ -471,10 +760,14 @@ function DayTaskList({
   const [optimistic, setOptimistic] = useState<boolean[]>(
     day.taskChecks?.length ? day.taskChecks : Array(day.tasks.length).fill(false)
   );
+  const [showCongrats, setShowCongrats] = useState(false);
+  const calledDone = useRef(false);
 
   useEffect(() => {
     setOptimistic(day.taskChecks?.length ? day.taskChecks : Array(day.tasks.length).fill(false));
-  }, [day.taskChecks]);
+    calledDone.current = false;
+    setShowCongrats(false);
+  }, [day.taskChecks, day.day]);
 
   const toggleMutation = useMutation({
     mutationFn: async ({ taskIndex, completed }: { taskIndex: number; completed: boolean }) => {
@@ -487,8 +780,13 @@ function DayTaskList({
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["journey30", sessionId] });
-      if (data.allDone) {
-        onAllDone();
+      if (data.allDone && !calledDone.current) {
+        calledDone.current = true;
+        setShowCongrats(true);
+        setTimeout(() => {
+          setShowCongrats(false);
+          onAllDone();
+        }, 2800);
       }
     },
   });
@@ -500,47 +798,67 @@ function DayTaskList({
     toggleMutation.mutate({ taskIndex: i, completed: next[i]! });
   };
 
-  const allDone = optimistic.every(Boolean);
+  const allDoneOptimistic = optimistic.every(Boolean);
 
   return (
     <div>
       <h4 className="text-xs font-bold text-muted-foreground mb-2">مهام اليوم:</h4>
-      {allDone && !day.completed && (
-        <div className="mb-2 flex items-center gap-1.5 text-xs text-primary font-bold bg-primary/5 rounded-lg px-3 py-2 border border-primary/15">
-          <CheckCircle2 size={13} />
-          أحسنت! جاري حفظ اليوم تلقائياً...
-        </div>
-      )}
       <div className="flex flex-col gap-2.5">
         {day.tasks.map((task, i) => {
           const surahsForTask = extractSurahsFromTask(task);
+          const isIstighfar = isIstighfarTask(task);
+          const isPrayer = isPrayerTask(task);
+          const isPages = isQuranPagesTask(task);
           return (
             <div key={i} className={`rounded-xl border transition-all ${optimistic[i] ? "bg-primary/5 border-primary/15" : "bg-muted/20 border-border/50"}`}>
               <div className="flex items-start gap-2.5 p-2.5">
-                <button
-                  onClick={() => toggle(i)}
-                  className="shrink-0 mt-0.5"
-                  disabled={day.completed}
-                >
-                  {optimistic[i] ? (
-                    <CheckSquare size={18} className="text-primary" />
-                  ) : (
-                    <Square size={18} className="text-muted-foreground/50" />
-                  )}
+                <button onClick={() => toggle(i)} className="shrink-0 mt-0.5" disabled={day.completed}>
+                  {optimistic[i] ? <CheckSquare size={18} className="text-primary" /> : <Square size={18} className="text-muted-foreground/50" />}
                 </button>
                 <span className={`text-sm flex-1 leading-relaxed ${optimistic[i] ? "line-through text-muted-foreground" : ""}`}>
                   {task}
                 </span>
               </div>
-              {surahsForTask && (
-                <div className="px-2.5 pb-2.5 flex flex-wrap gap-1.5">
-                  <SurahButton task={task} />
+              {/* Task-specific interactive widgets */}
+              {!day.completed && (
+                <div className="px-2.5 pb-2.5 flex flex-col gap-1.5">
+                  {isIstighfar && (
+                    <IstighfarCounter
+                      count={parseIstighfarCount(task)}
+                      done={optimistic[i] ?? false}
+                      onDone={() => toggle(i)}
+                    />
+                  )}
+                  {isPrayer && <PrayerReminderButton task={task} />}
+                  {isPages && (
+                    <QuranPagesButton done={optimistic[i] ?? false} onDone={() => !optimistic[i] && toggle(i)} />
+                  )}
+                  {surahsForTask && !isPages && (
+                    <div className="flex flex-wrap gap-1.5">
+                      <SurahButton task={task} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* Inline completion congratulations */}
+      <AnimatePresence>
+        {(showCongrats || (allDoneOptimistic && !day.completed && !showCongrats && calledDone.current)) && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="mt-4 bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-2xl p-4 text-center"
+          >
+            <p className="text-lg font-bold text-primary">🎉 أحسنت! اليوم {day.day} مكتمل</p>
+            <p className="text-xs text-muted-foreground mt-1">تم حفظ تقدمك — سيُفتح اليوم التالي بعد لحظات</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -759,7 +1077,6 @@ export default function Journey30() {
   const sessionId = getSessionId();
   const queryClient = useQueryClient();
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
-  const [justCompleted, setJustCompleted] = useState<number | null>(null);
   const [showRestoreCode, setShowRestoreCode] = useState(false);
 
   const { data, isLoading } = useQuery<JourneyData>({
@@ -812,20 +1129,6 @@ export default function Journey30() {
           استعادة رحلتي من جهاز آخر
         </button>
       </motion.div>
-
-      <AnimatePresence>
-        {justCompleted !== null && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-2xl p-4 text-center"
-          >
-            <p className="text-lg font-bold text-primary">🎉 أحسنت! اليوم {justCompleted} مكتمل</p>
-            <p className="text-xs text-muted-foreground mt-1">تم حفظ تقدمك. استمر في الرحلة بارك الله فيك</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       <AnimatePresence>
         {showRestoreCode && (
