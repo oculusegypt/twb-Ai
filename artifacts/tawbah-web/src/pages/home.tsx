@@ -281,6 +281,7 @@ function DynamicBanner() {
   const [manualIndex, setManualIndex] = useState<number | null>(null);
   const [showSeason, setShowSeason] = useState(!!seasonBanner);
   const [showTafsir, setShowTafsir] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
   const [audioState, setAudioState] = useState<"idle" | "loading" | "playing">("idle");
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -319,6 +320,8 @@ function DynamicBanner() {
   const gradientClass = currentItem.type === "season" && currentItem.seasonColor ? currentItem.seasonColor : `${styles.gradient} ${styles.border}`;
   const isAyah = currentItem.type === "ayah" && !!currentItem.ayahRef;
 
+  if (dismissed) return null;
+
   return (
     <>
       <AnimatePresence mode="wait">
@@ -334,7 +337,16 @@ function DynamicBanner() {
               <IconComp size={15} className={`${styles.iconColor} shrink-0`} />
               <span className={`font-bold text-xs ${styles.iconColor}`}>{currentItem.label}</span>
             </div>
-            <span className="text-[10px] text-muted-foreground/60">اضغط للتالي ›</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground/60">اضغط للتالي ›</span>
+              <button
+                onClick={(e) => { e.stopPropagation(); setDismissed(true); }}
+                className="w-5 h-5 flex items-center justify-center rounded-full bg-black/10 hover:bg-black/20 transition-colors shrink-0"
+                aria-label="إغلاق"
+              >
+                <X size={11} className="text-foreground/60" />
+              </button>
+            </div>
           </div>
           <p className="text-xs text-foreground/80 leading-relaxed">{currentItem.content}</p>
           {isAyah && (
@@ -939,7 +951,7 @@ export default function Home() {
         <HeroBellButton />
       </div>
 
-      <div className="px-5 mt-4 relative z-10 flex flex-col gap-4">
+      <div className="px-5 mt-1 relative z-10 flex flex-col gap-4">
 
         <EidEntryCard />
         <DynamicBanner />
