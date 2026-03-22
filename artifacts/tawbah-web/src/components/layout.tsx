@@ -17,7 +17,7 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
           className="absolute inset-0 rounded-full"
           style={{ border: "1.5px solid var(--color-primary)", opacity: 0.35 }}
           animate={{ scale: [1, 1.22, 1], opacity: [0.35, 0, 0.35] }}
-          transition={{ duration: 2.6, repeat: Infinity, delay: i * 0.7, ease: "easeInOut" }}
+          transition={{ duration: 5, repeat: Infinity, delay: i * 1.4, ease: "easeInOut" }}
         />
       ))}
 
@@ -53,7 +53,7 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
               className="rounded-full"
               style={{ width: 2, background: "hsl(var(--primary-foreground)/0.9)", originY: "50%" }}
               animate={{ scaleY: [h * 0.25, h, h * 0.45, h * 0.7, h * 0.25] }}
-              transition={{ duration: 1.1 + (i % 5) * 0.12, repeat: Infinity, delay: i * 0.055, ease: "easeInOut" }}
+              transition={{ duration: 2.4 + (i % 5) * 0.25, repeat: Infinity, delay: i * 0.11, ease: "easeInOut" }}
               initial={{ height: Math.round(h * 24) }}
             />
           ))}
