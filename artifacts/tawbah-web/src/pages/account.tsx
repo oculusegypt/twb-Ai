@@ -170,7 +170,7 @@ export default function Account() {
       >
         <SectionLabel>معلوماتي</SectionLabel>
         <LinkRow href="/progress" icon={<BarChart2 size={18} />} label="خريطة التقدم" description="إحصاءاتك الروحية والمسار اليومي" />
-        <LinkRow href="/plan" icon={<Calendar size={18} />} label={`خطة الـ 40 يوماً — اليوم ${dayCount}`} description={`المرحلة: ${phase}`} />
+        <LinkRow href="/journey" icon={<Calendar size={18} />} label="رحلة التوبة ٣٠ يوماً" description="برنامج يومي تدريجي" />
         <LinkRow href="/journal" icon={<PenLine size={18} />} label="يوميات التوبة" description="مساحتك السرية الخاصة" iconBg="bg-violet-500/10" iconColor="text-violet-500" />
         <LinkRow href="/danger-times" icon={<Clock size={18} />} label="أوقات الخطر" description="تذكيرات وقائية ذكية" iconBg="bg-orange-500/10" iconColor="text-orange-500" />
         <LinkRow href="/prayer-times" icon={<Bell size={18} />} label="مواقيت الصلاة" description="تذكيرات قبل كل صلاة" iconBg="bg-indigo-500/10" iconColor="text-indigo-500" />

@@ -16,7 +16,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const leftItems = [
     { href: "/", label: t.nav.home, icon: Home },
-    { href: "/plan", label: t.nav.plan, icon: Calendar },
+    { href: "/journey", label: "رحلتي", icon: Calendar },
   ];
 
   const rightItems = [

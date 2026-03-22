@@ -403,7 +403,7 @@ export default function SinsList() {
     saveSelectedSins(sins);
     localStorage.removeItem("personal_plan_dismissed");
     setSaved(true);
-    setTimeout(() => setLocation("/plan"), 700);
+    setTimeout(() => setLocation("/journey"), 700);
   };
 
   const handleAiDetected = (ids: string[], _explanation: string) => {
@@ -439,7 +439,7 @@ export default function SinsList() {
   return (
     <div className="flex flex-col flex-1 pb-32">
       <div className="flex items-center gap-3 px-5 pt-4 mb-1">
-        <Link href="/plan" className="p-2 -ml-2 rounded-xl hover:bg-muted/50 text-muted-foreground">
+        <Link href="/journey" className="p-2 -ml-2 rounded-xl hover:bg-muted/50 text-muted-foreground">
           <ArrowLeft size={20} />
         </Link>
         <div className="flex-1">

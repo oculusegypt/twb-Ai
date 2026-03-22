@@ -11,7 +11,7 @@ import AdminApp from "@/pages/admin/AdminApp";
 import Home from "@/pages/home";
 import Covenant from "@/pages/covenant";
 import DayOne from "@/pages/day-one";
-import Plan from "@/pages/plan";
+
 import Dhikr from "@/pages/dhikr";
 import Sos from "@/pages/sos";
 import Signs from "@/pages/signs";
@@ -56,7 +56,7 @@ function Router() {
         <Route path="/" component={Home} />
         <Route path="/covenant" component={Covenant} />
         <Route path="/day-one" component={DayOne} />
-        <Route path="/plan" component={Plan} />
+        <Route path="/plan">{() => { window.location.replace("/journey"); return null; }}</Route>
         <Route path="/dhikr" component={Dhikr} />
         <Route path="/sos" component={Sos} />
         <Route path="/signs" component={Signs} />

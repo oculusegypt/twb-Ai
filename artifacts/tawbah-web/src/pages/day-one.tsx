@@ -28,7 +28,7 @@ export default function DayOne() {
     if (!allDone) return;
     updateProgress.mutate({ firstDayTasksCompleted: true }, {
       onSuccess: () => {
-        setLocation("/plan");
+        setLocation("/journey");
       }
     });
   };

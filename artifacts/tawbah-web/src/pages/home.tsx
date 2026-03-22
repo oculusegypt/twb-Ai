@@ -80,20 +80,25 @@ const GRID_IDS = new Set<SectionId>([
 ]);
 
 const GRID_DEFAULT: GridId[] = [
-  "rajaa", "dhikr", "journal", "hadi-tasks",
-  "dhikr-rooms", "challenge", "kaffarah", "prayer-times",
-  "relapse", "progress-map", "notifications", "danger-times",
-  "secret-dua", "dua-timing",
+  "rajaa", "dhikr", "dua-timing", "dhikr-rooms", "hadi-tasks", "prayer-times",
+  "kaffarah", "relapse", "journal", "progress-map", "challenge", "notifications",
+  "danger-times", "secret-dua",
 ];
 
 const LIST_DEFAULT: ListId[] = [
-  "journey30", "invite", "ameen", "tawbah-card", "signs",
-  "map", "live-stats",
+  "live-stats", "ameen", "invite", "signs", "journey30", "tawbah-card", "map",
 ];
 
-const ALL_SECTIONS: SectionId[] = [...GRID_DEFAULT, ...LIST_DEFAULT];
+const ALL_SECTIONS: SectionId[] = [
+  "rajaa", "dhikr", "dua-timing", "dhikr-rooms", "hadi-tasks", "prayer-times",
+  "live-stats",
+  "kaffarah", "relapse", "journal", "progress-map", "challenge", "notifications",
+  "ameen", "invite", "signs",
+  "danger-times", "secret-dua",
+  "journey30", "tawbah-card", "map",
+];
 
-const COMBINED_STORAGE_KEY = "home_combined_order_v3";
+const COMBINED_STORAGE_KEY = "home_combined_order_v4";
 
 function loadCombinedOrder(): SectionId[] {
   try {

@@ -327,10 +327,10 @@ export default function ProgressChart() {
       >
         <div className="flex items-center gap-2 mb-3">
           <Moon size={16} className="text-primary" />
-          <h2 className="font-bold text-sm">خطة الـ 40 يوماً</h2>
+          <h2 className="font-bold text-sm">رحلة التوبة — ٣٠ يوماً</h2>
         </div>
         <div className="flex flex-wrap gap-1.5">
-          {Array.from({ length: 40 }, (_, i) => {
+          {Array.from({ length: 30 }, (_, i) => {
             const day = i + 1;
             const done = day <= covenantDays;
             const current = day === covenantDays + 1;
@@ -350,9 +350,9 @@ export default function ProgressChart() {
           })}
         </div>
         <p className="text-xs text-muted-foreground mt-3">
-          {covenantDays >= 40
-            ? "مبارك! أكملت خطة الـ 40 يوماً 🎉"
-            : `تبقّى ${40 - covenantDays} يوماً لإتمام الخطة`}
+          {covenantDays >= 30
+            ? "مبارك! أكملت رحلة التوبة ٣٠ يوماً 🎉"
+            : `تبقّى ${30 - Math.min(covenantDays, 30)} يوماً لإتمام الرحلة`}
         </p>
       </motion.div>
     </div>
