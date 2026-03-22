@@ -623,6 +623,18 @@ function HeroContent({
             )}
           </div>
 
+          {/* Progress bar */}
+          <div className="h-[2px] w-full" style={{ background: `${dotInactive}` }}>
+            <motion.div
+              key={idx}
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              transition={{ duration: 9, ease: "linear" }}
+              className="h-full origin-right"
+              style={{ background: dotActive, opacity: 0.7 }}
+            />
+          </div>
+
           {/* Card body */}
           <div className="min-h-[78px] px-4 py-3.5">
             <AnimatePresence mode="wait">

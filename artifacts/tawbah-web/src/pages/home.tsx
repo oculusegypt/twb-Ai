@@ -1047,7 +1047,7 @@ export default function Home() {
       <div className="px-5 mt-1 relative z-10 flex flex-col gap-4">
 
         <EidEntryCard />
-        <DynamicBanner />
+        <div className="hidden"><DynamicBanner /></div>
 
         {/* Edit mode banner */}
         <AnimatePresence>
