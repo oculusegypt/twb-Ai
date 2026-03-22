@@ -530,7 +530,7 @@ function HeroContent({
         className="mb-3"
       >
         <div
-          className="w-[72px] h-[72px] rounded-full overflow-hidden"
+          className="w-[96px] h-[96px] rounded-full overflow-hidden"
           style={{ border: `2px solid ${logoRing}`, boxShadow: logoGlow }}
         >
           <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
@@ -630,7 +630,7 @@ function HeroContent({
                 <motion.div
                   key="loading"
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="flex items-center gap-2.5"
+                  className="flex items-center justify-center gap-2.5"
                 >
                   <motion.div
                     animate={{ rotate: 360 }}
@@ -650,13 +650,14 @@ function HeroContent({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -14 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="flex flex-col items-center"
                 >
                   <p
-                    className="text-[13px] leading-[1.9] font-medium"
+                    className="text-[13px] leading-[1.9] font-medium text-center"
                     style={{ color: textColor }}
                     dir="rtl"
                   >
-                    {item.text}
+                    {item.type === "ayah" ? `﴿${item.text}﴾` : item.text}
                   </p>
                 </motion.div>
               ) : null}

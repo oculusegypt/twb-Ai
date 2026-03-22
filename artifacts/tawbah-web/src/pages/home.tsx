@@ -94,16 +94,16 @@ const LIST_DEFAULT: ListId[] = [
 ];
 
 const ALL_SECTIONS: SectionId[] = [
-  "soul-meter", "journey-card",
+  "journey-card",
   "rajaa", "dhikr", "dua-timing", "dhikr-rooms", "hadi-tasks", "prayer-times",
-  "live-stats",
+  "soul-meter", "live-stats",
   "kaffarah", "relapse", "journal", "progress-map", "challenge", "notifications",
   "ameen", "invite", "signs",
   "danger-times", "secret-dua",
   "journey30", "tawbah-card", "map",
 ];
 
-const COMBINED_STORAGE_KEY = "home_combined_order_v5";
+const COMBINED_STORAGE_KEY = "home_combined_order_v6";
 
 function loadCombinedOrder(): SectionId[] {
   try {

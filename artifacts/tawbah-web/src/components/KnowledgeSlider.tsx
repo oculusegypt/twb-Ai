@@ -207,14 +207,13 @@ export function KnowledgeSlider() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -16 }}
               transition={{ duration: 0.38, ease: "easeOut" }}
-              className="flex flex-col gap-2.5"
+              className="flex flex-col items-center gap-2.5"
             >
-              {/* Text */}
               <p
-                className="text-[13.5px] leading-[1.9] font-medium text-foreground"
+                className="text-[13.5px] leading-[1.9] font-medium text-foreground text-center"
                 dir="rtl"
               >
-                {item.text}
+                {item.type === "ayah" ? `﴿${item.text}﴾` : item.text}
               </p>
             </motion.div>
           ) : null}
