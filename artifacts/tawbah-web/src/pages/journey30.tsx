@@ -40,10 +40,14 @@ function toArabicIndic(n: number): string {
   return n.toString().replace(/\d/g, (d) => "٠١٢٣٤٥٦٧٨٩"[parseInt(d)]!);
 }
 
-function isBismillahAyah(text: string, surahNumber: number): boolean {
-  if (surahNumber === 1) return false;
-  const normalized = text.replace(/[\u0610-\u061A\u064B-\u065F\u0670]/g, "").replace(/\s+/g, "");
-  return normalized.startsWith("بسماللهالرحمن") || normalized.startsWith("بِسْمِاللَّهِ") || /^بِسۡمِ/.test(text.trim());
+function isBismillahAyah(ayah: SurahAyah, surahNumber: number): boolean {
+  // الفاتحة: البسملة هي الآية الأولى الحقيقية — لا تُحذف
+  // التوبة: لا بسملة أصلاً
+  if (surahNumber === 1 || surahNumber === 9) return false;
+  // البسملة دائماً هي الآية الأولى (numberInSurah === 1) في سائر السور
+  if (ayah.numberInSurah !== 1) return false;
+  const normalized = ayah.text.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "").replace(/\s+/g, "");
+  return normalized.startsWith("بسماللهالرحمن") || normalized.startsWith("بسمالله");
 }
 
 const SURAH_TASK_MAP: Array<{ pattern: RegExp; surahs: Array<{ number: number; name: string }> }> = [
@@ -251,7 +255,7 @@ function SurahReaderModal({
                   className="leading-[3] text-[18px] text-right"
                   style={{ fontFamily: "'Amiri Quran', 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif", textAlign: "justify" }}
                 >
-                  {ayahs.filter(a => !isBismillahAyah(a.text, surahNumber)).map((ayah) => {
+                  {ayahs.filter(a => !isBismillahAyah(a, surahNumber)).map((ayah) => {
                     const originalIdx = ayahs.indexOf(ayah);
                     const isCurrent = currentIdx === originalIdx;
                     return (
@@ -297,7 +301,7 @@ function SurahReaderModal({
                   {tafseerAyahs.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-6">جاري تحميل التفسير...</p>
                   ) : (
-                    ayahs.filter(a => !isBismillahAyah(a.text, surahNumber)).map((ayah) => {
+                    ayahs.filter(a => !isBismillahAyah(a, surahNumber)).map((ayah) => {
                       const originalIdx = ayahs.indexOf(ayah);
                       const isCurrent = currentIdx === originalIdx;
                       const tafseer = tafseerAyahs[originalIdx];

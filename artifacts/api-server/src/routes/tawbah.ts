@@ -33,6 +33,106 @@ const TODAY_HABITS = [
   { key: "change_env", nameAr: "غيّر بيئتك" },
 ];
 
+// ── مكتبة العادات الـ 50 ─────────────────────────────────────────────────────
+type HabitLevel = "easy" | "medium" | "advanced";
+
+interface HabitTemplate {
+  key: string;
+  nameAr: string;
+  level: HabitLevel;
+}
+
+const HABITS_LIBRARY: HabitTemplate[] = [
+  // ── سهل (18) ─────────────────────────────────────────────────
+  { key: "wudu",              nameAr: "الوضوء قبل النوم",                        level: "easy" },
+  { key: "salat_tawba",       nameAr: "ركعتا التوبة",                            level: "easy" },
+  { key: "bismillah",         nameAr: "البسملة قبل كل عمل",                      level: "easy" },
+  { key: "fatiha_3x",        nameAr: "قراءة الفاتحة 3 مرات صباحاً",             level: "easy" },
+  { key: "istighfar_10",      nameAr: "الاستغفار 10 مرات بعد الصلاة",            level: "easy" },
+  { key: "salawat_10",        nameAr: "الصلاة على النبي ﷺ 10 مرات",              level: "easy" },
+  { key: "no_phone_fajr",     nameAr: "عدم استخدام الهاتف بعد الفجر ساعة",       level: "easy" },
+  { key: "sadaqa_small",      nameAr: "صدقة ولو بكلمة طيبة",                    level: "easy" },
+  { key: "quran_page",        nameAr: "قراءة صفحة واحدة من القرآن",               level: "easy" },
+  { key: "subhana_33",        nameAr: "سبحان الله 33 مرة بعد الصلاة",            level: "easy" },
+  { key: "ayah_kursi",        nameAr: "آية الكرسي قبل النوم",                      level: "easy" },
+  { key: "muawwizatain",      nameAr: "المعوذتين قبل النوم",                      level: "easy" },
+  { key: "smile_sadaqa",      nameAr: "الابتسامة في وجه المسلم",                  level: "easy" },
+  { key: "water_niyyah",      nameAr: "شرب الماء بنية الاستعانة على العبادة",     level: "easy" },
+  { key: "morning_azkar",     nameAr: "أذكار الصباح المختصرة",                    level: "easy" },
+  { key: "evening_azkar",     nameAr: "أذكار المساء المختصرة",                    level: "easy" },
+  { key: "no_haram_look",     nameAr: "غض البصر طوال اليوم",                      level: "easy" },
+  { key: "dua_before_sleep",  nameAr: "الدعاء عند النوم باسم الله",               level: "easy" },
+
+  // ── متوسط (17) ────────────────────────────────────────────────
+  { key: "istighfar_100",     nameAr: "ورد الاستغفار 100 مرة يومياً",              level: "medium" },
+  { key: "quran_2pages",      nameAr: "قراءة صفحتين من القرآن",                   level: "medium" },
+  { key: "witr",              nameAr: "صلاة الوتر قبل النوم",                     level: "medium" },
+  { key: "sayyid_morning",    nameAr: "سيد الاستغفار صباحاً",                     level: "medium" },
+  { key: "sayyid_evening",    nameAr: "سيد الاستغفار مساءً",                      level: "medium" },
+  { key: "full_azkar",        nameAr: "أذكار الصباح والمساء كاملة",                level: "medium" },
+  { key: "rawatib_prayers",   nameAr: "السنن الرواتب (12 ركعة يومياً)",            level: "medium" },
+  { key: "quran_tafsir",      nameAr: "قراءة آية مع تفسيرها",                     level: "medium" },
+  { key: "sadaqa_daily",      nameAr: "الصدقة اليومية ولو درهماً",                 level: "medium" },
+  { key: "no_sin_hour",       nameAr: "ساعة خالية من الذنوب والغفلة",              level: "medium" },
+  { key: "duha_pray",         nameAr: "صلاة الضحى (ركعتان على الأقل)",             level: "medium" },
+  { key: "hadith_read",       nameAr: "قراءة حديث شريف والعمل به",                 level: "medium" },
+  { key: "parents_dua",       nameAr: "الدعاء للوالدين بعد كل صلاة",              level: "medium" },
+  { key: "zikr_100",          nameAr: "ذكر (سبحان الله وبحمده) 100 مرة",          level: "medium" },
+  { key: "fasting_white",     nameAr: "صيام الأيام البيض (13, 14, 15)",            level: "medium" },
+  { key: "journal_tawbah",    nameAr: "كتابة يومية في مفكرة التوبة",               level: "medium" },
+  { key: "tahajjud_2rak",     nameAr: "ركعتا تهجد في آخر الليل",                  level: "medium" },
+
+  // ── متقدم (15) ────────────────────────────────────────────────
+  { key: "juz_daily",         nameAr: "قراءة جزء كامل من القرآن يومياً",           level: "advanced" },
+  { key: "tahajjud_full",     nameAr: "قيام الليل (ثلث الليل الأخير)",             level: "advanced" },
+  { key: "fasting_weekly",    nameAr: "صيام الاثنين والخميس",                      level: "advanced" },
+  { key: "sadaqa_10pct",      nameAr: "الصدقة بعُشر الدخل اليومي",                 level: "advanced" },
+  { key: "no_sin_day",        nameAr: "يوم كامل خالٍ من الذنوب الظاهرة",           level: "advanced" },
+  { key: "memorize_ayah",     nameAr: "حفظ آية كريمة جديدة يومياً",               level: "advanced" },
+  { key: "istighfar_1000",    nameAr: "الاستغفار 1000 مرة في اليوم",               level: "advanced" },
+  { key: "complete_azkar",    nameAr: "جميع الأذكار المسنونة طوال اليوم",           level: "advanced" },
+  { key: "silat_rahim",       nameAr: "صلة رحم بالزيارة أو المكالمة",              level: "advanced" },
+  { key: "repent_immediately", nameAr: "التوبة الفورية عند أي ذنب",                level: "advanced" },
+  { key: "nawafil_extra",     nameAr: "20 ركعة نافلة إضافية",                      level: "advanced" },
+  { key: "surah_baqarah",     nameAr: "قراءة سورة البقرة كاملة",                   level: "advanced" },
+  { key: "itikaaf_hour",      nameAr: "ساعة اعتكاف في المسجد",                     level: "advanced" },
+  { key: "khushu_salat",      nameAr: "الصلاة بخشوع تام (تدبّر كل ركعة)",          level: "advanced" },
+  { key: "dawah_share",       nameAr: "مشاركة نصيحة إسلامية مع شخص آخر",           level: "advanced" },
+];
+
+// اختيار العادات اليومية حسب عمر المستخدم في التوبة
+function selectDailyHabits(dayProgress: number, sessionId: string, date: string): HabitTemplate[] {
+  // مرحلة البداية (1-7): 4 سهل، 1 متوسط
+  // مرحلة التثبيت (8-20): 3 سهل، 2 متوسط
+  // مرحلة التعمّق (21-35): 2 سهل، 2 متوسط، 1 متقدم
+  // مرحلة الإتقان (36+): 1 سهل، 2 متوسط، 2 متقدم
+  let easyCount = 4, mediumCount = 1, advancedCount = 0;
+  if (dayProgress >= 36) { easyCount = 1; mediumCount = 2; advancedCount = 2; }
+  else if (dayProgress >= 21) { easyCount = 2; mediumCount = 2; advancedCount = 1; }
+  else if (dayProgress >= 8) { easyCount = 3; mediumCount = 2; advancedCount = 0; }
+
+  const easy    = HABITS_LIBRARY.filter(h => h.level === "easy");
+  const medium  = HABITS_LIBRARY.filter(h => h.level === "medium");
+  const advanced = HABITS_LIBRARY.filter(h => h.level === "advanced");
+
+  // اختيار شبه عشوائي ولكن محدد لكل يوم وجلسة
+  const seed = Array.from(sessionId + date).reduce((a, c) => a + c.charCodeAt(0), 0);
+  const pick = <T,>(arr: T[], n: number, offset = 0): T[] => {
+    const result: T[] = [];
+    const len = arr.length;
+    for (let i = 0; i < n && i < len; i++) {
+      result.push(arr[(seed + offset + i * 7) % len]!);
+    }
+    return result;
+  };
+
+  return [
+    ...pick(easy, easyCount, 0),
+    ...pick(medium, mediumCount, 31),
+    ...pick(advanced, advancedCount, 67),
+  ];
+}
+
 const DAILY_HABITS = [
   { key: "istighfar_100", nameAr: "ورد الاستغفار (100 مرة)" },
   { key: "quran", nameAr: "قراءة صفحتين من القرآن" },
@@ -201,7 +301,10 @@ router.get("/habits", async (req, res) => {
     where: eq(userProgressTable.sessionId, sessionId),
   });
 
-  const habitTemplates = progress?.firstDayTasksCompleted ? DAILY_HABITS : TODAY_HABITS;
+  const dayProgress = progress?.day40Progress ?? 0;
+  const habitTemplates = progress?.firstDayTasksCompleted
+    ? selectDailyHabits(dayProgress, sessionId, dateStr)
+    : TODAY_HABITS;
 
   let habits = await db.query.habitsTable.findMany({
     where: and(
