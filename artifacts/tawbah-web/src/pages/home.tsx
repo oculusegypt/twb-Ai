@@ -938,7 +938,7 @@ function SortableUnifiedItem({ id, editMode }: { id: SectionId; editMode: boolea
           className={`flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${meta.bg} border ${meta.border} rounded-2xl px-3 py-4 hover:shadow-md active:scale-[0.97] transition-all text-center`}
           style={{ minHeight: "96px" }}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${meta.iconBg}`}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-rose-600/15 text-[#e87696] border-t-[#fca9bd] border-r-[#fca9bd] border-b-[#fca9bd] border-l-[#fca9bd]">
             {meta.icon}
           </div>
           <div>
