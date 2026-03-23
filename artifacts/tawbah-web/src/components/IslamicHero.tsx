@@ -306,8 +306,6 @@ export function IslamicHero() {
       />
       <MeshSpots isDark={isDark} />
       {isDark ? <IslamicGeometryDark /> : <IslamicGeometryLight color={lightCfg.shimmer} />}
-      {isDark ? <MosqueSilhouetteDark /> : <MosqueSilhouetteLight color={lightCfg.textColor} />}
-
       {/* Top accent line */}
       <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
         style={{ background: topLineColor }} />
