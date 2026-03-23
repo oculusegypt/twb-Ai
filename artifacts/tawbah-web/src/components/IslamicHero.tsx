@@ -478,43 +478,46 @@ export function IslamicHero() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
-            {/* Pulsing ring */}
-            <motion.div className="absolute inset-[-14%] rounded-full pointer-events-none"
-              style={{ border: "1px solid rgba(251,191,36,0.22)" }}
-              animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0, 0.4] }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut" }}
+            {/* Pulsing ring 1 */}
+            <motion.div className="absolute inset-0 rounded-full pointer-events-none"
+              style={isDark
+                ? { border: "2px solid rgba(251,191,36,0.42)", boxShadow: "0 0 20px rgba(251,191,36,0.22)" }
+                : { border: `2px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 16px ${lightCfg.glowColor}` }
+              }
+              animate={{ scale: [1, 1.24, 1], opacity: [0.65, 0, 0.65] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut" }}
             />
-            {/* ── Islamic mandala frame + original logo ── */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative" style={{ width: 172, height: 172 }}>
-                {/* Mandala ornamental frame */}
-                <img
-                  src="/images/mandala-frame.jpg"
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full"
-                  style={{ objectFit: "cover", mixBlendMode: "screen", opacity: 0.92 }}
-                  draggable={false}
-                />
-                {/* Original logo centred inside mandala's inner circle */}
-                <img
-                  src="/images/logo.png"
-                  alt="دليل التوبة"
-                  className="absolute"
-                  style={{
-                    width: "56%",
-                    height: "56%",
-                    top: "22%",
-                    left: "22%",
-                    objectFit: "contain",
-                    filter: isDark
-                      ? "drop-shadow(0 0 10px rgba(251,191,36,0.45))"
-                      : "drop-shadow(0 0 8px rgba(180,130,0,0.35))",
-                  }}
-                  draggable={false}
-                />
-              </div>
+            {/* Pulsing ring 2 */}
+            <motion.div className="absolute inset-0 rounded-full pointer-events-none"
+              style={isDark
+                ? { border: "1px solid rgba(96,165,250,0.28)" }
+                : { border: `1px solid ${lightCfg.glowColor}` }
+              }
+              animate={{ scale: [1, 1.45, 1], opacity: [0.35, 0, 0.35] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut", delay: 1.0 }}
+            />
+            {/* Logo image */}
+            <div
+              className="w-full h-full rounded-full overflow-hidden"
+              style={isDark
+                ? { border: "2.5px solid rgba(251,191,36,0.58)", boxShadow: "0 0 0 4px rgba(251,191,36,0.08), 0 0 32px rgba(251,191,36,0.38), 0 0 64px rgba(251,191,36,0.14), 0 6px 24px rgba(0,0,0,0.5)" }
+                : { border: `2.5px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 0 4px ${lightCfg.glowColor}, 0 0 24px ${lightCfg.glowColor}, 0 4px 16px rgba(0,0,0,0.12)` }
+              }
+            >
+              <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
             </div>
+            {/* Corner sparkle */}
+            <motion.div
+              className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full flex items-center justify-center"
+              style={isDark
+                ? { background: "rgba(30,58,138,0.88)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
+                : { background: "rgba(219,234,254,0.95)", border: `1px solid ${lightCfg.cardBorder}`, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }
+              }
+              animate={{ scale: [1, 1.18, 1] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Sparkles size={10} style={{ color: isDark ? "#93c5fd" : lightCfg.textColor }} />
+            </motion.div>
           </motion.button>
         </div>{/* /logo wrapper */}
 
