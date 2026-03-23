@@ -322,7 +322,7 @@ export function IslamicHero() {
           style={{
             width: 200,
             height: 200,
-            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 : -38,
+            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 : -18,
             marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 + 0 : 0,
             transition: "margin 0.48s cubic-bezier(0.34,1.26,0.64,1)",
           }}
@@ -464,7 +464,7 @@ export function IslamicHero() {
                 objectFit: "contain",
                 zIndex: 2,
                 filter:
-                  "drop-shadow(0 0 22px rgba(212,175,55,0.70)) drop-shadow(0 0 8px rgba(212,175,55,0.45)) drop-shadow(0 8px 18px rgba(0,0,0,0.75))",
+                  "drop-shadow(0 6px 18px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.55))",
               }}
             />
           </motion.button>
