@@ -582,12 +582,15 @@ export default function Rajaa() {
   ];
 
   return (
-    <div className="flex flex-col flex-1 pb-8">
-      <div className="px-5 pt-4 mb-3">
-        <h1 className="text-2xl font-display font-bold mb-0.5">مكتبة الرجاء</h1>
-        <p className="text-sm text-muted-foreground">آيات وأحاديث وقصص تملأ القلب بالأمل</p>
+    <div className="flex flex-col flex-1 pb-8" dir="rtl">
+      <PageHeader
+        title="مكتبة الرجاء"
+        subtitle="آيات وأحاديث وقصص تملأ القلب بالأمل"
+        icon={<BookOpen size={16} />}
+      />
 
-        <div className="flex gap-2 mt-3">
+      <div className="px-5 pt-3 mb-3">
+        <div className="flex gap-2 mt-0">
           <div className="flex-1 flex items-center gap-2 bg-muted/50 border border-border rounded-xl px-3 py-2">
             <Search size={14} className="text-muted-foreground shrink-0" />
             <input
@@ -652,9 +655,10 @@ export default function Rajaa() {
                   const key = `q_${v.id}`;
                   const isFav = favorites.has(key);
                   const isOpen = expanded === key;
+                  const isListening = listeningKey === key;
                   return (
                     <motion.div key={v.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                      className={`bg-card rounded-xl border transition-all ${isOpen ? "border-primary/30" : "border-border"}`}
+                      className={`bg-card rounded-xl border transition-all ${isListening ? "border-primary/50 ring-1 ring-primary/20" : isOpen ? "border-primary/30" : "border-border"}`}
                     >
                       <div className="p-4">
                         <div className="flex items-start justify-between gap-2 mb-2">
@@ -667,7 +671,11 @@ export default function Rajaa() {
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-xs text-primary font-bold">{v.source}</span>
                           <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                            <VerseAudioPlayer surah={v.surah} ayah={v.ayah} />
+                            <VerseAudioPlayer
+                              surah={v.surah}
+                              ayah={v.ayah}
+                              onOpenChange={(open) => setListeningKey(open ? key : null)}
+                            />
                             <VerseTafseerButton surah={v.surah} ayah={v.ayah} source={v.source} arabic={v.arabic} />
                             <button onClick={() => setExpanded(isOpen ? null : key)} className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
                               {isOpen ? "إغلاق" : "تأمل ▾"}
