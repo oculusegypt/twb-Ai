@@ -719,20 +719,29 @@ export function IslamicHero() {
       }}
     >
       {/* Hero background image */}
-      <div
+      <motion.div
         className="absolute inset-0 pointer-events-none"
+        animate={{ scale: [1, 1.03, 1] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
         style={{
-          backgroundImage: "url('/images/hero-bg.jpg')",
+          backgroundImage: isDark
+            ? "url('/images/hero-bg.jpg')"
+            : "url('/images/hero-bg-light.png')",
           backgroundSize: "cover",
           backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
+          filter: isDark
+            ? "brightness(0.92) saturate(1.1)"
+            : "brightness(1.0) saturate(1.2) hue-rotate(8deg) sepia(0.08)",
         }}
       />
-      {/* Dark overlay — stronger in light mode for readability */}
+      {/* Overlay — tinted to match theme */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: isDark ? "rgba(2, 22, 12, 0.48)" : "rgba(0, 10, 5, 0.62)",
+          background: isDark
+            ? "rgba(2, 22, 12, 0.48)"
+            : "linear-gradient(160deg, rgba(210,240,225,0.55) 0%, rgba(180,220,200,0.35) 50%, rgba(200,235,215,0.45) 100%)",
         }}
       />
       {/* Bottom fade to page background — matches both light and dark */}
