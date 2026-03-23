@@ -9,11 +9,14 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
   const [, navigate] = useLocation();
   const [bars, setBars] = useState<number[]>(Array(NUM_BARS).fill(0.06));
   const [phase, setPhase] = useState<"entering" | "listening" | "done">("entering");
+  const [interimText, setInterimText] = useState("");
+  const [finalText, setFinalText] = useState("");
 
   const audioCtxRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animFrameRef = useRef<number>(0);
   const recognitionRef = useRef<any>(null);
+  const capturedTextRef = useRef("");
 
   const stopAudio = useCallback(() => {
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -22,9 +25,12 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
     audioCtxRef.current = null;
   }, []);
 
-  const finishAndNavigate = useCallback(() => {
+  const finishAndNavigate = useCallback((text: string) => {
     stopAudio();
     setPhase("done");
+    if (text.trim()) {
+      localStorage.setItem("zakiy_voice_input", text.trim());
+    }
     setTimeout(() => {
       navigate("/zakiy");
       onClose();
@@ -60,7 +66,7 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
 
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
-      finishAndNavigate();
+      finishAndNavigate("");
       return;
     }
     const recognition = new SR();
@@ -71,14 +77,25 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (e: any) => {
+      let interim = "";
       let final = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) {
+          final += t;
+        } else {
+          interim += t;
+        }
       }
-      if (final.trim()) localStorage.setItem("zakiy_voice_input", final.trim());
+      if (interim) setInterimText(interim);
+      if (final.trim()) {
+        capturedTextRef.current = final.trim();
+        setFinalText(final.trim());
+        setInterimText("");
+      }
     };
-    recognition.onend = finishAndNavigate;
-    recognition.onerror = finishAndNavigate;
+    recognition.onend = () => finishAndNavigate(capturedTextRef.current);
+    recognition.onerror = () => finishAndNavigate(capturedTextRef.current);
     recognition.start();
   }, [finishAndNavigate]);
 
@@ -93,6 +110,8 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
       recognitionRef.current?.abort();
     };
   }, [stopAudio]);
+
+  const displayText = finalText || interimText;
 
   return (
     <motion.div
@@ -207,6 +226,48 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
               ? "تحدث الآن..."
               : "جاري الإرسال..."}
           </motion.p>
+        </AnimatePresence>
+
+        {/* Interim / final text preview */}
+        <AnimatePresence>
+          {displayText ? (
+            <motion.div
+              key="transcript"
+              initial={{ opacity: 0, y: 8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-[260px] text-center"
+            >
+              <p
+                className="text-sm leading-relaxed px-4 py-2.5 rounded-2xl"
+                style={{
+                  color: finalText ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.55)",
+                  background: finalText
+                    ? "rgba(255,255,255,0.12)"
+                    : "rgba(255,255,255,0.06)",
+                  border: finalText
+                    ? "1px solid rgba(255,255,255,0.18)"
+                    : "1px solid rgba(255,255,255,0.08)",
+                  fontStyle: finalText ? "normal" : "italic",
+                }}
+              >
+                {displayText}
+              </p>
+            </motion.div>
+          ) : phase === "listening" ? (
+            <motion.div
+              key="placeholder"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="max-w-[260px] text-center"
+            >
+              <p className="text-xs text-white/30 italic">
+                ما تقوله سيظهر هنا...
+              </p>
+            </motion.div>
+          ) : null}
         </AnimatePresence>
       </div>
     </motion.div>
