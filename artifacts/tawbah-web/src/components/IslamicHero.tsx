@@ -283,7 +283,7 @@ export function IslamicHero() {
         minHeight: orbiting ? 500 : 278,
         transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
         maskImage: "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 80%, transparent 100%)",
       }}
     >
       {/* Hero background image */}
@@ -310,7 +310,7 @@ export function IslamicHero() {
       <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
         style={{ background: topLineColor }} />
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center pt-2 pb-8 px-5"
+      <div className="relative z-10 flex flex-col items-center pt-2 px-5 pb-[93px]"
         style={{
           maskImage: "linear-gradient(to bottom, transparent 0%, black 18%, black 100%)",
           WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 18%, black 100%)",
