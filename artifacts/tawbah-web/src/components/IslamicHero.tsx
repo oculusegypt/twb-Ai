@@ -484,33 +484,36 @@ export function IslamicHero() {
               animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0, 0.4] }}
               transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut" }}
             />
-            {/* ── Combined Islamic logo block ── */}
+            {/* ── Islamic mandala frame + original logo ── */}
             <div className="absolute inset-0 flex items-center justify-center">
-              {/* Mandala ornamental frame — fills the entire container */}
-              <img
-                src="/images/mandala-frame.jpg"
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full"
-                style={{ objectFit: "cover", mixBlendMode: "screen", opacity: 0.88 }}
-                draggable={false}
-              />
-              {/* Tawbah Islamic logo — centred inside the mandala's inner circle */}
-              <img
-                src="/images/tawbah-islamic-logo.png"
-                alt="تَوْبَةٌ نَصُوحٌ"
-                className="relative"
-                style={{
-                  width: "84%",
-                  height: "84%",
-                  objectFit: "contain",
-                  mixBlendMode: "screen",
-                  filter: isDark
-                    ? "drop-shadow(0 0 18px rgba(251,191,36,0.55)) drop-shadow(0 0 8px rgba(251,191,36,0.35))"
-                    : "drop-shadow(0 0 12px rgba(180,130,0,0.40)) drop-shadow(0 0 6px rgba(180,130,0,0.25))",
-                }}
-                draggable={false}
-              />
+              <div className="relative" style={{ width: 172, height: 172 }}>
+                {/* Mandala ornamental frame */}
+                <img
+                  src="/images/mandala-frame.jpg"
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full"
+                  style={{ objectFit: "cover", mixBlendMode: "screen", opacity: 0.92 }}
+                  draggable={false}
+                />
+                {/* Original logo centred inside mandala's inner circle */}
+                <img
+                  src="/images/logo.png"
+                  alt="دليل التوبة"
+                  className="absolute"
+                  style={{
+                    width: "56%",
+                    height: "56%",
+                    top: "22%",
+                    left: "22%",
+                    objectFit: "contain",
+                    filter: isDark
+                      ? "drop-shadow(0 0 10px rgba(251,191,36,0.45))"
+                      : "drop-shadow(0 0 8px rgba(180,130,0,0.35))",
+                  }}
+                  draggable={false}
+                />
+              </div>
             </div>
           </motion.button>
         </div>{/* /logo wrapper */}
