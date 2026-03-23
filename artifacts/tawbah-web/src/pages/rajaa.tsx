@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Sparkles, Clock, Search, Heart, X, Play, Loader2, BookText } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
+import { PageHeader } from "@/components/PageHeader";
 
 type VerseCategory = "رجاء" | "ترغيب" | "نعيم" | "طمأنينة";
 
@@ -297,7 +298,7 @@ const STORIES = [
 
 type TabType = "quran" | "hadith" | "stories";
 
-function VerseAudioPlayer({ surah, ayah }: { surah: number; ayah: number }) {
+function VerseAudioPlayer({ surah, ayah, onOpenChange }: { surah: number; ayah: number; onOpenChange?: (open: boolean) => void }) {
   const { quranReciterId } = useSettings();
   const [open, setOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -307,12 +308,14 @@ function VerseAudioPlayer({ surah, ayah }: { surah: number; ayah: number }) {
   const handleOpen = (e: React.MouseEvent) => {
     e.stopPropagation();
     setOpen(true);
+    onOpenChange?.(true);
   };
 
   const handleClose = (e: React.MouseEvent) => {
     e.stopPropagation();
     audioRef.current?.pause();
     setOpen(false);
+    onOpenChange?.(false);
   };
 
   if (!open) {
@@ -533,6 +536,7 @@ export default function Rajaa() {
   const [activeTab, setActiveTab] = useState<TabType>("quran");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [listeningKey, setListeningKey] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     const saved = localStorage.getItem("rajaa_favorites");
     return saved ? new Set(JSON.parse(saved)) : new Set();

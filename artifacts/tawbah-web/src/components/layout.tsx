@@ -10,26 +10,24 @@ const WAVE_BARS = [0.35, 0.65, 1, 0.8, 0.5, 0.9, 0.6, 0.4, 0.75, 0.95, 0.55, 0.7
 function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
   return (
     <div className="relative w-[60px] h-[60px]">
-      {/* Rainbow glow — blurred conic gradient, no visible border */}
+      {/* Soft primary glow */}
       <div
         className="absolute rounded-full pointer-events-none"
         style={{
-          inset: "-12px",
-          background: "conic-gradient(from var(--rb-angle), #06b6d4 0%, #3b82f6 16%, #818cf8 28%, #a855f7 38%, #ec4899 50%, #f97316 62%, #eab308 74%, #22c55e 86%, #06b6d4 100%)",
-          animation: "rb-spin 5s linear infinite",
-          filter: "blur(16px)",
-          opacity: 0.42,
+          inset: "-8px",
+          background: "radial-gradient(circle, hsl(var(--primary)/0.28) 0%, transparent 70%)",
+          filter: "blur(10px)",
         }}
       />
 
       {/* Pulse rings */}
-      {[0, 1, 2].map((i) => (
+      {[0, 1].map((i) => (
         <motion.div
           key={i}
           className="absolute inset-0 rounded-full"
-          style={{ border: "1.5px solid var(--color-primary)", opacity: 0.35 }}
-          animate={{ scale: [1, 1.22, 1], opacity: [0.35, 0, 0.35] }}
-          transition={{ duration: 5, repeat: Infinity, delay: i * 1.4, ease: "easeInOut" }}
+          style={{ border: "1.5px solid hsl(var(--primary)/0.4)" }}
+          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0, 0.4] }}
+          transition={{ duration: 4, repeat: Infinity, delay: i * 1.8, ease: "easeInOut" }}
         />
       ))}
 
@@ -37,24 +35,16 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
       <div
         className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
         style={{
-          background: "conic-gradient(from 120deg, hsl(var(--primary)/0.92), hsl(var(--accent)/0.82), hsl(var(--primary)/0.78), hsl(var(--accent)/0.86), hsl(var(--primary)/0.92))",
+          background: "linear-gradient(145deg, hsl(var(--primary)/0.95), hsl(var(--primary)/0.75))",
           boxShadow: isActive
-            ? "0 0 0 2.5px hsl(var(--primary)/0.35), 0 0 18px hsl(var(--primary)/0.45), 0 6px 22px rgba(0,0,0,0.42)"
-            : "0 0 0 2px hsl(var(--primary)/0.22), 0 0 14px hsl(var(--primary)/0.32), 0 5px 18px rgba(0,0,0,0.38)",
+            ? "0 0 0 2.5px hsl(var(--primary)/0.4), 0 0 20px hsl(var(--primary)/0.35), 0 6px 20px rgba(0,0,0,0.35)"
+            : "0 0 0 2px hsl(var(--primary)/0.25), 0 0 12px hsl(var(--primary)/0.2), 0 4px 16px rgba(0,0,0,0.3)",
         }}
       >
-        {/* Rotating shine arc */}
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{ background: "conic-gradient(from 0deg, transparent 75%, rgba(255,255,255,0.18) 100%)" }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-        />
-
         {/* Gloss */}
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.16) 0%, transparent 60%)" }}
+          style={{ background: "radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.2) 0%, transparent 60%)" }}
         />
 
         {/* Sound wave bars */}
@@ -63,7 +53,7 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
             <motion.div
               key={i}
               className="rounded-full"
-              style={{ width: 2, background: "hsl(var(--primary-foreground)/0.9)", originY: "50%" }}
+              style={{ width: 2, background: "hsl(var(--primary-foreground)/0.92)", originY: "50%" }}
               animate={{ scaleY: [h * 0.25, h, h * 0.45, h * 0.7, h * 0.25] }}
               transition={{ duration: 2.4 + (i % 5) * 0.25, repeat: Infinity, delay: i * 0.11, ease: "easeInOut" }}
               initial={{ height: Math.round(h * 24) }}

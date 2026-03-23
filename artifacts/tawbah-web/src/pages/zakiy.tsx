@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare, Handshake, BookMarked, AlertTriangle, Sparkles } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
 import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
@@ -642,7 +643,7 @@ function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
 // ══════════════════════════════════════════
 
 function BotMessageBody({
-  msg, onImpressionToggle, impressionOpen, impressionText, sessionId, history, isLatest,
+  msg, onImpressionToggle, impressionOpen, impressionText, sessionId, history, isAutoPlayTarget, onAudioComplete,
 }: {
   msg: Message;
   onImpressionToggle: (id: string, text?: string) => void;
@@ -650,7 +651,8 @@ function BotMessageBody({
   impressionText?: string;
   sessionId: string;
   history: ApiHistory[];
-  isLatest: boolean;
+  isAutoPlayTarget: boolean;
+  onAudioComplete: () => void;
 }) {
   const { autoPlayBotAudio, autoPlayQuran, quranReciterId } = useSettings();
 
@@ -668,7 +670,12 @@ function BotMessageBody({
   // Helper: advance to next segment
   const advanceTo = useCallback((nextIdx: number) => {
     const seg = segments[nextIdx];
-    if (!seg) { setPlayIdx(-1); setIsPlaying(false); return; }
+    if (!seg) {
+      setPlayIdx(-1);
+      setIsPlaying(false);
+      onAudioComplete();
+      return;
+    }
 
     // Skip fatwa, promise, surah-link segments (no audio)
     if (seg.type === "fatwa" || seg.type === "promise" || seg.type === "surah-link") {
@@ -678,19 +685,22 @@ function BotMessageBody({
     // Quran segments play automatically with reciter audio in sequence
     setPlayIdx(nextIdx);
     setIsPlaying(true);
-  }, [segments]);
+  }, [segments, onAudioComplete]);
 
-  // Auto-play for the latest message respecting both settings
+  // Auto-play when this message is the designated auto-play target
   useEffect(() => {
-    if (!isLatest || autoStartedRef.current) return;
+    if (!isAutoPlayTarget || autoStartedRef.current) return;
     const hasTextAudio = segments.some(s => s.type === "text" && s.audioBase64);
     const hasQuran = segments.some(s => s.type === "quran");
     const shouldStart = (autoPlayBotAudio && hasTextAudio) || (autoPlayQuran && hasQuran);
-    if (!shouldStart) return;
+    if (!shouldStart) {
+      onAudioComplete();
+      return;
+    }
     autoStartedRef.current = true;
     const t = setTimeout(() => advanceTo(0), 400);
     return () => clearTimeout(t);
-  }, [isLatest, autoPlayBotAudio, autoPlayQuran, segments]);
+  }, [isAutoPlayTarget, autoPlayBotAudio, autoPlayQuran, segments]);
 
   // When a segment ends, move to next
   const handleSegmentEnd = useCallback((idx: number) => {
@@ -972,6 +982,8 @@ export default function ZakiyPage() {
   const [riskDismissed, setRiskDismissed] = useState(false);
   const [anniversaryMilestone, setAnniversaryMilestone] = useState<string | null>(null);
   const [pendingParts, setPendingParts] = useState<string[]>([]);
+  const [autoPlayMsgId, setAutoPlayMsgId] = useState<string | null>(null);
+  const autoPlayQueueRef = useRef<string[]>([]);
 
   const [interimText, setInterimText] = useState("");
 
@@ -1070,9 +1082,15 @@ export default function ZakiyPage() {
     }
   }
 
+  function handleAutoPlayComplete() {
+    const next = autoPlayQueueRef.current.shift();
+    setAutoPlayMsgId(next ?? null);
+  }
+
   function addBotMessage(text: string, segments?: MessageSegment[]) {
+    const id = Date.now().toString();
     const msg: Message = {
-      id: Date.now().toString(),
+      id,
       role: "bot",
       text,
       segments: segments ?? [],
@@ -1080,6 +1098,8 @@ export default function ZakiyPage() {
       suggestions: [],
       suggestionsLoading: true,
     };
+    autoPlayQueueRef.current = [];
+    setAutoPlayMsgId(id);
     setMessages((prev) => [...prev, msg]);
     const currentHistory = buildHistory();
     fetchSuggestions([...currentHistory, { role: "assistant", content: text }], msg.id);
@@ -1107,17 +1127,19 @@ export default function ZakiyPage() {
       return;
     }
 
+    const now = Date.now();
+    const partIds = parts.map((_, idx) => (now + idx).toString());
+
+    autoPlayQueueRef.current = partIds.slice(1);
+    setAutoPlayMsgId(partIds[0]);
     setPendingParts(parts.slice(1));
 
     parts.forEach((part, idx) => {
       const isLast = idx === parts.length - 1;
       setTimeout(async () => {
-        const partSegments = idx === 0 && parts.length === 1
-          ? (segments ?? [])
-          : await fetchTtsSegments(part);
-        const msgId = (Date.now() + idx).toString();
+        const partSegments = await fetchTtsSegments(part);
         const partMsg: Message = {
-          id: msgId,
+          id: partIds[idx],
           role: "bot",
           text: part,
           segments: partSegments,
@@ -1129,7 +1151,7 @@ export default function ZakiyPage() {
         setPendingParts((prev) => prev.slice(1));
         if (isLast) {
           const currentHistory = buildHistory();
-          fetchSuggestions([...currentHistory, { role: "assistant", content: part }], msgId);
+          fetchSuggestions([...currentHistory, { role: "assistant", content: part }], partIds[idx]);
         }
       }, idx * 800);
     });
@@ -1230,24 +1252,22 @@ export default function ZakiyPage() {
   return (
     <div className="flex flex-col h-full" dir="rtl">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 bg-card/60 backdrop-blur-sm">
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center shadow-md">
-          <Bot size={20} className="text-white" />
-        </div>
-        <div>
-          <h1 className="text-base font-bold text-foreground">الزكي</h1>
-          <p className="text-xs text-muted-foreground">صاحبك الروحاني دايماً معاك</p>
-        </div>
-        <div className="mr-auto flex items-center gap-1.5">
-          {anniversaryMilestone && (
-            <span className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold border border-amber-300/40">
-              <Sparkles size={11} /> {anniversaryMilestone}
-            </span>
-          )}
-          <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-          <span className="text-xs text-emerald-600 font-medium">متصل</span>
-        </div>
-      </div>
+      <PageHeader
+        title="الزكي"
+        subtitle="صاحبك الروحاني دايماً معاك"
+        icon={<Bot size={16} />}
+        right={
+          <div className="flex items-center gap-1.5">
+            {anniversaryMilestone && (
+              <span className="flex items-center gap-1 text-xs bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold border border-amber-300/40">
+                <Sparkles size={11} /> {anniversaryMilestone}
+              </span>
+            )}
+            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+            <span className="text-xs text-emerald-600 font-medium">متصل</span>
+          </div>
+        }
+      />
 
       {/* Risk Alert Banner */}
       <AnimatePresence>
@@ -1312,7 +1332,8 @@ export default function ZakiyPage() {
                       impressionText={impressionTexts[msg.id]}
                       sessionId={sessionId}
                       history={buildHistory()}
-                      isLatest={msg.role === "bot" && msgIdx === messages.map(m => m.role).lastIndexOf("bot")}
+                      isAutoPlayTarget={autoPlayMsgId === msg.id}
+                      onAudioComplete={handleAutoPlayComplete}
                     />
                   ) : (
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
