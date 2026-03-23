@@ -344,10 +344,10 @@ export function IslamicHero() {
         <div
           className="relative"
           style={{
-            width: 100,
-            height: 100,
-            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 50 : 0,
-            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 50 + 16 : 16,
+            width: 150,
+            height: 150,
+            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 75 : 0,
+            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 75 + 16 : 16,
             transition: "margin 0.48s cubic-bezier(0.34,1.26,0.64,1)",
           }}
         >
@@ -361,8 +361,8 @@ export function IslamicHero() {
                   style={{
                     width: ringSize,
                     height: ringSize,
-                    top: 50 - ringSize / 2,
-                    left: 50 - ringSize / 2,
+                    top: 75 - ringSize / 2,
+                    left: 75 - ringSize / 2,
                     border: isDark
                       ? "1px dashed rgba(251,191,36,0.26)"
                       : `1px dashed ${lightCfg.cardBorder}`,
@@ -379,8 +379,8 @@ export function IslamicHero() {
                   style={{
                     width: ringSize - 24,
                     height: ringSize - 24,
-                    top: 50 - (ringSize - 24) / 2,
-                    left: 50 - (ringSize - 24) / 2,
+                    top: 75 - (ringSize - 24) / 2,
+                    left: 75 - (ringSize - 24) / 2,
                     border: isDark
                       ? "1px solid rgba(96,165,250,0.08)"
                       : `1px solid ${lightCfg.glowColor}`,
@@ -393,7 +393,7 @@ export function IslamicHero() {
 
                 {/* Rotating bubbles — origin at logo center (50, 50) */}
                 <motion.div
-                  style={{ position: "absolute", width: 0, height: 0, top: 50, left: 50 }}
+                  style={{ position: "absolute", width: 0, height: 0, top: 75, left: 75 }}
                   animate={{ rotate: 360 }}
                   transition={{ duration: 42, repeat: Infinity, ease: "linear" }}
                 >
