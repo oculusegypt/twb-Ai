@@ -878,7 +878,7 @@ function SectionJourneyCard() {
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary"><Heart size={32} /></div>
           <h2 className="text-xl font-bold mb-2">رحلة العودة إلى الله</h2>
           <p className="text-muted-foreground text-sm mb-6 leading-relaxed">التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك. هل أنت مستعد لاتخاذ القرار؟</p>
-          <Link href="/covenant" className="w-full py-3.5 rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2 text-[#1e649c] border-t-[#1e9c24] border-r-[#1e9c24] border-b-[#1e9c24] border-l-[#1e9c24] bg-[#3ae31424]">
+          <Link href="/covenant" className="w-full py-3.5 rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2 text-[#1e649c] border-t-[#1e9c24] border-r-[#1e9c24] border-b-[#1e9c24] border-l-[#1e9c24] bg-[#24ed3321]">
             <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={18} />
           </Link>
         </div>
