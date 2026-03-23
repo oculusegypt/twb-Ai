@@ -67,12 +67,15 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
     recognitionRef.current = recognition;
     recognition.lang = "ar-SA";
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (e: any) => {
-      const text = e.results[0]?.[0]?.transcript?.trim();
-      if (text) localStorage.setItem("zakiy_voice_input", text);
+      let final = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      }
+      if (final.trim()) localStorage.setItem("zakiy_voice_input", final.trim());
     };
     recognition.onend = finishAndNavigate;
     recognition.onerror = finishAndNavigate;

@@ -1004,11 +1004,11 @@ export default function ZakiyPage() {
   useEffect(() => {
     const voiceText = localStorage.getItem("zakiy_voice_input");
     if (!voiceText) return;
-    localStorage.removeItem("zakiy_voice_input");
-    const t = setTimeout(() => {
+    const t = window.setTimeout(() => {
+      localStorage.removeItem("zakiy_voice_input");
       sendMessage(voiceText);
-    }, 900);
-    return () => clearTimeout(t);
+    }, 1100);
+    return () => window.clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
