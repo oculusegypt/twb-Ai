@@ -200,8 +200,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       for (const n of notifs) {
         const diff = n.fireAt - now;
         if (diff >= -WINDOW_MS && diff <= WINDOW_MS) {
-          if (!hasFiredToday(n.tag)) {
-            markFiredToday(n.tag);
+          // Key includes the exact minute so changing the time allows re-firing
+          const fireKey = `${n.tag}_${new Date(n.fireAt).toISOString().slice(0, 16)}`;
+          if (!hasFiredToday(fireKey)) {
+            markFiredToday(fireKey);
             // Show via SW — works from ANY page, background tab, or minimized window
             await showViaSW({ title: n.title, body: n.body, tag: n.tag, url: n.url ?? "/" });
             // Also add to in-app inbox
@@ -233,8 +235,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       if (settings.morningAdhkar) {
         const fireAt = getTimeMs(settings.morningAdhkarTime);
         const diff = now - fireAt;
-        if (diff >= 0 && diff <= ADHKAR_WINDOW_MS && !hasFiredToday("morning-adhkar-modal")) {
-          markFiredToday("morning-adhkar-modal");
+        // Key includes the configured time — changing the time resets the lock
+        const morningKey = `morning-adhkar-modal_${settings.morningAdhkarTime}`;
+        if (diff >= 0 && diff <= ADHKAR_WINDOW_MS && !hasFiredToday(morningKey)) {
+          markFiredToday(morningKey);
           setAdhkarType("morning");
           setAdhkarVisible(true);
         }
@@ -242,8 +246,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       if (settings.eveningAdhkar) {
         const fireAt = getTimeMs(settings.eveningAdhkarTime);
         const diff = now - fireAt;
-        if (diff >= 0 && diff <= ADHKAR_WINDOW_MS && !hasFiredToday("evening-adhkar-modal")) {
-          markFiredToday("evening-adhkar-modal");
+        const eveningKey = `evening-adhkar-modal_${settings.eveningAdhkarTime}`;
+        if (diff >= 0 && diff <= ADHKAR_WINDOW_MS && !hasFiredToday(eveningKey)) {
+          markFiredToday(eveningKey);
           setAdhkarType("evening");
           setAdhkarVisible(true);
         }

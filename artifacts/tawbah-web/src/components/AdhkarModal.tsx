@@ -701,15 +701,19 @@ interface AdhkarModalProps {
   onClose: () => void;
 }
 
+const MANDATORY_SECONDS = 3;
+
 export function AdhkarModal({ visible, type, onClose }: AdhkarModalProps) {
   const items = type === "morning" ? MORNING_ADHKAR : EVENING_ADHKAR;
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [celebrated, setCelebrated] = useState(false);
+  const [countdown, setCountdown] = useState(MANDATORY_SECONDS);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const currentIndex = items.findIndex((item) => !completedIds.has(item.id));
   const allDone = currentIndex === -1 && completedIds.size > 0;
+  const canClose = countdown <= 0;
 
   const handleItemDone = useCallback((id: string) => {
     setCompletedIds((prev) => {
@@ -728,9 +732,21 @@ export function AdhkarModal({ visible, type, onClose }: AdhkarModalProps) {
     if (allDone && !celebrated) setTimeout(() => setCelebrated(true), 450);
   }, [allDone, celebrated]);
 
+  // Reset state when modal opens — start mandatory countdown
   useEffect(() => {
-    if (visible) { setCompletedIds(new Set()); setCelebrated(false); }
+    if (visible) {
+      setCompletedIds(new Set());
+      setCelebrated(false);
+      setCountdown(MANDATORY_SECONDS);
+    }
   }, [visible]);
+
+  // Countdown timer — ticks every second until 0
+  useEffect(() => {
+    if (!visible || countdown <= 0) return;
+    const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [visible, countdown]);
 
   const isMorning = type === "morning";
 
@@ -815,11 +831,41 @@ export function AdhkarModal({ visible, type, onClose }: AdhkarModalProps) {
             transition={{ duration: 0.38, delay: 0.08 }}
           >
             <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full flex items-center justify-center active:scale-90 transition-all"
-              style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.13)" }}
+              onClick={canClose ? onClose : undefined}
+              className="rounded-full flex items-center justify-center transition-all"
+              style={{
+                minWidth: canClose ? 36 : 52,
+                height: 36,
+                padding: canClose ? 0 : "0 10px",
+                background: canClose
+                  ? "rgba(255,255,255,0.09)"
+                  : "rgba(255,255,255,0.04)",
+                border: canClose
+                  ? "1px solid rgba(255,255,255,0.13)"
+                  : "1px solid rgba(255,255,255,0.06)",
+                cursor: canClose ? "pointer" : "not-allowed",
+                opacity: canClose ? 1 : 0.65,
+                gap: 4,
+              }}
             >
-              <X size={17} className="text-white/80" />
+              {canClose ? (
+                <X size={17} className="text-white/80" />
+              ) : (
+                <>
+                  <span
+                    className="text-[11px] font-semibold"
+                    style={{ color: "rgba(255,255,255,0.55)" }}
+                  >
+                    تخطي
+                  </span>
+                  <span
+                    className="text-[13px] font-bold tabular-nums"
+                    style={{ color: isMorning ? "#fcd34d" : "#a78bfa", minWidth: 12, textAlign: "center" }}
+                  >
+                    {countdown}
+                  </span>
+                </>
+              )}
             </button>
 
             <div className="text-center">
