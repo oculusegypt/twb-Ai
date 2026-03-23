@@ -606,6 +606,55 @@ function TafseerModal({ surah, ayah, source, arabic, onClose }: TafseerModalProp
   );
 }
 
+function VerseAudioPlayer({ surah, ayah, onOpenChange }: { surah: number; ayah: number; onOpenChange?: (open: boolean) => void }) {
+  const { quranReciterId } = useSettings();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const url = reciterAudioUrl(surah, ayah, quranReciterId);
+
+  const stopSelf = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) { audio.pause(); audio.currentTime = 0; }
+    setIsPlaying(false);
+    if (activeGlobalAudio?.element === audio) activeGlobalAudio = null;
+    onOpenChange?.(false);
+  }, [onOpenChange]);
+
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+      if (activeGlobalAudio?.element === audio) activeGlobalAudio = null;
+      onOpenChange?.(false);
+    } else {
+      if (activeGlobalAudio && activeGlobalAudio.element !== audio) activeGlobalAudio.stop();
+      activeGlobalAudio = { element: audio, stop: stopSelf };
+      audio.play().catch(() => {});
+      setIsPlaying(true);
+      onOpenChange?.(true);
+    }
+  };
+
+  return (
+    <>
+      <audio ref={audioRef} src={url} preload="none" onEnded={stopSelf} />
+      <button
+        onClick={toggle}
+        className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+          isPlaying
+            ? "bg-primary/15 border-primary/40 text-primary"
+            : "bg-muted/60 border-border text-muted-foreground hover:text-primary hover:border-primary/40"
+        }`}
+      >
+        {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+        <span>{isPlaying ? "إيقاف" : "استمع"}</span>
+      </button>
+    </>
+  );
+}
+
 function VerseTafseerButton({ surah, ayah, source, arabic }: { surah: number; ayah: number; source: string; arabic: string }) {
   const [open, setOpen] = useState(false);
   return (
