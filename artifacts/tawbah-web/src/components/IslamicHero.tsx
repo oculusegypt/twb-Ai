@@ -286,8 +286,8 @@ export function IslamicHero() {
     <div
       className="relative w-full select-none overflow-hidden"
       style={{
-        minHeight: orbiting ? 460 : 278,
-        transition: "min-height 0.45s cubic-bezier(0.34,1.56,0.64,1)",
+        minHeight: orbiting ? 500 : 278,
+        transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
         ...bgStyle,
         WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
         maskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
@@ -324,39 +324,43 @@ export function IslamicHero() {
           </div>
         </motion.div>
 
-        {/* ── Orbital logo section ── */}
-        <motion.div
-          className="relative flex items-center justify-center"
-          animate={{ height: orbiting ? orbitContainerH : 112, marginBottom: orbiting ? 16 : 16 }}
-          transition={{ duration: 0.48, ease: [0.34, 1.26, 0.64, 1] }}
-          style={{ width: "100%" }}
+        {/* ── Orbital logo section ──
+            Strategy: the logo wrapper is in normal flex flow (naturally centered
+            by items-center). Orbit ring & bubbles are absolute children of the
+            wrapper, anchored at the logo center (50px from wrapper left/top).
+            Wrapper height expands when orbiting to create vertical space; the
+            hero's overflow:hidden is relaxed to visible during orbit so elements
+            above the hero don't get cut off.
+        ── */}
+        <div
+          className="relative"
+          style={{
+            width: 100,
+            height: 100,
+            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 50 : 0,
+            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 50 + 16 : 16,
+            transition: "margin 0.48s cubic-bezier(0.34,1.26,0.64,1)",
+          }}
         >
-          {/* Orbit ring + bubbles (only when orbiting) */}
+          {/* ── Orbit ring + bubbles (centered on logo center = 50,50) ── */}
           <AnimatePresence>
             {orbiting && (
-              <motion.div
-                className="absolute inset-0 pointer-events-none"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25 }}
-              >
+              <>
                 {/* Dashed orbit ring */}
                 <motion.div
                   className="absolute rounded-full pointer-events-none"
                   style={{
                     width: ringSize,
                     height: ringSize,
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
+                    top: 50 - ringSize / 2,
+                    left: 50 - ringSize / 2,
                     border: isDark
-                      ? "1px dashed rgba(251,191,36,0.22)"
+                      ? "1px dashed rgba(251,191,36,0.26)"
                       : `1px dashed ${lightCfg.cardBorder}`,
                   }}
-                  initial={{ scale: 0.45, opacity: 0 }}
+                  initial={{ scale: 0.4, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.45, opacity: 0 }}
+                  exit={{ scale: 0.4, opacity: 0 }}
                   transition={{ duration: 0.4, ease: "backOut" }}
                 />
 
@@ -364,33 +368,31 @@ export function IslamicHero() {
                 <motion.div
                   className="absolute rounded-full pointer-events-none"
                   style={{
-                    width: ringSize - 20,
-                    height: ringSize - 20,
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
+                    width: ringSize - 24,
+                    height: ringSize - 24,
+                    top: 50 - (ringSize - 24) / 2,
+                    left: 50 - (ringSize - 24) / 2,
                     border: isDark
-                      ? "1px solid rgba(96,165,250,0.07)"
+                      ? "1px solid rgba(96,165,250,0.08)"
                       : `1px solid ${lightCfg.glowColor}`,
                   }}
-                  initial={{ scale: 0.45, opacity: 0 }}
+                  initial={{ scale: 0.4, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.45, opacity: 0 }}
-                  transition={{ duration: 0.4, delay: 0.05, ease: "backOut" }}
+                  exit={{ scale: 0.4, opacity: 0 }}
+                  transition={{ duration: 0.4, delay: 0.06, ease: "backOut" }}
                 />
 
-                {/* Bubbles container — rotates continuously */}
+                {/* Rotating bubbles — origin at logo center (50, 50) */}
                 <motion.div
-                  className="absolute pointer-events-auto"
-                  style={{ width: 0, height: 0, top: "50%", left: "50%" }}
+                  style={{ position: "absolute", width: 0, height: 0, top: 50, left: 50 }}
                   animate={{ rotate: 360 }}
                   transition={{ duration: 42, repeat: Infinity, ease: "linear" }}
                 >
                   {ORBITAL_SECTIONS.map((section, i) => {
-                    const angle  = (i / ORBITAL_SECTIONS.length) * Math.PI * 2;
-                    const x      = ORBIT_RADIUS * Math.sin(angle);
-                    const y      = -ORBIT_RADIUS * Math.cos(angle);
-                    const half   = BUBBLE_SIZE / 2;
+                    const angle = (i / ORBITAL_SECTIONS.length) * Math.PI * 2;
+                    const x     = ORBIT_RADIUS * Math.sin(angle);
+                    const y     = -ORBIT_RADIUS * Math.cos(angle);
+                    const half  = BUBBLE_SIZE / 2;
 
                     return (
                       <motion.div
@@ -417,7 +419,7 @@ export function IslamicHero() {
                           style={{
                             background: isDark
                               ? `radial-gradient(circle at 38% 32%, ${section.bg}, rgba(6,12,30,0.9))`
-                              : `radial-gradient(circle at 38% 32%, ${section.bg}, rgba(255,255,255,0.9))`,
+                              : `radial-gradient(circle at 38% 32%, ${section.bg}, rgba(255,255,255,0.92))`,
                             border: `1.5px solid ${section.color}55`,
                             boxShadow: isDark
                               ? `0 0 16px ${section.color}28, 0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)`
@@ -427,7 +429,6 @@ export function IslamicHero() {
                             overflow: "hidden",
                           }}
                         >
-                          {/* Top shimmer */}
                           <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
                             style={{ background: `linear-gradient(to right, transparent, ${section.color}70, transparent)` }} />
                           <section.Icon
@@ -452,14 +453,14 @@ export function IslamicHero() {
                     );
                   })}
                 </motion.div>
-              </motion.div>
+              </>
             )}
           </AnimatePresence>
 
-          {/* ── Logo button (always centered) ── */}
+          {/* ── Logo button (always in place, z-index above orbits) ── */}
           <motion.button
-            className="rounded-full focus:outline-none"
-            style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 10 }}
+            className="w-full h-full rounded-full focus:outline-none relative"
+            style={{ zIndex: 10 }}
             onClick={() => setOrbiting((v) => !v)}
             whileHover={{ scale: 1.07 }}
             whileTap={{ scale: 0.94 }}
@@ -488,7 +489,7 @@ export function IslamicHero() {
             />
             {/* Logo image */}
             <div
-              className="w-[100px] h-[100px] rounded-full overflow-hidden"
+              className="w-full h-full rounded-full overflow-hidden"
               style={isDark
                 ? { border: "2.5px solid rgba(251,191,36,0.58)", boxShadow: "0 0 0 4px rgba(251,191,36,0.08), 0 0 32px rgba(251,191,36,0.38), 0 0 64px rgba(251,191,36,0.14), 0 6px 24px rgba(0,0,0,0.5)" }
                 : { border: `2.5px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 0 4px ${lightCfg.glowColor}, 0 0 24px ${lightCfg.glowColor}, 0 4px 16px rgba(0,0,0,0.12)` }
@@ -509,7 +510,7 @@ export function IslamicHero() {
               <Sparkles size={10} style={{ color: isDark ? "#93c5fd" : lightCfg.textColor }} />
             </motion.div>
           </motion.button>
-        </motion.div>
+        </div>{/* /logo wrapper */}
 
         {/* App name */}
         <motion.h1
