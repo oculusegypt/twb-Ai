@@ -304,7 +304,6 @@ export function IslamicHero() {
       {/* Top accent line */}
       <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
         style={{ background: topLineColor }} />
-
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center pt-2 pb-8 px-5">
 
@@ -466,7 +465,7 @@ export function IslamicHero() {
                 filter:
                   "drop-shadow(0 6px 18px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.55))",
               }}
-            />
+              className="ml-[1px] mr-[1px]" />
           </motion.button>
         </div>{/* /logo wrapper */}
 
