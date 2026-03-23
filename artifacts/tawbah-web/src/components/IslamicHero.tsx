@@ -311,14 +311,14 @@ export function IslamicHero() {
         style={{ background: topLineColor }} />
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center pt-6 pb-8 px-5">
+      <div className="relative z-10 flex flex-col items-center pt-2 pb-8 px-5">
 
         {/* AI badge */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-4"
+          className="mb-2"
         >
           <div
             className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider"
@@ -495,62 +495,48 @@ export function IslamicHero() {
               }}
             />
 
-            {/* ── Light rays SVG ── */}
+            {/* ── Light rays SVG (single gentle layer) ── */}
             <motion.div
               className="absolute pointer-events-none"
-              style={{ width: 160, height: 160, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+              style={{ width: 180, height: 180, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
               animate={{ rotate: 360 }}
-              transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
             >
-              <svg viewBox="0 0 160 160" width="160" height="160" aria-hidden>
-                {Array.from({ length: 12 }, (_, i) => {
-                  const angle = (i / 12) * 360;
-                  const isMain = i % 3 === 0;
+              <svg viewBox="0 0 180 180" width="180" height="180" aria-hidden>
+                {Array.from({ length: 16 }, (_, i) => {
+                  const angle = (i / 16) * 360;
+                  const isMain = i % 4 === 0;
+                  const cx = 90, cy = 90;
+                  const inner = 46, outer = isMain ? 88 : 78;
+                  const halfW = isMain ? 4.5 : 2.5;
+                  const rad = (angle - 90) * Math.PI / 180;
+                  const ix = cx + inner * Math.cos(rad);
+                  const iy = cy + inner * Math.sin(rad);
+                  const ox = cx + outer * Math.cos(rad);
+                  const oy = cy + outer * Math.sin(rad);
+                  const px = cx + (inner - 4) * Math.cos(rad + Math.PI / 2);
+                  const py = cy + (inner - 4) * Math.sin(rad + Math.PI / 2);
                   return (
-                    <g key={i} transform={`rotate(${angle} 80 80)`}>
-                      <polygon
-                        points={`80,${isMain ? 22 : 28} ${80 - (isMain ? 4 : 2.5)},80 80,${isMain ? 58 : 52} ${80 + (isMain ? 4 : 2.5)},80`}
-                        fill={isDark ? "#fbbf24" : lightCfg.textColor}
-                        opacity={isMain ? (isDark ? 0.45 : 0.24) : (isDark ? 0.22 : 0.12)}
-                      />
-                    </g>
+                    <polygon
+                      key={i}
+                      points={`${ix - halfW * Math.sin(rad * 1)},${iy + halfW * Math.cos(rad)} ${ox},${oy} ${ix + halfW * Math.sin(rad)},${iy - halfW * Math.cos(rad)} ${px},${py}`}
+                      fill={isDark ? "#fbbf24" : lightCfg.textColor}
+                      opacity={isMain ? (isDark ? 0.42 : 0.22) : (isDark ? 0.18 : 0.10)}
+                    />
                   );
                 })}
               </svg>
             </motion.div>
 
-            {/* ── Slow counter-rotating secondary rays ── */}
-            <motion.div
-              className="absolute pointer-events-none"
-              style={{ width: 130, height: 130, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-              animate={{ rotate: -360 }}
-              transition={{ duration: 44, repeat: Infinity, ease: "linear" }}
-            >
-              <svg viewBox="0 0 130 130" width="130" height="130" aria-hidden>
-                {Array.from({ length: 8 }, (_, i) => {
-                  const angle = (i / 8) * 360 + 22.5;
-                  return (
-                    <g key={i} transform={`rotate(${angle} 65 65)`}>
-                      <polygon
-                        points={`65,20 ${65 - 2},65 65,48 ${65 + 2},65`}
-                        fill={isDark ? "#60a5fa" : lightCfg.textColor}
-                        opacity={isDark ? 0.18 : 0.09}
-                      />
-                    </g>
-                  );
-                })}
-              </svg>
-            </motion.div>
-
-            {/* ── Logo image (no circle, smaller) ── */}
+            {/* ── Logo image ── */}
             <div
               className="relative"
               style={{
-                width: 66,
-                height: 66,
+                width: 84,
+                height: 84,
                 filter: isDark
-                  ? "drop-shadow(0 0 14px rgba(251,191,36,0.55)) drop-shadow(0 0 4px rgba(251,191,36,0.3))"
-                  : `drop-shadow(0 0 10px ${lightCfg.glowColor.replace("0.1", "0.5")}) drop-shadow(0 2px 6px rgba(0,0,0,0.15))`,
+                  ? "drop-shadow(0 0 18px rgba(251,191,36,0.60)) drop-shadow(0 0 6px rgba(251,191,36,0.35))"
+                  : `drop-shadow(0 0 12px ${lightCfg.textColor}55) drop-shadow(0 2px 8px rgba(0,0,0,0.18))`,
                 zIndex: 2,
               }}
             >
@@ -563,8 +549,8 @@ export function IslamicHero() {
               style={{
                 width: 20,
                 height: 20,
-                bottom: "calc(50% - 46px)",
-                right: "calc(50% - 46px)",
+                bottom: "calc(50% - 54px)",
+                right: "calc(50% - 54px)",
                 borderRadius: "50%",
                 ...(isDark
                   ? { background: "rgba(30,58,138,0.88)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
