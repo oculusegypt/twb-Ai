@@ -183,9 +183,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
     const DUA_PEAK_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
+    const threshold = settings.duaPeakThreshold ?? 100;
     const checkDuaPeak = () => {
       const score = calcDuaPower();
-      if (score >= 100 && duaPeakCooledDown()) {
+      if (score >= threshold && duaPeakCooledDown()) {
         markDuaPeakFired();
         playTakbeer();
         setDuaPeakVisible(true);
@@ -196,7 +197,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     checkDuaPeak();
     const interval = setInterval(checkDuaPeak, DUA_PEAK_INTERVAL);
     return () => clearInterval(interval);
-  }, [settings.duaPeakAlert]);
+  }, [settings.duaPeakAlert, settings.duaPeakThreshold]);
 
   const hideDuaPeak = useCallback(() => setDuaPeakVisible(false), []);
 

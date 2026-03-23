@@ -359,7 +359,7 @@ export default function Account() {
           iconBg="bg-amber-500/10"
           iconColor="text-amber-600"
           label="تنبيه قمة الإجابة"
-          description="يظهر تنبيه مع تكبير عند اكتمال قوة الدعاء"
+          description="يظهر تنبيه مع تكبير عند بلوغ قوة الدعاء للعتبة"
           right={
             <Toggle
               checked={notifSettings.duaPeakAlert}
@@ -367,6 +367,50 @@ export default function Account() {
             />
           }
         />
+
+        {/* Threshold selector — only shown when duaPeakAlert is ON */}
+        <AnimatePresence>
+          {notifSettings.duaPeakAlert && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-1 pb-3.5 px-1">
+                <p className="text-xs text-muted-foreground mb-2.5 text-right">
+                  عتبة قوة الدعاء للتنبيه
+                </p>
+                <div className="flex gap-2 justify-end" dir="ltr">
+                  {([80, 90, 100] as const).map((val) => {
+                    const active = (notifSettings.duaPeakThreshold ?? 100) === val;
+                    return (
+                      <button
+                        key={val}
+                        onClick={() => updateNotifSettings({ duaPeakThreshold: val })}
+                        className={cn(
+                          "flex-1 py-2 rounded-xl text-sm font-bold transition-all",
+                          active
+                            ? "bg-amber-500 text-white shadow-sm"
+                            : "bg-muted text-muted-foreground hover:bg-amber-500/10 hover:text-amber-600"
+                        )}
+                      >
+                        {val}%
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-2 text-right">
+                  {(notifSettings.duaPeakThreshold ?? 100) === 100
+                    ? "فقط عند اكتمال قوة الدعاء بالكامل"
+                    : (notifSettings.duaPeakThreshold ?? 100) === 90
+                    ? "عند بلوغ قوة الدعاء ٩٠٪ فأكثر"
+                    : "عند بلوغ قوة الدعاء ٨٠٪ فأكثر — تنبيه مبكر"}
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Reset / Privacy */}

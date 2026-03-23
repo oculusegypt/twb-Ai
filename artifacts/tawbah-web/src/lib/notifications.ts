@@ -51,6 +51,7 @@ export interface NotificationSettings {
   // Smart alert sounds
   prayerAlertSound: boolean;  // play takbeer MP3 when prayer time fires
   duaPeakAlert: boolean;      // show dua-peak modal + takbeer when score=100
+  duaPeakThreshold: number;   // score threshold to trigger modal: 80 | 90 | 100
 }
 
 export const DEFAULT_SETTINGS: NotificationSettings = {
@@ -83,6 +84,7 @@ export const DEFAULT_SETTINGS: NotificationSettings = {
   streakReminderTime: "20:00",
   prayerAlertSound: true,
   duaPeakAlert: true,
+  duaPeakThreshold: 100,
 };
 
 const STORAGE_KEY = "notif_settings_v2";
