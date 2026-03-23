@@ -346,8 +346,8 @@ export function IslamicHero() {
           style={{
             width: 200,
             height: 200,
-            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 : -16,
-            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 + 4 : 4,
+            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 : -30,
+            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 + 2 : 2,
             transition: "margin 0.48s cubic-bezier(0.34,1.26,0.64,1)",
           }}
         >
@@ -479,48 +479,12 @@ export function IslamicHero() {
             transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
 
-            {/* ── Light rays SVG (single gentle layer) ── */}
-            <motion.div
-              className="absolute pointer-events-none"
-              style={{ width: 180, height: 180, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-            >
-              <svg viewBox="0 0 180 180" width="180" height="180" aria-hidden>
-                {Array.from({ length: 16 }, (_, i) => {
-                  const angle = (i / 16) * 360;
-                  const isMain = i % 4 === 0;
-                  const cx = 90, cy = 90;
-                  const inner = 46, outer = isMain ? 88 : 78;
-                  const halfW = isMain ? 4.5 : 2.5;
-                  const rad = (angle - 90) * Math.PI / 180;
-                  const ix = cx + inner * Math.cos(rad);
-                  const iy = cy + inner * Math.sin(rad);
-                  const ox = cx + outer * Math.cos(rad);
-                  const oy = cy + outer * Math.sin(rad);
-                  const px = cx + (inner - 4) * Math.cos(rad + Math.PI / 2);
-                  const py = cy + (inner - 4) * Math.sin(rad + Math.PI / 2);
-                  return (
-                    <polygon
-                      key={i}
-                      points={`${ix - halfW * Math.sin(rad * 1)},${iy + halfW * Math.cos(rad)} ${ox},${oy} ${ix + halfW * Math.sin(rad)},${iy - halfW * Math.cos(rad)} ${px},${py}`}
-                      fill={isDark ? "#fbbf24" : lightCfg.textColor}
-                      opacity={isMain ? (isDark ? 0.42 : 0.22) : (isDark ? 0.18 : 0.10)}
-                    />
-                  );
-                })}
-              </svg>
-            </motion.div>
-
             {/* ── Logo image ── */}
             <div
               className="relative"
               style={{
-                width: 96,
-                height: 96,
-                filter: isDark
-                  ? "drop-shadow(0 0 10px rgba(251,191,36,0.35)) drop-shadow(0 0 3px rgba(251,191,36,0.18))"
-                  : `drop-shadow(0 0 6px ${lightCfg.textColor}33) drop-shadow(0 2px 4px rgba(0,0,0,0.12))`,
+                width: 120,
+                height: 120,
                 zIndex: 2,
               }}
             >
@@ -533,8 +497,8 @@ export function IslamicHero() {
               style={{
                 width: 20,
                 height: 20,
-                bottom: "calc(50% - 54px)",
-                right: "calc(50% - 54px)",
+                bottom: "calc(50% - 68px)",
+                right: "calc(50% - 68px)",
                 borderRadius: "50%",
                 ...(isDark
                   ? { background: "rgba(30,58,138,0.88)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
