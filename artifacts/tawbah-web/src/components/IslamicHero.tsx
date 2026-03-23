@@ -346,8 +346,8 @@ export function IslamicHero() {
           style={{
             width: 200,
             height: 200,
-            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 : 0,
-            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 + 16 : 16,
+            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 : -16,
+            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 + 4 : 4,
             transition: "margin 0.48s cubic-bezier(0.34,1.26,0.64,1)",
           }}
         >
@@ -478,22 +478,6 @@ export function IslamicHero() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
-            {/* ── Radial glow behind everything ── */}
-            <div
-              className="absolute pointer-events-none"
-              style={{
-                width: 140,
-                height: 140,
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                borderRadius: "50%",
-                background: isDark
-                  ? "radial-gradient(circle, rgba(251,191,36,0.32) 0%, rgba(251,191,36,0.10) 40%, transparent 72%)"
-                  : `radial-gradient(circle, ${lightCfg.textColor}60 0%, ${lightCfg.textColor}1a 40%, transparent 72%)`,
-                filter: "blur(8px)",
-              }}
-            />
 
             {/* ── Light rays SVG (single gentle layer) ── */}
             <motion.div
@@ -532,11 +516,11 @@ export function IslamicHero() {
             <div
               className="relative"
               style={{
-                width: 84,
-                height: 84,
+                width: 96,
+                height: 96,
                 filter: isDark
-                  ? "drop-shadow(0 0 18px rgba(251,191,36,0.60)) drop-shadow(0 0 6px rgba(251,191,36,0.35))"
-                  : `drop-shadow(0 0 12px ${lightCfg.textColor}55) drop-shadow(0 2px 8px rgba(0,0,0,0.18))`,
+                  ? "drop-shadow(0 0 10px rgba(251,191,36,0.35)) drop-shadow(0 0 3px rgba(251,191,36,0.18))"
+                  : `drop-shadow(0 0 6px ${lightCfg.textColor}33) drop-shadow(0 2px 4px rgba(0,0,0,0.12))`,
                 zIndex: 2,
               }}
             >
