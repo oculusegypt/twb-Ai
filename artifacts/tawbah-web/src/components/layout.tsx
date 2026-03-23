@@ -10,6 +10,18 @@ const WAVE_BARS = [0.35, 0.65, 1, 0.8, 0.5, 0.9, 0.6, 0.4, 0.75, 0.95, 0.55, 0.7
 function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
   return (
     <div className="relative w-[60px] h-[60px]">
+      {/* Rainbow glow — blurred conic gradient, no visible border */}
+      <div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          inset: "-12px",
+          background: "conic-gradient(from var(--rb-angle), #06b6d4 0%, #3b82f6 16%, #818cf8 28%, #a855f7 38%, #ec4899 50%, #f97316 62%, #eab308 74%, #22c55e 86%, #06b6d4 100%)",
+          animation: "rb-spin 5s linear infinite",
+          filter: "blur(16px)",
+          opacity: 0.42,
+        }}
+      />
+
       {/* Pulse rings */}
       {[0, 1, 2].map((i) => (
         <motion.div
