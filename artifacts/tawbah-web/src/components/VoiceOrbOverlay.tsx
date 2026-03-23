@@ -5,28 +5,43 @@ import { useLocation } from "wouter";
 
 const NUM_BARS = 22;
 
+const IDLE_HEIGHTS = [0.12, 0.18, 0.14, 0.22, 0.16, 0.20, 0.13, 0.19, 0.15, 0.21, 0.17, 0.23, 0.14, 0.18, 0.12, 0.20, 0.16, 0.22, 0.13, 0.19, 0.15, 0.17];
+
 export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
   const [, navigate] = useLocation();
-  const [bars, setBars] = useState<number[]>(Array(NUM_BARS).fill(0.06));
+  const [bars, setBars] = useState<number[]>(IDLE_HEIGHTS);
   const [phase, setPhase] = useState<"entering" | "listening" | "done">("entering");
   const [interimText, setInterimText] = useState("");
   const [finalText, setFinalText] = useState("");
 
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const animFrameRef = useRef<number>(0);
   const recognitionRef = useRef<any>(null);
   const capturedTextRef = useRef("");
+  const barAnimRef = useRef<number>(0);
+  const listeningRef = useRef(false);
 
-  const stopAudio = useCallback(() => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    audioCtxRef.current?.close().catch(() => {});
-    audioCtxRef.current = null;
+  const stopBarAnim = useCallback(() => {
+    listeningRef.current = false;
+    cancelAnimationFrame(barAnimRef.current);
+  }, []);
+
+  const startBarAnim = useCallback(() => {
+    listeningRef.current = true;
+    const tick = () => {
+      if (!listeningRef.current) return;
+      setBars((prev) =>
+        prev.map((h) => {
+          const delta = (Math.random() - 0.5) * 0.35;
+          return Math.max(0.06, Math.min(1, h + delta));
+        })
+      );
+      barAnimRef.current = requestAnimationFrame(tick);
+    };
+    barAnimRef.current = requestAnimationFrame(tick);
   }, []);
 
   const finishAndNavigate = useCallback((text: string) => {
-    stopAudio();
+    stopBarAnim();
+    setBars(IDLE_HEIGHTS);
     setPhase("done");
     if (text.trim()) {
       localStorage.setItem("zakiy_voice_input", text.trim());
@@ -35,34 +50,11 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
       navigate("/zakiy");
       onClose();
     }, 380);
-  }, [stopAudio, navigate, onClose]);
+  }, [stopBarAnim, navigate, onClose]);
 
-  const startListening = useCallback(async () => {
+  const startListening = useCallback(() => {
     setPhase("listening");
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-      const ctx = new AudioContext();
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.75;
-      ctx.createMediaStreamSource(stream).connect(analyser);
-      audioCtxRef.current = ctx;
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      const tick = () => {
-        analyser.getByteFrequencyData(data);
-        const newBars = Array.from({ length: NUM_BARS }, (_, i) => {
-          const idx = Math.floor((i / NUM_BARS) * data.length * 0.55);
-          return Math.max(0.05, (data[idx] ?? 0) / 255);
-        });
-        setBars(newBars);
-        animFrameRef.current = requestAnimationFrame(tick);
-      };
-      tick();
-    } catch {
-      /* mic denied — still run recognition */
-    }
+    startBarAnim();
 
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
@@ -97,7 +89,7 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
     recognition.onend = () => finishAndNavigate(capturedTextRef.current);
     recognition.onerror = () => finishAndNavigate(capturedTextRef.current);
     recognition.start();
-  }, [finishAndNavigate]);
+  }, [startBarAnim, finishAndNavigate]);
 
   useEffect(() => {
     const t = setTimeout(startListening, 520);
@@ -106,10 +98,10 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     return () => {
-      stopAudio();
+      stopBarAnim();
       recognitionRef.current?.abort();
     };
-  }, [stopAudio]);
+  }, [stopBarAnim]);
 
   const displayText = finalText || interimText;
 
@@ -120,11 +112,49 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.28 }}
-      style={{ background: "rgba(0,0,0,0.78)", backdropFilter: "blur(14px)" }}
+      style={{
+        background: "rgba(4, 10, 22, 0.88)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+      }}
       onClick={onClose}
     >
+      {/* Islamic geometric pattern overlay */}
+      <svg
+        aria-hidden
+        className="absolute inset-0 w-full h-full pointer-events-none opacity-[0.18]"
+        viewBox="0 0 400 800"
+        preserveAspectRatio="xMidYMid slice"
+      >
+        {[0, 1, 2].map((row) =>
+          [0, 1, 2, 3].map((col) => {
+            const cx = col * 110 + 55;
+            const cy = row * 190 + 95;
+            return (
+              <g key={`${row}-${col}`} transform={`translate(${cx},${cy})`}>
+                <polygon
+                  points={Array.from({ length: 8 }, (_, i) => {
+                    const a = i * 45;
+                    const r1 = 38, r2 = 16;
+                    const toRad = (d: number) => (d - 90) * Math.PI / 180;
+                    return [
+                      `${r1 * Math.cos(toRad(a))},${r1 * Math.sin(toRad(a))}`,
+                      `${r2 * Math.cos(toRad(a + 22.5))},${r2 * Math.sin(toRad(a + 22.5))}`,
+                    ].join(" ");
+                  }).join(" ")}
+                  fill="none"
+                  stroke="#fbbf24"
+                  strokeWidth="0.7"
+                />
+                <circle cx="0" cy="0" r="6" fill="none" stroke="#fbbf24" strokeWidth="0.5" />
+              </g>
+            );
+          })
+        )}
+      </svg>
+
       <div
-        className="flex flex-col items-center gap-7"
+        className="flex flex-col items-center gap-7 relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Sound wave bars */}
@@ -133,12 +163,14 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
             <motion.div
               key={i}
               animate={{ height: Math.max(4, h * 68) }}
-              transition={{ duration: 0.07, ease: "linear" }}
+              transition={{ duration: 0.12, ease: "easeOut" }}
               style={{
                 width: 3,
                 borderRadius: 2,
                 flexShrink: 0,
-                background: `hsl(${(i * 16 + 170) % 360}, 90%, 62%)`,
+                background: phase === "listening"
+                  ? `hsl(${(i * 16 + 170) % 360}, 90%, 62%)`
+                  : "rgba(255,255,255,0.25)",
               }}
             />
           ))}
@@ -153,7 +185,7 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
           className="relative flex items-center justify-center"
           style={{ width: 138, height: 138 }}
         >
-          {/* Outer blur glow — counter-rotating */}
+          {/* Outer blur glow */}
           <motion.div
             className="absolute rounded-full"
             style={{
@@ -161,13 +193,13 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
               background:
                 "conic-gradient(from 0deg, #06b6d4, #818cf8, #a855f7, #ec4899, #f97316, #22c55e, #06b6d4)",
               filter: "blur(18px)",
-              opacity: 0.55,
+              opacity: phase === "listening" ? 0.6 : 0.3,
             }}
             animate={{ rotate: -360 }}
             transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
           />
 
-          {/* Rainbow border ring — rotating */}
+          {/* Rainbow border ring */}
           <motion.div
             className="absolute rounded-full"
             style={{
@@ -228,16 +260,16 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
           </motion.p>
         </AnimatePresence>
 
-        {/* Interim / final text preview */}
-        <AnimatePresence>
+        {/* Transcript text */}
+        <AnimatePresence mode="wait">
           {displayText ? (
             <motion.div
               key="transcript"
               initial={{ opacity: 0, y: 8, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6, scale: 0.95 }}
+              exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.2 }}
-              className="max-w-[260px] text-center"
+              className="max-w-[260px] text-center px-2"
             >
               <p
                 className="text-sm leading-relaxed px-4 py-2.5 rounded-2xl"
@@ -261,11 +293,8 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="max-w-[260px] text-center"
             >
-              <p className="text-xs text-white/30 italic">
-                ما تقوله سيظهر هنا...
-              </p>
+              <p className="text-xs text-white/30 italic">ما تقوله سيظهر هنا...</p>
             </motion.div>
           ) : null}
         </AnimatePresence>

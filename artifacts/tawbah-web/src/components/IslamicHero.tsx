@@ -300,8 +300,8 @@ export function IslamicHero() {
           backgroundImage: "url('/images/islamic-pattern-bg.png')",
           backgroundSize: "280px 280px",
           backgroundRepeat: "repeat",
-          opacity: isDark ? 0.10 : 0.07,
-          mixBlendMode: isDark ? "screen" : "multiply",
+          opacity: isDark ? 0.12 : 0.10,
+          mixBlendMode: isDark ? "screen" : "overlay",
         }}
       />
       <MeshSpots isDark={isDark} />
