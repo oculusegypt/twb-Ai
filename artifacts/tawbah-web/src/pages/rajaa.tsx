@@ -15,7 +15,7 @@ function toGlobalAyah(surah: number, ayah: number): number {
   return count + ayah;
 }
 function reciterAudioUrl(surah: number, ayah: number, reciterId: string): string {
-  return `https://cdn.islamic.network/quran/audio/128/${reciterId}/${toGlobalAyah(surah, ayah)}.mp3`;
+  return `/api/audio-proxy/quran/${reciterId}/${toGlobalAyah(surah, ayah)}.mp3`;
 }
 
 const QURAN_VERSES: { id: number; arabic: string; source: string; tag: string; note: string; category: VerseCategory; surah: number; ayah: number }[] = [

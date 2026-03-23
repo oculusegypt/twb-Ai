@@ -9,9 +9,11 @@ import dhikrRoomsRouter from "./dhikr-rooms";
 import adminRouter from "./admin";
 import heroRouter from "./hero";
 import pushRouter from "./push";
+import audioProxyRouter from "./audio-proxy";
 
 const router: IRouter = Router();
 
+router.use(audioProxyRouter);
 router.use(healthRouter);
 router.use(heroRouter);
 router.use(tawbahRouter);
