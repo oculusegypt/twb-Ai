@@ -497,6 +497,30 @@
   z-index: 0;
 }
 
+/* Animated rainbow glow — blurred copy of the border behind the card */
+.rainbow-border::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: calc(var(--rb-radius) + 10px);
+  background: conic-gradient(
+    from var(--rb-angle),
+    #06b6d4 0%,
+    #3b82f6 16%,
+    #818cf8 28%,
+    #a855f7 38%,
+    #ec4899 50%,
+    #f97316 62%,
+    #eab308 74%,
+    #22c55e 86%,
+    #06b6d4 100%
+  );
+  animation: rb-spin 5s linear infinite;
+  filter: blur(18px);
+  opacity: 0.32;
+  z-index: -1;
+}
+
 .rainbow-border-inner {
   position: relative;
   z-index: 1;
