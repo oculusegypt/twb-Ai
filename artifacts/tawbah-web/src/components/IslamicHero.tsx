@@ -298,10 +298,10 @@ export function IslamicHero() {
         className="absolute inset-0 pointer-events-none"
         style={{
           backgroundImage: "url('/images/islamic-pattern-bg.png')",
-          backgroundSize: "280px 280px",
+          backgroundSize: "200px 200px",
           backgroundRepeat: "repeat",
-          opacity: isDark ? 0.12 : 0.10,
-          mixBlendMode: isDark ? "screen" : "overlay",
+          opacity: isDark ? 0.14 : 0.22,
+          mixBlendMode: isDark ? "screen" : "multiply",
         }}
       />
       <MeshSpots isDark={isDark} />
@@ -313,25 +313,6 @@ export function IslamicHero() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center pt-2 pb-8 px-5">
 
-        {/* AI badge */}
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-2"
-        >
-          <div
-            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider"
-            style={isDark
-              ? { background: "rgba(30,58,138,0.55)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.25)", backdropFilter: "blur(8px)" }
-              : { background: "rgba(219,234,254,0.8)", color: "#1d4ed8", border: "1px solid rgba(59,130,246,0.2)", backdropFilter: "blur(8px)" }
-            }
-          >
-            <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.8, repeat: Infinity }}>✦</motion.span>
-            مدعوم بالذكاء الاصطناعي
-            <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.8, repeat: Infinity, delay: 0.9 }}>✦</motion.span>
-          </div>
-        </motion.div>
 
         {/* ── Orbital logo section ──
             Strategy: the logo wrapper is in normal flex flow (naturally centered
@@ -346,8 +327,8 @@ export function IslamicHero() {
           style={{
             width: 200,
             height: 200,
-            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 : -30,
-            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 + 2 : 2,
+            marginTop: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 : -38,
+            marginBottom: orbiting ? ORBIT_RADIUS + BUBBLE_SIZE / 2 - 100 + 0 : 0,
             transition: "margin 0.48s cubic-bezier(0.34,1.26,0.64,1)",
           }}
         >
@@ -471,44 +452,94 @@ export function IslamicHero() {
             className="w-full h-full focus:outline-none relative flex items-center justify-center"
             style={{ zIndex: 10, background: "none", border: "none" }}
             onClick={() => setOrbiting((v) => !v)}
-            whileHover={{ scale: 1.06 }}
+            whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.93 }}
             aria-label={orbiting ? "إغلاق قائمة الأقسام" : "فتح قائمة الأقسام"}
             initial={{ scale: 0.75, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
-
-            {/* ── Logo image ── */}
+            {/* ── Circle with Islamic pattern background ── */}
             <div
-              className="relative"
               style={{
-                width: 120,
-                height: 120,
+                position: "relative",
+                width: 144,
+                height: 144,
+                borderRadius: "50%",
+                overflow: "hidden",
+                border: isDark
+                  ? "2.5px solid rgba(251,191,36,0.55)"
+                  : `2.5px solid ${lightCfg.textColor}50`,
+                boxShadow: isDark
+                  ? "0 0 28px rgba(251,191,36,0.18), 0 6px 24px rgba(0,0,0,0.45)"
+                  : `0 0 20px ${lightCfg.textColor}18, 0 6px 20px rgba(0,0,0,0.12)`,
                 zIndex: 2,
               }}
             >
-              <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-contain" />
-            </div>
+              {/* Islamic geometry inside circle */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: isDark
+                    ? "linear-gradient(145deg, #071c26 0%, #0a2318 50%, #071826 100%)"
+                    : `linear-gradient(145deg, ${lightCfg.textColor}0d 0%, ${lightCfg.textColor}18 50%, ${lightCfg.textColor}0a 100%)`,
+                }}
+              />
+              <svg
+                viewBox="0 0 144 144"
+                width="144"
+                height="144"
+                style={{ position: "absolute", inset: 0, opacity: isDark ? 0.55 : 0.40 }}
+                aria-hidden
+              >
+                <defs>
+                  <pattern id="iso-geo" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
+                    {/* 8-pointed star */}
+                    <polygon
+                      points="18,3 19.9,13.9 30.8,12 22.7,18 30.8,24 19.9,22.1 18,33 16.1,22.1 5.2,24 13.3,18 5.2,12 16.1,13.9"
+                      fill="none"
+                      stroke={isDark ? "#fbbf24" : lightCfg.textColor}
+                      strokeWidth="0.55"
+                    />
+                    {/* inner octagon */}
+                    <polygon
+                      points="18,9 22,13 22,23 18,27 14,23 14,13"
+                      fill="none"
+                      stroke={isDark ? "#fbbf24" : lightCfg.textColor}
+                      strokeWidth="0.35"
+                    />
+                    <circle cx="18" cy="18" r="1.4" fill={isDark ? "#fbbf24" : lightCfg.textColor} opacity="0.6" />
+                  </pattern>
+                  <clipPath id="circle-clip">
+                    <circle cx="72" cy="72" r="72" />
+                  </clipPath>
+                </defs>
+                <rect width="144" height="144" fill="url(#iso-geo)" clipPath="url(#circle-clip)" />
+                {/* Center glow ring */}
+                <circle cx="72" cy="72" r="50" fill="none"
+                  stroke={isDark ? "#fbbf24" : lightCfg.textColor}
+                  strokeWidth="0.5" opacity="0.25" />
+                <circle cx="72" cy="72" r="68" fill="none"
+                  stroke={isDark ? "#fbbf24" : lightCfg.textColor}
+                  strokeWidth="0.4" opacity="0.15" />
+              </svg>
 
-            {/* Corner sparkle */}
-            <motion.div
-              className="absolute flex items-center justify-center"
-              style={{
-                width: 20,
-                height: 20,
-                bottom: "calc(50% - 68px)",
-                right: "calc(50% - 68px)",
-                borderRadius: "50%",
-                ...(isDark
-                  ? { background: "rgba(30,58,138,0.88)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
-                  : { background: "rgba(219,234,254,0.95)", border: `1px solid ${lightCfg.cardBorder}`, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }),
-              }}
-              animate={{ scale: [1, 1.18, 1] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <Sparkles size={9} style={{ color: isDark ? "#93c5fd" : lightCfg.textColor }} />
-            </motion.div>
+              {/* Logo image on top */}
+              <img
+                src="/images/logo.png"
+                alt="دليل التوبة"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  padding: "12px",
+                  zIndex: 2,
+                }}
+              />
+            </div>
           </motion.button>
         </div>{/* /logo wrapper */}
 
