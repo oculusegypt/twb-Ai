@@ -6,6 +6,7 @@ import {
   ChevronRight, Trophy, Activity, ListChecks, Plus
 } from "lucide-react";
 import { Link } from "wouter";
+import { PageHeader } from "@/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
 import { useAppUserProgress, useAppDhikrCount, useAppHabits } from "@/hooks/use-app-data";
 import { getSessionId } from "@/lib/session";
@@ -471,12 +472,14 @@ export default function ProgressChart() {
   const trendDown = lastAvg < firstAvg - 0.05;
 
   return (
-    <div className="flex flex-col flex-1 pb-8 px-4 pt-4">
-      {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
-        <h1 className="text-2xl font-display font-bold mb-0.5">خريطة التقدم الروحي</h1>
-        <p className="text-xs text-muted-foreground italic">"{quote}"</p>
-      </motion.div>
+    <div className="flex flex-col flex-1 pb-8" dir="rtl">
+      <PageHeader
+        title="خريطة التقدم الروحي"
+        subtitle={`"${quote}"`}
+        icon={<BarChart3 size={16} />}
+      />
+
+      <div className="px-4 pt-4 flex flex-col">
 
       {/* Spiritual Level */}
       <SpiritualLevelCard streak={streakDays} avgRate={avgHabits / 100} journey30Days={journey30Days} badgeCount={badgeCount} />
@@ -582,6 +585,7 @@ export default function ProgressChart() {
 
       {/* 30-day journey track */}
       <Journey30Track journey30Days={journey30Days} />
+      </div>
     </div>
   );
 }

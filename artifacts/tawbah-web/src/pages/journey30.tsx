@@ -9,6 +9,7 @@ import {
 import { Link } from "wouter";
 import { getSessionId } from "@/lib/session";
 import { getSelectedSins, CATEGORY_META, type Sin } from "@/lib/sins-data";
+import { PageHeader } from "@/components/PageHeader";
 
 interface JourneyDay {
   day: number;
@@ -1172,14 +1173,19 @@ export default function Journey30() {
   const progress = (data.completedCount / 30) * 100;
 
   return (
-    <div className="flex flex-col flex-1 pb-8 px-5 pt-6 gap-5">
+    <div className="flex flex-col flex-1 pb-8 gap-5" dir="rtl">
+      <PageHeader
+        title="رحلة ٣٠ يوماً"
+        subtitle="طريق التوبة خطوة بخطوة"
+        icon={<Flame size={16} />}
+      />
+
+      <div className="px-5 flex flex-col gap-5 pt-2">
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         className="text-center"
       >
-        <h1 className="text-2xl font-bold mb-1">رحلة ٣٠ يوماً</h1>
-        <p className="text-sm text-muted-foreground">طريق التوبة خطوة بخطوة</p>
         <button
           onClick={() => setShowRestoreCode(!showRestoreCode)}
           className="mt-2 text-[11px] text-muted-foreground/60 hover:text-muted-foreground underline underline-offset-2 transition-colors"
@@ -1352,6 +1358,7 @@ export default function Journey30() {
             </div>
           </motion.div>
         ))}
+      </div>
       </div>
     </div>
   );

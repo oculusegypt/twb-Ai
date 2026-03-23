@@ -14,9 +14,9 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
       <div
         className="absolute rounded-full pointer-events-none"
         style={{
-          inset: "-8px",
-          background: "radial-gradient(circle, hsl(var(--primary)/0.28) 0%, transparent 70%)",
-          filter: "blur(10px)",
+          inset: "-6px",
+          background: "radial-gradient(circle, hsl(var(--primary)/0.14) 0%, transparent 70%)",
+          filter: "blur(8px)",
         }}
       />
 
@@ -25,9 +25,9 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
         <motion.div
           key={i}
           className="absolute inset-0 rounded-full"
-          style={{ border: "1.5px solid hsl(var(--primary)/0.4)" }}
-          animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0, 0.4] }}
-          transition={{ duration: 4, repeat: Infinity, delay: i * 1.8, ease: "easeInOut" }}
+          style={{ border: "1px solid hsl(var(--primary)/0.22)" }}
+          animate={{ scale: [1, 1.18, 1], opacity: [0.22, 0, 0.22] }}
+          transition={{ duration: 5, repeat: Infinity, delay: i * 2.2, ease: "easeInOut" }}
         />
       ))}
 
@@ -35,16 +35,16 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
       <div
         className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
         style={{
-          background: "linear-gradient(145deg, hsl(var(--primary)/0.95), hsl(var(--primary)/0.75))",
+          background: "linear-gradient(145deg, hsl(var(--primary)/0.82), hsl(var(--primary)/0.62))",
           boxShadow: isActive
-            ? "0 0 0 2.5px hsl(var(--primary)/0.4), 0 0 20px hsl(var(--primary)/0.35), 0 6px 20px rgba(0,0,0,0.35)"
-            : "0 0 0 2px hsl(var(--primary)/0.25), 0 0 12px hsl(var(--primary)/0.2), 0 4px 16px rgba(0,0,0,0.3)",
+            ? "0 0 0 2px hsl(var(--primary)/0.3), 0 0 14px hsl(var(--primary)/0.2), 0 4px 14px rgba(0,0,0,0.18)"
+            : "0 0 0 1.5px hsl(var(--primary)/0.18), 0 0 8px hsl(var(--primary)/0.12), 0 3px 10px rgba(0,0,0,0.14)",
         }}
       >
         {/* Gloss */}
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.2) 0%, transparent 60%)" }}
+          style={{ background: "radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.15) 0%, transparent 60%)" }}
         />
 
         {/* Sound wave bars */}
@@ -279,7 +279,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
               {/* Zaki button — center at nav-top (y=0), sits in the notch */}
               <div className="absolute left-1/2 -translate-x-1/2 -top-[30px] z-50"
-                style={{ filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.32)) drop-shadow(0 2px 6px rgba(0,0,0,0.22))" }}>
+                style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.16)) drop-shadow(0 1px 4px rgba(0,0,0,0.10))" }}>
                 <Link href={zakiHref} className="block tap-highlight-transparent">
                   <motion.div
                     whileTap={{ scale: 0.92 }}
