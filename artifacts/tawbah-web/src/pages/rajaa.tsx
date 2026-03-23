@@ -317,16 +317,78 @@ function VerseCardItem({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
+
   const audioRef = useRef<HTMLAudioElement>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const animFrameRef = useRef<number>(0);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+
   const url = reciterAudioUrl(v.surah, v.ayah, quranReciterId);
+
+  const stopVisualization = useCallback(() => {
+    if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = 0; }
+    setAudioLevel(0);
+  }, []);
+
+  const runVisualization = useCallback(() => {
+    const analyser = analyserRef.current;
+    const dataArray = dataArrayRef.current;
+    if (!analyser || !dataArray) return;
+    const tick = () => {
+      analyser.getByteFrequencyData(dataArray);
+      const len = dataArray.length;
+      const bassEnd = Math.floor(len * 0.12);
+      const midEnd  = Math.floor(len * 0.45);
+      let bass = 0, mid = 0, hi = 0;
+      for (let k = 0;       k < bassEnd; k++) bass += dataArray[k] ?? 0;
+      for (let k = bassEnd; k < midEnd;  k++) mid  += dataArray[k] ?? 0;
+      for (let k = midEnd;  k < len;     k++) hi   += dataArray[k] ?? 0;
+      bass /= bassEnd * 255;
+      mid  /= (midEnd - bassEnd) * 255;
+      hi   /= (len - midEnd) * 255;
+      const level = Math.min(1, bass * 1.6 + mid * 0.8 + hi * 0.3);
+      setAudioLevel(level);
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+  }, []);
+
+  const setupAnalyser = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audioCtxRef.current) {
+      if (audioCtxRef.current.state === "suspended") audioCtxRef.current.resume();
+      runVisualization();
+      return;
+    }
+    try {
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.78;
+      const source = ctx.createMediaElementSource(audio);
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+      dataArrayRef.current = dataArray;
+      runVisualization();
+    } catch {
+      runVisualization();
+    }
+  }, [runVisualization]);
 
   const stopSelf = useCallback(() => {
     const audio = audioRef.current;
     if (audio) { audio.pause(); audio.currentTime = 0; }
     setIsPlaying(false);
     setCurrentTime(0);
+    stopVisualization();
     if (activeGlobalAudio?.element === audio) activeGlobalAudio = null;
-  }, []);
+  }, [stopVisualization]);
 
   const toggle = () => {
     const audio = audioRef.current;
@@ -334,12 +396,14 @@ function VerseCardItem({
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
+      stopVisualization();
       if (activeGlobalAudio?.element === audio) activeGlobalAudio = null;
     } else {
       if (activeGlobalAudio && activeGlobalAudio.element !== audio) activeGlobalAudio.stop();
       activeGlobalAudio = { element: audio, stop: stopSelf };
       audio.play().catch(() => {});
       setIsPlaying(true);
+      setupAnalyser();
     }
   };
 
@@ -353,6 +417,14 @@ function VerseCardItem({
 
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
+  const hueShift   = (currentTime * 22) % 360;
+  const glowBlur   = 8 + audioLevel * 32;
+  const glowOpacity = isPlaying ? 0.18 + audioLevel * 0.55 : 0;
+  const brightness  = 1 + audioLevel * 0.75;
+  const borderInset = -(1.5 + audioLevel * 2.5);
+
+  const RAINBOW = "conic-gradient(from 0deg, #06b6d4 0%, #3b82f6 16%, #818cf8 28%, #a855f7 38%, #ec4899 50%, #f97316 62%, #eab308 74%, #22c55e 86%, #06b6d4 100%)";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -361,21 +433,48 @@ function VerseCardItem({
       className="relative"
       style={{ borderRadius: "0.75rem" }}
     >
+      {/* Reactive rainbow border */}
       <div
-        className="verse-rb-overlay transition-opacity duration-300"
-        style={{ opacity: isPlaying ? 1 : 0 }}
+        style={{
+          position: "absolute",
+          inset: `${borderInset}px`,
+          borderRadius: `calc(0.75rem + ${-borderInset}px)`,
+          background: RAINBOW,
+          opacity: isPlaying ? 1 : 0,
+          filter: `hue-rotate(${hueShift}deg) brightness(${brightness})`,
+          transition: isPlaying ? "opacity 0.25s, filter 0.05s, inset 0.05s" : "opacity 0.3s",
+          pointerEvents: "none",
+          zIndex: 0,
+        }}
+      />
+      {/* Reactive glow */}
+      <div
+        style={{
+          position: "absolute",
+          inset: "-10px",
+          borderRadius: "calc(0.75rem + 10px)",
+          background: RAINBOW,
+          opacity: glowOpacity,
+          filter: `blur(${glowBlur}px) hue-rotate(${hueShift}deg)`,
+          transition: isPlaying ? "opacity 0.06s, filter 0.06s" : "opacity 0.35s, filter 0.35s",
+          pointerEvents: "none",
+          zIndex: -1,
+        }}
       />
       <div
-        className="verse-rb-glow transition-opacity duration-300"
-        style={{ opacity: isPlaying ? 0.32 : 0 }}
-      />
-      <div
-        className="verse-card-inner"
-        style={!isPlaying ? { border: `1px solid ${isOpen ? "hsl(var(--primary) / 0.3)" : "hsl(var(--border))"}` } : {}}
+        style={{
+          position: "relative",
+          zIndex: 1,
+          background: "hsl(var(--card))",
+          borderRadius: "calc(0.75rem - 1.5px)",
+          overflow: "hidden",
+          border: !isPlaying ? `1px solid ${isOpen ? "hsl(var(--primary) / 0.3)" : "hsl(var(--border))"}` : undefined,
+        }}
       >
         <audio
           ref={audioRef}
           src={url}
+          crossOrigin="anonymous"
           preload="none"
           onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
           onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
@@ -411,7 +510,7 @@ function VerseCardItem({
           </div>
         </div>
 
-        {/* Thin rainbow progress bar */}
+        {/* Thin reactive progress bar */}
         <div
           className="mx-4 mb-3 h-[3px] bg-muted/40 rounded-full overflow-hidden cursor-pointer"
           style={{ opacity: isPlaying ? 1 : 0, transition: "opacity 0.3s" }}
@@ -421,7 +520,8 @@ function VerseCardItem({
             className="h-full rounded-full"
             style={{
               width: `${progressPct}%`,
-              background: "linear-gradient(to left, #06b6d4, #3b82f6, #818cf8, #a855f7, #ec4899)",
+              background: `linear-gradient(to left, #06b6d4, #3b82f6, #818cf8, #a855f7, #ec4899)`,
+              filter: `hue-rotate(${hueShift}deg)`,
               transition: "width 0.15s linear",
             }}
           />
