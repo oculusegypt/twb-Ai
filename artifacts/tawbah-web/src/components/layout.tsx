@@ -4,6 +4,7 @@ import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, HelpCircle, User2, X
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
+import { VoiceOrbOverlay } from "./VoiceOrbOverlay";
 
 const WAVE_BARS = [0.35, 0.65, 1, 0.8, 0.5, 0.9, 0.6, 0.4, 0.75, 0.95, 0.55, 0.7, 0.45, 0.85, 0.6];
 
@@ -84,6 +85,7 @@ export function Layout({ children }: { children: ReactNode }) {
     { href: "/account", label: "حسابي", icon: User2 },
   ];
 
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const zakiHref = "/zakiy";
   const isZakiActive = location === zakiHref;
   const isSos = location === "/sos";
@@ -216,6 +218,13 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
           </AnimatePresence>
 
+          {/* Voice Orb Overlay */}
+          <AnimatePresence>
+            {voiceOpen && (
+              <VoiceOrbOverlay onClose={() => setVoiceOpen(false)} />
+            )}
+          </AnimatePresence>
+
           {/* Bottom Navigation Bar */}
           <nav className="fixed bottom-0 inset-x-0 z-40 max-w-md mx-auto">
             <div className="relative">
@@ -280,7 +289,10 @@ export function Layout({ children }: { children: ReactNode }) {
               {/* Zaki button — center at nav-top (y=0), sits in the notch */}
               <div className="absolute left-1/2 -translate-x-1/2 -top-[30px] z-50"
                 style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.16)) drop-shadow(0 1px 4px rgba(0,0,0,0.10))" }}>
-                <Link href={zakiHref} className="block tap-highlight-transparent">
+                <button
+                  onClick={() => setVoiceOpen(true)}
+                  className="block tap-highlight-transparent focus:outline-none"
+                >
                   <motion.div
                     whileTap={{ scale: 0.92 }}
                     whileHover={{ scale: 1.06 }}
@@ -288,7 +300,7 @@ export function Layout({ children }: { children: ReactNode }) {
                   >
                     <ZakiyNavOrb isActive={isZakiActive} />
                   </motion.div>
-                </Link>
+                </button>
               </div>
 
             </div>

@@ -1002,6 +1002,17 @@ export default function ZakiyPage() {
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
   useEffect(() => {
+    const voiceText = localStorage.getItem("zakiy_voice_input");
+    if (!voiceText) return;
+    localStorage.removeItem("zakiy_voice_input");
+    const t = setTimeout(() => {
+      sendMessage(voiceText);
+    }, 900);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     if (!sessionId) return;
     const controller = new AbortController();
 
