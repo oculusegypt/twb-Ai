@@ -426,10 +426,9 @@ function VerseCardItem({
 
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  const glowBlur   = 8 + audioLevel * 32;
-  const glowOpacity = isPlaying ? 0.18 + audioLevel * 0.55 : 0;
-  const brightness  = 1 + audioLevel * 0.75;
-  const borderInset = -(1.5 + audioLevel * 2.5);
+  const glowBlur    = 5 + audioLevel * 14;
+  const glowOpacity = isPlaying ? 0.05 + audioLevel * 0.16 : 0;
+  const brightness  = 1 + audioLevel * 0.5;
 
   const RAINBOW = "conic-gradient(from 0deg, #06b6d4 0%, #3b82f6 16%, #818cf8 28%, #a855f7 38%, #ec4899 50%, #f97316 62%, #eab308 74%, #22c55e 86%, #06b6d4 100%)";
 
@@ -441,34 +440,60 @@ function VerseCardItem({
       className="relative"
       style={{ borderRadius: "0.75rem" }}
     >
-      {/* Reactive rainbow border */}
+      {/* Subtle glow */}
       <div
         style={{
           position: "absolute",
-          inset: `${borderInset}px`,
-          borderRadius: `calc(0.75rem + ${-borderInset}px)`,
-          background: RAINBOW,
-          opacity: isPlaying ? 1 : 0,
-          filter: `hue-rotate(${spectrumHue}deg) brightness(${brightness})`,
-          transition: isPlaying ? "opacity 0.25s, filter 0.12s, inset 0.05s" : "opacity 0.3s",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
-      {/* Reactive glow */}
-      <div
-        style={{
-          position: "absolute",
-          inset: "-10px",
-          borderRadius: "calc(0.75rem + 10px)",
+          inset: "-8px",
+          borderRadius: "calc(0.75rem + 8px)",
           background: RAINBOW,
           opacity: glowOpacity,
           filter: `blur(${glowBlur}px) hue-rotate(${spectrumHue}deg)`,
-          transition: isPlaying ? "opacity 0.06s, filter 0.12s" : "opacity 0.35s, filter 0.35s",
+          transition: isPlaying ? "opacity 0.08s, filter 0.12s" : "opacity 0.4s, filter 0.4s",
           pointerEvents: "none",
           zIndex: -1,
         }}
       />
+      {/* Lightning thread border */}
+      <svg
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          overflow: "visible",
+          pointerEvents: "none",
+          opacity: isPlaying ? 1 : 0,
+          transition: isPlaying ? "opacity 0.25s" : "opacity 0.4s",
+          zIndex: 0,
+          filter: `hue-rotate(${spectrumHue}deg) brightness(${brightness})`,
+        }}
+      >
+        <defs>
+          <filter id={`lf-${v.id}`} x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.03 0.14" numOctaves="2" result="noise">
+              <animate attributeName="seed" from="0" to="80" dur="0.5s" repeatCount="indefinite" />
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale={2 + audioLevel * 7} xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+          <linearGradient id={`rg-${v.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#06b6d4" />
+            <stop offset="25%" stopColor="#818cf8" />
+            <stop offset="50%" stopColor="#a855f7" />
+            <stop offset="75%" stopColor="#ec4899" />
+            <stop offset="100%" stopColor="#06b6d4" />
+          </linearGradient>
+        </defs>
+        <rect
+          x="1" y="1"
+          rx="11" ry="11"
+          fill="none"
+          stroke={`url(#rg-${v.id})`}
+          strokeWidth={0.8 + audioLevel * 0.7}
+          filter={`url(#lf-${v.id})`}
+          style={{ width: "calc(100% - 2px)", height: "calc(100% - 2px)" }}
+        />
+      </svg>
       <div
         style={{
           position: "relative",
