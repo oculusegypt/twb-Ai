@@ -468,55 +468,112 @@ export function IslamicHero() {
 
           {/* ── Logo button (always in place, z-index above orbits) ── */}
           <motion.button
-            className="w-full h-full rounded-full focus:outline-none relative"
-            style={{ zIndex: 10 }}
+            className="w-full h-full focus:outline-none relative flex items-center justify-center"
+            style={{ zIndex: 10, background: "none", border: "none" }}
             onClick={() => setOrbiting((v) => !v)}
-            whileHover={{ scale: 1.07 }}
-            whileTap={{ scale: 0.94 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.93 }}
             aria-label={orbiting ? "إغلاق قائمة الأقسام" : "فتح قائمة الأقسام"}
             initial={{ scale: 0.75, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
-            {/* Pulsing ring 1 */}
-            <motion.div className="absolute inset-0 rounded-full pointer-events-none"
-              style={isDark
-                ? { border: "2px solid rgba(251,191,36,0.42)", boxShadow: "0 0 20px rgba(251,191,36,0.22)" }
-                : { border: `2px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 16px ${lightCfg.glowColor}` }
-              }
-              animate={{ scale: [1, 1.24, 1], opacity: [0.65, 0, 0.65] }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut" }}
-            />
-            {/* Pulsing ring 2 */}
-            <motion.div className="absolute inset-0 rounded-full pointer-events-none"
-              style={isDark
-                ? { border: "1px solid rgba(96,165,250,0.28)" }
-                : { border: `1px solid ${lightCfg.glowColor}` }
-              }
-              animate={{ scale: [1, 1.45, 1], opacity: [0.35, 0, 0.35] }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut", delay: 1.0 }}
-            />
-            {/* Logo image */}
+            {/* ── Radial glow behind everything ── */}
             <div
-              className="w-full h-full rounded-full overflow-hidden"
-              style={isDark
-                ? { border: "2.5px solid rgba(251,191,36,0.58)", boxShadow: "0 0 0 4px rgba(251,191,36,0.08), 0 0 32px rgba(251,191,36,0.38), 0 0 64px rgba(251,191,36,0.14), 0 6px 24px rgba(0,0,0,0.5)" }
-                : { border: `2.5px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 0 4px ${lightCfg.glowColor}, 0 0 24px ${lightCfg.glowColor}, 0 4px 16px rgba(0,0,0,0.12)` }
-              }
+              className="absolute pointer-events-none"
+              style={{
+                width: 140,
+                height: 140,
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                borderRadius: "50%",
+                background: isDark
+                  ? "radial-gradient(circle, rgba(251,191,36,0.32) 0%, rgba(251,191,36,0.10) 40%, transparent 72%)"
+                  : `radial-gradient(circle, ${lightCfg.textColor}60 0%, ${lightCfg.textColor}1a 40%, transparent 72%)`,
+                filter: "blur(8px)",
+              }}
+            />
+
+            {/* ── Light rays SVG ── */}
+            <motion.div
+              className="absolute pointer-events-none"
+              style={{ width: 160, height: 160, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
             >
-              <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
+              <svg viewBox="0 0 160 160" width="160" height="160" aria-hidden>
+                {Array.from({ length: 12 }, (_, i) => {
+                  const angle = (i / 12) * 360;
+                  const isMain = i % 3 === 0;
+                  return (
+                    <g key={i} transform={`rotate(${angle} 80 80)`}>
+                      <polygon
+                        points={`80,${isMain ? 22 : 28} ${80 - (isMain ? 4 : 2.5)},80 80,${isMain ? 58 : 52} ${80 + (isMain ? 4 : 2.5)},80`}
+                        fill={isDark ? "#fbbf24" : lightCfg.textColor}
+                        opacity={isMain ? (isDark ? 0.45 : 0.24) : (isDark ? 0.22 : 0.12)}
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+            </motion.div>
+
+            {/* ── Slow counter-rotating secondary rays ── */}
+            <motion.div
+              className="absolute pointer-events-none"
+              style={{ width: 130, height: 130, top: "50%", left: "50%", transform: "translate(-50%, -50%)" }}
+              animate={{ rotate: -360 }}
+              transition={{ duration: 44, repeat: Infinity, ease: "linear" }}
+            >
+              <svg viewBox="0 0 130 130" width="130" height="130" aria-hidden>
+                {Array.from({ length: 8 }, (_, i) => {
+                  const angle = (i / 8) * 360 + 22.5;
+                  return (
+                    <g key={i} transform={`rotate(${angle} 65 65)`}>
+                      <polygon
+                        points={`65,20 ${65 - 2},65 65,48 ${65 + 2},65`}
+                        fill={isDark ? "#60a5fa" : lightCfg.textColor}
+                        opacity={isDark ? 0.18 : 0.09}
+                      />
+                    </g>
+                  );
+                })}
+              </svg>
+            </motion.div>
+
+            {/* ── Logo image (no circle, smaller) ── */}
+            <div
+              className="relative"
+              style={{
+                width: 66,
+                height: 66,
+                filter: isDark
+                  ? "drop-shadow(0 0 14px rgba(251,191,36,0.55)) drop-shadow(0 0 4px rgba(251,191,36,0.3))"
+                  : `drop-shadow(0 0 10px ${lightCfg.glowColor.replace("0.1", "0.5")}) drop-shadow(0 2px 6px rgba(0,0,0,0.15))`,
+                zIndex: 2,
+              }}
+            >
+              <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-contain" />
             </div>
+
             {/* Corner sparkle */}
             <motion.div
-              className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full flex items-center justify-center"
-              style={isDark
-                ? { background: "rgba(30,58,138,0.88)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
-                : { background: "rgba(219,234,254,0.95)", border: `1px solid ${lightCfg.cardBorder}`, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }
-              }
+              className="absolute flex items-center justify-center"
+              style={{
+                width: 20,
+                height: 20,
+                bottom: "calc(50% - 46px)",
+                right: "calc(50% - 46px)",
+                borderRadius: "50%",
+                ...(isDark
+                  ? { background: "rgba(30,58,138,0.88)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
+                  : { background: "rgba(219,234,254,0.95)", border: `1px solid ${lightCfg.cardBorder}`, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }),
+              }}
               animate={{ scale: [1, 1.18, 1] }}
               transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
             >
-              <Sparkles size={10} style={{ color: isDark ? "#93c5fd" : lightCfg.textColor }} />
+              <Sparkles size={9} style={{ color: isDark ? "#93c5fd" : lightCfg.textColor }} />
             </motion.div>
           </motion.button>
         </div>{/* /logo wrapper */}
