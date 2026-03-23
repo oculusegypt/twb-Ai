@@ -871,7 +871,7 @@ function SectionJourneyCard() {
   const hasCovenant = progress?.covenantSigned;
   const dayOneDone = progress?.firstDayTasksCompleted;
   return (
-    <div className="rainbow-border shadow-xl shadow-black/8">
+    <div className="rainbow-border shadow-xl shadow-black/8 mb-3">
       <div className="rainbow-border-inner p-5">
       {!hasCovenant ? (
         <div className="text-center flex flex-col items-center">
