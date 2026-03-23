@@ -14,6 +14,7 @@ import {
 } from "@/lib/notifications";
 import { hasFiredToday, markFiredToday, addToInboxApi } from "@/lib/app-notifications";
 import { playTakbeer } from "@/lib/takbeer";
+import { calcDuaPower, duaPeakCooledDown, markDuaPeakFired } from "@/lib/dua-power";
 
 const API_BASE = "/api";
 
@@ -64,6 +65,8 @@ interface NotificationsContextValue {
   enableNotifications: () => Promise<boolean>;
   disableNotifications: () => void;
   reschedule: () => Promise<void>;
+  duaPeakVisible: boolean;
+  hideDuaPeak: () => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
@@ -71,6 +74,7 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(nul
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<NotificationSettings>(() => loadSettings());
   const [permission, setPermission] = useState<NotificationPermission>(() => getPermission());
+  const [duaPeakVisible, setDuaPeakVisible] = useState(false);
   const supported = "Notification" in window && "serviceWorker" in navigator;
 
   // Register SW on mount and re-subscribe to push if already enabled
@@ -166,6 +170,27 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [settings, permission, supported]);
 
+  // ── 5-minute Dua Peak polling — shows modal when score = 100 ─────────────────
+  useEffect(() => {
+    const DUA_PEAK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+
+    const checkDuaPeak = () => {
+      const score = calcDuaPower();
+      if (score >= 100 && duaPeakCooledDown()) {
+        markDuaPeakFired();
+        playTakbeer();
+        setDuaPeakVisible(true);
+      }
+    };
+
+    // Check immediately, then every 5 minutes
+    checkDuaPeak();
+    const interval = setInterval(checkDuaPeak, DUA_PEAK_INTERVAL);
+    return () => clearInterval(interval);
+  }, []);
+
+  const hideDuaPeak = useCallback(() => setDuaPeakVisible(false), []);
+
   const updateSettings = useCallback((patch: Partial<NotificationSettings>) => {
     setSettings((prev) => {
       const next = { ...prev, ...patch };
@@ -195,6 +220,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     <NotificationsContext.Provider value={{
       settings, permission, supported,
       updateSettings, enableNotifications, disableNotifications, reschedule,
+      duaPeakVisible, hideDuaPeak,
     }}>
       {children}
     </NotificationsContext.Provider>

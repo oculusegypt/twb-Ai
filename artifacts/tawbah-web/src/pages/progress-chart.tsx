@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp, Flame, CheckCircle2, BookOpen, Moon, Star, Brain, ShieldAlert,
   TrendingDown, Target, Award, Calendar, Zap, Sparkles, BarChart3, Heart,
-  ChevronRight, Trophy, Activity, ListChecks, Plus
+  ChevronRight, Trophy, Activity, ListChecks, Plus, Hand
 } from "lucide-react";
+import { getDuaPeakAmeenCount } from "@/lib/dua-power";
 import { Link } from "wouter";
 import { PageHeader } from "@/components/PageHeader";
 import { useQuery } from "@tanstack/react-query";
@@ -423,6 +424,7 @@ export default function ProgressChart() {
   const [activeTab, setActiveTab] = useState<"habits" | "istighfar">("habits");
   const [quote] = useState(() => MOTIVATIONAL[Math.floor(Math.random() * MOTIVATIONAL.length)]);
   const sosStats = getSosStats();
+  const ameenCount = getDuaPeakAmeenCount();
 
   useEffect(() => {
     const sessionId = getSessionId();
@@ -517,6 +519,29 @@ export default function ProgressChart() {
               طلبت الله في لحظة صعبة — هذا جهاد حقيقي
             </p>
           </div>
+        </motion.div>
+      )}
+
+      {/* Dua Peak Ameen Counter */}
+      {ameenCount > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.31 }}
+          className="rounded-2xl border border-yellow-400/30 bg-gradient-to-br from-yellow-500/10 via-amber-400/5 to-transparent p-4 mb-4 flex items-center gap-3"
+        >
+          <div className="w-10 h-10 rounded-xl bg-yellow-500/15 flex items-center justify-center shrink-0">
+            <Hand size={18} className="text-yellow-500" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-bold text-yellow-700 dark:text-yellow-400">
+              دعوت في لحظة قمة الإجابة
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              وصل دعاؤك إلى الله في {ameenCount} {ameenCount === 1 ? "لحظة" : "لحظات"} كان فيها الدعاء مستجاباً — آمين
+            </p>
+          </div>
+          <span className="text-2xl font-black text-yellow-500">{ameenCount}</span>
         </motion.div>
       )}
 

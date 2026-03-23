@@ -3,8 +3,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SettingsProvider } from "@/context/SettingsContext";
-import { NotificationsProvider } from "@/context/NotificationsContext";
+import { NotificationsProvider, useNotifications } from "@/context/NotificationsContext";
 import { AppNotificationsProvider } from "@/context/AppNotificationsContext";
+import { DuaPeakModal } from "@/components/DuaPeakModal";
 
 import { Layout } from "@/components/layout";
 import AdminApp from "@/pages/admin/AdminApp";
@@ -91,6 +92,11 @@ function Router() {
   );
 }
 
+function DuaPeakModalBridge() {
+  const { duaPeakVisible, hideDuaPeak } = useNotifications();
+  return <DuaPeakModal visible={duaPeakVisible} onClose={hideDuaPeak} />;
+}
+
 function App() {
   return (
     <SettingsProvider>
@@ -108,6 +114,7 @@ function App() {
               </Switch>
             </WouterRouter>
             <Toaster />
+            <DuaPeakModalBridge />
           </TooltipProvider>
         </QueryClientProvider>
         </AppNotificationsProvider>
