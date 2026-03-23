@@ -713,7 +713,7 @@ function SectionDhikrRooms() {
 function SectionAmeen() {
   return (
     <Link href="/ameen" className="flex items-center gap-4 bg-gradient-to-l from-rose-500/10 to-pink-500/5 border border-rose-400/25 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all">
-      <div className="w-11 h-11 rounded-xl from-rose-500 to-rose-700 flex items-center justify-center shadow-md shrink-0 bg-[#cf199521] text-[#e80149]"><HandHeart size={20} className="text-white" /></div>
+      <div className="w-11 h-11 rounded-xl from-rose-500 to-rose-700 flex items-center justify-center shadow-md shrink-0 bg-[#cf199521] opacity-[1] text-[#e80505]"><HandHeart size={20} className="text-white" /></div>
       <div className="flex-1"><h3 className="font-bold text-sm">قل آمين 🤲</h3><p className="text-[11px] text-muted-foreground">ادعُ لأخٍ مجهول — وقل آمين لدعائه</p></div>
       <ArrowLeft size={16} className="text-muted-foreground shrink-0" />
     </Link>
