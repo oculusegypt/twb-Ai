@@ -293,6 +293,17 @@ export function IslamicHero() {
         maskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
       }}
     >
+      {/* Islamic pattern background overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: "url('/images/islamic-pattern-bg.png')",
+          backgroundSize: "280px 280px",
+          backgroundRepeat: "repeat",
+          opacity: isDark ? 0.10 : 0.07,
+          mixBlendMode: isDark ? "screen" : "multiply",
+        }}
+      />
       <MeshSpots isDark={isDark} />
       {isDark ? <IslamicGeometryDark /> : <IslamicGeometryLight color={lightCfg.shimmer} />}
       {isDark ? <MosqueSilhouetteDark /> : <MosqueSilhouetteLight color={lightCfg.textColor} />}

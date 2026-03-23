@@ -678,7 +678,6 @@ export default function Rajaa() {
   const [activeTab, setActiveTab] = useState<TabType>("quran");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [listeningKey, setListeningKey] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     const saved = localStorage.getItem("rajaa_favorites");
     return saved ? new Set(JSON.parse(saved)) : new Set();
@@ -795,48 +794,16 @@ export default function Rajaa() {
                 )}
                 {filteredVerses.map((v, i) => {
                   const key = `q_${v.id}`;
-                  const isFav = favorites.has(key);
-                  const isOpen = expanded === key;
-                  const isListening = listeningKey === key;
                   return (
-                    <motion.div key={v.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-                      className={`bg-card rounded-xl border transition-all ${isListening ? "border-primary/50 ring-1 ring-primary/20" : isOpen ? "border-primary/30" : "border-border"}`}
-                    >
-                      <div className="p-4">
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold shrink-0">{v.tag}</span>
-                          <button onClick={() => toggleFavorite(key)} className="shrink-0 p-0.5">
-                            <Heart size={15} className={`transition-colors ${isFav ? "fill-red-400 text-red-400" : "text-muted-foreground/40"}`} />
-                          </button>
-                        </div>
-                        <p className="font-display text-[15px] leading-loose text-foreground mb-3 text-center">{v.arabic}</p>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-xs text-primary font-bold">{v.source}</span>
-                          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-                            <VerseAudioPlayer
-                              surah={v.surah}
-                              ayah={v.ayah}
-                              onOpenChange={(open) => setListeningKey(open ? key : null)}
-                            />
-                            <VerseTafseerButton surah={v.surah} ayah={v.ayah} source={v.source} arabic={v.arabic} />
-                            <button onClick={() => setExpanded(isOpen ? null : key)} className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
-                              {isOpen ? "إغلاق" : "تأمل ▾"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                      <AnimatePresence>
-                        {isOpen && (
-                          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden border-t border-border/50"
-                          >
-                            <div className="px-4 py-3 bg-primary/5">
-                              <p className="text-xs text-foreground/80 leading-relaxed">{v.note}</p>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
+                    <VerseCardItem
+                      key={v.id}
+                      v={v}
+                      i={i}
+                      isFav={favorites.has(key)}
+                      isOpen={expanded === key}
+                      onToggleFavorite={() => toggleFavorite(key)}
+                      onToggleExpand={() => setExpanded(expanded === key ? null : key)}
+                    />
                   );
                 })}
               </>
