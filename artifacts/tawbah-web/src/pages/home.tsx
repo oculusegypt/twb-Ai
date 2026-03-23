@@ -1040,14 +1040,12 @@ export default function Home() {
       <AnimatePresence>
         {showSosToast && <SosReturnToast onDismiss={() => setShowSosToast(false)} />}
       </AnimatePresence>
-
       {/* Hero + bell overlay */}
       <div className="relative">
         <IslamicHero />
         <HeroBellButton />
       </div>
-
-      <div className="px-5 mt-1 relative z-10 flex flex-col gap-4">
+      <div className="px-5 relative z-10 flex flex-col gap-4 mt-[-115px]">
 
         <EidEntryCard />
         <div className="hidden"><DynamicBanner /></div>
