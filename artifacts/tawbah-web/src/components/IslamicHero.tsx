@@ -465,7 +465,7 @@ export function IslamicHero() {
                 filter:
                   "drop-shadow(0 6px 18px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.55))",
               }}
-              className="ml-[4px] mt-[86px] mr-[-4px]" />
+              className="ml-[4px] mr-[-4px] mt-[60px]" />
           </motion.button>
         </div>{/* /logo wrapper */}
 
