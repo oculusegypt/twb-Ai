@@ -269,13 +269,7 @@ export function IslamicHero() {
 
   const lightCfg = LIGHT_THEME_CONFIG[accentColor] ?? LIGHT_THEME_CONFIG.mint!;
 
-  const bgStyle = isDark
-    ? { background: "linear-gradient(160deg, #06111e 0%, #071826 25%, #091c1a 55%, #060f14 100%)" }
-    : { background: lightCfg.bg };
-
-  const topLineColor = isDark
-    ? "linear-gradient(to right, transparent 0%, rgba(251,191,36,0.7) 30%, rgba(96,165,250,0.7) 55%, rgba(251,191,36,0.7) 75%, transparent 100%)"
-    : `linear-gradient(to right, transparent 0%, ${lightCfg.shimmer} 35%, ${lightCfg.shimmer} 65%, transparent 100%)`;
+  const topLineColor = "linear-gradient(to right, transparent 0%, rgba(212,175,55,0.8) 30%, rgba(212,175,55,0.8) 70%, transparent 100%)";
 
   // Orbit ring diameter for CSS decoration
   const ringSize = ORBIT_RADIUS * 2 + BUBBLE_SIZE;
@@ -288,24 +282,25 @@ export function IslamicHero() {
       style={{
         minHeight: orbiting ? 500 : 278,
         transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
-        ...bgStyle,
-        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
-        maskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
+        maskImage: "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
       }}
     >
-      {/* Islamic pattern background overlay */}
+      {/* Hero background image */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: "url('/images/islamic-pattern-bg.png')",
-          backgroundSize: "200px 200px",
-          backgroundRepeat: "repeat",
-          opacity: isDark ? 0.14 : 0.22,
-          mixBlendMode: isDark ? "screen" : "multiply",
+          backgroundImage: "url('/images/hero-bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center top",
+          backgroundRepeat: "no-repeat",
         }}
       />
-      <MeshSpots isDark={isDark} />
-      {isDark ? <IslamicGeometryDark /> : <IslamicGeometryLight color={lightCfg.shimmer} />}
+      {/* Dark overlay for text readability */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "rgba(2, 22, 12, 0.48)" }}
+      />
       {/* Top accent line */}
       <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
         style={{ background: topLineColor }} />
@@ -459,87 +454,19 @@ export function IslamicHero() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
-            {/* ── Circle with Islamic pattern background ── */}
-            <div
+            {/* ── Logo image — no circle, golden arch-style shadow ── */}
+            <img
+              src="/images/logo.png"
+              alt="دليل التوبة"
               style={{
-                position: "relative",
-                width: 144,
-                height: 144,
-                borderRadius: "50%",
-                overflow: "hidden",
-                border: isDark
-                  ? "2.5px solid rgba(251,191,36,0.55)"
-                  : `2.5px solid ${lightCfg.textColor}50`,
-                boxShadow: isDark
-                  ? "0 0 28px rgba(251,191,36,0.18), 0 6px 24px rgba(0,0,0,0.45)"
-                  : `0 0 20px ${lightCfg.textColor}18, 0 6px 20px rgba(0,0,0,0.12)`,
+                width: 120,
+                height: 120,
+                objectFit: "contain",
                 zIndex: 2,
+                filter:
+                  "drop-shadow(0 0 22px rgba(212,175,55,0.70)) drop-shadow(0 0 8px rgba(212,175,55,0.45)) drop-shadow(0 8px 18px rgba(0,0,0,0.75))",
               }}
-            >
-              {/* Islamic geometry inside circle */}
-              <div
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  background: isDark
-                    ? "linear-gradient(145deg, #071c26 0%, #0a2318 50%, #071826 100%)"
-                    : `linear-gradient(145deg, ${lightCfg.textColor}0d 0%, ${lightCfg.textColor}18 50%, ${lightCfg.textColor}0a 100%)`,
-                }}
-              />
-              <svg
-                viewBox="0 0 144 144"
-                width="144"
-                height="144"
-                style={{ position: "absolute", inset: 0, opacity: isDark ? 0.55 : 0.40 }}
-                aria-hidden
-              >
-                <defs>
-                  <pattern id="iso-geo" x="0" y="0" width="36" height="36" patternUnits="userSpaceOnUse">
-                    {/* 8-pointed star */}
-                    <polygon
-                      points="18,3 19.9,13.9 30.8,12 22.7,18 30.8,24 19.9,22.1 18,33 16.1,22.1 5.2,24 13.3,18 5.2,12 16.1,13.9"
-                      fill="none"
-                      stroke={isDark ? "#fbbf24" : lightCfg.textColor}
-                      strokeWidth="0.55"
-                    />
-                    {/* inner octagon */}
-                    <polygon
-                      points="18,9 22,13 22,23 18,27 14,23 14,13"
-                      fill="none"
-                      stroke={isDark ? "#fbbf24" : lightCfg.textColor}
-                      strokeWidth="0.35"
-                    />
-                    <circle cx="18" cy="18" r="1.4" fill={isDark ? "#fbbf24" : lightCfg.textColor} opacity="0.6" />
-                  </pattern>
-                  <clipPath id="circle-clip">
-                    <circle cx="72" cy="72" r="72" />
-                  </clipPath>
-                </defs>
-                <rect width="144" height="144" fill="url(#iso-geo)" clipPath="url(#circle-clip)" />
-                {/* Center glow ring */}
-                <circle cx="72" cy="72" r="50" fill="none"
-                  stroke={isDark ? "#fbbf24" : lightCfg.textColor}
-                  strokeWidth="0.5" opacity="0.25" />
-                <circle cx="72" cy="72" r="68" fill="none"
-                  stroke={isDark ? "#fbbf24" : lightCfg.textColor}
-                  strokeWidth="0.4" opacity="0.15" />
-              </svg>
-
-              {/* Logo image on top */}
-              <img
-                src="/images/logo.png"
-                alt="دليل التوبة"
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  width: "100%",
-                  height: "100%",
-                  objectFit: "contain",
-                  padding: "12px",
-                  zIndex: 2,
-                }}
-              />
-            </div>
+            />
           </motion.button>
         </div>{/* /logo wrapper */}
 
