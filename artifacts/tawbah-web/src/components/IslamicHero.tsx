@@ -478,46 +478,40 @@ export function IslamicHero() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
-            {/* Pulsing ring 1 */}
-            <motion.div className="absolute inset-0 rounded-full pointer-events-none"
-              style={isDark
-                ? { border: "2px solid rgba(251,191,36,0.42)", boxShadow: "0 0 20px rgba(251,191,36,0.22)" }
-                : { border: `2px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 16px ${lightCfg.glowColor}` }
-              }
-              animate={{ scale: [1, 1.24, 1], opacity: [0.65, 0, 0.65] }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut" }}
+            {/* Pulsing ring */}
+            <motion.div className="absolute inset-[-14%] rounded-full pointer-events-none"
+              style={{ border: "1px solid rgba(251,191,36,0.22)" }}
+              animate={{ scale: [1, 1.12, 1], opacity: [0.4, 0, 0.4] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut" }}
             />
-            {/* Pulsing ring 2 */}
-            <motion.div className="absolute inset-0 rounded-full pointer-events-none"
-              style={isDark
-                ? { border: "1px solid rgba(96,165,250,0.28)" }
-                : { border: `1px solid ${lightCfg.glowColor}` }
-              }
-              animate={{ scale: [1, 1.45, 1], opacity: [0.35, 0, 0.35] }}
-              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut", delay: 1.0 }}
-            />
-            {/* Logo image */}
-            <div
-              className="w-full h-full rounded-full overflow-hidden"
-              style={isDark
-                ? { border: "2.5px solid rgba(251,191,36,0.58)", boxShadow: "0 0 0 4px rgba(251,191,36,0.08), 0 0 32px rgba(251,191,36,0.38), 0 0 64px rgba(251,191,36,0.14), 0 6px 24px rgba(0,0,0,0.5)" }
-                : { border: `2.5px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 0 4px ${lightCfg.glowColor}, 0 0 24px ${lightCfg.glowColor}, 0 4px 16px rgba(0,0,0,0.12)` }
-              }
-            >
-              <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
+            {/* ── Combined Islamic logo block ── */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* Mandala ornamental frame — fills the entire container */}
+              <img
+                src="/images/mandala-frame.jpg"
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full"
+                style={{ objectFit: "cover", mixBlendMode: "screen", opacity: 0.88 }}
+                draggable={false}
+              />
+              {/* Tawbah Islamic logo — centred inside the mandala's inner circle */}
+              <img
+                src="/images/tawbah-islamic-logo.png"
+                alt="تَوْبَةٌ نَصُوحٌ"
+                className="relative"
+                style={{
+                  width: "84%",
+                  height: "84%",
+                  objectFit: "contain",
+                  mixBlendMode: "screen",
+                  filter: isDark
+                    ? "drop-shadow(0 0 18px rgba(251,191,36,0.55)) drop-shadow(0 0 8px rgba(251,191,36,0.35))"
+                    : "drop-shadow(0 0 12px rgba(180,130,0,0.40)) drop-shadow(0 0 6px rgba(180,130,0,0.25))",
+                }}
+                draggable={false}
+              />
             </div>
-            {/* Corner sparkle */}
-            <motion.div
-              className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full flex items-center justify-center"
-              style={isDark
-                ? { background: "rgba(30,58,138,0.88)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
-                : { background: "rgba(219,234,254,0.95)", border: `1px solid ${lightCfg.cardBorder}`, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }
-              }
-              animate={{ scale: [1, 1.18, 1] }}
-              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <Sparkles size={10} style={{ color: isDark ? "#93c5fd" : lightCfg.textColor }} />
-            </motion.div>
           </motion.button>
         </div>{/* /logo wrapper */}
 
