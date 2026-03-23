@@ -474,7 +474,7 @@ export function IslamicHero() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
-          className="text-[17px] font-bold tracking-widest mb-1"
+          className="text-[17px] font-bold tracking-widest mb-1 mt-[-17px]"
           style={isDark
             ? { color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }
             : { color: lightCfg.textColor, letterSpacing: "0.06em" }
