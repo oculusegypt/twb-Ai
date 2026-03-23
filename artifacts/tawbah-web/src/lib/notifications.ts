@@ -306,7 +306,7 @@ export async function buildScheduledNotifications(
         title: "📿 أذكار الصباح",
         body: "لا تنسَ أذكار الصباح — «ما من عبد يقول في صباح كل يوم وفي مساء كل ليلة...» ابدأ الآن",
         fireAt,
-        url: "/dhikr",
+        url: "/?adhkar=morning",
       });
     }
   }
@@ -320,7 +320,7 @@ export async function buildScheduledNotifications(
         title: "🌙 أذكار المساء",
         body: "حان وقت أذكار المساء — أنت بحاجة إلى حصن الذكر الآن",
         fireAt,
-        url: "/dhikr",
+        url: "/?adhkar=evening",
       });
     }
   }

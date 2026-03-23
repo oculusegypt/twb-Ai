@@ -56,15 +56,25 @@ self.addEventListener('message', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const url = event.notification.data?.url || '/';
+
+  // For adhkar notifications: send a direct message to open the modal in already-open tabs
+  const adhkarMatch = url.match(/[?&]adhkar=(morning|evening)/);
+  const adhkarType = adhkarMatch ? adhkarMatch[1] : null;
+
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      for (const client of windowClients) {
-        if ('focus' in client) {
-          client.focus();
-          if (url !== '/') client.navigate(url);
-          return;
+      if (windowClients.length > 0) {
+        const client = windowClients[0];
+        client.focus();
+        if (adhkarType) {
+          // App is open — send a direct message to show the modal immediately (no reload)
+          client.postMessage({ type: 'SHOW_ADHKAR', adhkarType });
+        } else if (url !== '/') {
+          client.navigate(url);
         }
+        return;
       }
+      // App is closed — open it with the URL param so the modal appears on load
       return clients.openWindow(url);
     })
   );

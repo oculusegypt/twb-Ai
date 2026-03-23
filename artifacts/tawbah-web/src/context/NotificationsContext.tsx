@@ -84,6 +84,19 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [adhkarType, setAdhkarType] = useState<AdhkarType>("morning");
   const supported = "Notification" in window && "serviceWorker" in navigator;
 
+  // ── On mount: check if opened from a notification click (?adhkar=morning/evening) ──
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const adhkar = params.get("adhkar");
+    if (adhkar === "morning" || adhkar === "evening") {
+      setAdhkarType(adhkar);
+      setAdhkarVisible(true);
+      // Clean the URL so it doesn't re-trigger on refresh
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, "", cleanUrl);
+    }
+  }, []);
+
   // Preload the takbeer MP3 so it's ready for instant playback
   useEffect(() => { preloadTakbeer(); }, []);
 
@@ -132,6 +145,16 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!supported) return;
     const handleSwMessage = (event: MessageEvent) => {
+      // Direct adhkar modal trigger from SW notificationclick (app was open in background)
+      if (event.data?.type === "SHOW_ADHKAR") {
+        const t = event.data.adhkarType as AdhkarType;
+        if (t === "morning" || t === "evening") {
+          setAdhkarType(t);
+          setAdhkarVisible(true);
+        }
+        return;
+      }
+
       if (event.data?.type === "NOTIFICATION_FIRED") {
         const { tag, title, body } = event.data as {
           tag: string; title: string; body: string; url: string;
