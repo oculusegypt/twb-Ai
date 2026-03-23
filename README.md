@@ -204,6 +204,48 @@
 
 ---
 
+## 📱 لقطات الشاشة | Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/mobile/01-home.png" width="180"/><br/><sub><b>الرئيسية</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/02-covenant.png" width="180"/><br/><sub><b>العهد</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/03-sos.png" width="180"/><br/><sub><b>🚨 طوارئ SOS</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/04-dhikr.png" width="180"/><br/><sub><b>الذكر</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/mobile/05-habits.png" width="180"/><br/><sub><b>العادات</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/06-zakiy.png" width="180"/><br/><sub><b>🤖 زكي AI</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/07-progress.png" width="180"/><br/><sub><b>التقدم</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/08-journey.png" width="180"/><br/><sub><b>رحلة 30 يوم</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/mobile/09-dhikr-rooms.png" width="180"/><br/><sub><b>غرف الذكر</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/10-prayer-times.png" width="180"/><br/><sub><b>أوقات الصلاة</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/11-journal.png" width="180"/><br/><sub><b>المذكرة</b></sub></td>
+    <td align="center"><img src="screenshots/mobile/12-rajaa.png" width="180"/><br/><sub><b>الرجاء</b></sub></td>
+  </tr>
+</table>
+
+### 🖥️ سطح المكتب
+
+<table>
+  <tr>
+    <td><img src="screenshots/desktop/01-home.png" width="380"/><br/><sub><b>الرئيسية</b></sub></td>
+    <td><img src="screenshots/desktop/06-zakiy.png" width="380"/><br/><sub><b>زكي AI</b></sub></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/desktop/03-sos.png" width="380"/><br/><sub><b>وضع الطوارئ</b></sub></td>
+    <td><img src="screenshots/desktop/07-progress.png" width="380"/><br/><sub><b>متابعة التقدم</b></sub></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/desktop/09-dhikr-rooms.png" width="380"/><br/><sub><b>غرف الذكر الجماعي</b></sub></td>
+    <td><img src="screenshots/desktop/10-prayer-times.png" width="380"/><br/><sub><b>أوقات الصلاة</b></sub></td>
+  </tr>
+</table>
+
+---
+
 ## 🏗️ البنية التقنية
 
 ```

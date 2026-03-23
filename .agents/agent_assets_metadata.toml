@@ -5,4 +5,58 @@ generated = []
 id = "WlqOHSZfi6Nlp17WG5UHR"
 uri = "file://README.md"
 type = "text"
-title = "README — دليل التوبة النصوح"
+title = "README.md — وصف GitHub مع اللقطات"
+
+[[outputs]]
+id = "bUBO6mXbOgZ8J5uegHKYI"
+uri = "file://store-listing.md"
+type = "text"
+title = "store-listing.md — وصف Google Play & App Store"
+
+[[outputs]]
+id = "RAJPFYfFWshgZLEgI7iea"
+uri = "file://screenshots/mobile/01-home.png"
+type = "image"
+title = "لقطة: الرئيسية (جوال)"
+
+[[outputs]]
+id = "xO5jIxS8HTkvLcAfAQAno"
+uri = "file://screenshots/mobile/03-sos.png"
+type = "image"
+title = "لقطة: وضع الطوارئ SOS (جوال)"
+
+[[outputs]]
+id = "Am_alaU_3takY6eWICPKw"
+uri = "file://screenshots/mobile/06-zakiy.png"
+type = "image"
+title = "لقطة: زكي AI (جوال)"
+
+[[outputs]]
+id = "NuhMcHpj7NMmgSFz6E8Ys"
+uri = "file://screenshots/mobile/04-dhikr.png"
+type = "image"
+title = "لقطة: الذكر (جوال)"
+
+[[outputs]]
+id = "5oTSRZc0jnu0KWEGqFkSO"
+uri = "file://screenshots/mobile/07-progress.png"
+type = "image"
+title = "لقطة: التقدم (جوال)"
+
+[[outputs]]
+id = "lQqoC6SwAn4V26NiD9vHX"
+uri = "file://screenshots/mobile/09-dhikr-rooms.png"
+type = "image"
+title = "لقطة: غرف الذكر (جوال)"
+
+[[outputs]]
+id = "GMV6uQgKfPvkt1BVj48LH"
+uri = "file://screenshots/desktop/01-home.png"
+type = "image"
+title = "لقطة: الرئيسية (سطح المكتب)"
+
+[[outputs]]
+id = "y8ThfmAgx9ZqhRYm0JHFX"
+uri = "file://screenshots/desktop/06-zakiy.png"
+type = "image"
+title = "لقطة: زكي AI (سطح المكتب)"
