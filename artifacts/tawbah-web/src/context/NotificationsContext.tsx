@@ -13,7 +13,7 @@ import {
   showViaSW,
 } from "@/lib/notifications";
 import { hasFiredToday, markFiredToday, addToInboxApi } from "@/lib/app-notifications";
-import { playTakbeer, preloadTakbeer } from "@/lib/takbeer";
+import { playTakbeer, preloadTakbeer, playAzan, preloadAzan } from "@/lib/takbeer";
 import { calcDuaPower, duaPeakCooledDown, markDuaPeakFired } from "@/lib/dua-power";
 
 const API_BASE = "/api";
@@ -97,8 +97,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Preload the takbeer MP3 so it's ready for instant playback
-  useEffect(() => { preloadTakbeer(); }, []);
+  // Preload audio files so they're ready for instant playback
+  useEffect(() => { preloadTakbeer(); preloadAzan(); }, []);
 
   // Register SW on mount and re-subscribe to push if already enabled
   useEffect(() => {
@@ -159,9 +159,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const { tag, title, body } = event.data as {
           tag: string; title: string; body: string; url: string;
         };
-        // Play Takbeer for prayer and dua-peak notifications (if enabled)
+        // Play Azan for prayer notifications (if enabled)
         if (tag.startsWith("prayer-") && settings.prayerAlertSound) {
-          playTakbeer();
+          playAzan();
         }
         if ((tag === "dua-peak-last-third" || tag === "dua-peak-friday") && settings.duaPeakAlert) {
           playTakbeer();

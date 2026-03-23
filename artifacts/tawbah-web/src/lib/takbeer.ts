@@ -5,6 +5,54 @@
 let _active = false; // prevent overlapping playback
 let _audio: HTMLAudioElement | null = null;
 
+// ── Azan audio (for prayer-time notifications) ─────────────────────────────
+let _azanAudio: HTMLAudioElement | null = null;
+let _azanActive = false;
+
+export function preloadAzan(): void {
+  try {
+    if (!_azanAudio) {
+      _azanAudio = new Audio("/azan.m4a");
+      _azanAudio.preload = "auto";
+      _azanAudio.load();
+    }
+  } catch { /* ignore */ }
+}
+
+export function playAzan(): void {
+  if (_azanActive) return;
+  _azanActive = true;
+  try {
+    if (!_azanAudio) {
+      _azanAudio = new Audio("/azan.m4a");
+      _azanAudio.preload = "auto";
+    }
+    _azanAudio.currentTime = 0;
+    _azanAudio.volume = 1;
+    _azanAudio.onended = () => { _azanActive = false; };
+    _azanAudio.onerror = () => {
+      _azanActive = false;
+      // Fallback to takbeer if azan file fails
+      playTakbeer();
+    };
+    const p = _azanAudio.play();
+    if (p) p.catch(() => { _azanActive = false; playTakbeer(); });
+    // Safety reset after 3 minutes
+    setTimeout(() => { _azanActive = false; }, 180_000);
+  } catch {
+    _azanActive = false;
+    playTakbeer();
+  }
+}
+
+export function stopAzan(): void {
+  if (_azanAudio) {
+    _azanAudio.pause();
+    _azanAudio.currentTime = 0;
+  }
+  _azanActive = false;
+}
+
 function playChimes(): void {
   try {
     const Ctx =
