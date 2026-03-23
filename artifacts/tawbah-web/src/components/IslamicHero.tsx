@@ -994,12 +994,10 @@ export function IslamicHero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
           className="text-[17px] font-bold tracking-widest mb-1 mt-[-17px]"
-          style={{
-            color: "#f5c842",
-            textShadow:
-              "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)",
-            letterSpacing: "0.06em",
-          }}
+          style={isDark
+            ? { color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }
+            : { color: lightCfg.textColor, textShadow: `0 1px 8px ${lightCfg.glowColor}`, letterSpacing: "0.06em" }
+          }
         >
           دليل التوبة النصوح
         </motion.h1>
@@ -1015,13 +1013,14 @@ export function IslamicHero() {
             style={{
               flex: 1,
               height: 1,
-              background:
-                "linear-gradient(to left, rgba(251,191,36,0.4), transparent)",
+              background: isDark
+                ? "linear-gradient(to left, rgba(251,191,36,0.4), transparent)"
+                : `linear-gradient(to left, ${lightCfg.shimmer}, transparent)`,
             }}
           />
           <span
             className="text-[10px]"
-            style={{ color: "rgba(200,230,215,0.55)" }}
+            style={{ color: isDark ? "rgba(200,230,215,0.55)" : lightCfg.subColor }}
           >
             رحلتك نحو الله تبدأ هنا
           </span>
@@ -1029,8 +1028,9 @@ export function IslamicHero() {
             style={{
               flex: 1,
               height: 1,
-              background:
-                "linear-gradient(to right, rgba(251,191,36,0.4), transparent)",
+              background: isDark
+                ? "linear-gradient(to right, rgba(251,191,36,0.4), transparent)"
+                : `linear-gradient(to right, ${lightCfg.shimmer}, transparent)`,
             }}
           />
         </motion.div>
@@ -1041,7 +1041,7 @@ export function IslamicHero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.4 }}
           className="text-[10px] tracking-wide"
-          style={{ color: "rgba(147,197,253,0.55)" }}
+          style={{ color: isDark ? "rgba(147,197,253,0.55)" : lightCfg.subColor }}
         >
           {orbiting
             ? "اضغط على قسم للانتقال إليه ✦"
