@@ -1,16 +1,16 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   // Unique app identifier — change this to your own reverse-domain ID before publishing
-  appId: 'com.tawbah.guide',
-  appName: 'دليل التوبة النصوح',
+  appId: "com.tawbah.guide",
+  appName: "التوبة النصوح",
 
   // Points to the built web assets (output of `pnpm build`)
-  webDir: 'dist/public',
+  webDir: "dist/public",
 
   server: {
     // Forces HTTPS scheme on Android WebView for secure cookie handling
-    androidScheme: 'https',
+    androidScheme: "https",
   },
 
   android: {
