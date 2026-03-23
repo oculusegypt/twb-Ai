@@ -5,8 +5,10 @@ import {
   User2, Settings2, Moon, Sun, Languages, Volume2, BookOpen,
   ChevronDown, Check, BarChart2, Calendar, Clock,
   ScrollText, PenLine, Bell, ChevronLeft, Shield, Palette, CheckSquare,
+  Zap, Music2,
 } from "lucide-react";
 import { useSettings, QURAN_RECITERS, ACCENT_OPTIONS, type AccentColor } from "@/context/SettingsContext";
+import { useNotifications } from "@/context/NotificationsContext";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { cn } from "@/lib/utils";
 import { AnimatePresence } from "framer-motion";
@@ -116,6 +118,7 @@ function getHijriDate() {
 export default function Account() {
   const { lang, theme, accentColor, autoPlayBotAudio, autoPlayQuran, quranReciterId,
     toggleLang, toggleTheme, setAccentColor, setAutoPlayBotAudio, setAutoPlayQuran, setQuranReciterId } = useSettings();
+  const { settings: notifSettings, updateSettings: updateNotifSettings } = useNotifications();
   const { data: progress } = useAppUserProgress();
   const [reciterOpen, setReciterOpen] = useState(false);
   const currentReciter = QURAN_RECITERS.find(r => r.id === quranReciterId) ?? QURAN_RECITERS[0]!;
@@ -322,6 +325,48 @@ export default function Account() {
             )}
           </AnimatePresence>
         </div>
+      </motion.div>
+
+      {/* Smart Alerts Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.11 }}
+        className="bg-card border border-border rounded-2xl px-4 mb-4"
+      >
+        <SectionLabel>إشعارات ذكية</SectionLabel>
+
+        {/* Prayer Alert Sound */}
+        <SettingRow
+          icon={<Music2 size={17} />}
+          iconBg="bg-emerald-500/10"
+          iconColor="text-emerald-600"
+          label="صوت التكبير عند الصلاة"
+          description="يُشغَّل صوت الله أكبر عند كل وقت صلاة"
+          right={
+            <Toggle
+              checked={notifSettings.prayerAlertSound}
+              onToggle={() => updateNotifSettings({ prayerAlertSound: !notifSettings.prayerAlertSound })}
+            />
+          }
+        />
+
+        <div className="h-px bg-border/50 mx-0.5" />
+
+        {/* Dua Peak Alert */}
+        <SettingRow
+          icon={<Zap size={17} />}
+          iconBg="bg-amber-500/10"
+          iconColor="text-amber-600"
+          label="تنبيه قمة الإجابة"
+          description="يظهر تنبيه مع تكبير عند اكتمال قوة الدعاء"
+          right={
+            <Toggle
+              checked={notifSettings.duaPeakAlert}
+              onToggle={() => updateNotifSettings({ duaPeakAlert: !notifSettings.duaPeakAlert })}
+            />
+          }
+        />
       </motion.div>
 
       {/* Reset / Privacy */}

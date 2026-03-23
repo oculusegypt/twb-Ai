@@ -47,6 +47,10 @@ export interface NotificationSettings {
   // ── Streak reminder ───────────────────────────────────
   streakReminder: boolean;
   streakReminderTime: string; // "20:00"
+
+  // Smart alert sounds
+  prayerAlertSound: boolean;  // play takbeer MP3 when prayer time fires
+  duaPeakAlert: boolean;      // show dua-peak modal + takbeer when score=100
 }
 
 export const DEFAULT_SETTINGS: NotificationSettings = {
@@ -77,6 +81,8 @@ export const DEFAULT_SETTINGS: NotificationSettings = {
   fridayKahfTime: "09:00",
   streakReminder: false,
   streakReminderTime: "20:00",
+  prayerAlertSound: true,
+  duaPeakAlert: true,
 };
 
 const STORAGE_KEY = "notif_settings_v2";
@@ -427,6 +433,35 @@ export async function buildScheduledNotifications(
           body: `اليوم ${hijriDay} من الشهر — من أيام البيض المباركة. صيامها كصيام الدهر كله.`,
           fireAt,
           url: "/",
+        });
+      }
+    }
+  }
+
+
+  // ── Dua Peak server push (fires even when app is closed) ─────────────────────
+  if (settings.duaPeakAlert) {
+    // Last third of night: 02:30
+    const lastThirdAt = todayTimeMs('02:30');
+    if (lastThirdAt > now - pastWindowMs) {
+      notifs.push({
+        tag: 'dua-peak-last-third',
+        title: '✨ قمة الإجابة — آخر ثلث الليل',
+        body: 'الله ينزل إلى السماء الدنيا الآن — ارفع يديك وادعُ، الدعاء مستجاب',
+        fireAt: lastThirdAt,
+        url: '/dua-timing',
+      });
+    }
+    // Friday answer hour: 15:30
+    if (dayOfWeek === 5) {
+      const fridayPeakAt = todayTimeMs('15:30');
+      if (fridayPeakAt > now - pastWindowMs) {
+        notifs.push({
+          tag: 'dua-peak-friday',
+          title: '✨ ساعة الإجابة — الجمعة',
+          body: 'أنت الآن في ساعة إجابة الجمعة المباركة — ادعُ الله الآن بما تتمنى',
+          fireAt: fridayPeakAt,
+          url: '/dua-timing',
         });
       }
     }

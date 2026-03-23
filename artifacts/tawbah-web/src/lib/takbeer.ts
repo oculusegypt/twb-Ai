@@ -1,8 +1,9 @@
 // ── Three Allahu Akbar (تكبيرات) ───────────────────────────────────────────────
-// Plays "الله أكبر" spoken three times via the browser SpeechSynthesis API.
-// Falls back to three bell chimes (Web Audio API) if speech is unavailable.
+// Plays the takbeer MP3 file. Falls back to speech synthesis or chimes
+// if the audio file cannot be decoded.
 
 let _active = false; // prevent overlapping playback
+let _audio: HTMLAudioElement | null = null;
 
 function playChimes(): void {
   try {
@@ -18,17 +19,13 @@ function playChimes(): void {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-
-      // Two descending tones per chime, like a call
       osc.type = "sine";
-      osc.frequency.setValueAtTime(932, startTime);         // Bb5
-      osc.frequency.exponentialRampToValueAtTime(659, startTime + 0.22); // E5
-      osc.frequency.exponentialRampToValueAtTime(466, startTime + 0.55); // Bb4
-
+      osc.frequency.setValueAtTime(932, startTime);
+      osc.frequency.exponentialRampToValueAtTime(659, startTime + 0.22);
+      osc.frequency.exponentialRampToValueAtTime(466, startTime + 0.55);
       gain.gain.setValueAtTime(0, startTime);
       gain.gain.linearRampToValueAtTime(0.45, startTime + 0.04);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.3);
-
       osc.start(startTime);
       osc.stop(startTime + 1.3);
     };
@@ -37,64 +34,88 @@ function playChimes(): void {
     chime(t);
     chime(t + 1.6);
     chime(t + 3.2);
-
     setTimeout(() => ctx.close().catch(() => {}), 6000);
   } catch {
-    // Silent fail — audio context may be blocked
+    // Silent fail
+  } finally {
+    setTimeout(() => { _active = false; }, 6000);
   }
 }
 
-function speakThreeTakbeer(): void {
-  window.speechSynthesis.cancel();
-  let failed = false;
-
-  const queue = ["الله أكبر", "الله أكبر", "الله أكبر"];
-  const next = () => {
-    if (failed) return;
-    const text = queue.shift();
-    if (!text) {
-      _active = false;
-      return;
+function playMp3(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      // Reuse existing audio element or create new
+      if (!_audio) {
+        _audio = new Audio("/takbeer.mp3");
+        _audio.preload = "auto";
+      }
+      _audio.currentTime = 0;
+      _audio.volume = 1;
+      const onEnd = () => {
+        _active = false;
+        resolve();
+      };
+      const onError = () => {
+        _active = false;
+        reject(new Error("audio error"));
+      };
+      _audio.onended = onEnd;
+      _audio.onerror = onError;
+      const play = _audio.play();
+      if (play) {
+        play.then(resolve).catch(onError);
+      }
+      // Safety reset
+      setTimeout(() => { _active = false; resolve(); }, 15_000);
+    } catch (e) {
+      reject(e);
     }
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "ar-SA";
-    u.rate = 0.78;
-    u.pitch = 0.88;
-    u.volume = 1;
-    u.onend = () => setTimeout(next, 380);
-    u.onerror = () => {
-      failed = true;
-      _active = false;
-      playChimes();
-    };
-    window.speechSynthesis.speak(u);
-  };
-  next();
+  });
 }
 
 export function playTakbeer(): void {
-  if (_active) return; // Already playing
+  if (_active) return;
   _active = true;
 
-  if (!("speechSynthesis" in window)) {
-    _active = false;
+  playMp3().catch(() => {
+    // Fallback 1: Speech synthesis
+    if ("speechSynthesis" in window) {
+      const voices = window.speechSynthesis.getVoices();
+      const hasArabic = voices.some((v) => v.lang.startsWith("ar"));
+      if (hasArabic || voices.length === 0) {
+        window.speechSynthesis.cancel();
+        const queue = ["الله أكبر", "الله أكبر", "الله أكبر"];
+        let failed = false;
+        const next = () => {
+          if (failed) return;
+          const text = queue.shift();
+          if (!text) { _active = false; return; }
+          const u = new SpeechSynthesisUtterance(text);
+          u.lang = "ar-SA"; u.rate = 0.78; u.pitch = 0.88; u.volume = 1;
+          u.onend = () => setTimeout(next, 380);
+          u.onerror = () => { failed = true; _active = false; playChimes(); };
+          window.speechSynthesis.speak(u);
+        };
+        next();
+        return;
+      }
+    }
+    // Fallback 2: Chimes
     playChimes();
-    return;
+  });
+}
+
+/** Preload the MP3 so it's ready for instant playback */
+export function preloadTakbeer(): void {
+  try {
+    if (!_audio) {
+      _audio = new Audio("/takbeer.mp3");
+      _audio.preload = "auto";
+      // Trigger load without playing
+      _audio.load();
+    }
+  } catch {
+    // ignore
   }
-
-  // Warm up voices list — first call may return empty array
-  const voices = window.speechSynthesis.getVoices();
-  const hasArabic = voices.some((v) => v.lang.startsWith("ar"));
-
-  if (hasArabic || voices.length === 0) {
-    // Either Arabic voice exists, or voices not yet loaded — try speech
-    speakThreeTakbeer();
-  } else {
-    // Voices loaded but no Arabic voice — use chimes
-    _active = false;
-    playChimes();
-  }
-
-  // Safety reset in case speech engine stalls
-  setTimeout(() => { _active = false; }, 12_000);
 }

@@ -13,7 +13,7 @@ import {
   showViaSW,
 } from "@/lib/notifications";
 import { hasFiredToday, markFiredToday, addToInboxApi } from "@/lib/app-notifications";
-import { playTakbeer } from "@/lib/takbeer";
+import { playTakbeer, preloadTakbeer } from "@/lib/takbeer";
 import { calcDuaPower, duaPeakCooledDown, markDuaPeakFired } from "@/lib/dua-power";
 
 const API_BASE = "/api";
@@ -77,6 +77,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [duaPeakVisible, setDuaPeakVisible] = useState(false);
   const supported = "Notification" in window && "serviceWorker" in navigator;
 
+  // Preload the takbeer MP3 so it's ready for instant playback
+  useEffect(() => { preloadTakbeer(); }, []);
+
   // Register SW on mount and re-subscribe to push if already enabled
   useEffect(() => {
     if (!supported) return;
@@ -126,9 +129,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const { tag, title, body } = event.data as {
           tag: string; title: string; body: string; url: string;
         };
-        // Play three Takbeer sounds for prayer-time notifications
-        if (tag.startsWith("prayer-")) {
+        // Play Takbeer for prayer and dua-peak notifications (if enabled)
+        if (tag.startsWith("prayer-") && settings.prayerAlertSound) {
           playTakbeer();
+        }
+        if ((tag === "dua-peak-last-third" || tag === "dua-peak-friday") && settings.duaPeakAlert) {
+          playTakbeer();
+          setDuaPeakVisible(true);
         }
         if (!hasFiredToday(tag)) {
           markFiredToday(tag);
@@ -170,8 +177,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [settings, permission, supported]);
 
-  // ── 5-minute Dua Peak polling — shows modal when score = 100 ─────────────────
+  // ── 5-minute Dua Peak polling — shows modal + plays takbeer when score = 100 ──
   useEffect(() => {
+    if (!settings.duaPeakAlert) return; // only run if feature is enabled
+
     const DUA_PEAK_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
     const checkDuaPeak = () => {
@@ -187,7 +196,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     checkDuaPeak();
     const interval = setInterval(checkDuaPeak, DUA_PEAK_INTERVAL);
     return () => clearInterval(interval);
-  }, []);
+  }, [settings.duaPeakAlert]);
 
   const hideDuaPeak = useCallback(() => setDuaPeakVisible(false), []);
 
