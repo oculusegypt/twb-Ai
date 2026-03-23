@@ -310,7 +310,7 @@ export function IslamicHero() {
       <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
         style={{ background: topLineColor }} />
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center pt-2 px-5 pb-[93px]"
+      <div className="relative z-10 flex flex-col items-center pt-2 px-5 pb-[60px]"
         style={{
           maskImage: "linear-gradient(to bottom, transparent 0%, black 18%, black 100%)",
           WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 18%, black 100%)",
