@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, Shield, ArrowLeft, ChevronLeft, AlertTriangle, Info, Sparkles, Mic, MicOff, Send, RotateCcw } from "lucide-react";
+import { PageHeader } from "@/components/PageHeader";
 import { useAppCreateCovenant } from "@/hooks/use-app-data";
 import { recordEvent } from "@/components/live-stats";
 import {
@@ -277,15 +278,11 @@ export default function Covenant() {
             exit={{ opacity: 0, x: -30 }}
             className="flex-1 flex flex-col"
           >
-            <div className="px-5 pt-6 pb-4">
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 text-primary">
-                <Shield size={28} />
-              </div>
-              <h1 className="text-2xl font-display font-bold mb-2">حدّد ذنبك</h1>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                اختر الذنب أو الذنوب التي تريد التوبة منها. الله يعلم السر وأخفى — هذا التحديد ليبني خطتك الشخصية.
-              </p>
-            </div>
+            <PageHeader
+              title="حدّد ذنبك"
+              subtitle="اختر ما تريد التوبة منه — هذا التحديد ليبني خطتك الشخصية"
+              icon={<Shield size={16} />}
+            />
 
             <div className="mx-5 mb-4 flex items-center gap-2 bg-blue-500/10 border border-blue-400/20 rounded-xl px-3.5 py-2.5">
               <Info size={13} className="text-blue-500 shrink-0" />
@@ -344,19 +341,12 @@ export default function Covenant() {
             exit={{ opacity: 0, x: -30 }}
             className="flex-1 flex flex-col"
           >
-            <div className="px-5 pt-6 pb-4">
-              <button
-                onClick={() => setStep("select")}
-                className="flex items-center gap-1.5 text-sm text-muted-foreground mb-5 hover:text-foreground transition-colors"
-              >
-                <ArrowLeft size={16} />
-                تعديل الاختيار
-              </button>
-              <h1 className="text-2xl font-display font-bold mb-2">المعاهدة مع الله</h1>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                راجع ذنوبك المختارة، ثم أعاهد الله على التوبة الصادقة.
-              </p>
-            </div>
+            <PageHeader
+              title="المعاهدة مع الله"
+              subtitle="راجع ذنوبك المختارة، ثم أعاهد الله على التوبة الصادقة"
+              icon={<Shield size={16} />}
+              onBack={() => setStep("select")}
+            />
 
             <div className="px-5 flex flex-col gap-3 flex-1 overflow-y-auto pb-6">
               <div className="bg-card border border-border rounded-2xl p-4">
