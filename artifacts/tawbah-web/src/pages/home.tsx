@@ -873,7 +873,7 @@ function SectionJourneyCard() {
   const dayOneDone = progress?.firstDayTasksCompleted;
   return (
     <div className="rainbow-border shadow-xl shadow-black/8 mb-[23px] mt-[-28px]">
-      <div className="rainbow-border-inner p-5 ml-[23px] mr-[23px]">
+      <div className="rainbow-border-inner p-5">
       {!hasCovenant ? (
         <div className="text-center flex flex-col items-center">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary"><Heart size={32} /></div>
