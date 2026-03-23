@@ -1,8 +1,10 @@
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Sparkles, Clock, Search, Heart, X, Play, Loader2, BookText } from "lucide-react";
+import { BookOpen, Sparkles, Clock, Search, Heart, X, Play, Pause, Loader2, BookText } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { PageHeader } from "@/components/PageHeader";
+
+let activeGlobalAudio: { element: HTMLAudioElement; stop: () => void } | null = null;
 
 type VerseCategory = "رجاء" | "ترغيب" | "نعيم" | "طمأنينة";
 
@@ -298,58 +300,149 @@ const STORIES = [
 
 type TabType = "quran" | "hadith" | "stories";
 
-function VerseAudioPlayer({ surah, ayah, onOpenChange }: { surah: number; ayah: number; onOpenChange?: (open: boolean) => void }) {
+type QuranVerse = { id: number; arabic: string; source: string; tag: string; note: string; category: VerseCategory; surah: number; ayah: number };
+
+function VerseCardItem({
+  v, i, isFav, isOpen,
+  onToggleFavorite, onToggleExpand,
+}: {
+  v: QuranVerse;
+  i: number;
+  isFav: boolean;
+  isOpen: boolean;
+  onToggleFavorite: () => void;
+  onToggleExpand: () => void;
+}) {
   const { quranReciterId } = useSettings();
-  const [open, setOpen] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const url = reciterAudioUrl(v.surah, v.ayah, quranReciterId);
 
-  const url = reciterAudioUrl(surah, ayah, quranReciterId);
+  const stopSelf = useCallback(() => {
+    const audio = audioRef.current;
+    if (audio) { audio.pause(); audio.currentTime = 0; }
+    setIsPlaying(false);
+    setCurrentTime(0);
+    if (activeGlobalAudio?.element === audio) activeGlobalAudio = null;
+  }, []);
 
-  const handleOpen = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setOpen(true);
-    onOpenChange?.(true);
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+      if (activeGlobalAudio?.element === audio) activeGlobalAudio = null;
+    } else {
+      if (activeGlobalAudio && activeGlobalAudio.element !== audio) activeGlobalAudio.stop();
+      activeGlobalAudio = { element: audio, stop: stopSelf };
+      audio.play().catch(() => {});
+      setIsPlaying(true);
+    }
   };
 
-  const handleClose = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    audioRef.current?.pause();
-    setOpen(false);
-    onOpenChange?.(false);
+  const seek = (e: React.MouseEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * duration;
   };
 
-  if (!open) {
-    return (
-      <button
-        onClick={handleOpen}
-        title="استمع"
-        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border bg-muted/60 border-border text-muted-foreground hover:text-primary hover:border-primary/40"
-      >
-        <Play size={12} />
-        <span>استمع</span>
-      </button>
-    );
-  }
+  const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-      <audio
-        ref={audioRef}
-        src={url}
-        controls
-        autoPlay
-        preload="auto"
-        className="h-7"
-        style={{ minWidth: 140, maxWidth: 180 }}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: i * 0.04 }}
+      className="relative"
+      style={{ borderRadius: "0.75rem" }}
+    >
+      <div
+        className="verse-rb-overlay transition-opacity duration-300"
+        style={{ opacity: isPlaying ? 1 : 0 }}
       />
-      <button
-        onClick={handleClose}
-        className="p-1 rounded-md text-muted-foreground hover:text-foreground"
-        title="إغلاق"
+      <div
+        className="verse-rb-glow transition-opacity duration-300"
+        style={{ opacity: isPlaying ? 0.32 : 0 }}
+      />
+      <div
+        className="verse-card-inner"
+        style={!isPlaying ? { border: `1px solid ${isOpen ? "hsl(var(--primary) / 0.3)" : "hsl(var(--border))"}` } : {}}
       >
-        <X size={12} />
-      </button>
-    </div>
+        <audio
+          ref={audioRef}
+          src={url}
+          preload="none"
+          onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime ?? 0)}
+          onLoadedMetadata={() => setDuration(audioRef.current?.duration ?? 0)}
+          onEnded={stopSelf}
+        />
+        <div className="p-4">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold shrink-0">{v.tag}</span>
+            <button onClick={onToggleFavorite} className="shrink-0 p-0.5">
+              <Heart size={15} className={`transition-colors ${isFav ? "fill-red-400 text-red-400" : "text-muted-foreground/40"}`} />
+            </button>
+          </div>
+          <p className="font-display text-[15px] leading-loose text-foreground mb-3 text-center">{v.arabic}</p>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-xs text-primary font-bold">{v.source}</span>
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+              <button
+                onClick={toggle}
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+                  isPlaying
+                    ? "bg-primary/15 border-primary/40 text-primary"
+                    : "bg-muted/60 border-border text-muted-foreground hover:text-primary hover:border-primary/40"
+                }`}
+              >
+                {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+                <span>{isPlaying ? "إيقاف" : "استمع"}</span>
+              </button>
+              <VerseTafseerButton surah={v.surah} ayah={v.ayah} source={v.source} arabic={v.arabic} />
+              <button onClick={onToggleExpand} className="text-xs text-muted-foreground hover:text-primary transition-colors font-medium">
+                {isOpen ? "إغلاق" : "تأمل ▾"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Thin rainbow progress bar */}
+        <div
+          className="mx-4 mb-3 h-[3px] bg-muted/40 rounded-full overflow-hidden cursor-pointer"
+          style={{ opacity: isPlaying ? 1 : 0, transition: "opacity 0.3s" }}
+          onClick={seek}
+        >
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${progressPct}%`,
+              background: "linear-gradient(to left, #06b6d4, #3b82f6, #818cf8, #a855f7, #ec4899)",
+              transition: "width 0.15s linear",
+            }}
+          />
+        </div>
+
+        <AnimatePresence>
+          {isOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden border-t border-border/50"
+            >
+              <div className="px-4 py-3 bg-primary/5">
+                <p className="text-xs text-foreground/80 leading-relaxed">{v.note}</p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
 
