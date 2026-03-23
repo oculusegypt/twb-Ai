@@ -57,6 +57,8 @@ async function loadSettingsFromApi(): Promise<NotificationSettings | null> {
   }
 }
 
+type AdhkarType = "morning" | "evening";
+
 interface NotificationsContextValue {
   settings: NotificationSettings;
   permission: NotificationPermission;
@@ -67,6 +69,9 @@ interface NotificationsContextValue {
   reschedule: () => Promise<void>;
   duaPeakVisible: boolean;
   hideDuaPeak: () => void;
+  adhkarVisible: boolean;
+  adhkarType: AdhkarType;
+  hideAdhkar: () => void;
 }
 
 const NotificationsContext = createContext<NotificationsContextValue | null>(null);
@@ -75,6 +80,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<NotificationSettings>(() => loadSettings());
   const [permission, setPermission] = useState<NotificationPermission>(() => getPermission());
   const [duaPeakVisible, setDuaPeakVisible] = useState(false);
+  const [adhkarVisible, setAdhkarVisible] = useState(false);
+  const [adhkarType, setAdhkarType] = useState<AdhkarType>("morning");
   const supported = "Notification" in window && "serviceWorker" in navigator;
 
   // Preload the takbeer MP3 so it's ready for instant playback
@@ -137,6 +144,15 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           playTakbeer();
           setDuaPeakVisible(true);
         }
+        // Adhkar notifications
+        if (tag === "morning-adhkar" && settings.morningAdhkar) {
+          setAdhkarType("morning");
+          setAdhkarVisible(true);
+        }
+        if (tag === "evening-adhkar" && settings.eveningAdhkar) {
+          setAdhkarType("evening");
+          setAdhkarVisible(true);
+        }
         if (!hasFiredToday(tag)) {
           markFiredToday(tag);
           void addToInboxApi({ type: "reminder", title, body, icon: "bell", color: "#4A90B8" });
@@ -177,6 +193,45 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [settings, permission, supported]);
 
+  // ── Adhkar polling — shows the modal at configured morning/evening time ────────
+  useEffect(() => {
+    const ADHKAR_CHECK_INTERVAL = 60_000; // check every minute
+    const ADHKAR_WINDOW_MS = 120_000; // ±2 minutes
+
+    const getTimeMs = (timeStr: string) => {
+      const [h, m] = timeStr.split(":").map(Number);
+      const d = new Date();
+      d.setHours(h ?? 0, m ?? 0, 0, 0);
+      return d.getTime();
+    };
+
+    const checkAdhkar = () => {
+      const now = Date.now();
+      if (settings.morningAdhkar) {
+        const fireAt = getTimeMs(settings.morningAdhkarTime);
+        const diff = now - fireAt;
+        if (diff >= 0 && diff <= ADHKAR_WINDOW_MS && !hasFiredToday("morning-adhkar-modal")) {
+          markFiredToday("morning-adhkar-modal");
+          setAdhkarType("morning");
+          setAdhkarVisible(true);
+        }
+      }
+      if (settings.eveningAdhkar) {
+        const fireAt = getTimeMs(settings.eveningAdhkarTime);
+        const diff = now - fireAt;
+        if (diff >= 0 && diff <= ADHKAR_WINDOW_MS && !hasFiredToday("evening-adhkar-modal")) {
+          markFiredToday("evening-adhkar-modal");
+          setAdhkarType("evening");
+          setAdhkarVisible(true);
+        }
+      }
+    };
+
+    checkAdhkar();
+    const interval = setInterval(checkAdhkar, ADHKAR_CHECK_INTERVAL);
+    return () => clearInterval(interval);
+  }, [settings.morningAdhkar, settings.morningAdhkarTime, settings.eveningAdhkar, settings.eveningAdhkarTime]);
+
   // ── 5-minute Dua Peak polling — shows modal + plays takbeer when score = 100 ──
   useEffect(() => {
     if (!settings.duaPeakAlert) return; // only run if feature is enabled
@@ -200,6 +255,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, [settings.duaPeakAlert, settings.duaPeakThreshold]);
 
   const hideDuaPeak = useCallback(() => setDuaPeakVisible(false), []);
+  const hideAdhkar = useCallback(() => setAdhkarVisible(false), []);
 
   const updateSettings = useCallback((patch: Partial<NotificationSettings>) => {
     setSettings((prev) => {
@@ -231,6 +287,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       settings, permission, supported,
       updateSettings, enableNotifications, disableNotifications, reschedule,
       duaPeakVisible, hideDuaPeak,
+      adhkarVisible, adhkarType, hideAdhkar,
     }}>
       {children}
     </NotificationsContext.Provider>

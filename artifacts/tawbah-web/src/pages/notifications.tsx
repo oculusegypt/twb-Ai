@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Bell, BellOff, Clock, Moon, Sun, BookOpen,
   Flame, Calendar, Star, RefreshCw, CheckCircle, XCircle,
-  ChevronDown, Shield, Sparkles
+  ChevronDown, Shield, Sparkles, Eye
 } from "lucide-react";
 import { useState } from "react";
 import { useNotifications } from "@/context/NotificationsContext";
+import { AdhkarModal } from "@/components/AdhkarModal";
 import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/PageHeader";
 
@@ -157,6 +158,7 @@ export default function NotificationsPage() {
   const { settings, permission, supported, updateSettings, enableNotifications, disableNotifications } = useNotifications();
   const [enabling, setEnabling] = useState(false);
   const [prayersOpen, setPrayersOpen] = useState(true);
+  const [adhkarPreview, setAdhkarPreview] = useState<"morning" | "evening" | null>(null);
 
   const handleEnable = async () => {
     setEnabling(true);
@@ -371,26 +373,52 @@ export default function NotificationsPage() {
           {/* ── Adhkar ─────────────────────────────────────────────────────── */}
           <SectionHeader label="الأذكار والأوراد" />
           <div className="bg-card border border-border/40 rounded-2xl px-4 divide-y divide-border/30">
-            <TimedRow
-              icon={<Sun size={15} />}
-              color="bg-amber-500/15 text-amber-600"
-              label="أذكار الصباح"
-              description="تذكير يومي بأذكار الصباح"
-              enabled={settings.morningAdhkar}
-              onToggle={(v) => up({ morningAdhkar: v })}
-              time={settings.morningAdhkarTime}
-              onTimeChange={(v) => up({ morningAdhkarTime: v })}
-            />
-            <TimedRow
-              icon={<Moon size={15} />}
-              color="bg-indigo-500/15 text-indigo-600"
-              label="أذكار المساء"
-              description="تذكير يومي بأذكار المساء"
-              enabled={settings.eveningAdhkar}
-              onToggle={(v) => up({ eveningAdhkar: v })}
-              time={settings.eveningAdhkarTime}
-              onTimeChange={(v) => up({ eveningAdhkarTime: v })}
-            />
+            <div>
+              <TimedRow
+                icon={<Sun size={15} />}
+                color="bg-amber-500/15 text-amber-600"
+                label="أذكار الصباح"
+                description="تذكير يومي بأذكار الصباح كاملةً"
+                enabled={settings.morningAdhkar}
+                onToggle={(v) => up({ morningAdhkar: v })}
+                time={settings.morningAdhkarTime}
+                onTimeChange={(v) => up({ morningAdhkarTime: v })}
+              />
+              {settings.morningAdhkar && (
+                <div className="pb-3">
+                  <button
+                    onClick={() => setAdhkarPreview("morning")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/20 active:scale-95 transition-all"
+                  >
+                    <Eye size={12} />
+                    معاينة نافذة أذكار الصباح
+                  </button>
+                </div>
+              )}
+            </div>
+            <div>
+              <TimedRow
+                icon={<Moon size={15} />}
+                color="bg-indigo-500/15 text-indigo-600"
+                label="أذكار المساء"
+                description="تذكير يومي بأذكار المساء كاملةً"
+                enabled={settings.eveningAdhkar}
+                onToggle={(v) => up({ eveningAdhkar: v })}
+                time={settings.eveningAdhkarTime}
+                onTimeChange={(v) => up({ eveningAdhkarTime: v })}
+              />
+              {settings.eveningAdhkar && (
+                <div className="pb-3">
+                  <button
+                    onClick={() => setAdhkarPreview("evening")}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium bg-indigo-500/10 text-indigo-600 border border-indigo-500/20 active:scale-95 transition-all"
+                  >
+                    <Eye size={12} />
+                    معاينة نافذة أذكار المساء
+                  </button>
+                </div>
+              )}
+            </div>
             <TimedRow
               icon={<Star size={15} />}
               color="bg-violet-500/15 text-violet-600"
@@ -496,6 +524,18 @@ export default function NotificationsPage() {
 
         </div>
       </div>
+
+      {/* Adhkar preview modals */}
+      <AdhkarModal
+        visible={adhkarPreview === "morning"}
+        type="morning"
+        onClose={() => setAdhkarPreview(null)}
+      />
+      <AdhkarModal
+        visible={adhkarPreview === "evening"}
+        type="evening"
+        onClose={() => setAdhkarPreview(null)}
+      />
     </div>
   );
 }

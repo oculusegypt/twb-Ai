@@ -6,6 +6,7 @@ import { SettingsProvider } from "@/context/SettingsContext";
 import { NotificationsProvider, useNotifications } from "@/context/NotificationsContext";
 import { AppNotificationsProvider } from "@/context/AppNotificationsContext";
 import { DuaPeakModal } from "@/components/DuaPeakModal";
+import { AdhkarModal } from "@/components/AdhkarModal";
 
 import { Layout } from "@/components/layout";
 import AdminApp from "@/pages/admin/AdminApp";
@@ -97,6 +98,11 @@ function DuaPeakModalBridge() {
   return <DuaPeakModal visible={duaPeakVisible} onClose={hideDuaPeak} />;
 }
 
+function AdhkarModalBridge() {
+  const { adhkarVisible, adhkarType, hideAdhkar } = useNotifications();
+  return <AdhkarModal visible={adhkarVisible} type={adhkarType} onClose={hideAdhkar} />;
+}
+
 function App() {
   return (
     <SettingsProvider>
@@ -115,6 +121,7 @@ function App() {
             </WouterRouter>
             <Toaster />
             <DuaPeakModalBridge />
+            <AdhkarModalBridge />
           </TooltipProvider>
         </QueryClientProvider>
         </AppNotificationsProvider>
