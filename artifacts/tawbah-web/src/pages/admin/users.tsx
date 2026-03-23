@@ -48,7 +48,7 @@ export default function UsersPage() {
 
   async function loadDetail(sessionId: string) {
     const d = await adminApi.getUserDetail(sessionId);
-    setDetail(d as UserDetail);
+    setDetail(d as unknown as UserDetail);
   }
 
   async function handleSaveEdit() {
@@ -226,7 +226,7 @@ export default function UsersPage() {
                 <label className="text-xs text-gray-400 mb-1 block">{label}</label>
                 <input
                   type={type}
-                  value={(editUser as Record<string, unknown>)[field] as number}
+                  value={(editUser as unknown as Record<string, unknown>)[field] as number}
                   onChange={(e) => setEditUser({ ...editUser, [field]: Number(e.target.value) })}
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white"
                 />

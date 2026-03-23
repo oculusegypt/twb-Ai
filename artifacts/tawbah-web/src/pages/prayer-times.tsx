@@ -417,7 +417,7 @@ export default function PrayerTimes() {
                 {PRAYERS.find(p => p.key === nextPrayerKey)?.nameAr}
               </p>
               <p className="text-sm text-primary font-medium mt-1">
-                بعد {formatCountdown(getMinutesUntil(timings[nextPrayerKey]))}
+                بعد {formatCountdown(getMinutesUntil(timings[nextPrayerKey as keyof PrayerTimings]))}
               </p>
             </motion.div>
           )}

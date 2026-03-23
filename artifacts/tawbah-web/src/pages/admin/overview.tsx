@@ -39,7 +39,7 @@ export default function OverviewPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    adminApi.getOverview().then((d) => { setData(d as Overview); setLoading(false); });
+    adminApi.getOverview().then((d) => { setData(d as unknown as Overview); setLoading(false); });
   }, []);
 
   if (loading) return <AdminLayout title="نظرة عامة"><div className="text-gray-400 text-center py-20">جارٍ التحميل...</div></AdminLayout>;

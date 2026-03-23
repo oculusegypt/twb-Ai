@@ -238,5 +238,5 @@ const translations = {
 export type Translations = typeof translations["ar"];
 
 export function getTranslations(lang: Lang): Translations {
-  return translations[lang];
+  return translations[lang] as Translations;
 }

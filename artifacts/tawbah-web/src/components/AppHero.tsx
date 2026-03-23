@@ -86,7 +86,7 @@ export function AppHero() {
   const { progress } = useUserProgress();
   const [greeting] = useState(getDayGreeting);
 
-  const name = progress?.displayName?.trim() || null;
+  const name: string | null = null;
   const hasCovenant = !!progress?.covenantSigned;
 
   return (

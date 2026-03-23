@@ -9,7 +9,7 @@ import { useAppNotifications } from "@/context/AppNotificationsContext";
 import { IslamicHero } from "@/components/IslamicHero";
 import { KnowledgeSlider } from "@/components/KnowledgeSlider";
 import { SoulMeter } from "@/components/SoulMeter";
-import { getEidStatus } from "@/lib/eid-utils";
+import { getEidStatus, type EidPeriod } from "@/lib/eid-utils";
 import { getSessionId } from "@/lib/session";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -498,13 +498,14 @@ function EidEntryCard() {
   const [dismissed, setDismissed] = useState(() => { try { return localStorage.getItem(dismissKey) === "1"; } catch { return false; } });
   if (eid.period !== "eid_fitr" && eid.period !== "eid_adha") return null;
   if (dismissed) return null;
-  const isEidDay = eid.period === "eid_fitr" || eid.period === "eid_adha";
+  const period = eid.period as EidPeriod;
+  const isEidDay = period === "eid_fitr" || period === "eid_adha";
   const isAdha = eid.eidType === "adha";
-  const isPreAdha = eid.period === "pre_adha_dhul_hijja" || eid.period === "arafah";
+  const isPreAdha = period === "pre_adha_dhul_hijja" || period === "arafah";
   const gradientClass = isAdha ? "from-emerald-600/15 to-teal-500/5 border-emerald-500/30" : "from-violet-600/15 to-purple-500/5 border-violet-400/30";
   const iconBg = isAdha ? "bg-emerald-500" : "bg-violet-600";
-  const title = isEidDay ? (isAdha ? "عيد الأضحى المبارك 🐑" : "عيد الفطر المبارك 🌙") : eid.period === "arafah" ? "يوم عرفة اليوم 🤲" : isPreAdha ? `العشر من ذي الحجة — ${eid.daysUntilEid === 1 ? "العيد غداً" : `العيد بعد ${eid.daysUntilEid} أيام`}` : `العيد ${eid.daysUntilEid === 1 ? "غداً" : `بعد ${eid.daysUntilEid} أيام`} 🌙`;
-  const subtitle = isEidDay ? "تقبّل الله منا ومنكم — اضغط لصفحة العيد الكاملة" : eid.period === "arafah" ? "صُم واستغفر وادعُ — اكتشف صفحة العيد" : isPreAdha ? "أفضل أيام السنة — أكثر من الطاعة والتوبة" : "استعد وأخرج زكاة الفطر — اكتشف صفحة العيد";
+  const title = isEidDay ? (isAdha ? "عيد الأضحى المبارك 🐑" : "عيد الفطر المبارك 🌙") : period === "arafah" ? "يوم عرفة اليوم 🤲" : isPreAdha ? `العشر من ذي الحجة — ${eid.daysUntilEid === 1 ? "العيد غداً" : `العيد بعد ${eid.daysUntilEid} أيام`}` : `العيد ${eid.daysUntilEid === 1 ? "غداً" : `بعد ${eid.daysUntilEid} أيام`} 🌙`;
+  const subtitle = isEidDay ? "تقبّل الله منا ومنكم — اضغط لصفحة العيد الكاملة" : period === "arafah" ? "صُم واستغفر وادعُ — اكتشف صفحة العيد" : isPreAdha ? "أفضل أيام السنة — أكثر من الطاعة والتوبة" : "استعد وأخرج زكاة الفطر — اكتشف صفحة العيد";
   const handleDismiss = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setDismissed(true); try { localStorage.setItem(dismissKey, "1"); } catch {} };
   return (
     <AnimatePresence>
