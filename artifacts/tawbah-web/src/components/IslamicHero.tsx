@@ -212,6 +212,28 @@ const LIGHT_THEME_CONFIG: Record<
   },
 };
 
+const LIGHT_HERO_FILTER: Record<string, string> = {
+  forest:   "brightness(1.0) saturate(1.4) hue-rotate(0deg)",
+  mint:     "brightness(1.0) saturate(1.5) hue-rotate(15deg)",
+  ocean:    "brightness(0.98) saturate(1.3) hue-rotate(-90deg) sepia(0.08)",
+  midnight: "brightness(0.97) saturate(1.2) hue-rotate(-80deg) sepia(0.06)",
+  aurora:   "brightness(0.98) saturate(1.2) hue-rotate(-120deg) sepia(0.1)",
+  rose:     "brightness(1.0) saturate(1.2) hue-rotate(130deg) sepia(0.12)",
+  sunset:   "brightness(1.02) saturate(1.4) hue-rotate(75deg) sepia(0.15)",
+  slate:    "brightness(0.97) saturate(1.0) hue-rotate(-60deg) sepia(0.05)",
+};
+
+const LIGHT_LOGO_SHADOW: Record<string, string> = {
+  forest:   "drop-shadow(0 5px 14px rgba(23,77,43,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
+  mint:     "drop-shadow(0 5px 14px rgba(6,95,70,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
+  ocean:    "drop-shadow(0 5px 14px rgba(15,76,129,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
+  midnight: "drop-shadow(0 5px 14px rgba(30,58,138,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
+  aurora:   "drop-shadow(0 5px 14px rgba(107,33,168,0.28)) drop-shadow(0 2px 5px rgba(0,0,0,0.16))",
+  rose:     "drop-shadow(0 5px 14px rgba(159,18,57,0.28)) drop-shadow(0 2px 5px rgba(0,0,0,0.16))",
+  sunset:   "drop-shadow(0 5px 14px rgba(146,64,14,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
+  slate:    "drop-shadow(0 5px 14px rgba(30,58,95,0.28)) drop-shadow(0 2px 5px rgba(0,0,0,0.16))",
+};
+
 // ── Typing effect hook ──────────────────────────────────────────────────────
 function useTypingText(text: string, speed = 28) {
   const [displayed, setDisplayed] = useState("");
@@ -732,7 +754,7 @@ export function IslamicHero() {
           backgroundRepeat: "no-repeat",
           filter: isDark
             ? "brightness(0.92) saturate(1.1)"
-            : "brightness(1.0) saturate(1.2) hue-rotate(8deg) sepia(0.08)",
+            : (LIGHT_HERO_FILTER[accentColor] ?? LIGHT_HERO_FILTER["forest"]!),
         }}
       />
       {/* Overlay — tinted to match theme */}
@@ -956,8 +978,9 @@ export function IslamicHero() {
                 height: 120,
                 objectFit: "contain",
                 zIndex: 2,
-                filter:
-                  "drop-shadow(0 6px 18px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.55))",
+                filter: isDark
+                  ? "drop-shadow(0 6px 18px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.55))"
+                  : `saturate(0.7) brightness(0.88) ${LIGHT_LOGO_SHADOW[accentColor] ?? LIGHT_LOGO_SHADOW["forest"]!}`,
               }}
               className="ml-[4px] mr-[-4px] mt-[60px]"
             />
