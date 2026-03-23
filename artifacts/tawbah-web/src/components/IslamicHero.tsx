@@ -282,8 +282,6 @@ export function IslamicHero() {
       style={{
         minHeight: orbiting ? 500 : 278,
         transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
-        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
-        maskImage: "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
       }}
     >
       {/* Hero background image */}
@@ -296,10 +294,15 @@ export function IslamicHero() {
           backgroundRepeat: "no-repeat",
         }}
       />
-      {/* Dark overlay for text readability */}
+      {/* Dark overlay — stronger in light mode for readability */}
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "rgba(2, 22, 12, 0.48)" }}
+        style={{ background: isDark ? "rgba(2, 22, 12, 0.48)" : "rgba(0, 10, 5, 0.62)" }}
+      />
+      {/* Bottom fade to page background — matches both light and dark */}
+      <div
+        className="absolute bottom-0 inset-x-0 h-24 pointer-events-none"
+        style={{ background: "linear-gradient(to bottom, transparent, var(--background))" }}
       />
       {/* Top accent line */}
       <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
@@ -475,10 +478,7 @@ export function IslamicHero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
           className="text-[17px] font-bold tracking-widest mb-1 mt-[-17px]"
-          style={isDark
-            ? { color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }
-            : { color: lightCfg.textColor, letterSpacing: "0.06em" }
-          }
+          style={{ color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }}
         >
           دليل التوبة النصوح
         </motion.h1>
@@ -490,11 +490,11 @@ export function IslamicHero() {
           transition={{ delay: 0.4, duration: 0.5 }}
           className="flex items-center gap-2 mb-3 w-full max-w-xs"
         >
-          <div style={{ flex: 1, height: 1, background: isDark ? "linear-gradient(to left, rgba(251,191,36,0.4), transparent)" : `linear-gradient(to left, ${lightCfg.shimmer}, transparent)` }} />
-          <span className="text-[10px]" style={{ color: isDark ? "rgba(200,230,215,0.4)" : lightCfg.subColor }}>
+          <div style={{ flex: 1, height: 1, background: "linear-gradient(to left, rgba(251,191,36,0.4), transparent)" }} />
+          <span className="text-[10px]" style={{ color: "rgba(200,230,215,0.55)" }}>
             رحلتك نحو الله تبدأ هنا
           </span>
-          <div style={{ flex: 1, height: 1, background: isDark ? "linear-gradient(to right, rgba(251,191,36,0.4), transparent)" : `linear-gradient(to right, ${lightCfg.shimmer}, transparent)` }} />
+          <div style={{ flex: 1, height: 1, background: "linear-gradient(to right, rgba(251,191,36,0.4), transparent)" }} />
         </motion.div>
 
         {/* Tap hint */}
@@ -503,7 +503,7 @@ export function IslamicHero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.4 }}
           className="text-[10px] tracking-wide"
-          style={{ color: isDark ? "rgba(147,197,253,0.5)" : lightCfg.subColor }}
+          style={{ color: "rgba(147,197,253,0.55)" }}
         >
           {orbiting ? "اضغط على قسم للانتقال إليه ✦" : "اضغط على الشعار لاستعراض الأقسام ✦"}
         </motion.p>
