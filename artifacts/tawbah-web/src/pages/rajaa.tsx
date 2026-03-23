@@ -318,6 +318,7 @@ function VerseCardItem({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
+  const [spectrumHue, setSpectrumHue] = useState(0);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -330,6 +331,7 @@ function VerseCardItem({
   const stopVisualization = useCallback(() => {
     if (animFrameRef.current) { cancelAnimationFrame(animFrameRef.current); animFrameRef.current = 0; }
     setAudioLevel(0);
+    setSpectrumHue(0);
   }, []);
 
   const runVisualization = useCallback(() => {
@@ -350,6 +352,13 @@ function VerseCardItem({
       hi   /= (len - midEnd) * 255;
       const level = Math.min(1, bass * 1.6 + mid * 0.8 + hi * 0.3);
       setAudioLevel(level);
+      // Compute hue from dominant frequency band:
+      // bass → warm (red/orange ~20°), mid → cool (cyan ~180°), hi → violet (~280°)
+      const total = bass + mid + hi;
+      const hue = total > 0.001
+        ? (bass * 20 + mid * 180 + hi * 280) / total
+        : 0;
+      setSpectrumHue(hue);
       animFrameRef.current = requestAnimationFrame(tick);
     };
     tick();
@@ -417,7 +426,6 @@ function VerseCardItem({
 
   const progressPct = duration > 0 ? (currentTime / duration) * 100 : 0;
 
-  const hueShift   = (currentTime * 22) % 360;
   const glowBlur   = 8 + audioLevel * 32;
   const glowOpacity = isPlaying ? 0.18 + audioLevel * 0.55 : 0;
   const brightness  = 1 + audioLevel * 0.75;
@@ -441,8 +449,8 @@ function VerseCardItem({
           borderRadius: `calc(0.75rem + ${-borderInset}px)`,
           background: RAINBOW,
           opacity: isPlaying ? 1 : 0,
-          filter: `hue-rotate(${hueShift}deg) brightness(${brightness})`,
-          transition: isPlaying ? "opacity 0.25s, filter 0.05s, inset 0.05s" : "opacity 0.3s",
+          filter: `hue-rotate(${spectrumHue}deg) brightness(${brightness})`,
+          transition: isPlaying ? "opacity 0.25s, filter 0.12s, inset 0.05s" : "opacity 0.3s",
           pointerEvents: "none",
           zIndex: 0,
         }}
@@ -455,8 +463,8 @@ function VerseCardItem({
           borderRadius: "calc(0.75rem + 10px)",
           background: RAINBOW,
           opacity: glowOpacity,
-          filter: `blur(${glowBlur}px) hue-rotate(${hueShift}deg)`,
-          transition: isPlaying ? "opacity 0.06s, filter 0.06s" : "opacity 0.35s, filter 0.35s",
+          filter: `blur(${glowBlur}px) hue-rotate(${spectrumHue}deg)`,
+          transition: isPlaying ? "opacity 0.06s, filter 0.12s" : "opacity 0.35s, filter 0.35s",
           pointerEvents: "none",
           zIndex: -1,
         }}
@@ -521,7 +529,7 @@ function VerseCardItem({
             style={{
               width: `${progressPct}%`,
               background: `linear-gradient(to left, #06b6d4, #3b82f6, #818cf8, #a855f7, #ec4899)`,
-              filter: `hue-rotate(${hueShift}deg)`,
+              filter: `hue-rotate(${spectrumHue}deg)`,
               transition: "width 0.15s linear",
             }}
           />
