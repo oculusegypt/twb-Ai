@@ -282,6 +282,8 @@ export function IslamicHero() {
       style={{
         minHeight: orbiting ? 500 : 278,
         transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
+        maskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 55%, transparent 100%)",
       }}
     >
       {/* Hero background image */}
