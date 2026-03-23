@@ -25,10 +25,10 @@ function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
       <div
         className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
         style={{
-          background: "conic-gradient(from 120deg, hsl(var(--primary)/0.75), hsl(var(--accent)/0.6), hsl(var(--primary)/0.55), hsl(var(--accent)/0.65), hsl(var(--primary)/0.75))",
+          background: "conic-gradient(from 120deg, hsl(var(--primary)/0.92), hsl(var(--accent)/0.82), hsl(var(--primary)/0.78), hsl(var(--accent)/0.86), hsl(var(--primary)/0.92))",
           boxShadow: isActive
-            ? "0 0 0 2px hsl(var(--primary)/0.25), 0 0 12px hsl(var(--primary)/0.3), 0 5px 16px rgba(0,0,0,0.25)"
-            : "0 0 0 1.5px hsl(var(--primary)/0.15), 0 0 8px hsl(var(--primary)/0.2), 0 4px 14px rgba(0,0,0,0.22)",
+            ? "0 0 0 2.5px hsl(var(--primary)/0.35), 0 0 18px hsl(var(--primary)/0.45), 0 6px 22px rgba(0,0,0,0.42)"
+            : "0 0 0 2px hsl(var(--primary)/0.22), 0 0 14px hsl(var(--primary)/0.32), 0 5px 18px rgba(0,0,0,0.38)",
         }}
       >
         {/* Rotating shine arc */}
@@ -276,7 +276,8 @@ export function Layout({ children }: { children: ReactNode }) {
               </div>
 
               {/* Zaki button — center at nav-top (y=0), sits in the notch */}
-              <div className="absolute left-1/2 -translate-x-1/2 -top-[30px] z-50">
+              <div className="absolute left-1/2 -translate-x-1/2 -top-[30px] z-50"
+                style={{ filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.32)) drop-shadow(0 2px 6px rgba(0,0,0,0.22))" }}>
                 <Link href={zakiHref} className="block tap-highlight-transparent">
                   <motion.div
                     whileTap={{ scale: 0.92 }}

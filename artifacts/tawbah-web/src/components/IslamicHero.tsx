@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, MessageCircle, Star, Sparkles, Sun, Moon, ChevronLeft, ChevronRight,
   CircleDot, PenLine, ListChecks, Users, Swords, ScrollText, Clock,
-  Heart, BarChart2, Bell, Zap, X,
+  Heart, BarChart2, Bell, Zap,
 } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { useLocation } from "wouter";
@@ -186,28 +186,19 @@ function MeshSpots({ isDark }: { isDark: boolean }) {
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
       <motion.div
         className="absolute rounded-full blur-[60px]"
-        style={{
-          width: 220, height: 180, top: -40, left: "10%",
-          background: isDark ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.08)",
-        }}
+        style={{ width: 220, height: 180, top: -40, left: "10%", background: isDark ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.08)" }}
         animate={{ x: [0, 20, 0], y: [0, 15, 0] }}
         transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
         className="absolute rounded-full blur-[50px]"
-        style={{
-          width: 160, height: 140, top: 20, right: "5%",
-          background: isDark ? "rgba(251,191,36,0.06)" : "rgba(251,191,36,0.07)",
-        }}
+        style={{ width: 160, height: 140, top: 20, right: "5%", background: isDark ? "rgba(251,191,36,0.06)" : "rgba(251,191,36,0.07)" }}
         animate={{ x: [0, -15, 0], y: [0, 20, 0] }}
         transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 2 }}
       />
       <motion.div
         className="absolute rounded-full blur-[40px]"
-        style={{
-          width: 120, height: 100, bottom: 20, left: "30%",
-          background: isDark ? "rgba(99,179,237,0.07)" : "rgba(99,179,237,0.06)",
-        }}
+        style={{ width: 120, height: 100, bottom: 20, left: "30%", background: isDark ? "rgba(99,179,237,0.07)" : "rgba(99,179,237,0.06)" }}
         animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
         transition={{ duration: 13, repeat: Infinity, ease: "easeInOut", delay: 4 }}
       />
@@ -220,233 +211,28 @@ type OrbitalSection = {
   id: string;
   href: string;
   label: string;
-  sub: string;
   Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
   color: string;
   bg: string;
 };
 
 const ORBITAL_SECTIONS: OrbitalSection[] = [
-  { id: "rajaa",        href: "/rajaa",          label: "مكتبة الرجاء",   sub: "آيات وأحاديث",       Icon: BookOpen,    color: "#10b981", bg: "rgba(16,185,129,0.18)" },
-  { id: "dhikr",        href: "/dhikr",          label: "مسبحة الذكر",    sub: "استغفار وتسبيح",     Icon: CircleDot,   color: "#f59e0b", bg: "rgba(245,158,11,0.18)" },
-  { id: "dua-timing",   href: "/dua-timing",     label: "لحظة الإجابة",   sub: "أقوى أوقات الدعاء",  Icon: Zap,         color: "#eab308", bg: "rgba(234,179,8,0.18)"  },
-  { id: "dhikr-rooms",  href: "/dhikr-rooms",    label: "غرف الذكر",      sub: "مع آلاف المسلمين",   Icon: Users,       color: "#14b8a6", bg: "rgba(20,184,166,0.18)" },
-  { id: "hadi-tasks",   href: "/hadi-tasks",     label: "مهام هادي",      sub: "نصائح الزكي",        Icon: ListChecks,  color: "#06b6d4", bg: "rgba(6,182,212,0.18)"  },
-  { id: "prayer-times", href: "/prayer-times",   label: "مواقيت الصلاة",  sub: "تذكيرات ذكية",       Icon: Clock,       color: "#6366f1", bg: "rgba(99,102,241,0.18)" },
-  { id: "kaffarah",     href: "/kaffarah",       label: "الكفارات",       sub: "خطوات مفصّلة",       Icon: ScrollText,  color: "#ef4444", bg: "rgba(239,68,68,0.18)"  },
-  { id: "relapse",      href: "/relapse",        label: "ضعفت وعدت؟",     sub: "لا تيأس",            Icon: Heart,       color: "#ec4899", bg: "rgba(236,72,153,0.18)" },
-  { id: "journal",      href: "/journal",        label: "يوميات التوبة",  sub: "مساحة سرية",         Icon: PenLine,     color: "#8b5cf6", bg: "rgba(139,92,246,0.18)" },
-  { id: "progress-map", href: "/progress",       label: "خريطة التقدم",   sub: "إحصاءاتك",           Icon: BarChart2,   color: "#3b82f6", bg: "rgba(59,130,246,0.18)" },
-  { id: "challenge",    href: "/challenge/create",label: "تحدي التوبة",   sub: "شارك رابطه",         Icon: Swords,      color: "#f97316", bg: "rgba(249,115,22,0.18)" },
-  { id: "notifications",href: "/notifications",  label: "الإشعارات",      sub: "تنبيهات الصلاة",     Icon: Bell,        color: "#d97706", bg: "rgba(217,119,6,0.18)"  },
+  { id: "rajaa",        href: "/rajaa",           label: "مكتبة الرجاء",  Icon: BookOpen,   color: "#10b981", bg: "rgba(16,185,129,0.22)" },
+  { id: "dhikr",        href: "/dhikr",           label: "مسبحة الذكر",   Icon: CircleDot,  color: "#f59e0b", bg: "rgba(245,158,11,0.22)" },
+  { id: "dua-timing",   href: "/dua-timing",      label: "لحظة الإجابة",  Icon: Zap,        color: "#eab308", bg: "rgba(234,179,8,0.22)"  },
+  { id: "dhikr-rooms",  href: "/dhikr-rooms",     label: "غرف الذكر",     Icon: Users,      color: "#14b8a6", bg: "rgba(20,184,166,0.22)" },
+  { id: "hadi-tasks",   href: "/hadi-tasks",      label: "مهام هادي",     Icon: ListChecks, color: "#06b6d4", bg: "rgba(6,182,212,0.22)"  },
+  { id: "prayer-times", href: "/prayer-times",    label: "مواقيت الصلاة", Icon: Clock,      color: "#6366f1", bg: "rgba(99,102,241,0.22)" },
+  { id: "kaffarah",     href: "/kaffarah",        label: "الكفارات",      Icon: ScrollText, color: "#ef4444", bg: "rgba(239,68,68,0.22)"  },
+  { id: "relapse",      href: "/relapse",         label: "ضعفت وعدت؟",    Icon: Heart,      color: "#ec4899", bg: "rgba(236,72,153,0.22)" },
+  { id: "journal",      href: "/journal",         label: "يوميات التوبة", Icon: PenLine,    color: "#8b5cf6", bg: "rgba(139,92,246,0.22)" },
+  { id: "progress-map", href: "/progress",        label: "خريطة التقدم",  Icon: BarChart2,  color: "#3b82f6", bg: "rgba(59,130,246,0.22)" },
+  { id: "challenge",    href: "/challenge/create",label: "تحدي التوبة",   Icon: Swords,     color: "#f97316", bg: "rgba(249,115,22,0.22)" },
+  { id: "notifications",href: "/notifications",   label: "الإشعارات",     Icon: Bell,       color: "#d97706", bg: "rgba(217,119,6,0.22)"  },
 ];
 
-// ── Orbital Navigation Overlay ──────────────────────────────────────────────
-function OrbitalOverlay({ onClose }: { onClose: () => void }) {
-  const [, navigate] = useLocation();
-  const ORBIT_RADIUS = 148;
-  const BUBBLE_SIZE = 62;
-
-  const handleNavigate = (href: string) => {
-    onClose();
-    navigate(href);
-  };
-
-  return (
-    <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backdropFilter: "blur(22px)", WebkitBackdropFilter: "blur(22px)", background: "rgba(2,8,22,0.88)" }}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.28 }}
-      onClick={onClose}
-    >
-      {/* Close button */}
-      <motion.button
-        className="absolute top-5 left-5 z-20 w-9 h-9 flex items-center justify-center rounded-full"
-        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)" }}
-        whileHover={{ scale: 1.12, background: "rgba(255,255,255,0.12)" }}
-        whileTap={{ scale: 0.92 }}
-        onClick={onClose}
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        <X size={16} />
-      </motion.button>
-
-      {/* Hint text */}
-      <motion.p
-        className="absolute bottom-8 text-[11px] tracking-widest"
-        style={{ color: "rgba(255,255,255,0.22)", letterSpacing: "0.12em" }}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        اختر قسماً للانتقال إليه
-      </motion.p>
-
-      {/* Central container */}
-      <div
-        className="relative flex items-center justify-center"
-        style={{ width: (ORBIT_RADIUS + BUBBLE_SIZE) * 2 + 20, height: (ORBIT_RADIUS + BUBBLE_SIZE) * 2 + 20 }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Outer orbit ring decoration */}
-        <motion.div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: ORBIT_RADIUS * 2 + BUBBLE_SIZE,
-            height: ORBIT_RADIUS * 2 + BUBBLE_SIZE,
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            border: "1px dashed rgba(251,191,36,0.18)",
-          }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        />
-
-        {/* Inner glow ring */}
-        <motion.div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: ORBIT_RADIUS * 2 + BUBBLE_SIZE - 30,
-            height: ORBIT_RADIUS * 2 + BUBBLE_SIZE - 30,
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            border: "1px solid rgba(96,165,250,0.08)",
-            boxShadow: "inset 0 0 60px rgba(59,130,246,0.04)",
-          }}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-        />
-
-        {/* Orbiting bubbles container - rotates continuously */}
-        <motion.div
-          className="absolute"
-          style={{ width: 0, height: 0, top: "50%", left: "50%" }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-        >
-          {ORBITAL_SECTIONS.map((section, i) => {
-            const angle = (i / ORBITAL_SECTIONS.length) * 360;
-            const rad = (angle * Math.PI) / 180;
-            const x = ORBIT_RADIUS * Math.sin(rad);
-            const y = -ORBIT_RADIUS * Math.cos(rad);
-            const half = BUBBLE_SIZE / 2;
-
-            return (
-              <motion.div
-                key={section.id}
-                style={{
-                  position: "absolute",
-                  left: x - half,
-                  top: y - half,
-                  width: BUBBLE_SIZE,
-                  height: BUBBLE_SIZE,
-                }}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1, rotate: -360 }}
-                transition={{
-                  scale: { type: "spring", stiffness: 280, damping: 22, delay: i * 0.04 + 0.1 },
-                  opacity: { duration: 0.25, delay: i * 0.04 + 0.1 },
-                  rotate: { duration: 40, repeat: Infinity, ease: "linear" },
-                }}
-              >
-                <motion.button
-                  onClick={() => handleNavigate(section.href)}
-                  whileHover={{ scale: 1.18, zIndex: 10 }}
-                  whileTap={{ scale: 0.92 }}
-                  className="w-full h-full flex flex-col items-center justify-center gap-[5px] rounded-[14px] cursor-pointer"
-                  style={{
-                    background: `linear-gradient(145deg, ${section.bg}, rgba(10,15,30,0.85))`,
-                    border: `1.5px solid ${section.color}45`,
-                    boxShadow: `0 0 16px ${section.color}22, 0 2px 8px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.07)`,
-                    backdropFilter: "blur(8px)",
-                    position: "relative",
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Subtle top shimmer line */}
-                  <div
-                    className="absolute top-0 inset-x-0 h-px pointer-events-none"
-                    style={{ background: `linear-gradient(to right, transparent, ${section.color}60, transparent)` }}
-                  />
-                  {/* Corner dot */}
-                  <div
-                    className="absolute top-[5px] right-[5px] w-[4px] h-[4px] rounded-full pointer-events-none"
-                    style={{ background: section.color, opacity: 0.6 }}
-                  />
-                  <section.Icon size={20} style={{ color: section.color }} />
-                  <span
-                    className="leading-tight text-center px-1"
-                    style={{ fontSize: 8.5, color: "rgba(255,255,255,0.88)", fontFamily: "inherit" }}
-                    dir="rtl"
-                  >
-                    {section.label}
-                  </span>
-                </motion.button>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-
-        {/* Central logo button */}
-        <motion.button
-          className="relative z-10 rounded-full overflow-hidden focus:outline-none"
-          style={{
-            width: 96,
-            height: 96,
-            border: "2.5px solid rgba(251,191,36,0.7)",
-            boxShadow: "0 0 0 6px rgba(251,191,36,0.08), 0 0 40px rgba(251,191,36,0.5), 0 0 80px rgba(251,191,36,0.18), 0 6px 32px rgba(0,0,0,0.6)",
-          }}
-          onClick={onClose}
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          whileHover={{ scale: 1.08 }}
-          whileTap={{ scale: 0.94 }}
-        >
-          {/* Pulsing ring */}
-          <motion.div
-            className="absolute inset-0 rounded-full pointer-events-none"
-            style={{ border: "2px solid rgba(251,191,36,0.4)" }}
-            animate={{ scale: [1, 1.35, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeOut" }}
-          />
-          <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
-        </motion.button>
-
-        {/* AI label under center logo */}
-        <motion.div
-          className="absolute flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-semibold tracking-widest"
-          style={{
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, 54px)",
-            background: "rgba(30,58,138,0.5)",
-            color: "#93c5fd",
-            border: "1px solid rgba(96,165,250,0.25)",
-            backdropFilter: "blur(8px)",
-            whiteSpace: "nowrap",
-          }}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.8, repeat: Infinity }}>✦</motion.span>
-          مدعوم بالذكاء الاصطناعي
-          <motion.span animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.8, repeat: Infinity, delay: 0.9 }}>✦</motion.span>
-        </motion.div>
-      </div>
-    </motion.div>
-  );
-}
+const ORBIT_RADIUS   = 118;  // px from logo center to bubble center
+const BUBBLE_SIZE    = 50;   // px diameter of each bubble
 
 // ── Main export ─────────────────────────────────────────────────────────────
 export function IslamicHero() {
@@ -456,6 +242,7 @@ export function IslamicHero() {
   const [orbiting, setOrbiting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { theme, accentColor } = useSettings();
+  const [, navigate] = useLocation();
   const isDark = theme === "dark";
 
   const fetchContent = useCallback(async () => {
@@ -490,163 +277,284 @@ export function IslamicHero() {
     ? "linear-gradient(to right, transparent 0%, rgba(251,191,36,0.7) 30%, rgba(96,165,250,0.7) 55%, rgba(251,191,36,0.7) 75%, transparent 100%)"
     : `linear-gradient(to right, transparent 0%, ${lightCfg.shimmer} 35%, ${lightCfg.shimmer} 65%, transparent 100%)`;
 
+  // Orbit ring diameter for CSS decoration
+  const ringSize = ORBIT_RADIUS * 2 + BUBBLE_SIZE;
+  // Container height: orbit needs radius+bubble/2 above and below logo center
+  const orbitContainerH = (ORBIT_RADIUS + BUBBLE_SIZE / 2) * 2 + 8;
+
   return (
-    <>
-      {/* Orbital overlay (portal-like, rendered at root level via fixed position) */}
-      <AnimatePresence>
-        {orbiting && <OrbitalOverlay onClose={() => setOrbiting(false)} />}
-      </AnimatePresence>
+    <div
+      className="relative w-full select-none overflow-hidden"
+      style={{
+        minHeight: orbiting ? 460 : 278,
+        transition: "min-height 0.45s cubic-bezier(0.34,1.56,0.64,1)",
+        ...bgStyle,
+        WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+        maskImage: "linear-gradient(to bottom, black 0%, black 68%, transparent 100%)",
+      }}
+    >
+      <MeshSpots isDark={isDark} />
+      {isDark ? <IslamicGeometryDark /> : <IslamicGeometryLight color={lightCfg.shimmer} />}
+      {isDark ? <MosqueSilhouetteDark /> : <MosqueSilhouetteLight color={lightCfg.textColor} />}
 
-      <div
-        className="relative w-full select-none overflow-hidden"
-        style={{
-          minHeight: 280,
-          ...bgStyle,
-          WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 65%, transparent 100%)",
-          maskImage: "linear-gradient(to bottom, black 0%, black 65%, transparent 100%)",
-        }}
-      >
-        {/* Mesh animated spots */}
-        <MeshSpots isDark={isDark} />
+      {/* Top accent line */}
+      <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
+        style={{ background: topLineColor }} />
 
-        {/* Islamic geometry */}
-        {isDark ? <IslamicGeometryDark /> : <IslamicGeometryLight color={lightCfg.shimmer} />}
-        {isDark ? <MosqueSilhouetteDark /> : <MosqueSilhouetteLight color={lightCfg.textColor} />}
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center pt-6 pb-8 px-5">
 
-        {/* Top accent line */}
-        <div className="absolute top-0 inset-x-0 h-[2px] pointer-events-none"
-          style={{ background: topLineColor }} />
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center pt-6 pb-8 px-5">
-
-          {/* AI powered badge */}
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="mb-5"
-          >
-            <div
-              className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider"
-              style={isDark
-                ? { background: "rgba(30,58,138,0.55)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.25)", backdropFilter: "blur(8px)" }
-                : { background: "rgba(219,234,254,0.8)", color: "#1d4ed8", border: "1px solid rgba(59,130,246,0.2)", backdropFilter: "blur(8px)" }
-              }
-            >
-              <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.8, repeat: Infinity }}>
-                ✦
-              </motion.span>
-              مدعوم بالذكاء الاصطناعي
-              <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.8, repeat: Infinity, delay: 0.9 }}>
-                ✦
-              </motion.span>
-            </div>
-          </motion.div>
-
-          {/* Logo — now a button that triggers orbital nav */}
-          <motion.div
-            initial={{ scale: 0.75, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.6, ease: "backOut", delay: 0.1 }}
-            className="mb-4"
-          >
-            <motion.button
-              className="relative focus:outline-none rounded-full"
-              onClick={() => setOrbiting(true)}
-              whileHover={{ scale: 1.07 }}
-              whileTap={{ scale: 0.95 }}
-              aria-label="فتح قائمة الأقسام"
-            >
-              {/* Pulsing outer ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full pointer-events-none"
-                style={isDark
-                  ? { border: "2px solid rgba(251,191,36,0.45)", boxShadow: "0 0 24px rgba(251,191,36,0.25)" }
-                  : { border: `2px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 20px ${lightCfg.glowColor}` }
-                }
-                animate={{ scale: [1, 1.22, 1], opacity: [0.7, 0, 0.7] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeOut" }}
-              />
-              {/* Second pulsing ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full pointer-events-none"
-                style={isDark
-                  ? { border: "1px solid rgba(96,165,250,0.3)" }
-                  : { border: `1px solid ${lightCfg.glowColor}` }
-                }
-                animate={{ scale: [1, 1.4, 1], opacity: [0.4, 0, 0.4] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeOut", delay: 0.9 }}
-              />
-              <div
-                className="w-[100px] h-[100px] rounded-full overflow-hidden"
-                style={isDark
-                  ? { border: "2.5px solid rgba(251,191,36,0.55)", boxShadow: "0 0 0 4px rgba(251,191,36,0.08), 0 0 32px rgba(251,191,36,0.35), 0 0 60px rgba(251,191,36,0.14), 0 6px 24px rgba(0,0,0,0.5)" }
-                  : { border: `2.5px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 0 4px ${lightCfg.glowColor}, 0 0 24px ${lightCfg.glowColor}, 0 4px 16px rgba(0,0,0,0.12)` }
-                }
-              >
-                <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
-              </div>
-              {/* Tap hint */}
-              <motion.div
-                className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full flex items-center justify-center"
-                style={isDark
-                  ? { background: "rgba(30,58,138,0.9)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
-                  : { background: "rgba(219,234,254,0.95)", border: `1px solid ${lightCfg.cardBorder}`, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }
-                }
-                animate={{ scale: [1, 1.15, 1] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <Sparkles size={10} style={{ color: isDark ? "#93c5fd" : lightCfg.textColor }} />
-              </motion.div>
-            </motion.button>
-          </motion.div>
-
-          {/* App name */}
-          <motion.h1
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.5 }}
-            className="text-[17px] font-bold tracking-widest mb-1"
+        {/* AI badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-4"
+        >
+          <div
+            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider"
             style={isDark
-              ? { color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }
-              : { color: lightCfg.textColor, letterSpacing: "0.06em" }
+              ? { background: "rgba(30,58,138,0.55)", color: "#93c5fd", border: "1px solid rgba(96,165,250,0.25)", backdropFilter: "blur(8px)" }
+              : { background: "rgba(219,234,254,0.8)", color: "#1d4ed8", border: "1px solid rgba(59,130,246,0.2)", backdropFilter: "blur(8px)" }
             }
           >
-            دليل التوبة النصوح
-          </motion.h1>
+            <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.8, repeat: Infinity }}>✦</motion.span>
+            مدعوم بالذكاء الاصطناعي
+            <motion.span animate={{ opacity: [1, 0.4, 1] }} transition={{ duration: 1.8, repeat: Infinity, delay: 0.9 }}>✦</motion.span>
+          </div>
+        </motion.div>
 
-          {/* Divider */}
-          <motion.div
-            initial={{ opacity: 0, scaleX: 0.4 }}
-            animate={{ opacity: 1, scaleX: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className="flex items-center gap-2 mb-3 w-full max-w-xs"
-          >
-            <div style={{ flex: 1, height: 1, background: isDark ? "linear-gradient(to left, rgba(251,191,36,0.4), transparent)" : `linear-gradient(to left, ${lightCfg.shimmer}, transparent)` }} />
-            <span className="text-[10px]" style={{ color: isDark ? "rgba(200,230,215,0.4)" : lightCfg.subColor }}>
-              رحلتك نحو الله تبدأ هنا
-            </span>
-            <div style={{ flex: 1, height: 1, background: isDark ? "linear-gradient(to right, rgba(251,191,36,0.4), transparent)" : `linear-gradient(to right, ${lightCfg.shimmer}, transparent)` }} />
-          </motion.div>
+        {/* ── Orbital logo section ── */}
+        <motion.div
+          className="relative flex items-center justify-center"
+          animate={{ height: orbiting ? orbitContainerH : 112, marginBottom: orbiting ? 16 : 16 }}
+          transition={{ duration: 0.48, ease: [0.34, 1.26, 0.64, 1] }}
+          style={{ width: "100%" }}
+        >
+          {/* Orbit ring + bubbles (only when orbiting) */}
+          <AnimatePresence>
+            {orbiting && (
+              <motion.div
+                className="absolute inset-0 pointer-events-none"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                {/* Dashed orbit ring */}
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{
+                    width: ringSize,
+                    height: ringSize,
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    border: isDark
+                      ? "1px dashed rgba(251,191,36,0.22)"
+                      : `1px dashed ${lightCfg.cardBorder}`,
+                  }}
+                  initial={{ scale: 0.45, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.45, opacity: 0 }}
+                  transition={{ duration: 0.4, ease: "backOut" }}
+                />
 
-          {/* Tap hint label */}
-          <motion.p
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.4 }}
-            className="text-[10px] tracking-wide"
-            style={{ color: isDark ? "rgba(147,197,253,0.5)" : lightCfg.subColor }}
+                {/* Inner glow ring */}
+                <motion.div
+                  className="absolute rounded-full pointer-events-none"
+                  style={{
+                    width: ringSize - 20,
+                    height: ringSize - 20,
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    border: isDark
+                      ? "1px solid rgba(96,165,250,0.07)"
+                      : `1px solid ${lightCfg.glowColor}`,
+                  }}
+                  initial={{ scale: 0.45, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.45, opacity: 0 }}
+                  transition={{ duration: 0.4, delay: 0.05, ease: "backOut" }}
+                />
+
+                {/* Bubbles container — rotates continuously */}
+                <motion.div
+                  className="absolute pointer-events-auto"
+                  style={{ width: 0, height: 0, top: "50%", left: "50%" }}
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 42, repeat: Infinity, ease: "linear" }}
+                >
+                  {ORBITAL_SECTIONS.map((section, i) => {
+                    const angle  = (i / ORBITAL_SECTIONS.length) * Math.PI * 2;
+                    const x      = ORBIT_RADIUS * Math.sin(angle);
+                    const y      = -ORBIT_RADIUS * Math.cos(angle);
+                    const half   = BUBBLE_SIZE / 2;
+
+                    return (
+                      <motion.div
+                        key={section.id}
+                        style={{
+                          position: "absolute",
+                          left: x - half,
+                          top: y - half,
+                          width: BUBBLE_SIZE,
+                          height: BUBBLE_SIZE,
+                        }}
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1, rotate: -360 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{
+                          scale:   { type: "spring", stiffness: 300, damping: 22, delay: i * 0.038 },
+                          opacity: { duration: 0.2, delay: i * 0.038 },
+                          rotate:  { duration: 42, repeat: Infinity, ease: "linear" },
+                        }}
+                      >
+                        <button
+                          onClick={() => { navigate(section.href); setOrbiting(false); }}
+                          className="w-full h-full rounded-full flex flex-col items-center justify-center gap-[4px] cursor-pointer"
+                          style={{
+                            background: isDark
+                              ? `radial-gradient(circle at 38% 32%, ${section.bg}, rgba(6,12,30,0.9))`
+                              : `radial-gradient(circle at 38% 32%, ${section.bg}, rgba(255,255,255,0.9))`,
+                            border: `1.5px solid ${section.color}55`,
+                            boxShadow: isDark
+                              ? `0 0 16px ${section.color}28, 0 3px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)`
+                              : `0 0 12px ${section.color}20, 0 3px 10px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.95)`,
+                            backdropFilter: "blur(4px)",
+                            position: "relative",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {/* Top shimmer */}
+                          <div className="absolute top-0 inset-x-0 h-px pointer-events-none"
+                            style={{ background: `linear-gradient(to right, transparent, ${section.color}70, transparent)` }} />
+                          <section.Icon
+                            size={17}
+                            style={{ color: section.color, filter: `drop-shadow(0 0 4px ${section.color}60)` }}
+                          />
+                          <span
+                            style={{
+                              fontSize: 8,
+                              color: isDark ? "rgba(255,255,255,0.88)" : "rgba(20,20,30,0.82)",
+                              textAlign: "center",
+                              lineHeight: 1.25,
+                              padding: "0 3px",
+                              fontFamily: "inherit",
+                            }}
+                            dir="rtl"
+                          >
+                            {section.label.length > 7 ? section.label.slice(0, 7) : section.label}
+                          </span>
+                        </button>
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Logo button (always centered) ── */}
+          <motion.button
+            className="rounded-full focus:outline-none"
+            style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", zIndex: 10 }}
+            onClick={() => setOrbiting((v) => !v)}
+            whileHover={{ scale: 1.07 }}
+            whileTap={{ scale: 0.94 }}
+            aria-label={orbiting ? "إغلاق قائمة الأقسام" : "فتح قائمة الأقسام"}
+            initial={{ scale: 0.75, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
-            اضغط على الشعار لاستعراض الأقسام ✦
-          </motion.p>
-        </div>
+            {/* Pulsing ring 1 */}
+            <motion.div className="absolute inset-0 rounded-full pointer-events-none"
+              style={isDark
+                ? { border: "2px solid rgba(251,191,36,0.42)", boxShadow: "0 0 20px rgba(251,191,36,0.22)" }
+                : { border: `2px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 16px ${lightCfg.glowColor}` }
+              }
+              animate={{ scale: [1, 1.24, 1], opacity: [0.65, 0, 0.65] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut" }}
+            />
+            {/* Pulsing ring 2 */}
+            <motion.div className="absolute inset-0 rounded-full pointer-events-none"
+              style={isDark
+                ? { border: "1px solid rgba(96,165,250,0.28)" }
+                : { border: `1px solid ${lightCfg.glowColor}` }
+              }
+              animate={{ scale: [1, 1.45, 1], opacity: [0.35, 0, 0.35] }}
+              transition={{ duration: 2.8, repeat: Infinity, ease: "easeOut", delay: 1.0 }}
+            />
+            {/* Logo image */}
+            <div
+              className="w-[100px] h-[100px] rounded-full overflow-hidden"
+              style={isDark
+                ? { border: "2.5px solid rgba(251,191,36,0.58)", boxShadow: "0 0 0 4px rgba(251,191,36,0.08), 0 0 32px rgba(251,191,36,0.38), 0 0 64px rgba(251,191,36,0.14), 0 6px 24px rgba(0,0,0,0.5)" }
+                : { border: `2.5px solid ${lightCfg.cardBorder}`, boxShadow: `0 0 0 4px ${lightCfg.glowColor}, 0 0 24px ${lightCfg.glowColor}, 0 4px 16px rgba(0,0,0,0.12)` }
+              }
+            >
+              <img src="/images/logo.png" alt="دليل التوبة" className="w-full h-full object-cover" />
+            </div>
+            {/* Corner sparkle */}
+            <motion.div
+              className="absolute -bottom-1 -right-1 w-[22px] h-[22px] rounded-full flex items-center justify-center"
+              style={isDark
+                ? { background: "rgba(30,58,138,0.88)", border: "1px solid rgba(96,165,250,0.35)", boxShadow: "0 2px 8px rgba(0,0,0,0.4)" }
+                : { background: "rgba(219,234,254,0.95)", border: `1px solid ${lightCfg.cardBorder}`, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }
+              }
+              animate={{ scale: [1, 1.18, 1] }}
+              transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+            >
+              <Sparkles size={10} style={{ color: isDark ? "#93c5fd" : lightCfg.textColor }} />
+            </motion.div>
+          </motion.button>
+        </motion.div>
+
+        {/* App name */}
+        <motion.h1
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
+          className="text-[17px] font-bold tracking-widest mb-1"
+          style={isDark
+            ? { color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }
+            : { color: lightCfg.textColor, letterSpacing: "0.06em" }
+          }
+        >
+          دليل التوبة النصوح
+        </motion.h1>
+
+        {/* Divider */}
+        <motion.div
+          initial={{ opacity: 0, scaleX: 0.4 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="flex items-center gap-2 mb-3 w-full max-w-xs"
+        >
+          <div style={{ flex: 1, height: 1, background: isDark ? "linear-gradient(to left, rgba(251,191,36,0.4), transparent)" : `linear-gradient(to left, ${lightCfg.shimmer}, transparent)` }} />
+          <span className="text-[10px]" style={{ color: isDark ? "rgba(200,230,215,0.4)" : lightCfg.subColor }}>
+            رحلتك نحو الله تبدأ هنا
+          </span>
+          <div style={{ flex: 1, height: 1, background: isDark ? "linear-gradient(to right, rgba(251,191,36,0.4), transparent)" : `linear-gradient(to right, ${lightCfg.shimmer}, transparent)` }} />
+        </motion.div>
+
+        {/* Tap hint */}
+        <motion.p
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.4 }}
+          className="text-[10px] tracking-wide"
+          style={{ color: isDark ? "rgba(147,197,253,0.5)" : lightCfg.subColor }}
+        >
+          {orbiting ? "اضغط على قسم للانتقال إليه ✦" : "اضغط على الشعار لاستعراض الأقسام ✦"}
+        </motion.p>
       </div>
-    </>
+    </div>
   );
 }
 
-// ── Content card (preserved but hidden) ────────────────────────────────────
+// ── Preserved (hidden) content card ─────────────────────────────────────────
 interface ContentCardProps {
   item: HeroItem | null;
   meta: typeof TYPE_META[HeroItem["type"]] | null;
@@ -667,71 +575,48 @@ function TypingText({ text, type, textColor }: { text: string; type: HeroItem["t
     <p className="text-[13px] leading-[1.9] font-medium text-center" style={{ color: textColor }} dir="rtl">
       {displayed}
       {!done && (
-        <motion.span
-          animate={{ opacity: [1, 0] }}
-          transition={{ duration: 0.5, repeat: Infinity }}
-          style={{ color: textColor, opacity: 0.7 }}
-        >|</motion.span>
+        <motion.span animate={{ opacity: [1, 0] }} transition={{ duration: 0.5, repeat: Infinity }}
+          style={{ color: textColor, opacity: 0.7 }}>|</motion.span>
       )}
     </p>
   );
 }
 
 function ContentCard({ item, meta, loading, items, idx, goNext, goPrev, timerRef, isDark, lightCfg }: ContentCardProps) {
-  const cardBg     = isDark ? "rgba(255,255,255,0.05)" : lightCfg.cardBg;
-  const cardBorder = isDark ? "rgba(251,191,36,0.16)"  : lightCfg.cardBorder;
-  const cardShadow = isDark
-    ? "0 4px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(251,191,36,0.1)"
-    : "0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)";
-  const headerBg   = isDark ? "linear-gradient(to right, rgba(251,191,36,0.05), transparent)" : `linear-gradient(to right, ${lightCfg.glowColor}, transparent)`;
+  const cardBg      = isDark ? "rgba(255,255,255,0.05)" : lightCfg.cardBg;
+  const cardBorder  = isDark ? "rgba(251,191,36,0.16)"  : lightCfg.cardBorder;
+  const headerBg    = isDark ? "linear-gradient(to right, rgba(251,191,36,0.05), transparent)" : `linear-gradient(to right, ${lightCfg.glowColor}, transparent)`;
   const headerBorder = isDark ? "rgba(251,191,36,0.1)" : lightCfg.cardBorder;
-  const labelColor = isDark ? "rgba(251,191,36,0.85)" : lightCfg.textColor;
-  const subColor   = isDark ? "rgba(200,230,215,0.5)"  : lightCfg.subColor;
-  const textColor  = isDark ? "rgba(240,255,245,0.92)" : lightCfg.textColor;
-  const dotActive  = isDark ? "#fbbf24" : lightCfg.textColor;
+  const labelColor  = isDark ? "rgba(251,191,36,0.85)" : lightCfg.textColor;
+  const subColor    = isDark ? "rgba(200,230,215,0.5)"  : lightCfg.subColor;
+  const textColor   = isDark ? "rgba(240,255,245,0.92)" : lightCfg.textColor;
+  const dotActive   = isDark ? "#fbbf24" : lightCfg.textColor;
   const dotInactive = isDark ? "rgba(251,191,36,0.18)" : lightCfg.cardBorder;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5, duration: 0.5 }}
-      className="w-full max-w-sm"
-    >
-      <div
-        className="rounded-2xl overflow-hidden"
-        style={{ background: cardBg, border: `1px solid ${cardBorder}`, boxShadow: cardShadow, backdropFilter: "blur(12px)" }}
-      >
-        <div
-          className="flex items-center justify-between px-4 py-2.5"
-          style={{ borderBottom: `1px solid ${headerBorder}`, background: headerBg }}
-        >
+    <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.5 }} className="w-full max-w-sm">
+      <div className="rounded-2xl overflow-hidden"
+        style={{ background: cardBg, border: `1px solid ${cardBorder}`, backdropFilter: "blur(12px)" }}>
+        <div className="flex items-center justify-between px-4 py-2.5"
+          style={{ borderBottom: `1px solid ${headerBorder}`, background: headerBg }}>
           <div className="flex items-center gap-2 min-w-0">
             {meta ? (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
                 style={{ background: meta.bg, color: meta.color }}>
                 {meta.icon}{meta.label}
               </span>
-            ) : (
-              <Sparkles size={12} style={{ color: labelColor }} />
-            )}
-            {item?.source && (
-              <span className="text-[10px] truncate" style={{ color: subColor }}>{item.source}</span>
-            )}
+            ) : <Sparkles size={12} style={{ color: labelColor }} />}
+            {item?.source && <span className="text-[10px] truncate" style={{ color: subColor }}>{item.source}</span>}
           </div>
           {items.length > 1 && (
             <div className="flex items-center gap-2">
-              <button onClick={goPrev}
-                className="w-6 h-6 flex items-center justify-center rounded-lg transition-all"
-                style={{ color: labelColor, background: headerBorder }}
-                aria-label="السابق">
+              <button onClick={goPrev} className="w-6 h-6 flex items-center justify-center rounded-lg"
+                style={{ color: labelColor, background: headerBorder }} aria-label="السابق">
                 <ChevronRight size={13} />
               </button>
               <span className="text-[10px] tabular-nums" style={{ color: subColor }}>{idx + 1}/{items.length}</span>
-              <button onClick={goNext}
-                className="w-6 h-6 flex items-center justify-center rounded-lg transition-all"
-                style={{ color: labelColor, background: headerBorder }}
-                aria-label="التالي">
+              <button onClick={goNext} className="w-6 h-6 flex items-center justify-center rounded-lg"
+                style={{ color: labelColor, background: headerBorder }} aria-label="التالي">
                 <ChevronLeft size={13} />
               </button>
             </div>
@@ -748,14 +633,11 @@ function ContentCard({ item, meta, loading, items, idx, goNext, goPrev, timerRef
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="flex items-center justify-center gap-2.5 h-full py-4">
                 <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                  style={{ color: labelColor }}>
-                  <Sparkles size={13} />
-                </motion.div>
+                  style={{ color: labelColor }}><Sparkles size={13} /></motion.div>
                 <p className="text-[12px]" style={{ color: subColor }}>زكي يُعد محتوى اليوم...</p>
               </motion.div>
             ) : item ? (
-              <motion.div key={`item-${idx}`}
-                initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
+              <motion.div key={`item-${idx}`} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.3, ease: "easeOut" }}
                 className="flex flex-col items-center">
                 <TypingText text={item.text} type={item.type} textColor={textColor} />
@@ -766,8 +648,7 @@ function ContentCard({ item, meta, loading, items, idx, goNext, goPrev, timerRef
         {items.length > 1 && (
           <div className="flex justify-center gap-1.5 pb-3">
             {items.map((_, i) => (
-              <button key={i}
-                onClick={() => { if (timerRef.current) clearInterval(timerRef.current); }}
+              <button key={i} onClick={() => { if (timerRef.current) clearInterval(timerRef.current); }}
                 className="rounded-full transition-all duration-300"
                 style={{ width: i === idx ? 18 : 5, height: 5, background: i === idx ? dotActive : dotInactive }}
                 aria-label={`الانتقال إلى ${i + 1}`} />
