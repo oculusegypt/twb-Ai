@@ -420,7 +420,7 @@ function VerseCardItem({
     const audio = audioRef.current;
     if (!audio || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const ratio = Math.max(0, Math.min(1, 1 - (e.clientX - rect.left) / rect.width));
     audio.currentTime = ratio * duration;
   };
 
