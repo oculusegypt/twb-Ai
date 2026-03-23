@@ -13,6 +13,7 @@ import {
   showViaSW,
 } from "@/lib/notifications";
 import { hasFiredToday, markFiredToday, addToInboxApi } from "@/lib/app-notifications";
+import { playTakbeer } from "@/lib/takbeer";
 
 const API_BASE = "/api";
 
@@ -121,6 +122,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         const { tag, title, body } = event.data as {
           tag: string; title: string; body: string; url: string;
         };
+        // Play three Takbeer sounds for prayer-time notifications
+        if (tag.startsWith("prayer-")) {
+          playTakbeer();
+        }
         if (!hasFiredToday(tag)) {
           markFiredToday(tag);
           void addToInboxApi({ type: "reminder", title, body, icon: "bell", color: "#4A90B8" });
