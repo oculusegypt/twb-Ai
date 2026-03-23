@@ -1,0 +1,18 @@
+kind = "web"
+previewPath = "/"
+title = "Tawbah Guide"
+version = "1.0.0"
+id = "tawbah-web-artifact"
+
+[[services]]
+localPort = 20251
+name = "web"
+paths = ["/"]
+
+[services.development]
+run = "PORT=20251 BASE_PATH=/ pnpm --filter @workspace/tawbah-web run dev"
+
+[services.production]
+build = "pnpm --filter @workspace/tawbah-web run build"
+serve = "static"
+servePath = "artifacts/tawbah-web/dist/public"
