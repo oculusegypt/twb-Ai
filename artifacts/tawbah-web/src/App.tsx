@@ -41,6 +41,7 @@ import NotificationsPage from "@/pages/notifications";
 import InboxPage from "@/pages/inbox";
 import DuaTiming from "@/pages/dua-timing";
 import HabitsPage from "@/pages/habits";
+import IslamicPrograms from "@/pages/islamic-programs";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -87,6 +88,7 @@ function Router() {
         <Route path="/notifications" component={NotificationsPage} />
         <Route path="/inbox" component={InboxPage} />
         <Route path="/dua-timing" component={DuaTiming} />
+        <Route path="/islamic-programs" component={IslamicPrograms} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

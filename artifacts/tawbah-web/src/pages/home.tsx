@@ -72,7 +72,8 @@ type ListId =
   | "tawbah-card"
   | "signs"
   | "map"
-  | "live-stats";
+  | "live-stats"
+  | "islamic-programs";
 
 type SectionId = GridId | ListId;
 
@@ -90,7 +91,7 @@ const GRID_DEFAULT: GridId[] = [
 ];
 
 const LIST_DEFAULT: ListId[] = [
-  "soul-meter", "journey-card", "live-stats", "ameen", "invite", "signs", "journey30", "tawbah-card", "map",
+  "soul-meter", "journey-card", "live-stats", "ameen", "invite", "islamic-programs", "signs", "journey30", "tawbah-card", "map",
 ];
 
 const ALL_SECTIONS: SectionId[] = [
@@ -98,7 +99,7 @@ const ALL_SECTIONS: SectionId[] = [
   "rajaa", "dhikr", "dua-timing", "dhikr-rooms", "hadi-tasks", "prayer-times",
   "soul-meter", "live-stats",
   "kaffarah", "relapse", "journal", "progress-map", "challenge", "notifications",
-  "ameen", "invite", "signs",
+  "ameen", "invite", "islamic-programs", "signs",
   "danger-times", "secret-dua",
   "journey30", "tawbah-card", "map",
 ];
@@ -892,15 +893,16 @@ function SectionNotifications() {
 // ─── Section label map ────────────────────────────────────────────────────────
 
 const SECTION_LABELS: Record<ListId, string> = {
-  "soul-meter":    "مقياس الروح",
-  "journey-card":  "رحلة التوبة ٣٠ يوماً",
-  "journey30":     "رحلة ٣٠ يوماً (رابط)",
-  "invite":        "ادعُ رفيقاً",
-  "ameen":         "قل آمين",
-  "tawbah-card":   "بطاقة توبتي",
-  "signs":         "تباشير القبول",
-  "map":           "خريطة التوبة",
-  "live-stats":    "إحصاءات حية",
+  "soul-meter":         "مقياس الروح",
+  "journey-card":       "رحلة التوبة ٣٠ يوماً",
+  "journey30":          "رحلة ٣٠ يوماً (رابط)",
+  "invite":             "ادعُ رفيقاً",
+  "ameen":              "قل آمين",
+  "tawbah-card":        "بطاقة توبتي",
+  "signs":              "تباشير القبول",
+  "map":                "خريطة التوبة",
+  "live-stats":         "إحصاءات حية",
+  "islamic-programs":   "برامج إسلامية",
 };
 
 function SectionSoulMeter() {
@@ -940,17 +942,65 @@ function SectionJourneyCard() {
   );
 }
 
+function SectionIslamicPrograms() {
+  return (
+    <Link
+      href="/islamic-programs"
+      className="flex items-center gap-4 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all overflow-hidden relative"
+      style={{
+        background: "linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)",
+      }}
+    >
+      {/* Decorative circles */}
+      <div className="absolute top-[-20px] left-[-20px] w-[90px] h-[90px] rounded-full opacity-15 bg-white pointer-events-none" />
+      <div className="absolute bottom-[-30px] right-[30%] w-[80px] h-[80px] rounded-full opacity-10 bg-white pointer-events-none" />
+
+      {/* Icon */}
+      <div
+        className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-2xl"
+        style={{ background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)" }}
+      >
+        📺
+      </div>
+
+      {/* Text */}
+      <div className="flex-1">
+        <h3 className="font-bold text-[15px]" style={{ color: "#fff" }}>برامج إسلامية</h3>
+        <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
+          50 برنامج • تفسير · دعوة · فتاوى · سيرة · إذاعة
+        </p>
+      </div>
+
+      {/* Small program previews */}
+      <div className="flex gap-1 shrink-0">
+        {["📖", "🤝", "🎬"].map((icon, i) => (
+          <div
+            key={i}
+            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+            style={{ background: "rgba(255,255,255,0.12)" }}
+          >
+            {icon}
+          </div>
+        ))}
+      </div>
+
+      <ArrowLeft size={16} style={{ color: "rgba(255,255,255,0.5)" }} className="shrink-0" />
+    </Link>
+  );
+}
+
 function renderSection(id: ListId) {
   switch (id) {
-    case "soul-meter":  return <SectionSoulMeter />;
-    case "journey-card":return <SectionJourneyCard />;
-    case "journey30":   return <SectionJourney30 />;
-    case "invite":      return <SectionInvite />;
-    case "ameen":       return <SectionAmeen />;
-    case "tawbah-card": return <SectionTawbahCard />;
-    case "signs":       return <SectionSigns />;
-    case "map":         return <SectionMap />;
-    case "live-stats":  return <SectionLiveStats />;
+    case "soul-meter":         return <SectionSoulMeter />;
+    case "journey-card":       return <SectionJourneyCard />;
+    case "journey30":          return <SectionJourney30 />;
+    case "invite":             return <SectionInvite />;
+    case "ameen":              return <SectionAmeen />;
+    case "tawbah-card":        return <SectionTawbahCard />;
+    case "signs":              return <SectionSigns />;
+    case "map":                return <SectionMap />;
+    case "live-stats":         return <SectionLiveStats />;
+    case "islamic-programs":   return <SectionIslamicPrograms />;
   }
 }
 
