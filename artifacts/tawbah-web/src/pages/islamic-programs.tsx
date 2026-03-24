@@ -99,10 +99,11 @@ const FEATURED = PROGRAMS.filter((p) => p.featured);
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function HeroBanner({ program }: { program: Program }) {
+function HeroBanner({ program, onClick }: { program: Program; onClick: () => void }) {
   return (
-    <div
-      className="relative w-full rounded-2xl overflow-hidden flex flex-col justify-end"
+    <button
+      onClick={onClick}
+      className="relative w-full rounded-2xl overflow-hidden flex flex-col justify-end active:scale-[0.98] transition-transform text-right"
       style={{
         height: 180,
         background: `linear-gradient(135deg, ${program.color}, ${program.colorTo})`,
@@ -130,13 +131,13 @@ function HeroBanner({ program }: { program: Program }) {
           <p className="text-white/70 text-[12px] mt-0.5">{program.host}</p>
         )}
         <div className="flex items-center gap-2 mt-3">
-          <button
+          <span
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-bold"
             style={{ background: "rgba(255,255,255,0.22)", color: "#fff" }}
           >
             <Play size={11} fill="white" />
-            <span>ابحث عنه</span>
-          </button>
+            <span>مشاهدة البرنامج</span>
+          </span>
           {program.hot && (
             <span className="flex items-center gap-1 text-[11px]" style={{ color: "#fbbf24" }}>
               <Flame size={12} fill="#fbbf24" /> رائج
@@ -144,7 +145,7 @@ function HeroBanner({ program }: { program: Program }) {
           )}
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -154,10 +155,11 @@ const GAP = 10;
 const FEATURED_W = 148;
 const FEATURED_H = CARD_H * 2 + GAP;
 
-function ProgramCard({ program }: { program: Program }) {
+function ProgramCard({ program, onClick }: { program: Program; onClick: () => void }) {
   return (
-    <div
-      className="relative rounded-xl overflow-hidden flex flex-col justify-end"
+    <button
+      onClick={onClick}
+      className="relative rounded-xl overflow-hidden flex flex-col justify-end active:scale-95 transition-transform"
       style={{
         width: CARD_W,
         height: CARD_H,
@@ -174,20 +176,21 @@ function ProgramCard({ program }: { program: Program }) {
           {program.badge}
         </div>
       )}
-      <div className="relative z-10 p-2.5">
+      <div className="relative z-10 p-2.5 text-right">
         <p className="text-white font-bold text-[11px] leading-tight line-clamp-2">{program.name}</p>
         {program.host && (
           <p className="text-white/55 text-[9px] mt-0.5 truncate">{program.host}</p>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 
-function FeaturedPosterCard({ program }: { program: Program }) {
+function FeaturedPosterCard({ program, onClick }: { program: Program; onClick: () => void }) {
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden flex flex-col justify-end shrink-0"
+    <button
+      onClick={onClick}
+      className="relative rounded-2xl overflow-hidden flex flex-col justify-end shrink-0 active:scale-95 transition-transform"
       style={{
         width: FEATURED_W,
         height: FEATURED_H,
@@ -226,7 +229,7 @@ function FeaturedPosterCard({ program }: { program: Program }) {
       />
 
       {/* Content */}
-      <div className="relative z-10 p-3">
+      <div className="relative z-10 p-3 text-right">
         <p className="text-white font-bold text-[13px] leading-tight">{program.name}</p>
         {program.host && (
           <p className="text-white/65 text-[10px] mt-0.5">{program.host}</p>
@@ -239,11 +242,11 @@ function FeaturedPosterCard({ program }: { program: Program }) {
           <span>الأبرز</span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
-function CategoryRow({ catId }: { catId: CategoryId }) {
+function CategoryRow({ catId, onProgramClick }: { catId: CategoryId; onProgramClick: (id: string) => void }) {
   const cat = CATEGORIES.find((c) => c.id === catId)!;
   const programs = PROGRAMS.filter((p) => p.category === catId);
 
@@ -270,7 +273,7 @@ function CategoryRow({ catId }: { catId: CategoryId }) {
           transition={{ duration: 0.4 }}
           className="shrink-0"
         >
-          <FeaturedPosterCard program={featured} />
+          <FeaturedPosterCard program={featured} onClick={() => onProgramClick(featured.id)} />
         </motion.div>
 
         {/* 2-row CSS grid — scrolls horizontally */}
@@ -290,7 +293,7 @@ function CategoryRow({ catId }: { catId: CategoryId }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.03, duration: 0.25 }}
             >
-              <ProgramCard program={p} />
+              <ProgramCard program={p} onClick={() => onProgramClick(p.id)} />
             </motion.div>
           ))}
         </div>
@@ -363,7 +366,7 @@ export default function IslamicPrograms() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.4 }}
           >
-            <HeroBanner program={FEATURED[featuredIndex]} />
+            <HeroBanner program={FEATURED[featuredIndex]} onClick={() => navigate(`/islamic-programs/${FEATURED[featuredIndex].id}`)} />
           </motion.div>
           {/* Dots */}
           <div className="flex justify-center gap-1.5 mt-3">
@@ -432,7 +435,11 @@ export default function IslamicPrograms() {
 
         {/* ── Program rows ── */}
         {visibleCategories.map((catId) => (
-          <CategoryRow key={catId} catId={catId} />
+          <CategoryRow
+            key={catId}
+            catId={catId}
+            onProgramClick={(id) => navigate(`/islamic-programs/${id}`)}
+          />
         ))}
       </div>
     </div>
