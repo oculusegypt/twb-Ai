@@ -597,12 +597,14 @@ function Journey30HeroCard() {
   return (
     <div className="relative overflow-hidden rounded-2xl shadow-xl" style={{ minHeight: 230 }}>
       {/* Background image */}
-      <div
-        className="absolute inset-0 pointer-events-none"
+      <img
+        src="/images/journey-card-bg.jpg"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
-          backgroundImage: "url('/images/journey-card-bg.jpg')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
+          objectFit: "cover",
+          objectPosition: "center",
           filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.85) saturate(1.15)",
         }}
       />
