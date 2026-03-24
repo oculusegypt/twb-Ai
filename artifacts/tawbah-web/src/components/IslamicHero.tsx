@@ -741,10 +741,8 @@ export function IslamicHero() {
       }}
     >
       {/* Hero background image */}
-      <motion.div
+      <div
         className="absolute inset-0 pointer-events-none"
-        animate={{ scale: [1, 1.03, 1] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
         style={{
           backgroundImage: isDark
             ? "url('/images/hero-bg.jpg')"
@@ -978,11 +976,14 @@ export function IslamicHero() {
                 height: 120,
                 objectFit: "contain",
                 zIndex: 2,
+                marginTop: orbiting ? 0 : 85,
+                marginLeft: 4,
+                marginRight: -4,
+                transition: "margin-top 0.48s cubic-bezier(0.34,1.26,0.64,1)",
                 filter: isDark
                   ? "drop-shadow(0 6px 18px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.55))"
                   : `saturate(0.7) brightness(0.88) ${LIGHT_LOGO_SHADOW[accentColor] ?? LIGHT_LOGO_SHADOW["forest"]!}`,
               }}
-              className="ml-[4px] mr-[-4px] mt-[85px]"
             />
           </motion.button>
         </div>
