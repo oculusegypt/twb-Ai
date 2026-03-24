@@ -148,23 +148,24 @@ function HeroBanner({ program }: { program: Program }) {
   );
 }
 
+const CARD_W = 118;
+const CARD_H = 86;
+const GAP = 10;
+const FEATURED_W = 148;
+const FEATURED_H = CARD_H * 2 + GAP;
+
 function ProgramCard({ program }: { program: Program }) {
   return (
     <div
-      className="relative rounded-xl overflow-hidden shrink-0 flex flex-col justify-end"
+      className="relative rounded-xl overflow-hidden flex flex-col justify-end"
       style={{
-        width: 130,
-        height: 90,
+        width: CARD_W,
+        height: CARD_H,
         background: `linear-gradient(135deg, ${program.color}, ${program.colorTo})`,
       }}
     >
-      {/* Decorative */}
-      <div className="absolute top-[-15px] right-[-15px] w-[60px] h-[60px] rounded-full opacity-15 bg-white" />
-
-      {/* Icon */}
-      <div className="absolute top-2 right-2 text-[24px] opacity-40 select-none">{program.icon}</div>
-
-      {/* Badge */}
+      <div className="absolute top-[-12px] right-[-12px] w-[50px] h-[50px] rounded-full opacity-15 bg-white" />
+      <div className="absolute top-2 right-2 text-[22px] opacity-35 select-none">{program.icon}</div>
       {program.badge && (
         <div
           className="absolute top-2 left-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
@@ -173,13 +174,70 @@ function ProgramCard({ program }: { program: Program }) {
           {program.badge}
         </div>
       )}
-
-      {/* Name */}
       <div className="relative z-10 p-2.5">
         <p className="text-white font-bold text-[11px] leading-tight line-clamp-2">{program.name}</p>
         {program.host && (
-          <p className="text-white/60 text-[9px] mt-0.5 truncate">{program.host}</p>
+          <p className="text-white/55 text-[9px] mt-0.5 truncate">{program.host}</p>
         )}
+      </div>
+    </div>
+  );
+}
+
+function FeaturedPosterCard({ program }: { program: Program }) {
+  return (
+    <div
+      className="relative rounded-2xl overflow-hidden flex flex-col justify-end shrink-0"
+      style={{
+        width: FEATURED_W,
+        height: FEATURED_H,
+        background: `linear-gradient(160deg, ${program.color}, ${program.colorTo})`,
+        boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+      }}
+    >
+      {/* Decorative circles */}
+      <div className="absolute top-[-25px] right-[-25px] w-[100px] h-[100px] rounded-full opacity-15 bg-white" />
+      <div className="absolute bottom-[-20px] left-[-20px] w-[80px] h-[80px] rounded-full opacity-10 bg-white" />
+
+      {/* Large icon */}
+      <div className="absolute top-5 right-0 left-0 flex justify-center text-[52px] opacity-25 select-none">{program.icon}</div>
+
+      {/* Badge */}
+      {program.badge && (
+        <div
+          className="absolute top-3 left-3 text-[10px] font-bold px-2 py-0.5 rounded-full"
+          style={{ background: "rgba(251,191,36,0.95)", color: "#1c0f00" }}
+        >
+          {program.badge}
+        </div>
+      )}
+
+      {/* Hot indicator */}
+      {program.hot && (
+        <div className="absolute top-3 right-3 flex items-center gap-1" style={{ color: "#fbbf24" }}>
+          <Flame size={12} fill="#fbbf24" />
+        </div>
+      )}
+
+      {/* Bottom gradient */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-[70px]"
+        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.65), transparent)" }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 p-3">
+        <p className="text-white font-bold text-[13px] leading-tight">{program.name}</p>
+        {program.host && (
+          <p className="text-white/65 text-[10px] mt-0.5">{program.host}</p>
+        )}
+        <div
+          className="mt-2 flex items-center gap-1 text-[10px] font-semibold px-2 py-1 rounded-full w-fit"
+          style={{ background: "rgba(255,255,255,0.18)", color: "#fff" }}
+        >
+          <Star size={9} fill="white" />
+          <span>الأبرز</span>
+        </div>
       </div>
     </div>
   );
@@ -188,8 +246,13 @@ function ProgramCard({ program }: { program: Program }) {
 function CategoryRow({ catId }: { catId: CategoryId }) {
   const cat = CATEGORIES.find((c) => c.id === catId)!;
   const programs = PROGRAMS.filter((p) => p.category === catId);
+
+  // Pick the most featured: hot > has badge > first
+  const featured = programs.find((p) => p.hot) ?? programs.find((p) => p.badge) ?? programs[0];
+  const rest = programs.filter((p) => p.id !== featured.id);
+
   return (
-    <div className="mb-6">
+    <div className="mb-7">
       {/* Row header */}
       <div className="flex items-center gap-2 mb-3 px-1">
         <span style={{ color: cat.color }}>{cat.icon}</span>
@@ -197,18 +260,40 @@ function CategoryRow({ catId }: { catId: CategoryId }) {
         <span className="text-[11px] text-muted-foreground mr-auto">{programs.length} برنامج</span>
         <ChevronLeft size={14} className="text-muted-foreground" />
       </div>
-      {/* Horizontal scroll */}
-      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide" style={{ direction: "rtl" }}>
-        {programs.map((p, i) => (
-          <motion.div
-            key={p.id}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: i * 0.04, duration: 0.3 }}
-          >
-            <ProgramCard program={p} />
-          </motion.div>
-        ))}
+
+      {/* Row: featured poster + 2-row scrollable grid */}
+      <div className="flex overflow-x-auto pb-2 scrollbar-hide" style={{ gap: GAP, direction: "rtl" }}>
+        {/* Featured tall poster */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="shrink-0"
+        >
+          <FeaturedPosterCard program={featured} />
+        </motion.div>
+
+        {/* 2-row CSS grid — scrolls horizontally */}
+        <div
+          className="grid shrink-0"
+          style={{
+            gridTemplateRows: `repeat(2, ${CARD_H}px)`,
+            gridAutoFlow: "column",
+            gridAutoColumns: `${CARD_W}px`,
+            gap: GAP,
+          }}
+        >
+          {rest.map((p, i) => (
+            <motion.div
+              key={p.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03, duration: 0.25 }}
+            >
+              <ProgramCard program={p} />
+            </motion.div>
+          ))}
+        </div>
       </div>
     </div>
   );
