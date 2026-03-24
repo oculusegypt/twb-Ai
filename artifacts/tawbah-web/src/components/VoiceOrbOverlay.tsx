@@ -43,12 +43,19 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
     stopBarAnim();
     setBars(IDLE_HEIGHTS);
     setPhase("done");
-    if (text.trim()) {
-      localStorage.setItem("zakiy_voice_input", text.trim());
+    const trimmed = text.trim();
+    if (trimmed) {
+      localStorage.setItem("zakiy_voice_input", trimmed);
     }
     setTimeout(() => {
       navigate("/zakiy");
       onClose();
+      // Dispatch after a short delay so Zakiy has time to mount (or is already mounted)
+      if (trimmed) {
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent("zakiy:voice-input", { detail: trimmed }));
+        }, 120);
+      }
     }, 380);
   }, [stopBarAnim, navigate, onClose]);
 

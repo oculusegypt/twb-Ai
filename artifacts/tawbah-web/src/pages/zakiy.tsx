@@ -1001,6 +1001,7 @@ export default function ZakiyPage() {
 
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
+  // Read voice input set by the nav-bar mic (on mount — when navigating fresh to this page)
   useEffect(() => {
     const voiceText = localStorage.getItem("zakiy_voice_input");
     if (!voiceText) return;
@@ -1011,6 +1012,19 @@ export default function ZakiyPage() {
     }, 150);
     return () => window.clearTimeout(t);
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Also listen for the custom event — fires when page is already mounted (user was already on /zakiy)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const text = (e as CustomEvent<string>).detail;
+      if (!text) return;
+      localStorage.removeItem("zakiy_voice_input");
+      setInput(text);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    };
+    window.addEventListener("zakiy:voice-input", handler);
+    return () => window.removeEventListener("zakiy:voice-input", handler);
   }, []);
 
   useEffect(() => {
