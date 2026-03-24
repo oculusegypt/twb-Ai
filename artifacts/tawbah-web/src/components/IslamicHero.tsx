@@ -1051,15 +1051,6 @@ export function IslamicHero() {
           >
             رحلتك نحو الله تبدأ هنا
           </span>
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: isDark
-                ? "linear-gradient(to right, rgba(251,191,36,0.4), transparent)"
-                : `linear-gradient(to right, ${lightCfg.shimmer}, transparent)`,
-            }}
-          />
         </motion.div>
 
         {/* Tap hint */}
