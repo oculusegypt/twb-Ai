@@ -1045,7 +1045,7 @@ export default function Home() {
         <IslamicHero />
         <HeroBellButton />
       </div>
-      <div className="px-5 relative z-10 flex flex-col gap-4 mt-[-115px] pl-[7px] pr-[7px]">
+      <div className="px-5 relative z-10 flex flex-col gap-4 pl-[7px] pr-[7px] mt-[-88px]">
 
         <EidEntryCard />
         <div className="hidden"><DynamicBanner /></div>
