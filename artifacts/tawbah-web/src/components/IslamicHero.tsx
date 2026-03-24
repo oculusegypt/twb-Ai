@@ -740,10 +740,11 @@ export function IslamicHero() {
           "linear-gradient(to bottom, black 0%, black 50%, transparent 100%)",
       }}
     >
-      {/* Hero background image */}
+      {/* Hero background image — fixed height so it never stretches when orbit expands */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute top-0 inset-x-0 pointer-events-none"
         style={{
+          height: 278,
           backgroundImage: isDark
             ? "url('/images/hero-bg.jpg')"
             : "url('/images/hero-bg-light.png')",
@@ -755,10 +756,11 @@ export function IslamicHero() {
             : (LIGHT_HERO_FILTER[accentColor] ?? LIGHT_HERO_FILTER["forest"]!),
         }}
       />
-      {/* Overlay — tinted to match theme */}
+      {/* Overlay — tinted to match theme, also fixed height */}
       <div
-        className="absolute inset-0 pointer-events-none"
+        className="absolute top-0 inset-x-0 pointer-events-none"
         style={{
+          height: 278,
           background: isDark
             ? "rgba(2, 22, 12, 0.48)"
             : "linear-gradient(160deg, rgba(210,240,225,0.55) 0%, rgba(180,220,200,0.35) 50%, rgba(200,235,215,0.45) 100%)",
