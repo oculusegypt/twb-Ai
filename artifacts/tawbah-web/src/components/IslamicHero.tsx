@@ -721,14 +721,21 @@ export function IslamicHero() {
   const lightCfg = LIGHT_THEME_CONFIG[accentColor] ?? LIGHT_THEME_CONFIG.mint!;
 
   const [customBg, setCustomBg] = useState<string | null>(() => localStorage.getItem("hero_custom_bg"));
+  const [customBgLight, setCustomBgLight] = useState<string | null>(() => localStorage.getItem("hero_custom_bg_light"));
 
   useEffect(() => {
     const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as string | null;
-      setCustomBg(detail);
+      setCustomBg((e as CustomEvent).detail as string | null);
+    };
+    const handlerLight = (e: Event) => {
+      setCustomBgLight((e as CustomEvent).detail as string | null);
     };
     window.addEventListener("hero-bg-changed", handler);
-    return () => window.removeEventListener("hero-bg-changed", handler);
+    window.addEventListener("hero-bg-light-changed", handlerLight);
+    return () => {
+      window.removeEventListener("hero-bg-changed", handler);
+      window.removeEventListener("hero-bg-light-changed", handlerLight);
+    };
   }, []);
 
   const topLineColor =
@@ -755,18 +762,22 @@ export function IslamicHero() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: customBg
-            ? `url(${customBg})`
-            : isDark
-              ? "url('/images/hero-bg.jpg')"
+          backgroundImage: isDark
+            ? customBg
+              ? `url(${customBg})`
+              : "url('/images/hero-bg.jpg')"
+            : customBgLight
+              ? `url(${customBgLight})`
               : "url('/images/hero-bg-light.png')",
           backgroundSize: "cover",
           backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
-          filter: customBg
-            ? "brightness(0.88) saturate(1.05)"
-            : isDark
-              ? "brightness(0.92) saturate(1.1)"
+          filter: isDark
+            ? customBg
+              ? "brightness(0.88) saturate(1.05)"
+              : "brightness(0.92) saturate(1.1)"
+            : customBgLight
+              ? "brightness(0.92) saturate(1.05)"
               : (LIGHT_HERO_FILTER[accentColor] ?? LIGHT_HERO_FILTER["forest"]!),
         }}
       />

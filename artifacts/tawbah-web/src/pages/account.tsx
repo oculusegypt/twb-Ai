@@ -151,6 +151,32 @@ export default function Account() {
     window.dispatchEvent(new CustomEvent("hero-bg-changed", { detail: null }));
   };
 
+  const [heroLightPreview, setHeroLightPreview] = useState<string | null>(() => localStorage.getItem("hero_custom_bg_light"));
+  const [heroLightUploading, setHeroLightUploading] = useState(false);
+  const heroLightInputRef = useRef<HTMLInputElement>(null);
+
+  const handleHeroLightUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setHeroLightUploading(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      localStorage.setItem("hero_custom_bg_light", dataUrl);
+      setHeroLightPreview(dataUrl);
+      setHeroLightUploading(false);
+      window.dispatchEvent(new CustomEvent("hero-bg-light-changed", { detail: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+    if (heroLightInputRef.current) heroLightInputRef.current.value = "";
+  };
+
+  const resetHeroLightImage = () => {
+    localStorage.removeItem("hero_custom_bg_light");
+    setHeroLightPreview(null);
+    window.dispatchEvent(new CustomEvent("hero-bg-light-changed", { detail: null }));
+  };
+
   const dayCount = progress?.day40Progress ?? 0;
   const streak = progress?.streakDays ?? 0;
   const signed = progress?.covenantSigned;
@@ -324,6 +350,67 @@ export default function Account() {
             {heroPreview && (
               <button
                 onClick={resetHeroImage}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-muted hover:bg-destructive/10 text-muted-foreground hover:text-destructive text-sm font-bold transition-colors"
+              >
+                <RotateCcw size={14} />
+                إعادة تعيين
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Light mode hero image upload */}
+        <div className="py-4 border-b border-border/30">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 flex-shrink-0">
+              <ImageIcon size={17} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">خلفية الهيرو — وضع النهار</p>
+              <p className="text-xs text-muted-foreground">
+                {heroLightPreview ? "صورة مخصصة مفعّلة" : "الصورة الافتراضية"}
+              </p>
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div
+            className="w-full h-28 rounded-2xl mb-3 overflow-hidden border border-border/50 relative"
+            style={{
+              backgroundImage: heroLightPreview
+                ? `url(${heroLightPreview})`
+                : "url('/images/hero-bg-light.png')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            {heroLightPreview && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/10">
+                <span className="text-white text-[10px] font-bold bg-black/40 px-2 py-1 rounded-full">معاينة</span>
+              </div>
+            )}
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-2">
+            <input
+              ref={heroLightInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleHeroLightUpload}
+            />
+            <button
+              onClick={() => heroLightInputRef.current?.click()}
+              disabled={heroLightUploading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 text-sm font-bold transition-colors disabled:opacity-50"
+            >
+              <Upload size={15} />
+              {heroLightUploading ? "جارٍ الرفع..." : "رفع صورة"}
+            </button>
+            {heroLightPreview && (
+              <button
+                onClick={resetHeroLightImage}
                 className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-muted hover:bg-destructive/10 text-muted-foreground hover:text-destructive text-sm font-bold transition-colors"
               >
                 <RotateCcw size={14} />

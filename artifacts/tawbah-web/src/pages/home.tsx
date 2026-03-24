@@ -590,7 +590,17 @@ function Journey30HeroCard() {
   const isFinished = completed >= 30;
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 relative overflow-hidden">
+      {/* Card background image */}
+      <div
+        className="absolute inset-0 pointer-events-none rounded-xl"
+        style={{
+          backgroundImage: "url('/images/journey30-card-bg.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          opacity: 0.08,
+        }}
+      />
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div>
