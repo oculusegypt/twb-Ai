@@ -598,7 +598,7 @@ function Journey30HeroCard() {
           backgroundImage: "url('/images/journey30-card-bg.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          opacity: 0.08,
+          opacity: 0.25,
         }}
       />
       {/* Header row */}
