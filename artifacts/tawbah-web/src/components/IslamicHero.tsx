@@ -734,10 +734,6 @@ export function IslamicHero() {
       style={{
         minHeight: orbiting ? 500 : 278,
         transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
-        maskImage:
-          "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
-        WebkitMaskImage:
-          "linear-gradient(to bottom, black 0%, black 50%, transparent 100%)",
       }}
     >
       {/* Hero background image — fixed height so it never stretches when orbit expands */}
@@ -766,12 +762,18 @@ export function IslamicHero() {
             : "linear-gradient(160deg, rgba(210,240,225,0.55) 0%, rgba(180,220,200,0.35) 50%, rgba(200,235,215,0.45) 100%)",
         }}
       />
-      {/* Bottom fade to page background — matches both light and dark */}
+      {/* Fill area below the 278px bg image with page background (visible when orbiting) */}
       <div
-        className="absolute bottom-0 inset-x-0 h-24 pointer-events-none"
+        className="absolute inset-x-0 bottom-0 pointer-events-none"
+        style={{ top: 278, background: "var(--background)" }}
+      />
+      {/* Bottom fade — fixed at the end of the 278px background image, never moves */}
+      <div
+        className="absolute inset-x-0 pointer-events-none"
         style={{
-          background:
-            "linear-gradient(to bottom, transparent, var(--background))",
+          top: 182,
+          height: 96,
+          background: "linear-gradient(to bottom, transparent, var(--background))",
         }}
       />
       {/* Top accent line */}
