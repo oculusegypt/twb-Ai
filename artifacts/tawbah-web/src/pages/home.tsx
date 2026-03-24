@@ -573,6 +573,9 @@ interface Journey30Summary {
 
 function Journey30HeroCard() {
   const sessionId = getSessionId();
+  const { theme } = useSettings();
+  const isDark = theme === "dark";
+
   const { data: j30 } = useQuery<Journey30Summary>({
     queryKey: ["journey30-home", sessionId],
     queryFn: async () => {
@@ -586,85 +589,125 @@ function Journey30HeroCard() {
 
   const completed = j30?.completedCount ?? 0;
   const currentDay = j30?.currentDay ?? 1;
+  const streak = j30?.streakDays ?? 0;
   const progress = Math.round((completed / 30) * 100);
   const isFinished = completed >= 30;
+  const circumference = 2 * Math.PI * 26;
 
   return (
-    <div className="flex flex-col gap-4 relative overflow-hidden">
-      {/* Card background image */}
+    <div className="relative overflow-hidden rounded-2xl shadow-xl" style={{ minHeight: 230 }}>
+      {/* Background image */}
       <div
-        className="absolute inset-0 pointer-events-none rounded-xl"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: "url('/images/journey30-card-bg.jpg')",
+          backgroundImage: "url('/images/journey-card-bg.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          opacity: 0.25,
+          filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.85) saturate(1.15)",
         }}
       />
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-bold">رحلة الـ ٣٠ يوماً</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {isFinished
-              ? "🎉 أتممت الرحلة — بارك الله فيك"
-              : `أنت في اليوم `}
-            {!isFinished && <span className="text-primary font-bold">{currentDay}</span>}
-          </p>
-        </div>
-        <div className="relative w-[58px] h-[58px]">
-          <svg className="w-full h-full -rotate-90" viewBox="0 0 58 58">
-            <circle cx="29" cy="29" r="24" fill="none" stroke="currentColor" strokeWidth="4" className="text-primary/10" />
-            <circle
-              cx="29" cy="29" r="24" fill="none" stroke="currentColor" strokeWidth="4"
-              strokeDasharray={`${2 * Math.PI * 24}`}
-              strokeDashoffset={`${2 * Math.PI * 24 * (1 - progress / 100)}`}
-              strokeLinecap="round"
-              className="text-primary transition-all duration-700"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-sm font-bold text-primary leading-none">{progress}%</span>
+      {/* Gradient overlay — dark at bottom for button readability */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: isDark
+            ? "linear-gradient(to bottom, rgba(0,18,12,0.52) 0%, rgba(0,18,12,0.72) 100%)"
+            : "linear-gradient(to bottom, rgba(0,30,20,0.38) 0%, rgba(0,30,20,0.62) 100%)",
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 p-5 flex flex-col gap-3.5">
+        {/* ── Header ── */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2
+              className="text-[19px] font-bold leading-tight"
+              style={{ color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.55)" }}
+            >
+              رحلة الـ ٣٠ يوماً
+            </h2>
+            <p className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.72)" }}>
+              {isFinished
+                ? "🎉 أتممت الرحلة — بارك الله فيك"
+                : <>اليوم <span style={{ color: "#fbbf24", fontWeight: 700 }}>{currentDay}</span> من ٣٠</>}
+            </p>
+          </div>
+
+          {/* Circular progress */}
+          <div className="relative w-[60px] h-[60px] shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 60 60">
+              <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4.5" />
+              <motion.circle
+                cx="30" cy="30" r="26" fill="none" stroke="#fbbf24" strokeWidth="4.5"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                initial={{ strokeDashoffset: circumference }}
+                animate={{ strokeDashoffset: circumference * (1 - progress / 100) }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-[13px] font-bold leading-none" style={{ color: "#fbbf24" }}>{progress}%</span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Progress bar */}
-      <div>
-        <div className="flex justify-between text-[11px] text-muted-foreground mb-1.5">
-          <span className="flex items-center gap-1">
-            <Flame size={11} className="text-orange-500" />
-            {completed} يوم مكتمل
-          </span>
-          <span>{30 - completed} يوم متبقٍ</span>
+        {/* ── Stats pills ── */}
+        <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5"
+            style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)" }}
+          >
+            <Flame size={12} style={{ color: "#fb923c" }} />
+            <span className="text-[11px] font-medium" style={{ color: "#fff" }}>{completed} مكتمل</span>
+          </div>
+          {streak > 1 && (
+            <div
+              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5"
+              style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)" }}
+            >
+              <Zap size={12} style={{ color: "#fbbf24" }} />
+              <span className="text-[11px] font-medium" style={{ color: "#fff" }}>{streak} يوم متواصل</span>
+            </div>
+          )}
+          <div
+            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 mr-auto"
+            style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)" }}
+          >
+            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.75)" }}>{30 - completed} متبقٍ</span>
+          </div>
         </div>
-        <div className="w-full bg-primary/10 rounded-full h-2.5 overflow-hidden">
+
+        {/* ── Progress bar ── */}
+        <div className="w-full rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.15)" }}>
           <motion.div
-            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
+            className="h-full rounded-full"
+            style={{ background: "linear-gradient(to left, #fbbf24, #f59e0b)" }}
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 1, ease: "easeOut" }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
           />
         </div>
-      </div>
 
-      {/* CTA Button */}
-      <Link
-        href="/journey"
-        className="w-full py-3.5 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
-      >
-        {isFinished ? (
-          <>
-            <TrendingUp size={17} />
-            <span>استعرض إنجازك</span>
-          </>
-        ) : (
-          <>
-            <span>متابعة مهام اليوم {currentDay}</span>
-            <ArrowLeft size={17} />
-          </>
-        )}
-      </Link>
+        {/* ── CTA button ── */}
+        <Link
+          href="/journey"
+          className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+          style={{
+            background: "linear-gradient(to left, rgba(251,191,36,0.92), rgba(217,119,6,0.92))",
+            color: "#1c0f00",
+            backdropFilter: "blur(8px)",
+            boxShadow: "0 4px 18px rgba(251,191,36,0.40)",
+          }}
+        >
+          {isFinished ? (
+            <><TrendingUp size={16} /><span>استعرض إنجازك</span></>
+          ) : (
+            <><span>متابعة مهام اليوم {currentDay}</span><ArrowLeft size={16} /></>
+          )}
+        </Link>
+      </div>
     </div>
   );
 }
