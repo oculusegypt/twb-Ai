@@ -781,7 +781,7 @@ export function IslamicHero() {
       />
       {/* Content */}
       <div
-        className="relative z-10 flex flex-col items-center px-5 pb-[166px] pt-[4px]"
+        className="relative z-10 flex flex-col items-center px-5 pb-[166px] pl-[15px] pt-[7px]"
         style={{
           maskImage:
             "linear-gradient(to bottom, transparent 0%, black 18%, black 100%)",
