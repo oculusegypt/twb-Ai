@@ -1029,29 +1029,6 @@ export function IslamicHero() {
           دليل التوبة النصوح
         </motion.h1>
 
-        {/* Divider */}
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0.4 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="flex items-center gap-2 mb-3 w-full max-w-xs"
-        >
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              background: isDark
-                ? "linear-gradient(to left, rgba(251,191,36,0.4), transparent)"
-                : `linear-gradient(to left, ${lightCfg.shimmer}, transparent)`,
-            }}
-          />
-          <span
-            className="text-[10px]"
-            style={{ color: isDark ? "rgba(200,230,215,0.55)" : lightCfg.subColor }}
-          >
-            رحلتك نحو الله تبدأ هنا
-          </span>
-        </motion.div>
 
         {/* Tap hint */}
         <motion.p
