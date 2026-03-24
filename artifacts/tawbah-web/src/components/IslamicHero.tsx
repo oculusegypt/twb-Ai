@@ -734,13 +734,18 @@ export function IslamicHero() {
       style={{
         minHeight: orbiting ? 500 : 278,
         transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
+        maskImage:
+          "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, black 0%, black 50%, transparent 100%)",
       }}
     >
-      {/* Hero background image — fixed height so it never stretches when orbit expands */}
-      <div
-        className="absolute top-0 inset-x-0 pointer-events-none"
+      {/* Hero background image */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        animate={{ scale: [1, 1.03, 1] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
         style={{
-          height: 278,
           backgroundImage: isDark
             ? "url('/images/hero-bg.jpg')"
             : "url('/images/hero-bg-light.png')",
@@ -752,28 +757,21 @@ export function IslamicHero() {
             : (LIGHT_HERO_FILTER[accentColor] ?? LIGHT_HERO_FILTER["forest"]!),
         }}
       />
-      {/* Overlay — tinted to match theme, also fixed height */}
+      {/* Overlay — tinted to match theme */}
       <div
-        className="absolute top-0 inset-x-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          height: 278,
           background: isDark
             ? "rgba(2, 22, 12, 0.48)"
             : "linear-gradient(160deg, rgba(210,240,225,0.55) 0%, rgba(180,220,200,0.35) 50%, rgba(200,235,215,0.45) 100%)",
         }}
       />
-      {/* Fill area below the 278px bg image with page background (visible when orbiting) */}
+      {/* Bottom fade to page background — matches both light and dark */}
       <div
-        className="absolute inset-x-0 bottom-0 pointer-events-none"
-        style={{ top: 278, background: "var(--background)" }}
-      />
-      {/* Bottom fade — fixed at the end of the 278px background image, never moves */}
-      <div
-        className="absolute inset-x-0 pointer-events-none"
+        className="absolute bottom-0 inset-x-0 h-24 pointer-events-none"
         style={{
-          top: 182,
-          height: 96,
-          background: "linear-gradient(to bottom, transparent, var(--background))",
+          background:
+            "linear-gradient(to bottom, transparent, var(--background))",
         }}
       />
       {/* Top accent line */}
@@ -980,14 +978,11 @@ export function IslamicHero() {
                 height: 120,
                 objectFit: "contain",
                 zIndex: 2,
-                marginTop: orbiting ? 0 : 85,
-                marginLeft: 4,
-                marginRight: -4,
-                transition: "margin-top 0.48s cubic-bezier(0.34,1.26,0.64,1)",
                 filter: isDark
                   ? "drop-shadow(0 6px 18px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.55))"
                   : `saturate(0.7) brightness(0.88) ${LIGHT_LOGO_SHADOW[accentColor] ?? LIGHT_LOGO_SHADOW["forest"]!}`,
               }}
+              className="ml-[4px] mr-[-4px] mt-[60px]"
             />
           </motion.button>
         </div>
@@ -998,7 +993,7 @@ export function IslamicHero() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
-          className="text-[17px] font-bold tracking-widest mb-1 mt-[6px]"
+          className="text-[17px] font-bold tracking-widest mb-1 mt-[-17px]"
           style={isDark
             ? { color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }
             : { color: lightCfg.textColor, textShadow: `0 1px 8px ${lightCfg.glowColor}`, letterSpacing: "0.06em" }
