@@ -16,6 +16,7 @@ import {
   ChevronUp,
   Volume2,
   Youtube,
+  Search,
 } from "lucide-react";
 import { useSettings } from "@/context/SettingsContext";
 import { getProgramById, type Episode, type ProgramData } from "@/data/programs-data";
@@ -28,6 +29,21 @@ const CATEGORY_META: Record<string, { label: string; icon: React.ReactNode; colo
   stories: { label: "قصص وسيرة",      icon: <Scroll size={14} />,  color: "#ef4444" },
   radio:   { label: "إذاعية",         icon: <Radio size={14} />,   color: "#3b82f6" },
 };
+
+function buildYouTubeSearchUrl(program: ProgramData, episode?: Episode): string {
+  const parts = [program.name];
+  if (program.host) parts.push(program.host);
+  if (episode) parts.push(episode.title);
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(parts.join(" "))}`;
+}
+
+function buildProgramYouTubeUrl(program: ProgramData): string {
+  if (program.youtubeHandle) return `https://www.youtube.com/@${program.youtubeHandle}`;
+  if (program.youtubePlaylist) return `https://www.youtube.com/playlist?list=${program.youtubePlaylist}`;
+  if (program.youtubeChannel) return `https://www.youtube.com/channel/${program.youtubeChannel}`;
+  const q = [program.name, program.host].filter(Boolean).join(" ");
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+}
 
 // ─── Episode card ─────────────────────────────────────────────────────────────
 function EpisodeCard({
@@ -43,12 +59,8 @@ function EpisodeCard({
   isExpanded: boolean;
   onToggle: () => void;
 }) {
-  const youtubeUrl = episode.youtubeId
-    ? `https://www.youtube.com/watch?v=${episode.youtubeId}`
-    : episode.audioUrl ?? "#";
-  const embedUrl = episode.youtubeId
-    ? `https://www.youtube-nocookie.com/embed/${episode.youtubeId}?rel=0&modestbranding=1`
-    : null;
+  const isAudio = episode.type === "audio";
+  const searchUrl = buildYouTubeSearchUrl(program, episode);
 
   return (
     <motion.div
@@ -77,9 +89,9 @@ function EpisodeCard({
         {/* Type icon */}
         <div
           className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center"
-          style={{ background: episode.type === "audio" ? "rgba(59,130,246,0.18)" : "rgba(239,68,68,0.18)" }}
+          style={{ background: isAudio ? "rgba(59,130,246,0.18)" : "rgba(239,68,68,0.18)" }}
         >
-          {episode.type === "audio" ? (
+          {isAudio ? (
             <Volume2 size={13} color="#3b82f6" />
           ) : (
             <Play size={11} color="#ef4444" fill="#ef4444" />
@@ -102,7 +114,7 @@ function EpisodeCard({
         </span>
       </button>
 
-      {/* Expanded: embed or link */}
+      {/* Expanded: YouTube search links */}
       <AnimatePresence>
         {isExpanded && (
           <motion.div
@@ -112,43 +124,38 @@ function EpisodeCard({
             transition={{ duration: 0.3 }}
             style={{ overflow: "hidden" }}
           >
-            <div className="px-4 pb-4 flex flex-col gap-3">
-              {/* YouTube embed */}
-              {embedUrl && (
-                <div className="w-full rounded-xl overflow-hidden" style={{ aspectRatio: "16/9" }}>
-                  <iframe
-                    src={embedUrl}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    loading="lazy"
-                    title={episode.title}
-                  />
-                </div>
-              )}
-
-              {/* External link */}
+            <div className="px-4 pb-4 flex flex-col gap-2">
+              {/* Search this episode on YouTube */}
               <a
-                href={youtubeUrl}
+                href={searchUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[13px] font-bold"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-[13px] font-bold"
                 style={{
-                  background:
-                    episode.type === "audio"
-                      ? "rgba(59,130,246,0.18)"
-                      : "rgba(255,0,0,0.15)",
-                  color: episode.type === "audio" ? "#3b82f6" : "#ff4d4d",
-                  border: `1px solid ${episode.type === "audio" ? "rgba(59,130,246,0.3)" : "rgba(255,0,0,0.25)"}`,
+                  background: "rgba(255,0,0,0.15)",
+                  color: "#ff4d4d",
+                  border: "1px solid rgba(255,0,0,0.25)",
                 }}
               >
-                {episode.type === "audio" ? (
-                  <Volume2 size={15} />
-                ) : (
-                  <Youtube size={15} />
-                )}
-                <span>فتح في يوتيوب</span>
+                <Youtube size={16} />
+                <span>بحث عن الحلقة في يوتيوب</span>
                 <ExternalLink size={12} />
+              </a>
+
+              {/* Search just the program */}
+              <a
+                href={buildYouTubeSearchUrl(program)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[12px] font-medium"
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  color: "rgba(255,255,255,0.5)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                }}
+              >
+                <Search size={13} />
+                <span>البحث عن البرنامج كاملاً</span>
               </a>
             </div>
           </motion.div>
@@ -194,6 +201,8 @@ export default function ProgramDetail() {
 
   const toggleExpand = (id: string) =>
     setExpandedId((prev) => (prev === id ? null : id));
+
+  const programYouTubeUrl = buildProgramYouTubeUrl(program);
 
   return (
     <div
@@ -367,31 +376,25 @@ export default function ProgramDetail() {
           </motion.div>
         )}
 
-        {/* YouTube channel link */}
-        {(program.youtubeChannel || program.youtubePlaylist) && (
-          <motion.a
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            href={
-              program.youtubePlaylist
-                ? `https://www.youtube.com/playlist?list=${program.youtubePlaylist}`
-                : `https://www.youtube.com/channel/${program.youtubeChannel}`
-            }
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[13px] font-bold"
-            style={{
-              background: "rgba(255,0,0,0.12)",
-              color: "#ff4d4d",
-              border: "1px solid rgba(255,0,0,0.2)",
-            }}
-          >
-            <Youtube size={16} />
-            <span>عرض القناة الكاملة على يوتيوب</span>
-            <ExternalLink size={12} />
-          </motion.a>
-        )}
+        {/* YouTube channel / search link */}
+        <motion.a
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          href={programYouTubeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl text-[13px] font-bold"
+          style={{
+            background: "rgba(255,0,0,0.12)",
+            color: "#ff4d4d",
+            border: "1px solid rgba(255,0,0,0.2)",
+          }}
+        >
+          <Youtube size={16} />
+          <span>مشاهدة البرنامج على يوتيوب</span>
+          <ExternalLink size={12} />
+        </motion.a>
 
         {/* Video episodes */}
         {videoEpisodes.length > 0 && (
