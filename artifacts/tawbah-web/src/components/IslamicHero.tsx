@@ -1035,7 +1035,7 @@ export function IslamicHero() {
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.4 }}
-          className="text-[10px] tracking-wide"
+          className="text-[10px] tracking-wide text-[#dcf24b80]"
           style={{ color: isDark ? "rgba(147,197,253,0.55)" : lightCfg.subColor }}
         >
           {orbiting
