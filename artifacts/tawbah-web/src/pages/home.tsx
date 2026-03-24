@@ -619,96 +619,100 @@ function Journey30HeroCard() {
       />
 
       {/* Content */}
-      <div className="relative z-10 p-5 flex flex-col gap-3.5">
-        {/* ── Header ── */}
+      <div className="relative z-10 flex flex-col justify-between p-5" style={{ minHeight: 230 }}>
+
+        {/* ── Top: title + circular progress ── */}
         <div className="flex items-start justify-between">
           <div>
             <h2
-              className="text-[19px] font-bold leading-tight"
-              style={{ color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.55)" }}
+              className="text-[20px] font-bold leading-tight"
+              style={{ color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
             >
               رحلة الـ ٣٠ يوماً
             </h2>
-            <p className="text-[12px] mt-0.5" style={{ color: "rgba(255,255,255,0.72)" }}>
+            <p className="text-[12px] mt-1" style={{ color: "rgba(255,255,255,0.78)" }}>
               {isFinished
                 ? "🎉 أتممت الرحلة — بارك الله فيك"
-                : <>اليوم <span style={{ color: "#fbbf24", fontWeight: 700 }}>{currentDay}</span> من ٣٠</>}
+                : <>اليوم <span style={{ color: "#fbbf24", fontWeight: 700, fontSize: 14 }}>{currentDay}</span> من ٣٠</>}
             </p>
           </div>
 
-          {/* Circular progress */}
-          <div className="relative w-[60px] h-[60px] shrink-0">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 60 60">
-              <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4.5" />
+          {/* Circular progress — top left in RTL */}
+          <div className="relative w-[68px] h-[68px] shrink-0">
+            <svg className="w-full h-full -rotate-90" viewBox="0 0 68 68">
+              <circle cx="34" cy="34" r="29" fill="rgba(0,0,0,0.18)" stroke="rgba(255,255,255,0.18)" strokeWidth="5" />
               <motion.circle
-                cx="30" cy="30" r="26" fill="none" stroke="#fbbf24" strokeWidth="4.5"
+                cx="34" cy="34" r="29" fill="none" stroke="#fbbf24" strokeWidth="5"
                 strokeLinecap="round"
-                strokeDasharray={circumference}
-                initial={{ strokeDashoffset: circumference }}
-                animate={{ strokeDashoffset: circumference * (1 - progress / 100) }}
+                strokeDasharray={2 * Math.PI * 29}
+                initial={{ strokeDashoffset: 2 * Math.PI * 29 }}
+                animate={{ strokeDashoffset: 2 * Math.PI * 29 * (1 - progress / 100) }}
                 transition={{ duration: 1.2, ease: "easeOut" }}
               />
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[13px] font-bold leading-none" style={{ color: "#fbbf24" }}>{progress}%</span>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+              <span className="text-[15px] font-bold leading-none" style={{ color: "#fbbf24" }}>{progress}%</span>
+              <span className="text-[9px] leading-none" style={{ color: "rgba(255,255,255,0.6)" }}>مكتمل</span>
             </div>
           </div>
         </div>
 
-        {/* ── Stats pills ── */}
-        <div className="flex items-center gap-2">
+        {/* ── Middle: stats row ── */}
+        <div className="flex items-center justify-center gap-2 my-2">
           <div
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5"
-            style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)" }}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+            style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}
           >
             <Flame size={12} style={{ color: "#fb923c" }} />
             <span className="text-[11px] font-medium" style={{ color: "#fff" }}>{completed} مكتمل</span>
           </div>
           {streak > 1 && (
             <div
-              className="flex items-center gap-1.5 rounded-lg px-3 py-1.5"
-              style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)" }}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+              style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}
             >
               <Zap size={12} style={{ color: "#fbbf24" }} />
-              <span className="text-[11px] font-medium" style={{ color: "#fff" }}>{streak} يوم متواصل</span>
+              <span className="text-[11px] font-medium" style={{ color: "#fff" }}>{streak} متواصل</span>
             </div>
           )}
           <div
-            className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 mr-auto"
-            style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)" }}
+            className="flex items-center gap-1.5 rounded-xl px-3 py-1.5"
+            style={{ background: "rgba(0,0,0,0.28)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.12)" }}
           >
-            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.75)" }}>{30 - completed} متبقٍ</span>
+            <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.8)" }}>{30 - completed} متبقٍ</span>
           </div>
         </div>
 
-        {/* ── Progress bar ── */}
-        <div className="w-full rounded-full overflow-hidden" style={{ height: 6, background: "rgba(255,255,255,0.15)" }}>
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: "linear-gradient(to left, #fbbf24, #f59e0b)" }}
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 1.2, ease: "easeOut" }}
-          />
-        </div>
+        {/* ── Bottom: progress bar + button ── */}
+        <div className="flex flex-col gap-2.5">
+          {/* Progress bar */}
+          <div className="w-full rounded-full overflow-hidden" style={{ height: 5, background: "rgba(255,255,255,0.18)" }}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: "linear-gradient(to left, #fbbf24, #f59e0b)" }}
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+            />
+          </div>
 
-        {/* ── CTA button ── */}
-        <Link
-          href="/journey"
-          className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-          style={{
-            background: "linear-gradient(to left, rgba(251,191,36,0.92), rgba(217,119,6,0.92))",
-            color: "#1c0f00",
-            backdropFilter: "blur(8px)",
-            boxShadow: "0 4px 18px rgba(251,191,36,0.40)",
-          }}
-        >
-          {isFinished ? (
-            <><TrendingUp size={16} /><span>استعرض إنجازك</span></>
-          ) : (
-            <><span>متابعة مهام اليوم {currentDay}</span><ArrowLeft size={16} /></>
-          )}
-        </Link>
+          {/* CTA button */}
+          <Link
+            href="/journey"
+            className="w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+            style={{
+              background: "linear-gradient(to left, #fbbf24, #d97706)",
+              color: "#1c0f00",
+              boxShadow: "0 4px 18px rgba(251,191,36,0.45), 0 2px 8px rgba(0,0,0,0.3)",
+            }}
+          >
+            {isFinished ? (
+              <><TrendingUp size={16} /><span>استعرض إنجازك</span></>
+            ) : (
+              <><span>متابعة مهام اليوم {currentDay}</span><ArrowLeft size={16} /></>
+            )}
+          </Link>
+        </div>
       </div>
     </div>
   );
