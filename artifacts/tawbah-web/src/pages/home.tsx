@@ -911,28 +911,110 @@ function SectionSoulMeter() {
 
 function SectionJourneyCard() {
   const { data: progress } = useAppUserProgress();
+  const { theme } = useSettings();
+  const isDark = theme === "dark";
   const hasCovenant = progress?.covenantSigned;
   const dayOneDone = progress?.firstDayTasksCompleted;
   return (
     <div className="rainbow-border shadow-xl shadow-black/8 mb-[23px] mt-[-28px]">
       <div className="rainbow-border-inner p-5 text-left pt-[0px] pb-[0px] pl-[0px] pr-[0px]">
       {!hasCovenant ? (
-        <div className="text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4 text-primary"><Heart size={32} /></div>
-          <h2 className="text-xl font-bold mb-2">رحلة العودة إلى الله</h2>
-          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك. هل أنت مستعد لاتخاذ القرار؟</p>
-          <Link href="/covenant" className="w-full py-3.5 bg-primary text-primary-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
-            <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={18} />
-          </Link>
+        <div className="relative overflow-hidden rounded-2xl shadow-xl" style={{ minHeight: 230 }}>
+          <img
+            src="/images/journey-card-bg.jpg"
+            alt=""
+            aria-hidden
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{
+              objectFit: "cover",
+              objectPosition: "center",
+              filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.85) saturate(1.15)",
+            }}
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: isDark
+                ? "linear-gradient(to bottom, rgba(0,18,12,0.52) 0%, rgba(0,18,12,0.72) 100%)"
+                : "linear-gradient(to bottom, rgba(0,30,20,0.38) 0%, rgba(0,30,20,0.62) 100%)",
+            }}
+          />
+          <div className="relative z-10 flex flex-col justify-between p-5" style={{ minHeight: 230 }}>
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(255,255,255,0.15)" }}>
+                <Heart size={28} style={{ color: "#fff" }} />
+              </div>
+              <h2 className="text-[20px] font-bold leading-tight" style={{ color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+                رحلة العودة إلى الله
+              </h2>
+              <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "rgba(255,255,255,0.78)" }}>
+                التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك.
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <Link
+                href="/covenant"
+                className="py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                style={{
+                  width: "60%",
+                  background: "linear-gradient(to left, #fbbf24, #d97706)",
+                  color: "#1c0f00",
+                  boxShadow: "0 4px 18px rgba(251,191,36,0.45), 0 2px 8px rgba(0,0,0,0.3)",
+                }}
+              >
+                <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={15} />
+              </Link>
+            </div>
+          </div>
         </div>
       ) : !dayOneDone ? (
-        <div className="text-center flex flex-col items-center">
-          <div className="w-16 h-16 bg-accent/20 text-accent rounded-full flex items-center justify-center mb-4"><Activity size={32} /></div>
-          <h2 className="text-xl font-bold mb-2">لقد عاهدت الله</h2>
-          <p className="text-muted-foreground text-sm mb-6 leading-relaxed">بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة تماماً.</p>
-          <Link href="/day-one" className="w-full py-3.5 bg-accent text-accent-foreground rounded-xl font-bold text-base hover:opacity-90 active:scale-[0.98] transition-all shadow-md flex items-center justify-center gap-2">
-            <span>أكمل مهام اللحظة الأولى</span><CheckCircle2 size={18} />
-          </Link>
+        <div className="relative overflow-hidden rounded-2xl shadow-xl" style={{ minHeight: 230 }}>
+          <img
+            src="/images/journey-card-bg.jpg"
+            alt=""
+            aria-hidden
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{
+              objectFit: "cover",
+              objectPosition: "center",
+              filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.85) saturate(1.15)",
+            }}
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: isDark
+                ? "linear-gradient(to bottom, rgba(0,18,12,0.52) 0%, rgba(0,18,12,0.72) 100%)"
+                : "linear-gradient(to bottom, rgba(0,30,20,0.38) 0%, rgba(0,30,20,0.62) 100%)",
+            }}
+          />
+          <div className="relative z-10 flex flex-col justify-between p-5" style={{ minHeight: 230 }}>
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(255,255,255,0.15)" }}>
+                <Activity size={28} style={{ color: "#fff" }} />
+              </div>
+              <h2 className="text-[20px] font-bold leading-tight" style={{ color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+                لقد عاهدت الله
+              </h2>
+              <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "rgba(255,255,255,0.78)" }}>
+                بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة.
+              </p>
+            </div>
+            <div className="flex justify-center">
+              <Link
+                href="/day-one"
+                className="py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+                style={{
+                  width: "60%",
+                  background: "linear-gradient(to left, #fbbf24, #d97706)",
+                  color: "#1c0f00",
+                  boxShadow: "0 4px 18px rgba(251,191,36,0.45), 0 2px 8px rgba(0,0,0,0.3)",
+                }}
+              >
+                <span>أكمل مهام اللحظة الأولى</span><CheckCircle2 size={15} />
+              </Link>
+            </div>
+          </div>
         </div>
       ) : (
         <Journey30HeroCard />
