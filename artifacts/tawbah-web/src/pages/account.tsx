@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import {
   User2, Settings2, Moon, Sun, Languages, Volume2, BookOpen,
   ChevronDown, Check, BarChart2, Calendar, Clock,
   ScrollText, PenLine, Bell, ChevronLeft, Shield, Palette, CheckSquare,
-  Zap, Music2,
+  Zap, Music2, ImageIcon, Upload, RotateCcw,
 } from "lucide-react";
 import { useSettings, QURAN_RECITERS, ACCENT_OPTIONS, type AccentColor } from "@/context/SettingsContext";
 import { useNotifications } from "@/context/NotificationsContext";
@@ -115,6 +115,8 @@ function getHijriDate() {
   }
 }
 
+const HERO_BG_KEY = "hero_custom_bg";
+
 export default function Account() {
   const { lang, theme, accentColor, autoPlayBotAudio, autoPlayQuran, quranReciterId,
     toggleLang, toggleTheme, setAccentColor, setAutoPlayBotAudio, setAutoPlayQuran, setQuranReciterId } = useSettings();
@@ -122,6 +124,32 @@ export default function Account() {
   const { data: progress } = useAppUserProgress();
   const [reciterOpen, setReciterOpen] = useState(false);
   const currentReciter = QURAN_RECITERS.find(r => r.id === quranReciterId) ?? QURAN_RECITERS[0]!;
+
+  const [heroPreview, setHeroPreview] = useState<string | null>(() => localStorage.getItem(HERO_BG_KEY));
+  const [heroUploading, setHeroUploading] = useState(false);
+  const heroInputRef = useRef<HTMLInputElement>(null);
+
+  const handleHeroUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setHeroUploading(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      localStorage.setItem(HERO_BG_KEY, dataUrl);
+      setHeroPreview(dataUrl);
+      setHeroUploading(false);
+      window.dispatchEvent(new CustomEvent("hero-bg-changed", { detail: dataUrl }));
+    };
+    reader.readAsDataURL(file);
+    if (heroInputRef.current) heroInputRef.current.value = "";
+  };
+
+  const resetHeroImage = () => {
+    localStorage.removeItem(HERO_BG_KEY);
+    setHeroPreview(null);
+    window.dispatchEvent(new CustomEvent("hero-bg-changed", { detail: null }));
+  };
 
   const dayCount = progress?.day40Progress ?? 0;
   const streak = progress?.streakDays ?? 0;
@@ -241,6 +269,67 @@ export default function Account() {
                 </span>
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Hero image upload */}
+        <div className="py-4 border-b border-border/30">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-500 flex-shrink-0">
+              <ImageIcon size={17} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">صورة خلفية الهيرو</p>
+              <p className="text-xs text-muted-foreground">
+                {heroPreview ? "صورة مخصصة مفعّلة" : "الصورة الافتراضية"}
+              </p>
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div
+            className="w-full h-28 rounded-2xl mb-3 overflow-hidden border border-border/50 relative"
+            style={{
+              backgroundImage: heroPreview
+                ? `url(${heroPreview})`
+                : "url('/images/hero-bg.jpg')",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            {heroPreview && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                <span className="text-white text-[10px] font-bold bg-black/40 px-2 py-1 rounded-full">معاينة</span>
+              </div>
+            )}
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-2">
+            <input
+              ref={heroInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleHeroUpload}
+            />
+            <button
+              onClick={() => heroInputRef.current?.click()}
+              disabled={heroUploading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-violet-500/10 hover:bg-violet-500/20 text-violet-600 text-sm font-bold transition-colors disabled:opacity-50"
+            >
+              <Upload size={15} />
+              {heroUploading ? "جارٍ الرفع..." : "رفع صورة"}
+            </button>
+            {heroPreview && (
+              <button
+                onClick={resetHeroImage}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-muted hover:bg-destructive/10 text-muted-foreground hover:text-destructive text-sm font-bold transition-colors"
+              >
+                <RotateCcw size={14} />
+                إعادة تعيين
+              </button>
+            )}
           </div>
         </div>
 

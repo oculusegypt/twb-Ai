@@ -720,6 +720,17 @@ export function IslamicHero() {
 
   const lightCfg = LIGHT_THEME_CONFIG[accentColor] ?? LIGHT_THEME_CONFIG.mint!;
 
+  const [customBg, setCustomBg] = useState<string | null>(() => localStorage.getItem("hero_custom_bg"));
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as string | null;
+      setCustomBg(detail);
+    };
+    window.addEventListener("hero-bg-changed", handler);
+    return () => window.removeEventListener("hero-bg-changed", handler);
+  }, []);
+
   const topLineColor =
     "linear-gradient(to right, transparent 0%, rgba(212,175,55,0.8) 30%, rgba(212,175,55,0.8) 70%, transparent 100%)";
 
@@ -744,15 +755,19 @@ export function IslamicHero() {
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage: isDark
-            ? "url('/images/hero-bg.jpg')"
-            : "url('/images/hero-bg-light.png')",
+          backgroundImage: customBg
+            ? `url(${customBg})`
+            : isDark
+              ? "url('/images/hero-bg.jpg')"
+              : "url('/images/hero-bg-light.png')",
           backgroundSize: "cover",
           backgroundPosition: "center top",
           backgroundRepeat: "no-repeat",
-          filter: isDark
-            ? "brightness(0.92) saturate(1.1)"
-            : (LIGHT_HERO_FILTER[accentColor] ?? LIGHT_HERO_FILTER["forest"]!),
+          filter: customBg
+            ? "brightness(0.88) saturate(1.05)"
+            : isDark
+              ? "brightness(0.92) saturate(1.1)"
+              : (LIGHT_HERO_FILTER[accentColor] ?? LIGHT_HERO_FILTER["forest"]!),
         }}
       />
       {/* Overlay — tinted to match theme */}
