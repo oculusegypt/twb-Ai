@@ -75,7 +75,9 @@ type ListId =
   | "signs"
   | "map"
   | "live-stats"
-  | "islamic-programs";
+  | "islamic-programs"
+  | "garden"
+  | "munajat";
 
 type SectionId = GridId | ListId;
 
