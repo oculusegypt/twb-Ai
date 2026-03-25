@@ -574,7 +574,7 @@ function ImpressionPanel({ impression, onClose }: { impression: string; onClose:
         </button>
       </div>
       <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 px-4 py-3">
-        <p className="text-sm leading-relaxed dark:text-rose-200 text-right whitespace-pre-wrap text-[#302e2e]">
+        <p className="text-sm leading-relaxed dark:text-rose-200 text-right whitespace-pre-wrap text-[#f0dfdf]">
           {impression}
         </p>
       </div>
