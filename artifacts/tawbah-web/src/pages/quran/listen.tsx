@@ -400,17 +400,24 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
           </div>
 
           {/* Ayah scroll row — ﴿١﴾ format */}
-          <div className="overflow-x-auto px-4 py-2 border-t shrink-0" style={{ borderColor: "rgba(200,168,75,0.1)" }}>
+          <div
+            className="overflow-x-auto px-4 py-2 border-t shrink-0 ayah-scroll-row"
+            style={{ borderColor: "rgba(200,168,75,0.1)" }}
+          >
             <div ref={scrollRef} className="flex gap-1.5 min-w-max">
               {ayahs.map((a, i) => (
                 <button
                   key={a.numberInSurah}
                   onClick={() => playAyah(i)}
-                  className="shrink-0 px-2 py-1 rounded-lg text-[14px] transition-all active:scale-95"
+                  className={`shrink-0 px-2 py-1 rounded-lg text-[14px] transition-all active:scale-95 ${
+                    i === currentIdx
+                      ? "border text-primary"
+                      : "border border-border/40 text-muted-foreground hover:text-foreground hover:border-border"
+                  }`}
                   style={{
-                    background: i === currentIdx ? "rgba(200,168,75,0.22)" : "rgba(255,255,255,0.04)",
-                    border: i === currentIdx ? "1px solid rgba(200,168,75,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                    color: i === currentIdx ? "#c8a84b" : "rgba(255,255,255,0.45)",
+                    background: i === currentIdx ? "rgba(200,168,75,0.18)" : "transparent",
+                    borderColor: i === currentIdx ? "rgba(200,168,75,0.5)" : undefined,
+                    color: i === currentIdx ? "#c8a84b" : undefined,
                     fontFamily: "'Amiri Quran', serif",
                     direction: "rtl",
                     minWidth: 36,

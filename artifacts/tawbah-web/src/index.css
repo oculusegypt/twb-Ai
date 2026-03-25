@@ -376,6 +376,12 @@
 ::-webkit-scrollbar-thumb { @apply bg-foreground/25 rounded-full; }
 .dark ::-webkit-scrollbar-thumb { @apply bg-primary/30 rounded-full; }
 
+/* Ayah scroll row — horizontal scrollbar */
+.ayah-scroll-row::-webkit-scrollbar { height: 4px; }
+.ayah-scroll-row::-webkit-scrollbar-track { background: transparent; }
+.ayah-scroll-row::-webkit-scrollbar-thumb { @apply bg-foreground/30 rounded-full; }
+.dark .ayah-scroll-row::-webkit-scrollbar-thumb { @apply bg-primary/35 rounded-full; }
+
 /* Quran text */
 .quran-text {
   font-family: var(--font-quran);
