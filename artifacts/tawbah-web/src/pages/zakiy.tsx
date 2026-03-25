@@ -1213,7 +1213,6 @@ export default function ZakiyPage() {
           </div>
         }
       />
-
       {/* Risk Alert Banner */}
       <AnimatePresence>
         {riskAlert && !riskDismissed && (
@@ -1234,7 +1233,7 @@ export default function ZakiyPage() {
                 <p className={cn("text-xs font-bold mb-0.5", riskAlert.level === "high" ? "text-red-700 dark:text-red-400" : "text-amber-700 dark:text-amber-400")}>
                   {riskAlert.level === "high" ? "⚠️ الزكي قلقان عليك" : "💛 الزكي يلاحظ"}
                 </p>
-                <p className="text-xs text-muted-foreground leading-relaxed">{riskAlert.message}</p>
+                <p className="text-xs leading-relaxed text-[#ffffff]">{riskAlert.message}</p>
                 {riskAlert.sign && (
                   <p className="text-[10px] text-muted-foreground/70 mt-1">العلامة: {riskAlert.sign}</p>
                 )}
@@ -1246,7 +1245,6 @@ export default function ZakiyPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
         <AnimatePresence initial={false}>
@@ -1322,7 +1320,6 @@ export default function ZakiyPage() {
 
         <div ref={messagesEndRef} />
       </div>
-
       {/* Input */}
       <div className="px-3 py-3 border-t border-border/50 bg-card/60 backdrop-blur-sm">
         {recording && (
