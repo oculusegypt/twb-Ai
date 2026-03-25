@@ -1601,8 +1601,7 @@ function SectionJourneyCard() {
       {/* Gold glow orb */}
       <div className="absolute top-[-30px] left-[30%] right-[30%] h-[100px] pointer-events-none"
         style={{ background: "radial-gradient(ellipse, rgba(251,191,36,0.14) 0%, transparent 70%)", filter: "blur(18px)" }} />
-
-      <div className="relative z-10 p-4 flex flex-col gap-3">
+      <div className="relative z-10 p-4 flex flex-col gap-3 pt-[20px] pb-[20px] mt-[0px] mb-[0px]">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
