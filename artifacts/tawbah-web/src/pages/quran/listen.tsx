@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, Search, ChevronRight, Volume2, Loader2, RotateCcw, Check } from "lucide-react";
+import {
+  Play, Pause, SkipBack, SkipForward, Search, ChevronRight,
+  Volume2, Loader2, RotateCcw, Check, X, Image, Radio,
+} from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
 
@@ -16,6 +19,35 @@ function toGlobal(surah: number, ayah: number): number {
 
 const TO_AR = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
 function toEA(n: number) { return String(n).split('').map(d => TO_AR[parseInt(d)] ?? d).join(''); }
+
+function stripBismillahPrefix(text: string): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= 4) return text;
+  const norm = (s: string) =>
+    s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\uFE70-\uFEFF]/g, "")
+     .replace(/[أإآٱ]/g, "ا");
+  const w = [norm(words[0]||""), norm(words[1]||""), norm(words[2]||""), norm(words[3]||"")];
+  const isBism = w[0].includes("بسم") && w[1].includes("الله") && w[2].includes("الرحمن") && w[3].includes("الرحيم");
+  if (!isBism) return text;
+  return words.slice(4).join(" ").trim();
+}
+
+function isBismillahOnly(text: string): boolean {
+  const normalized = text.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "").replace(/\s+/g, "");
+  return normalized.startsWith("بسماللهالرحمنالرحيم") && text.trim().split(/\s+/).length <= 6;
+}
+
+// ─── Nature gallery images ────────────────────────────────────────────────────
+
+const NATURE_IMAGES = [
+  "https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=900&q=85",
+  "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=900&q=85",
+  "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=900&q=85",
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900&q=85",
+  "https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=900&q=85",
+  "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?w=900&q=85",
+  "https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?w=900&q=85",
+];
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -55,6 +87,172 @@ const SURAHS: Surah[] = [
   { id:114,name:"الناس",    nameEn:"An-Nas",       ayahCount:6,   juz:30, revelation:"مكية"  },
 ];
 
+// ─── Gallery ──────────────────────────────────────────────────────────────────
+
+function NatureGallery({ onClose }: { onClose: () => void }) {
+  const [imgIdx, setImgIdx] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setImgIdx(i => (i + 1) % NATURE_IMAGES.length), 4500);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div className="relative w-full overflow-hidden rounded-2xl" style={{ height: 156 }}>
+      <AnimatePresence mode="sync">
+        <motion.div
+          key={imgIdx}
+          initial={{ opacity: 0, scale: 1.06 }}
+          animate={{ opacity: 1, scale: 1.02 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.2, ease: "easeInOut" }}
+          className="absolute inset-0"
+        >
+          <img
+            src={NATURE_IMAGES[imgIdx]}
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ filter: "brightness(0.72) saturate(1.15)" }}
+          />
+        </motion.div>
+      </AnimatePresence>
+
+      {/* Overlay gradient */}
+      <div className="absolute inset-0 rounded-2xl" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 55%)" }} />
+
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        className="absolute top-2.5 left-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-95"
+        style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.18)" }}
+      >
+        <X size={13} style={{ color: "rgba(255,255,255,0.9)" }} />
+      </button>
+
+      {/* Label */}
+      <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+        <Image size={11} style={{ color: "rgba(255,255,255,0.7)" }} />
+        <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.7)" }}>خلق الله</span>
+      </div>
+
+      {/* Dots */}
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1">
+        {NATURE_IMAGES.map((_, i) => (
+          <div
+            key={i}
+            onClick={() => setImgIdx(i)}
+            className="cursor-pointer rounded-full transition-all"
+            style={{
+              width: i === imgIdx ? 14 : 5,
+              height: 5,
+              background: i === imgIdx ? "rgba(200,168,75,0.9)" : "rgba(255,255,255,0.35)",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Waveform ─────────────────────────────────────────────────────────────────
+
+function Waveform({
+  analyserRef,
+  isPlaying,
+  onOpenGallery,
+}: {
+  analyserRef: React.RefObject<AnalyserNode | null>;
+  isPlaying: boolean;
+  onOpenGallery: () => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const analyser = analyserRef.current;
+
+    const draw = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      const W = canvas.width;
+      const H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+
+      const barCount = 40;
+
+      if (analyser && isPlaying) {
+        const buf = new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(buf);
+        const step = Math.floor(analyser.frequencyBinCount / barCount);
+        const barW = W / barCount - 2;
+        for (let i = 0; i < barCount; i++) {
+          const val = buf[i * step] ?? 0;
+          const barH = Math.max(4, (val / 255) * H * 0.92);
+          const x = i * (barW + 2);
+          const alpha = 0.5 + (val / 255) * 0.5;
+          ctx.fillStyle = `rgba(200, 168, 75, ${alpha})`;
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(x, H - barH, barW, barH, 2);
+          else ctx.rect(x, H - barH, barW, barH);
+          ctx.fill();
+        }
+      } else {
+        // Idle: gentle sine wave bars
+        const t = Date.now() / 800;
+        const barW = W / barCount - 2;
+        for (let i = 0; i < barCount; i++) {
+          const wave = Math.sin(t + i * 0.35) * 0.5 + 0.5;
+          const barH = 4 + wave * 14;
+          const x = i * (barW + 2);
+          ctx.fillStyle = `rgba(200, 168, 75, 0.28)`;
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(x, H - barH, barW, barH, 2);
+          else ctx.rect(x, H - barH, barW, barH);
+          ctx.fill();
+        }
+      }
+
+      rafRef.current = requestAnimationFrame(draw);
+    };
+
+    rafRef.current = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [isPlaying, analyserRef]);
+
+  return (
+    <div
+      className="relative w-full rounded-2xl flex flex-col items-center justify-end overflow-hidden"
+      style={{
+        height: 156,
+        background: "linear-gradient(160deg, rgba(200,168,75,0.07) 0%, rgba(0,0,0,0) 100%)",
+        border: "1px solid rgba(200,168,75,0.12)",
+      }}
+    >
+      <canvas
+        ref={canvasRef}
+        width={320}
+        height={100}
+        className="w-full"
+        style={{ height: 100, display: "block" }}
+      />
+      <button
+        onClick={onOpenGallery}
+        className="absolute top-2.5 left-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-95"
+        style={{ background: "rgba(200,168,75,0.12)", border: "1px solid rgba(200,168,75,0.25)" }}
+        title="عرض معرض الصور"
+      >
+        <Image size={13} style={{ color: "#c8a84b" }} />
+      </button>
+      <div className="absolute top-3 right-3 flex items-center gap-1.5">
+        <Radio size={11} style={{ color: "rgba(200,168,75,0.6)" }} />
+        <span className="text-[10px]" style={{ color: "rgba(200,168,75,0.6)" }}>تردد الصوت</span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Player ───────────────────────────────────────────────────────────────────
 
 function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string; onBack: () => void }) {
@@ -66,16 +264,49 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
   const [duration, setDuration] = useState(0);
   const [currentTime, setCT] = useState(0);
   const [loop, setLoop] = useState(false);
+  const [showGallery, setShowGallery] = useState(true);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const sourceConnectedRef = useRef(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     setLoading(true);
     fetch(`/api/quran/surah/${surah.id}`)
       .then(r => r.json())
-      .then(data => { if (data.code === 200) setAyahs(data.data.ayahs); })
+      .then(data => {
+        if (data.code === 200) {
+          let list: Ayah[] = data.data.ayahs;
+          if (surah.id !== 1 && surah.id !== 9) {
+            list = list.filter(a => !(a.numberInSurah === 1 && isBismillahOnly(a.text)));
+            if (list.length > 0 && list[0]) {
+              list[0] = { ...list[0], text: stripBismillahPrefix(list[0].text) };
+            }
+          }
+          setAyahs(list);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [surah.id]);
+
+  const connectAnalyser = useCallback(() => {
+    if (!audioRef.current || sourceConnectedRef.current) return;
+    try {
+      const ctx = new AudioContext();
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.82;
+      const source = ctx.createMediaElementSource(audioRef.current);
+      source.connect(analyser);
+      analyser.connect(ctx.destination);
+      audioCtxRef.current = ctx;
+      analyserRef.current = analyser;
+      sourceConnectedRef.current = true;
+    } catch {}
+  }, []);
 
   const playAyah = useCallback((idx: number) => {
     const ayah = ayahs[idx];
@@ -85,6 +316,8 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
     audio.src = `https://cdn.islamic.network/quran/audio/128/${reciterId}/${toGlobal(surah.id, ayah.numberInSurah)}.mp3`;
     audio.load();
     audio.play().catch(() => {});
+    connectAnalyser();
+    if (audioCtxRef.current?.state === "suspended") audioCtxRef.current.resume();
     setCurrentIdx(idx);
     setIsPlaying(true);
     setProgress(0);
@@ -93,7 +326,12 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
       else if (idx + 1 < ayahs.length) playAyah(idx + 1);
       else { setIsPlaying(false); setProgress(0); }
     };
-  }, [ayahs, surah.id, reciterId, loop]);
+    // scroll thumbnail into view
+    setTimeout(() => {
+      const el = scrollRef.current?.children[idx] as HTMLElement | undefined;
+      el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }, 100);
+  }, [ayahs, surah.id, reciterId, loop, connectAnalyser]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -112,30 +350,31 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
   const togglePlay = () => {
-    if (!audioRef.current || ayahs.length === 0) {
+    if (!audioRef.current || !audioRef.current.src) {
       if (ayahs.length > 0) playAyah(currentIdx);
       return;
     }
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
-    } else if (ayahs.length > 0) {
-      if (!audioRef.current.src) playAyah(currentIdx);
-      else { audioRef.current.play().catch(() => {}); setIsPlaying(true); }
+    } else {
+      audioRef.current.play().catch(() => {});
+      if (audioCtxRef.current?.state === "suspended") audioCtxRef.current.resume();
+      setIsPlaying(true);
     }
   };
 
   const fmtTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = Math.floor(s % 60);
-    return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+    return `${m}:${sec < 10 ? "0" : ""}${sec}`;
   };
 
   const currentAyah = ayahs[currentIdx];
 
   return (
     <div className="flex flex-col h-full" dir="rtl">
-      {/* Back + title */}
+      {/* Header */}
       <div className="px-4 py-3 flex items-center gap-3 border-b shrink-0" style={{ borderColor: "rgba(200,168,75,0.12)" }}>
         <button onClick={onBack} className="w-8 h-8 rounded-xl bg-muted/60 flex items-center justify-center">
           <ChevronRight size={16} className="text-muted-foreground" />
@@ -152,62 +391,85 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
           <Loader2 size={28} className="animate-spin" style={{ color: "#c8a84b" }} />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col">
-          {/* Ayah display */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Current ayah display */}
           <div
-            className="flex-1 flex flex-col items-center justify-center px-6 py-8"
-            style={{
-              background: "linear-gradient(160deg, rgba(200,168,75,0.05) 0%, rgba(0,0,0,0) 100%)",
-            }}
+            className="flex-1 flex flex-col items-center justify-center px-6 py-4"
+            style={{ background: "linear-gradient(160deg, rgba(200,168,75,0.05) 0%, rgba(0,0,0,0) 100%)" }}
           >
-            {currentAyah && (
-              <motion.div
-                key={currentIdx}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center"
-              >
-                <p
-                  className="leading-[2.8] mb-4"
-                  style={{
-                    fontFamily: "'Amiri Quran', 'Scheherazade New', serif",
-                    fontSize: 24,
-                    color: isPlaying ? "#c8a84b" : "var(--foreground)",
-                    transition: "color 0.3s",
-                  }}
+            <AnimatePresence mode="wait">
+              {currentAyah && (
+                <motion.div
+                  key={currentIdx}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="text-center max-w-full"
                 >
-                  {currentAyah.text}
-                </p>
-                <p className="text-[13px] text-muted-foreground">
-                  آية {toEA(currentAyah.numberInSurah)} من {toEA(surah.ayahCount)}
-                </p>
-              </motion.div>
-            )}
+                  <p
+                    className="leading-[2.9] mb-3"
+                    style={{
+                      fontFamily: "'Amiri Quran', 'Scheherazade New', serif",
+                      fontSize: 22,
+                      color: isPlaying ? "#c8a84b" : "var(--foreground)",
+                      transition: "color 0.4s",
+                    }}
+                  >
+                    {currentAyah.text}
+                    {" "}
+                    <span style={{ fontFamily: "'Amiri Quran', serif", fontSize: 18, color: "rgba(200,168,75,0.7)" }}>
+                      ﴿{toEA(currentAyah.numberInSurah)}﴾
+                    </span>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    آية {toEA(currentAyah.numberInSurah)} من {toEA(surah.ayahCount)}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Ayah list (small) */}
+          {/* Gallery / Waveform */}
+          <div className="px-4 pb-2 shrink-0">
+            <AnimatePresence mode="wait">
+              {showGallery ? (
+                <motion.div key="gallery" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+                  <NatureGallery onClose={() => setShowGallery(false)} />
+                </motion.div>
+              ) : (
+                <motion.div key="waveform" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+                  <Waveform analyserRef={analyserRef} isPlaying={isPlaying} onOpenGallery={() => setShowGallery(true)} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Ayah scroll row — ﴿١﴾ format */}
           <div className="overflow-x-auto px-4 py-2 border-t shrink-0" style={{ borderColor: "rgba(200,168,75,0.1)" }}>
-            <div className="flex gap-2 min-w-max">
+            <div ref={scrollRef} className="flex gap-1.5 min-w-max">
               {ayahs.map((a, i) => (
                 <button
                   key={a.numberInSurah}
                   onClick={() => playAyah(i)}
-                  className="w-8 h-8 rounded-full text-[12px] font-bold shrink-0 transition-all"
+                  className="shrink-0 px-2 py-1 rounded-lg text-[14px] transition-all active:scale-95"
                   style={{
-                    background: i === currentIdx ? "rgba(200,168,75,0.25)" : "rgba(255,255,255,0.05)",
+                    background: i === currentIdx ? "rgba(200,168,75,0.22)" : "rgba(255,255,255,0.04)",
                     border: i === currentIdx ? "1px solid rgba(200,168,75,0.5)" : "1px solid rgba(255,255,255,0.08)",
-                    color: i === currentIdx ? "#c8a84b" : "rgba(255,255,255,0.5)",
+                    color: i === currentIdx ? "#c8a84b" : "rgba(255,255,255,0.45)",
                     fontFamily: "'Amiri Quran', serif",
+                    direction: "rtl",
+                    minWidth: 36,
+                    letterSpacing: 0,
                   }}
                 >
-                  {toEA(a.numberInSurah)}
+                  ﴿{toEA(a.numberInSurah)}﴾
                 </button>
               ))}
             </div>
           </div>
 
           {/* Progress */}
-          <div className="px-5 pt-4 pb-2 shrink-0">
+          <div className="px-5 pt-3 pb-2 shrink-0">
             <div
               className="h-1.5 rounded-full overflow-hidden mb-1 cursor-pointer"
               style={{ background: "rgba(255,255,255,0.08)" }}
@@ -235,7 +497,10 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
               <button
                 onClick={() => setLoop(l => !l)}
                 className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
-                style={{ background: loop ? "rgba(200,168,75,0.2)" : "rgba(255,255,255,0.05)", color: loop ? "#c8a84b" : "rgba(255,255,255,0.4)" }}
+                style={{
+                  background: loop ? "rgba(200,168,75,0.2)" : "rgba(255,255,255,0.05)",
+                  color: loop ? "#c8a84b" : "rgba(255,255,255,0.4)",
+                }}
               >
                 <RotateCcw size={16} />
               </button>
@@ -251,10 +516,12 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
                 className="w-16 h-16 rounded-full flex items-center justify-center transition-all active:scale-95"
                 style={{
                   background: "linear-gradient(135deg, #c8a84b, #a07c2a)",
-                  boxShadow: "0 4px 20px rgba(200,168,75,0.35)",
+                  boxShadow: isPlaying ? "0 4px 24px rgba(200,168,75,0.45)" : "0 4px 20px rgba(200,168,75,0.3)",
                 }}
               >
-                {isPlaying ? <Pause size={26} style={{ color: "#1a0e00" }} /> : <Play size={26} style={{ color: "#1a0e00", marginLeft: 3 }} />}
+                {isPlaying
+                  ? <Pause size={26} style={{ color: "#1a0e00" }} />
+                  : <Play size={26} style={{ color: "#1a0e00", marginLeft: 3 }} />}
               </button>
               <button
                 onClick={() => currentIdx < ayahs.length - 1 && playAyah(currentIdx + 1)}
@@ -304,8 +571,15 @@ function SurahList({ onSelect }: { onSelect: (s: Surah) => void }) {
             className="w-full flex items-center gap-3 px-3 py-3 rounded-xl mb-1.5 text-right active:scale-[0.98] transition-all"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}
           >
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 font-bold text-[12px]"
-              style={{ background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)", color: "#3b82f6", fontFamily: "'Amiri Quran', serif" }}>
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 text-[13px]"
+              style={{
+                background: "rgba(59,130,246,0.12)",
+                border: "1px solid rgba(59,130,246,0.25)",
+                color: "#3b82f6",
+                fontFamily: "'Amiri Quran', serif",
+              }}
+            >
               {toEA(s.id)}
             </div>
             <div className="flex-1 min-w-0">

@@ -24,6 +24,18 @@ function isBismillah(text: string, surahId: number, ayahNum: number): boolean {
   return normalized.startsWith("بسماللهالرحمنالرحيم") && text.trim().split(/\s+/).length <= 6;
 }
 
+function stripBismillahPrefix(text: string): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= 4) return text;
+  const norm = (s: string) =>
+    s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\uFE70-\uFEFF]/g, "")
+     .replace(/[أإآٱ]/g, "ا");
+  const w = [norm(words[0]||""), norm(words[1]||""), norm(words[2]||""), norm(words[3]||"")];
+  const isBism = w[0].includes("بسم") && w[1].includes("الله") && w[2].includes("الرحمن") && w[3].includes("الرحيم");
+  if (!isBism) return text;
+  return words.slice(4).join(" ").trim();
+}
+
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 interface Surah { id: number; name: string; nameEn: string; ayahCount: number; juz: number; revelation: string; }
@@ -80,8 +92,20 @@ function TafsirReader({ surah, reciterId, onBack }: { surah: Surah; reciterId: s
       fetch(`/api/quran/surah/${surah.id}`).then(r => r.json()),
       fetch(`https://api.alquran.cloud/v1/surah/${surah.id}/ar.muyassar`).then(r => r.json()),
     ]).then(([main, tafsir]) => {
-      if (main.code === 200) setAyahs(main.data.ayahs.filter((a: Ayah) => !isBismillah(a.text, surah.id, a.numberInSurah)));
-      if (tafsir.code === 200) setTafsirAyahs(tafsir.data.ayahs.filter((a: Ayah) => !isBismillah(a.text, surah.id, a.numberInSurah)));
+      if (main.code === 200) {
+        let list: Ayah[] = main.data.ayahs.filter((a: Ayah) => !isBismillah(a.text, surah.id, a.numberInSurah));
+        if (surah.id !== 1 && surah.id !== 9 && list.length > 0 && list[0]) {
+          list[0] = { ...list[0], text: stripBismillahPrefix(list[0].text) };
+        }
+        setAyahs(list);
+      }
+      if (tafsir.code === 200) {
+        let tlist: Ayah[] = tafsir.data.ayahs.filter((a: Ayah) => !isBismillah(a.text, surah.id, a.numberInSurah));
+        if (surah.id !== 1 && surah.id !== 9 && tlist.length > 0 && tlist[0]) {
+          tlist[0] = { ...tlist[0], text: stripBismillahPrefix(tlist[0].text) };
+        }
+        setTafsirAyahs(tlist);
+      }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [surah.id]);
 

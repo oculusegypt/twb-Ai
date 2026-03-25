@@ -20,6 +20,23 @@ function toEasternArabic(n: number): string {
   return String(n).split('').map(d => TO_AR[parseInt(d)] ?? d).join('');
 }
 
+function stripBismillahPrefix(text: string): string {
+  const words = text.trim().split(/\s+/);
+  if (words.length <= 4) return text;
+  const norm = (s: string) =>
+    s.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED\uFE70-\uFEFF]/g, "")
+     .replace(/[أإآٱ]/g, "ا");
+  const w = [norm(words[0]||""), norm(words[1]||""), norm(words[2]||""), norm(words[3]||"")];
+  const isBism = w[0].includes("بسم") && w[1].includes("الله") && w[2].includes("الرحمن") && w[3].includes("الرحيم");
+  if (!isBism) return text;
+  return words.slice(4).join(" ").trim();
+}
+
+function isBismillahOnly(text: string): boolean {
+  const normalized = text.replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "").replace(/\s+/g, "");
+  return normalized.startsWith("بسماللهالرحمنالرحيم") && text.trim().split(/\s+/).length <= 6;
+}
+
 function cdnUrl(surahId: number, ayahNum: number, reciterId: string) {
   return `https://cdn.islamic.network/quran/audio/128/${reciterId}/${toGlobalAyah(surahId, ayahNum)}.mp3`;
 }
@@ -177,7 +194,20 @@ function MushafReader({ surah, reciterId, onBack }: { surah: Surah; reciterId: s
     setIsPlaying(false);
     fetch(`/api/quran/surah/${surah.id}`)
       .then(r => r.json())
-      .then(data => { if (data.code === 200) setAyahs(data.data.ayahs); else setError(true); })
+      .then(data => {
+        if (data.code === 200) {
+          let list: Ayah[] = data.data.ayahs;
+          if (surah.id !== 1 && surah.id !== 9) {
+            list = list.filter(a => !(a.numberInSurah === 1 && isBismillahOnly(a.text)));
+            if (list.length > 0 && list[0]) {
+              list[0] = { ...list[0], text: stripBismillahPrefix(list[0].text) };
+            }
+          }
+          setAyahs(list);
+        } else {
+          setError(true);
+        }
+      })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [surah.id]);

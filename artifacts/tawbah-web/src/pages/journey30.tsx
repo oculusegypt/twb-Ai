@@ -351,7 +351,9 @@ function SurahReaderModal({
                               className="leading-[2.8] text-[17px]"
                               style={{ fontFamily: "'Amiri Quran', 'Amiri', serif" }}
                             >
-                              {ayah.text}
+                              {displayIdx === 0 && !isRanged && surahNumber !== 1 && surahNumber !== 9
+                                ? stripBismillahPrefix(ayah.text)
+                                : ayah.text}
                               {" "}
                               <span
                                 className={isCurrent ? "text-primary" : "text-primary/70"}
