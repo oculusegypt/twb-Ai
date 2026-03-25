@@ -40,6 +40,16 @@
 11. **خريطة التقدم الروحي (Spiritual Progress Chart)** - 40-day grid + weekly bar charts for habits & dhikr
 12. **أوقات الخطر الذكية (Smart Danger Times)** - User-configurable danger time alerts with local notifications
 13. **تنبيهات المواسم (Seasonal Banners)** - Auto-detected Islamic season banners (Ramadan, Dhul Hijja, etc.)
+14. **البوت الزكي — Zakiy AI Chatbot** (`/zakiy`) - Arabic spiritual chatbot for venting and repentance guidance. Supports text + voice input, TTS responses (OpenAI onyx voice), full chat history. Uses OpenAI via Replit proxy.
+15. **غرف الذكر الجماعية (Dhikr Rooms)** (`/dhikr-rooms`) - Live group dhikr sessions where users join virtual rooms and do collective remembrance in real time.
+16. **مقياس الروح (Soul Meter)** - Interactive spiritual wellness gauge on the home page; user rates their spiritual state and gets a contextual response.
+17. **برامج إسلامية (Islamic Programs)** (`/islamic-programs`) - Curated collection of structured Islamic self-improvement programmes (e.g., Tahajjud challenge, Quran khatm planner).
+18. **شجرة التوبة (Tawbah Garden)** - Gamified visual tree on the home page that grows with each completed day and habit, giving a sense of spiritual progress.
+19. **وضع المناجاة (Munajat Mode)** - Immersive night-mode screen with soft background audio and personal supplication prompts for late-night worship.
+20. **شريط الوصول الفوري (Quick Access Bar)** - Horizontally scrollable pill-shaped shortcut bar at the top of the home page linking to the 8 most-used sections (Quran, Prayer Times, Dhikr, Rajaa Library, Islamic Programs, Dhikr Rooms, Journal, Adhkar).
+21. **بطاقة تركيزي اليوم (Daily Focus Card)** - A pinned daily task card on the home page showing one spiritually focused mission per day (rotates by day of week). User marks it complete; state persists across sessions via localStorage.
+22. **قارئ القرآن الداخلي الكامل (In-App Quran Reader)** - Full in-app surah reader sheet triggered from the Quran browser. Displays all ayahs in Uthmani script fetched from `/api/quran/surah/:id`. Each ayah has a play/pause audio button using the CDN audio proxy. Includes reciter selection (6 reciters), Bismillah header, and a singleton audio manager so only one ayah plays at a time.
+23. **مسار API لنص القرآن (Quran Text API Route)** (`GET /api/quran/surah/:id`) - Backend proxy route that fetches full surah ayah text from alquran.cloud (`quran-uthmani` edition) and caches responses in memory for 24 hours to avoid repeated upstream calls.
 
 ## Structure
 
@@ -88,6 +98,8 @@ Express 5 API server. Routes:
 - `POST /api/habits` - Toggle habit completion
 - `GET /api/dhikr/count` - Get dhikr counts
 - `POST /api/dhikr/increment` - Increment a dhikr counter
+- `GET /api/quran/surah/:id` - Fetch full ayah text for a surah (1-114) from alquran.cloud, 24h in-memory cache
+- `GET /api/audio-proxy/quran/:reciterId/:globalAyahNum.mp3` - Streams Quran recitation audio from cdn.islamic.network CDN
 
 ### `artifacts/tawbah-web` (`@workspace/tawbah-web`)
 
