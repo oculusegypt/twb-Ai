@@ -84,7 +84,7 @@ function CreateKhatmaModal({ onClose, onCreate }: { onClose: () => void; onCreat
       <motion.div
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm rounded-t-3xl p-5 pb-10"
+        className="w-full max-w-sm rounded-t-3xl p-5 pt-[16px] pb-[107px]"
         style={{ background: "var(--background)", border: "1px solid rgba(139,92,246,0.2)" }}
         onClick={e => e.stopPropagation()}
         dir="rtl"
