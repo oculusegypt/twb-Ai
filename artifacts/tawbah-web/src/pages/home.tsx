@@ -1332,21 +1332,223 @@ function SecretOfTheDayCellBento() {
   );
 }
 
+// ─── Qibla + Prayer Hook ──────────────────────────────────────────────────────
+
+const MECCA = { lat: 21.4225, lon: 39.8262 };
+const PRAYER_NAMES: Record<string, string> = {
+  Fajr: "الفجر", Sunrise: "الشروق", Dhuhr: "الظهر",
+  Asr: "العصر", Maghrib: "المغرب", Isha: "العشاء",
+};
+const PRAYER_ORDER = ["Fajr", "Sunrise", "Dhuhr", "Asr", "Maghrib", "Isha"];
+
+function calcQibla(lat: number, lon: number): number {
+  const toR = (d: number) => d * Math.PI / 180;
+  const lat1 = toR(lat), lat2 = toR(MECCA.lat);
+  const dLon = toR(MECCA.lon - lon);
+  const y = Math.sin(dLon) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+  return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
+}
+
+function getNextPrayerFromTimings(timings: Record<string, string>): { name: string; time: string; minsLeft: number } | null {
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  for (const key of PRAYER_ORDER) {
+    const t = timings[key];
+    if (!t) continue;
+    const [h, m] = t.split(":").map(Number);
+    const pMins = h * 60 + m;
+    if (pMins > nowMins) {
+      const hh = h > 12 ? h - 12 : h === 0 ? 12 : h;
+      const suffix = h < 12 ? "ص" : "م";
+      return { name: PRAYER_NAMES[key] ?? key, time: `${hh}:${String(m).padStart(2,"0")} ${suffix}`, minsLeft: pMins - nowMins };
+    }
+  }
+  return null;
+}
+
+function useQiblaAndPrayer() {
+  const [qibla, setQibla] = useState<number | null>(null);
+  const [heading, setHeading] = useState<number | null>(null);
+  const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string; minsLeft: number } | null>(null);
+  const [permDenied, setPermDenied] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function init(lat: number, lon: number) {
+      if (!mounted) return;
+      setQibla(calcQibla(lat, lon));
+
+      const cacheKey = `bento_prayer_${Math.floor(Date.now() / (1000 * 60 * 60))}`;
+      let timings: Record<string, string> | null = null;
+      try {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) timings = JSON.parse(cached);
+      } catch {}
+
+      if (!timings) {
+        try {
+          const res = await fetch(
+            `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=4`
+          );
+          const data = await res.json();
+          if (data.code === 200) {
+            const raw = data.data.timings as Record<string, string>;
+            timings = {};
+            for (const key of PRAYER_ORDER) {
+              timings[key] = (raw[key] ?? "").split(" ")[0]!;
+            }
+            try { sessionStorage.setItem(cacheKey, JSON.stringify(timings)); } catch {}
+          }
+        } catch {}
+      }
+
+      if (timings && mounted) {
+        setNextPrayer(getNextPrayerFromTimings(timings));
+      }
+    }
+
+    const cachedLat = parseFloat(localStorage.getItem("prayerLat") ?? "");
+    const cachedLon = parseFloat(localStorage.getItem("prayerLng") ?? "");
+
+    if (!isNaN(cachedLat) && !isNaN(cachedLon)) {
+      init(cachedLat, cachedLon);
+    } else if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          try {
+            localStorage.setItem("prayerLat", String(pos.coords.latitude));
+            localStorage.setItem("prayerLng", String(pos.coords.longitude));
+          } catch {}
+          init(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => { if (mounted) setPermDenied(true); },
+        { timeout: 6000, maximumAge: 3600000 }
+      );
+    }
+
+    const handleOrientation = (e: DeviceOrientationEvent) => {
+      if (!mounted) return;
+      const alpha = e.alpha ?? (e as any).webkitCompassHeading;
+      if (alpha !== null && alpha !== undefined) setHeading(alpha);
+    };
+
+    async function requestCompass() {
+      const DevOri = DeviceOrientationEvent as any;
+      if (typeof DevOri.requestPermission === "function") {
+        try {
+          const perm = await DevOri.requestPermission();
+          if (perm === "granted") {
+            window.addEventListener("deviceorientation", handleOrientation, true);
+          }
+        } catch {}
+      } else {
+        window.addEventListener("deviceorientation", handleOrientation, true);
+      }
+    }
+    requestCompass();
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("deviceorientation", handleOrientation, true);
+    };
+  }, []);
+
+  const needleRotation = qibla !== null
+    ? heading !== null
+      ? qibla - heading
+      : qibla
+    : null;
+
+  return { qibla, needleRotation, nextPrayer, permDenied };
+}
+
+// ─── Live Compass Widget ──────────────────────────────────────────────────────
+
 function BentoCompassWidget() {
+  const { needleRotation, nextPrayer, qibla, permDenied } = useQiblaAndPrayer();
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setTick(x => x + 1), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const hasLocation = qibla !== null;
+
   return (
     <div className="flex items-center gap-2">
-      <div className="text-right">
-        <p className="text-[9.5px] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>القبلة</p>
-        <p className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.3)" }}>الفجر ٤:٣٢</p>
+      <div className="text-right min-w-0">
+        {hasLocation ? (
+          <>
+            <p className="text-[9.5px] font-bold leading-tight" style={{ color: "rgba(255,255,255,0.6)" }}>
+              القبلة {Math.round(qibla!)}°
+            </p>
+            {nextPrayer ? (
+              <p className="text-[8px] leading-tight mt-0.5" style={{ color: "rgba(255,200,80,0.8)" }}>
+                {nextPrayer.name} {nextPrayer.time}
+              </p>
+            ) : (
+              <p className="text-[8px] leading-tight" style={{ color: "rgba(255,255,255,0.3)" }}>
+                جاري الحساب…
+              </p>
+            )}
+          </>
+        ) : permDenied ? (
+          <>
+            <p className="text-[9.5px] font-bold" style={{ color: "rgba(255,255,255,0.4)" }}>القبلة</p>
+            <p className="text-[8px]" style={{ color: "rgba(255,100,100,0.6)" }}>الموقع مرفوض</p>
+          </>
+        ) : (
+          <>
+            <p className="text-[9.5px] font-bold" style={{ color: "rgba(255,255,255,0.4)" }}>القبلة</p>
+            <p className="text-[8px]" style={{ color: "rgba(255,255,255,0.25)" }}>جاري…</p>
+          </>
+        )}
       </div>
-      <motion.div
-        animate={{ rotate: [0, 6, -4, 0] }}
-        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.14)" }}
+
+      <div
+        className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 relative overflow-hidden"
+        style={{
+          background: hasLocation
+            ? "linear-gradient(135deg, rgba(200,168,75,0.2) 0%, rgba(255,255,255,0.06) 100%)"
+            : "rgba(255,255,255,0.08)",
+          border: hasLocation
+            ? "1px solid rgba(200,168,75,0.45)"
+            : "1px solid rgba(255,255,255,0.12)",
+        }}
       >
-        <span className="text-[16px]">🧭</span>
-      </motion.div>
+        {/* Cardinal marks */}
+        {hasLocation && (
+          <>
+            <div className="absolute top-1 left-1/2 -translate-x-1/2 w-[2px] h-[4px] rounded-full" style={{ background: "rgba(255,255,255,0.25)" }} />
+            <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-[2px] h-[4px] rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
+          </>
+        )}
+
+        {hasLocation && needleRotation !== null ? (
+          <motion.div
+            animate={{ rotate: needleRotation }}
+            transition={{ type: "spring", damping: 15, stiffness: 80 }}
+            className="absolute inset-0 flex items-center justify-center"
+          >
+            <svg width="28" height="28" viewBox="0 0 28 28">
+              <polygon points="14,3 16,13 12,13" fill="#c8a84b" />
+              <polygon points="14,25 16,15 12,15" fill="rgba(255,255,255,0.25)" />
+              <circle cx="14" cy="14" r="2" fill="rgba(255,255,255,0.6)" />
+            </svg>
+          </motion.div>
+        ) : (
+          <motion.span
+            style={{ fontSize: 18 }}
+            animate={hasLocation ? {} : { rotate: [0, 8, -6, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            🧭
+          </motion.span>
+        )}
+      </div>
     </div>
   );
 }
