@@ -562,7 +562,7 @@ function ImpressionPanel({ impression, onClose }: { impression: string; onClose:
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 8, scale: 0.97 }}
       transition={{ duration: 0.25 }}
-      className="mt-2 rounded-2xl border border-rose-300/50 overflow-hidden shadow-md"
+      className="mt-2 rounded-2xl border border-rose-300/50 overflow-hidden shadow-md border-t-[#1f1e1e80] border-r-[#1f1e1e80] border-b-[#1f1e1e80] border-l-[#1f1e1e80] bg-[#e8317b52]"
     >
       <div className="bg-gradient-to-l from-rose-700 to-pink-800 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-1.5">
