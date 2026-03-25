@@ -10,22 +10,22 @@ name = "react-vite"
 version = "1.0.0"
 
 [[services]]
-localPort = 20251
 name = "web"
-paths = ["/"]
+paths = [ "/" ]
+localPort = 20251
 
 [services.development]
 run = "pnpm --filter @workspace/tawbah-web run dev"
 
-[services.env]
-PORT = "20251"
-BASE_PATH = "/"
-
 [services.production]
-build = ["pnpm", "--filter", "@workspace/tawbah-web", "run", "build"]
+build = [ "pnpm", "--filter", "@workspace/tawbah-web", "run", "build" ]
 publicDir = "artifacts/tawbah-web/dist/public"
 serve = "static"
 
 [[services.production.rewrites]]
 from = "/*"
 to = "/index.html"
+
+[services.env]
+PORT = "20251"
+BASE_PATH = "/"
