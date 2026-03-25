@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Check, Shield, ChevronLeft, AlertTriangle, Sparkles,
+  Check, Shield, ChevronLeft, ChevronUp, AlertTriangle, Sparkles,
   Mic, MicOff, Send, RotateCcw, X, Flame, BookOpen,
   HandHeart, Users, ScrollText, ArrowRight,
 } from "lucide-react";
@@ -289,6 +289,88 @@ function SinCard({ sin, selected, onToggle }: { sin: Sin; selected: boolean; onT
   );
 }
 
+// ─── Collapsible category group (for "all" view) ─────────────────────────────
+function SinCategoryGroup({
+  category,
+  sins,
+  selectedIds,
+  onToggle,
+  defaultExpanded = true,
+}: {
+  category: SinCategory;
+  sins: Sin[];
+  selectedIds: Set<string>;
+  onToggle: (id: string) => void;
+  defaultExpanded?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const meta = CATEGORY_META[category];
+  const icon = CAT_ICONS[category];
+  const selectedCount = sins.filter((s) => selectedIds.has(s.id)).length;
+
+  return (
+    <div className={`rounded-2xl border overflow-hidden ${meta.borderColor}`}
+      style={{ background: "var(--card)" }}>
+      {/* Group header */}
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className={`w-full flex items-center gap-3 px-4 py-3.5 text-right transition-colors ${meta.bg}`}
+      >
+        <div className={`w-8 h-8 rounded-xl ${meta.bg} border ${meta.borderColor} flex items-center justify-center shrink-0`}>
+          <span className={meta.color}>{icon}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className={`text-[13px] font-bold leading-tight ${meta.color}`}>{meta.groupLabel}</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{sins.length} ذنب في هذا التصنيف</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {selectedCount > 0 && (
+            <motion.span
+              key={selectedCount}
+              initial={{ scale: 0.7 }}
+              animate={{ scale: 1 }}
+              className="text-[10px] font-bold text-primary bg-primary/12 border border-primary/20 px-2 py-0.5 rounded-full"
+            >
+              {selectedCount} ✓
+            </motion.span>
+          )}
+          <motion.div
+            animate={{ rotate: expanded ? 0 : 180 }}
+            transition={{ duration: 0.2 }}
+            className="text-muted-foreground"
+          >
+            <ChevronUp size={15} />
+          </motion.div>
+        </div>
+      </button>
+
+      {/* Sin cards */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height: "auto" }}
+            exit={{ height: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden"
+          >
+            <div className="p-3 flex flex-col gap-2">
+              {sins.map((sin) => (
+                <SinCard
+                  key={sin.id}
+                  sin={sin}
+                  selected={selectedIds.has(sin.id)}
+                  onToggle={() => onToggle(sin.id)}
+                />
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 // ─── Step indicator ───────────────────────────────────────────────────────────
 function StepDots({ step }: { step: Step }) {
   return (
@@ -509,31 +591,19 @@ export default function Covenant() {
             </div>
 
             {/* ── Sin list ── */}
-            <div className="flex-1 px-4 pt-3 pb-28 flex flex-col gap-4 overflow-y-auto">
+            <div className="flex-1 px-4 pt-3 pb-28 flex flex-col gap-3 overflow-y-auto">
               {activeCategory === "all"
                 ? SIN_CATEGORY_ORDER.map((cat) => {
                     const sinsInCat = SINS.filter((s) => s.category === cat);
-                    const meta = CATEGORY_META[cat];
-                    const selectedInCat = sinsInCat.filter((s) => selectedIds.has(s.id)).length;
                     return (
-                      <div key={cat}>
-                        <div className="flex items-center gap-2 mb-2.5">
-                          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border ${meta.bg} ${meta.borderColor}`}>
-                            <span className={meta.color}>{CAT_ICONS[cat]}</span>
-                            <span className={`text-[11px] font-bold ${meta.color}`}>{meta.groupLabel}</span>
-                          </div>
-                          {selectedInCat > 0 && (
-                            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-                              {selectedInCat} مختار
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          {sinsInCat.map((sin) => (
-                            <SinCard key={sin.id} sin={sin} selected={selectedIds.has(sin.id)} onToggle={() => toggleSin(sin.id)} />
-                          ))}
-                        </div>
-                      </div>
+                      <SinCategoryGroup
+                        key={cat}
+                        category={cat}
+                        sins={sinsInCat}
+                        selectedIds={selectedIds}
+                        onToggle={toggleSin}
+                        defaultExpanded={cat === "major" || cat === "common"}
+                      />
                     );
                   })
                 : (

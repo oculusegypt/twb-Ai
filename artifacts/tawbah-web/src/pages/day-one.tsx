@@ -131,20 +131,34 @@ function TaskItem({
   );
 }
 
+// ─── Keywords that mark a condition as a kaffarah obligation (not a day-1 task) ─
+const KAFFARAH_KEYWORDS = ["كفارة", "فدية", "دية", "عتق", "إطعام", "قضاء اليوم", "قضاء اليوم"];
+
+function isKaffarahCondition(cond: string) {
+  return KAFFARAH_KEYWORDS.some((kw) => cond.includes(kw));
+}
+
 // ─── Sin condition group ──────────────────────────────────────────────────────
 function SinConditionsGroup({
   sin,
   checkedSet,
   onToggle,
-  taskOffset,
 }: {
   sin: Sin;
   checkedSet: Set<string>;
   onToggle: (id: string) => void;
-  taskOffset: number;
+  taskOffset?: number;
 }) {
   const [expanded, setExpanded] = useState(true);
   const meta = CATEGORY_META[sin.category];
+
+  // Separate conditions: day-1 checkable tasks vs long-term kaffarah obligations
+  const taskConds = sin.conditions.filter((c, i) =>
+    !(sin.kaffarahId && isKaffarahCondition(c))
+  );
+  const kaffarahConds = sin.kaffarahId
+    ? sin.conditions.filter((c) => isKaffarahCondition(c))
+    : [];
 
   return (
     <div className={`rounded-2xl border overflow-hidden ${meta.borderColor}`}
@@ -157,26 +171,33 @@ function SinConditionsGroup({
         <span className="text-xl shrink-0">{sin.icon}</span>
         <div className="flex-1 min-w-0">
           <p className={`text-[13px] font-bold leading-tight ${meta.color}`}>{sin.name}</p>
-          <p className="text-[10px] text-muted-foreground mt-0.5">{sin.conditions.length} خطوات خاصة بهذا الذنب</p>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {taskConds.length} خطوة أولية
+            {kaffarahConds.length > 0 && ` · كفارة واجبة`}
+          </p>
         </div>
-        <div className={`text-muted-foreground transition-transform duration-200 ${expanded ? "rotate-0" : "rotate-180"}`}>
-          {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </div>
+        <motion.div
+          animate={{ rotate: expanded ? 0 : 180 }}
+          transition={{ duration: 0.2 }}
+          className="text-muted-foreground"
+        >
+          <ChevronUp size={16} />
+        </motion.div>
       </button>
 
-      {/* Tasks */}
       <AnimatePresence initial={false}>
         {expanded && (
           <motion.div
             initial={{ height: 0 }}
             animate={{ height: "auto" }}
             exit={{ height: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.22 }}
             className="overflow-hidden"
           >
             <div className="p-3 flex flex-col gap-2">
-              {sin.conditions.map((cond, i) => {
-                const taskId = `${sin.id}_${i}`;
+              {/* ── Checkable day-1 tasks ── */}
+              {taskConds.map((cond, i) => {
+                const taskId = `${sin.id}_task_${i}`;
                 const checked = checkedSet.has(taskId);
                 return (
                   <motion.button
@@ -211,22 +232,58 @@ function SinConditionsGroup({
                   </motion.button>
                 );
               })}
+
+              {/* ── Kaffarah notice (non-checkable, informational) ── */}
+              {sin.kaffarahId && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-1 rounded-xl border border-amber-400/30 overflow-hidden"
+                  style={{ background: "linear-gradient(135deg, rgba(251,191,36,0.08), rgba(245,158,11,0.04))" }}
+                >
+                  <div className="flex items-center gap-2 px-3.5 py-2 border-b border-amber-400/20">
+                    <AlertTriangle size={12} className="text-amber-500 shrink-0" />
+                    <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 tracking-wide">
+                      واجب شرعي أساسي — يُكمَل في الرحلة
+                    </p>
+                  </div>
+                  <div className="px-3.5 py-2.5">
+                    <p className="text-[11.5px] font-bold text-amber-700 dark:text-amber-300 mb-1">
+                      {sin.kaffarahLabel}
+                    </p>
+                    {sin.warning && (
+                      <p className="text-[10.5px] text-amber-600 dark:text-amber-400 leading-relaxed">
+                        {sin.warning}
+                      </p>
+                    )}
+                    {kaffarahConds.length > 0 && (
+                      <ul className="mt-1.5 flex flex-col gap-1">
+                        {kaffarahConds.map((c, i) => (
+                          <li key={i} className="flex items-start gap-1.5">
+                            <span className="text-amber-400 mt-0.5 shrink-0">◈</span>
+                            <span className="text-[10.5px] text-muted-foreground leading-snug">{c}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <p className="text-[9.5px] text-amber-500/70 mt-2 italic">
+                      ستجد خطة الكفارة التفصيلية في صفحة الكفارات بعد انتهاء اليوم الأول.
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Warning without kaffarah */}
+              {!sin.kaffarahId && sin.warning && (
+                <div className="mt-1 flex items-start gap-2.5 bg-amber-500/8 border border-amber-400/25 rounded-xl px-3 py-2.5">
+                  <AlertTriangle size={12} className="text-amber-500 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">{sin.warning}</p>
+                </div>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Warning/kaffarah if exists */}
-      {(sin.warning || sin.kaffarahLabel) && expanded && (
-        <div className="px-3 pb-3">
-          <div className="flex items-start gap-2.5 bg-amber-500/8 border border-amber-400/25 rounded-xl px-3 py-2.5">
-            <AlertTriangle size={13} className="text-amber-500 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
-              {sin.warning ?? sin.kaffarahLabel}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -255,9 +312,11 @@ export default function DayOne() {
   });
   const envTaskIds = envTasks.map((t) => t!.id);
 
-  // Total count for progress
+  // Total count: only day-1 checkable conditions (exclude kaffarah obligations)
   const sinConditionIds = sins.flatMap((s) =>
-    s.conditions.map((_, i) => `${s.id}_${i}`)
+    s.conditions
+      .filter((c) => !(s.kaffarahId && isKaffarahCondition(c)))
+      .map((_, i) => `${s.id}_task_${i}`)
   );
   const allTaskIds = [...universalTaskIds, ...envTaskIds, ...sinConditionIds];
   const [checked, setChecked] = useState<Set<string>>(new Set());
