@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
 import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
+import { voicePending } from "@/lib/voice-pending";
 
 // ══════════════════════════════════════════
 // TYPES
@@ -1001,24 +1002,36 @@ export default function ZakiyPage() {
 
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
-  // Read voice input set by the nav-bar mic (on mount — when navigating fresh to this page)
+  // Read voice input on mount — handles the "navigating FROM another page" case.
+  // Uses a module-level variable (voicePending) as the primary source so it works
+  // even across React Strict Mode double-mounts. localStorage is a backup.
+  // The clear timer is intentionally cancelled on Strict-Mode unmount so the
+  // second mount can still read the value.
   useEffect(() => {
-    const voiceText = localStorage.getItem("zakiy_voice_input");
-    if (!voiceText) return;
-    localStorage.removeItem("zakiy_voice_input");
-    setInput(voiceText);
-    const t = window.setTimeout(() => {
+    const text = voicePending.get() || localStorage.getItem("zakiy_voice_input") || "";
+    if (!text) return;
+    setInput(text);
+    const clearT = window.setTimeout(() => {
+      voicePending.clear();
+      localStorage.removeItem("zakiy_voice_input");
+    }, 300);
+    const focusT = window.setTimeout(() => {
       inputRef.current?.focus();
     }, 150);
-    return () => window.clearTimeout(t);
+    return () => {
+      window.clearTimeout(clearT);
+      window.clearTimeout(focusT);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Also listen for the custom event — fires when page is already mounted (user was already on /zakiy)
+  // Listen for the custom event — fires when Zakiy is already mounted (same page re-use).
+  // Also covers the "navigated here" case if mount effect ran before voicePending was set.
   useEffect(() => {
     const handler = (e: Event) => {
       const text = (e as CustomEvent<string>).detail;
       if (!text) return;
+      voicePending.clear();
       localStorage.removeItem("zakiy_voice_input");
       setInput(text);
       setTimeout(() => inputRef.current?.focus(), 100);

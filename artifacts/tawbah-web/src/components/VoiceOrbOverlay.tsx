@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic } from "lucide-react";
 import { useLocation } from "wouter";
+import { voicePending } from "@/lib/voice-pending";
 
 const NUM_BARS = 22;
 
@@ -45,16 +46,21 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
     setPhase("done");
     const trimmed = text.trim();
     if (trimmed) {
+      // Primary: module variable — immune to Strict Mode and timing issues
+      voicePending.set(trimmed);
+      // Backup: localStorage — for robustness
       localStorage.setItem("zakiy_voice_input", trimmed);
     }
     setTimeout(() => {
       navigate("/zakiy");
       onClose();
-      // Dispatch after a short delay so Zakiy has time to mount (or is already mounted)
+      // Dispatch event for the case when Zakiy is ALREADY mounted (same page).
+      // Delay must exceed the full page transition: exit (300ms) + enter (300ms) + buffer.
+      // If Zakiy was NOT yet mounted, the mount effect handles it via voicePending.
       if (trimmed) {
         setTimeout(() => {
           window.dispatchEvent(new CustomEvent("zakiy:voice-input", { detail: trimmed }));
-        }, 120);
+        }, 750);
       }
     }, 380);
   }, [stopBarAnim, navigate, onClose]);
