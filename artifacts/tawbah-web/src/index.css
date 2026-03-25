@@ -373,7 +373,8 @@
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+::-webkit-scrollbar-thumb { @apply bg-foreground/25 rounded-full; }
+.dark ::-webkit-scrollbar-thumb { @apply bg-primary/30 rounded-full; }
 
 /* Quran text */
 .quran-text {
