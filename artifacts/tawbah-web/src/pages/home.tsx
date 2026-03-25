@@ -1136,7 +1136,7 @@ function SectionHadithCard() {
           </span>
         </div>
         <p
-          className="font-semibold leading-relaxed mb-1.5 dark:text-white/90 text-[#2acf1be6] text-center"
+          className="font-semibold leading-relaxed mb-1.5 dark:text-white/90 text-center text-[#3fd12ce6]"
           style={{ fontSize: 13 }}
         >
           «{hadith.text}»
