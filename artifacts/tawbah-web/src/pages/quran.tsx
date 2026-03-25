@@ -10,7 +10,7 @@ import { Link } from "wouter";
 import { PageHeader } from "@/components/PageHeader";
 import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
 
-// ─── Audio helpers (same pattern as مكتبة الرجاء) ──────────────────────────
+// ─── Audio helpers ─────────────────────────────────────────────────────────────
 
 const SURAH_LENGTHS = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 
@@ -20,8 +20,13 @@ function toGlobalAyah(surah: number, ayah: number): number {
   return count + ayah;
 }
 
-function reciterAudioUrl(surah: number, ayah: number, reciterId: string): string {
-  return `/api/audio-proxy/quran/${reciterId}/${toGlobalAyah(surah, ayah)}.mp3`;
+function cdnAudioUrl(surahId: number, ayahNum: number, reciterId: string): string {
+  return `https://cdn.islamic.network/quran/audio/128/${reciterId}/${toGlobalAyah(surahId, ayahNum)}.mp3`;
+}
+
+const TO_AR = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+function toEasternArabic(n: number): string {
+  return String(n).split('').map(d => TO_AR[parseInt(d)] ?? d).join('');
 }
 
 let activeQuranAudio: { element: HTMLAudioElement; stop: () => void } | null = null;
@@ -356,114 +361,137 @@ interface AlQuranResponse {
   };
 }
 
-function AyahRow({
-  surahId, ayah, reciterId,
+// ─── Mushaf Inline Display ────────────────────────────────────────────────────
+
+function MushafDisplay({
+  surahId,
+  ayahs,
+  reciterId,
 }: {
   surahId: number;
-  ayah: AlQuranAyah;
+  ayahs: AlQuranAyah[];
   reciterId: string;
 }) {
+  const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const spanRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
-  const url = reciterAudioUrl(surahId, ayah.numberInSurah, reciterId);
-
-  const stopSelf = useCallback(() => {
-    const el = audioRef.current;
-    if (el) { el.pause(); el.currentTime = 0; }
+  const stopAudio = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+    }
+    setPlayingIdx(null);
     setIsPlaying(false);
-    setProgress(0);
-    if (activeQuranAudio?.element === el) activeQuranAudio = null;
+    if (activeQuranAudio) activeQuranAudio = null;
   }, []);
 
-  const toggle = () => {
-    const el = audioRef.current;
-    if (!el) return;
-    if (isPlaying) {
-      el.pause();
+  const playIdx = useCallback((idx: number) => {
+    const ayah = ayahs[idx];
+    if (!ayah) return;
+    if (!audioRef.current) audioRef.current = new Audio();
+    const audio = audioRef.current;
+    audio.pause();
+    audio.src = cdnAudioUrl(surahId, ayah.numberInSurah, reciterId);
+    audio.load();
+    audio.play().catch(() => {});
+    activeQuranAudio = { element: audio, stop: stopAudio };
+    setPlayingIdx(idx);
+    setIsPlaying(true);
+    spanRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    audio.onended = () => {
+      const next = idx + 1;
+      if (next < ayahs.length) {
+        playIdx(next);
+      } else {
+        setPlayingIdx(null);
+        setIsPlaying(false);
+      }
+    };
+  }, [ayahs, surahId, reciterId, stopAudio]);
+
+  const handleAyahTap = (idx: number) => {
+    if (playingIdx === idx && isPlaying) {
+      audioRef.current?.pause();
       setIsPlaying(false);
-      if (activeQuranAudio?.element === el) activeQuranAudio = null;
+      activeQuranAudio = null;
     } else {
-      if (activeQuranAudio && activeQuranAudio.element !== el) activeQuranAudio.stop();
-      activeQuranAudio = { element: el, stop: stopSelf };
-      el.play().catch(() => {});
-      setIsPlaying(true);
+      playIdx(idx);
     }
   };
 
   useEffect(() => {
-    const el = audioRef.current;
-    if (!el) return;
-    const onTimeUpdate = () => {
-      if (el.duration > 0) setProgress((el.currentTime / el.duration) * 100);
-    };
-    const onEnded = () => { setIsPlaying(false); setProgress(0); };
-    el.addEventListener("timeupdate", onTimeUpdate);
-    el.addEventListener("ended", onEnded);
-    return () => {
-      el.removeEventListener("timeupdate", onTimeUpdate);
-      el.removeEventListener("ended", onEnded);
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => { if (audioRef.current) audioRef.current.pause(); };
-  }, []);
+    return () => stopAudio();
+  }, [stopAudio]);
 
   return (
-    <div
-      className="flex flex-col gap-2 px-4 py-4 border-b"
-      style={{ borderColor: "rgba(200,168,75,0.1)" }}
-    >
-      {/* Ayah number badge */}
-      <div className="flex items-start justify-between gap-3">
+    <div className="px-5 py-5">
+      {/* Controls row */}
+      <div className="flex items-center justify-between mb-4 pb-3 border-b" style={{ borderColor: "rgba(200,168,75,0.12)" }}>
         <button
-          onClick={toggle}
-          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-1 transition-all active:scale-90"
-          style={{
-            background: isPlaying ? "rgba(200,168,75,0.25)" : "rgba(200,168,75,0.1)",
-            border: "1px solid rgba(200,168,75,0.3)",
-          }}
+          onClick={() => isPlaying ? (audioRef.current?.pause(), setIsPlaying(false)) : (playingIdx !== null ? (audioRef.current?.play(), setIsPlaying(true)) : playIdx(0))}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[12px] font-bold transition-all active:scale-95"
+          style={{ background: "rgba(200,168,75,0.12)", border: "1px solid rgba(200,168,75,0.25)", color: "#c8a84b" }}
         >
-          {isPlaying
-            ? <Pause size={13} style={{ color: "#c8a84b" }} />
-            : <Play size={13} style={{ color: "#c8a84b" }} />
-          }
+          {isPlaying ? <Pause size={13} /> : <Play size={13} />}
+          {isPlaying ? "إيقاف" : (playingIdx !== null ? "متابعة" : "تشغيل الكل")}
         </button>
-        <p
-          className="flex-1 text-right leading-[2.1]"
-          style={{
-            fontFamily: "'Amiri Quran', 'Scheherazade New', serif",
-            fontSize: 18,
-            color: "var(--foreground)",
-            direction: "rtl",
-          }}
-        >
-          {ayah.text}
-          <span
-            className="inline-block mx-2 text-[14px] font-bold"
-            style={{ color: "rgba(200,168,75,0.7)", fontFamily: "inherit" }}
-          >
-            ﴿{ayah.numberInSurah}﴾
-          </span>
-        </p>
+        {playingIdx !== null && (
+          <button onClick={stopAudio} className="text-[11px] text-muted-foreground px-2 py-1 rounded-lg" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <X size={13} />
+          </button>
+        )}
+        <p className="text-[11px] text-muted-foreground">اضغط على أي آية للاستماع</p>
       </div>
 
-      {/* Progress bar */}
-      {isPlaying && (
-        <div
-          className="h-0.5 rounded-full overflow-hidden mx-11"
-          style={{ background: "rgba(200,168,75,0.15)" }}
-        >
-          <motion.div
-            className="h-full rounded-full"
-            style={{ background: "#c8a84b", width: `${progress}%` }}
-          />
-        </div>
-      )}
-
-      <audio ref={audioRef} src={url} preload="none" />
+      {/* Continuous mushaf text */}
+      <p
+        className="leading-[3] text-right"
+        style={{
+          fontFamily: "'Amiri Quran', 'Scheherazade New', 'KFGQPC Uthmanic Script HAFS', serif",
+          fontSize: 21,
+          direction: "rtl",
+          textAlign: "justify",
+          color: "var(--foreground)",
+          wordSpacing: "0.05em",
+        }}
+        dir="rtl"
+      >
+        {ayahs.map((ayah, idx) => (
+          <span key={ayah.numberInSurah}>
+            <span
+              ref={el => { spanRefs.current[idx] = el; }}
+              onClick={() => handleAyahTap(idx)}
+              className="cursor-pointer rounded transition-all"
+              style={{
+                background: playingIdx === idx
+                  ? "rgba(200,168,75,0.22)"
+                  : "transparent",
+                color: playingIdx === idx ? "#c8a84b" : "inherit",
+                boxShadow: playingIdx === idx ? "0 0 0 2px rgba(200,168,75,0.2)" : "none",
+                borderRadius: 6,
+                padding: "1px 2px",
+              }}
+            >
+              {ayah.text}
+            </span>
+            {" "}
+            <span
+              className="inline-flex items-center justify-center"
+              style={{
+                fontFamily: "'Amiri Quran', serif",
+                fontSize: 15,
+                color: playingIdx === idx ? "#c8a84b" : "rgba(200,168,75,0.75)",
+                letterSpacing: 0,
+              }}
+            >
+              ﴿{toEasternArabic(ayah.numberInSurah)}﴾
+            </span>
+            {" "}
+          </span>
+        ))}
+      </p>
     </div>
   );
 }
@@ -612,7 +640,7 @@ function SurahReaderSheet({
           </div>
         )}
 
-        {/* Ayahs list */}
+        {/* Ayahs content */}
         <div className="overflow-y-auto flex-1">
           {loading && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -625,14 +653,13 @@ function SurahReaderSheet({
               <p className="text-sm text-muted-foreground">تعذّر التحميل — تحقق من اتصالك</p>
             </div>
           )}
-          {!loading && !error && ayahs.map((ayah) => (
-            <AyahRow
-              key={ayah.numberInSurah}
+          {!loading && !error && ayahs.length > 0 && (
+            <MushafDisplay
               surahId={surah.id}
-              ayah={ayah}
+              ayahs={ayahs}
               reciterId={quranReciterId}
             />
-          ))}
+          )}
           <div className="h-8" />
         </div>
       </motion.div>
@@ -1244,27 +1271,25 @@ function SectionTitle({ icon, title, sub, accent = "#c8a84b" }: { icon: React.Re
 
 function QuickActions() {
   const actions = [
-    { icon: "🎙️", label: "استمع", sub: "تلاوة مباشرة", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.25)", href: "https://quran.com" },
-    { icon: "📖", label: "اقرأ", sub: "quran.com", color: "#10b981", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.25)", href: "https://quran.com" },
-    { icon: "🔍", label: "ابحث", sub: "في الآيات", color: "#8b5cf6", bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.25)", href: "https://quran.com/search" },
-    { icon: "🌙", label: "حفظ", sub: "مساعد الحفظ", color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", href: "https://quran.com" },
+    { icon: "🎙️", label: "استمع", sub: "تلاوة صوتية", color: "#3b82f6", bg: "rgba(59,130,246,0.12)", border: "rgba(59,130,246,0.25)", href: "/quran/listen" },
+    { icon: "📖", label: "اقرأ", sub: "مصحف كامل", color: "#10b981", bg: "rgba(16,185,129,0.12)", border: "rgba(16,185,129,0.25)", href: "/quran/read" },
+    { icon: "💡", label: "تفسير", sub: "آية بآية", color: "#8b5cf6", bg: "rgba(139,92,246,0.12)", border: "rgba(139,92,246,0.25)", href: "/quran/tafsir" },
+    { icon: "🌙", label: "حفظ", sub: "مساعد الحفظ", color: "#f59e0b", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.25)", href: "/quran/memorize" },
   ];
 
   return (
     <div className="grid grid-cols-4 gap-2">
       {actions.map((a) => (
-        <a
+        <Link
           key={a.label}
           href={a.href}
-          target="_blank"
-          rel="noopener noreferrer"
           className="flex flex-col items-center gap-1.5 py-3 px-1 rounded-2xl active:scale-[0.95] transition-all"
           style={{ background: a.bg, border: `1px solid ${a.border}` }}
         >
           <span className="text-[22px] leading-none">{a.icon}</span>
           <span className="font-bold text-[12px]" style={{ color: a.color }}>{a.label}</span>
           <span className="text-[9px] text-muted-foreground text-center leading-tight">{a.sub}</span>
-        </a>
+        </Link>
       ))}
     </div>
   );

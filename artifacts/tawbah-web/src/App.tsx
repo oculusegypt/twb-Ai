@@ -47,6 +47,10 @@ import Garden from "@/pages/garden";
 import Munajat from "@/pages/munajat";
 import Adhkar from "@/pages/adhkar";
 import QuranPage from "@/pages/quran";
+import QuranReadPage from "@/pages/quran/read";
+import QuranListenPage from "@/pages/quran/listen";
+import QuranMemorizePage from "@/pages/quran/memorize";
+import QuranTafsirPage from "@/pages/quran/tafsir";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -98,6 +102,10 @@ function Router() {
         <Route path="/garden" component={Garden} />
         <Route path="/munajat" component={Munajat} />
         <Route path="/adhkar" component={Adhkar} />
+        <Route path="/quran/read" component={QuranReadPage} />
+        <Route path="/quran/listen" component={QuranListenPage} />
+        <Route path="/quran/memorize" component={QuranMemorizePage} />
+        <Route path="/quran/tafsir" component={QuranTafsirPage} />
         <Route path="/quran" component={QuranPage} />
         <Route component={NotFound} />
       </Switch>
