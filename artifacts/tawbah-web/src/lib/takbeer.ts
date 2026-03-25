@@ -5,6 +5,90 @@
 let _active = false; // prevent overlapping playback
 let _audio: HTMLAudioElement | null = null;
 
+// ── Azkar Sabah audio (أذكار الصباح) ──────────────────────────────────────────
+let _azkarSabahAudio: HTMLAudioElement | null = null;
+let _azkarSabahActive = false;
+
+export function preloadAzkarSabah(): void {
+  try {
+    if (!_azkarSabahAudio) {
+      _azkarSabahAudio = new Audio("/sounds/azkar-sabah.mp3");
+      _azkarSabahAudio.preload = "auto";
+      _azkarSabahAudio.load();
+    }
+  } catch { /* ignore */ }
+}
+
+export function playAzkarSabah(): void {
+  if (_azkarSabahActive) return;
+  _azkarSabahActive = true;
+  try {
+    if (!_azkarSabahAudio) {
+      _azkarSabahAudio = new Audio("/sounds/azkar-sabah.mp3");
+      _azkarSabahAudio.preload = "auto";
+    }
+    _azkarSabahAudio.currentTime = 0;
+    _azkarSabahAudio.volume = 1;
+    _azkarSabahAudio.onended = () => { _azkarSabahActive = false; };
+    _azkarSabahAudio.onerror = () => { _azkarSabahActive = false; };
+    const p = _azkarSabahAudio.play();
+    if (p) p.catch(() => { _azkarSabahActive = false; });
+    setTimeout(() => { _azkarSabahActive = false; }, 120_000);
+  } catch {
+    _azkarSabahActive = false;
+  }
+}
+
+export function stopAzkarSabah(): void {
+  if (_azkarSabahAudio) {
+    _azkarSabahAudio.pause();
+    _azkarSabahAudio.currentTime = 0;
+  }
+  _azkarSabahActive = false;
+}
+
+// ── Azkar Masaa audio (أذكار المساء) ──────────────────────────────────────────
+let _azkarMasaaAudio: HTMLAudioElement | null = null;
+let _azkarMasaaActive = false;
+
+export function preloadAzkarMasaa(): void {
+  try {
+    if (!_azkarMasaaAudio) {
+      _azkarMasaaAudio = new Audio("/sounds/azkar-masaa.mp3");
+      _azkarMasaaAudio.preload = "auto";
+      _azkarMasaaAudio.load();
+    }
+  } catch { /* ignore */ }
+}
+
+export function playAzkarMasaa(): void {
+  if (_azkarMasaaActive) return;
+  _azkarMasaaActive = true;
+  try {
+    if (!_azkarMasaaAudio) {
+      _azkarMasaaAudio = new Audio("/sounds/azkar-masaa.mp3");
+      _azkarMasaaAudio.preload = "auto";
+    }
+    _azkarMasaaAudio.currentTime = 0;
+    _azkarMasaaAudio.volume = 1;
+    _azkarMasaaAudio.onended = () => { _azkarMasaaActive = false; };
+    _azkarMasaaAudio.onerror = () => { _azkarMasaaActive = false; };
+    const p = _azkarMasaaAudio.play();
+    if (p) p.catch(() => { _azkarMasaaActive = false; });
+    setTimeout(() => { _azkarMasaaActive = false; }, 120_000);
+  } catch {
+    _azkarMasaaActive = false;
+  }
+}
+
+export function stopAzkarMasaa(): void {
+  if (_azkarMasaaAudio) {
+    _azkarMasaaAudio.pause();
+    _azkarMasaaAudio.currentTime = 0;
+  }
+  _azkarMasaaActive = false;
+}
+
 // ── Dua Peak audio (for لحظة قمة الإجابة notifications) ───────────────────────
 let _duaPeakAudio: HTMLAudioElement | null = null;
 let _duaPeakActive = false;

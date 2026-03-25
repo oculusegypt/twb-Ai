@@ -13,7 +13,7 @@ import {
   showViaSW,
 } from "@/lib/notifications";
 import { hasFiredToday, markFiredToday, addToInboxApi } from "@/lib/app-notifications";
-import { playTakbeer, preloadTakbeer, playAzan, preloadAzan, playDuaPeak, preloadDuaPeak } from "@/lib/takbeer";
+import { playTakbeer, preloadTakbeer, playAzan, preloadAzan, playDuaPeak, preloadDuaPeak, playAzkarSabah, preloadAzkarSabah, playAzkarMasaa, preloadAzkarMasaa, stopAzkarSabah, stopAzkarMasaa } from "@/lib/takbeer";
 import { calcDuaPower, duaPeakCooledDown, markDuaPeakFired } from "@/lib/dua-power";
 
 const API_BASE = "/api";
@@ -98,7 +98,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Preload audio files so they're ready for instant playback
-  useEffect(() => { preloadTakbeer(); preloadAzan(); preloadDuaPeak(); }, []);
+  useEffect(() => { preloadTakbeer(); preloadAzan(); preloadDuaPeak(); preloadAzkarSabah(); preloadAzkarMasaa(); }, []);
 
   // Register SW on mount and re-subscribe to push if already enabled
   useEffect(() => {
@@ -281,6 +281,22 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     const interval = setInterval(checkDuaPeak, DUA_PEAK_INTERVAL);
     return () => clearInterval(interval);
   }, [settings.duaPeakAlert, settings.duaPeakThreshold]);
+
+  // ── Play azkar sound when modal opens, stop when it closes ───────────────────
+  useEffect(() => {
+    if (adhkarVisible) {
+      if (adhkarType === "morning") {
+        stopAzkarMasaa();
+        playAzkarSabah();
+      } else {
+        stopAzkarSabah();
+        playAzkarMasaa();
+      }
+    } else {
+      stopAzkarSabah();
+      stopAzkarMasaa();
+    }
+  }, [adhkarVisible, adhkarType]);
 
   const hideDuaPeak = useCallback(() => setDuaPeakVisible(false), []);
   const hideAdhkar = useCallback(() => setAdhkarVisible(false), []);
