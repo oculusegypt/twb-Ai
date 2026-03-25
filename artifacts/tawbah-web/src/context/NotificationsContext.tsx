@@ -13,7 +13,7 @@ import {
   showViaSW,
 } from "@/lib/notifications";
 import { hasFiredToday, markFiredToday, addToInboxApi } from "@/lib/app-notifications";
-import { playTakbeer, preloadTakbeer, playAzan, preloadAzan } from "@/lib/takbeer";
+import { playTakbeer, preloadTakbeer, playAzan, preloadAzan, playDuaPeak, preloadDuaPeak } from "@/lib/takbeer";
 import { calcDuaPower, duaPeakCooledDown, markDuaPeakFired } from "@/lib/dua-power";
 
 const API_BASE = "/api";
@@ -98,7 +98,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Preload audio files so they're ready for instant playback
-  useEffect(() => { preloadTakbeer(); preloadAzan(); }, []);
+  useEffect(() => { preloadTakbeer(); preloadAzan(); preloadDuaPeak(); }, []);
 
   // Register SW on mount and re-subscribe to push if already enabled
   useEffect(() => {
@@ -164,7 +164,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           playAzan();
         }
         if ((tag === "dua-peak-last-third" || tag === "dua-peak-friday") && settings.duaPeakAlert) {
-          playTakbeer();
+          playDuaPeak();
           setDuaPeakVisible(true);
         }
         // Adhkar notifications
@@ -271,7 +271,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       const score = calcDuaPower();
       if (score >= threshold && duaPeakCooledDown()) {
         markDuaPeakFired();
-        playTakbeer();
+        playDuaPeak();
         setDuaPeakVisible(true);
       }
     };

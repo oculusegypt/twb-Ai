@@ -5,6 +5,52 @@
 let _active = false; // prevent overlapping playback
 let _audio: HTMLAudioElement | null = null;
 
+// ── Dua Peak audio (for لحظة قمة الإجابة notifications) ───────────────────────
+let _duaPeakAudio: HTMLAudioElement | null = null;
+let _duaPeakActive = false;
+
+export function preloadDuaPeak(): void {
+  try {
+    if (!_duaPeakAudio) {
+      _duaPeakAudio = new Audio("/dua-peak.mp3");
+      _duaPeakAudio.preload = "auto";
+      _duaPeakAudio.load();
+    }
+  } catch { /* ignore */ }
+}
+
+export function playDuaPeak(): void {
+  if (_duaPeakActive) return;
+  _duaPeakActive = true;
+  try {
+    if (!_duaPeakAudio) {
+      _duaPeakAudio = new Audio("/dua-peak.mp3");
+      _duaPeakAudio.preload = "auto";
+    }
+    _duaPeakAudio.currentTime = 0;
+    _duaPeakAudio.volume = 1;
+    _duaPeakAudio.onended = () => { _duaPeakActive = false; };
+    _duaPeakAudio.onerror = () => {
+      _duaPeakActive = false;
+      playTakbeer();
+    };
+    const p = _duaPeakAudio.play();
+    if (p) p.catch(() => { _duaPeakActive = false; playTakbeer(); });
+    setTimeout(() => { _duaPeakActive = false; }, 60_000);
+  } catch {
+    _duaPeakActive = false;
+    playTakbeer();
+  }
+}
+
+export function stopDuaPeak(): void {
+  if (_duaPeakAudio) {
+    _duaPeakAudio.pause();
+    _duaPeakAudio.currentTime = 0;
+  }
+  _duaPeakActive = false;
+}
+
 // ── Azan audio (for prayer-time notifications) ─────────────────────────────
 let _azanAudio: HTMLAudioElement | null = null;
 let _azanActive = false;
