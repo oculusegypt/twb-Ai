@@ -882,7 +882,6 @@ function BotMessageBody({
           />
         );
       })}
-
       {/* Audio & impression controls */}
       <div className="flex items-center gap-2 mt-2 flex-wrap">
         {hasAudio && (
@@ -903,12 +902,7 @@ function BotMessageBody({
           <button
             onClick={handleImpressionClick}
             disabled={impressionLoading}
-            className={cn(
-              "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
-              impressionOpen
-                ? "bg-rose-500 text-white border-rose-500"
-                : "bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-400/60 hover:bg-rose-200"
-            )}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border dark:bg-rose-950/30 dark:text-rose-400 border-rose-400/60 hover:bg-rose-200 bg-[#e63c53] text-[#ffffff]"
           >
             {impressionLoading
               ? <><Loader2 size={12} className="animate-spin" /> لحظة...</>
@@ -937,7 +931,6 @@ function BotMessageBody({
           </button>
         )}
       </div>
-
       <AnimatePresence>
         {impressionOpen && impressionText && (
           <ImpressionPanel impression={impressionText} onClose={() => onImpressionToggle(msg.id)} />
