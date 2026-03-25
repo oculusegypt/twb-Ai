@@ -344,11 +344,11 @@ function QuranCard({
   function setIsPlaying_noop() {}
 
   return (
-    <div className="my-2 rounded-2xl border border-amber-400/50 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-l from-amber-500 to-amber-600 dark:from-amber-800 dark:to-amber-900 px-4 py-2 flex items-center justify-between">
+    <div className="my-2 rounded-2xl border border-amber-300 dark:border-amber-400/50 overflow-hidden shadow-sm">
+      <div className="bg-amber-100 dark:bg-gradient-to-l dark:from-amber-800 dark:to-amber-900 border-b border-amber-300 dark:border-transparent px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BookOpen size={13} className="text-amber-100 dark:text-amber-300" />
-          <span className="text-[11px] font-bold text-amber-50 dark:text-amber-200 tracking-wide">
+          <BookOpen size={13} className="text-amber-700 dark:text-amber-300" />
+          <span className="text-[11px] font-bold text-amber-900 dark:text-amber-200 tracking-wide">
             سورة {getSurahName(seg.surah!)} — آية {seg.ayah}
           </span>
         </div>
@@ -357,8 +357,8 @@ function QuranCard({
           className={cn(
             "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full transition-all font-medium",
             isActive && isPlaying
-              ? "bg-white/30 text-white dark:bg-amber-400 dark:text-amber-900"
-              : "bg-white/20 text-white hover:bg-white/30 dark:bg-amber-900/60 dark:text-amber-300 dark:hover:bg-amber-800/60"
+              ? "bg-amber-600 text-white dark:bg-amber-400 dark:text-amber-900"
+              : "bg-amber-200 text-amber-900 hover:bg-amber-300 dark:bg-amber-900/60 dark:text-amber-300 dark:hover:bg-amber-800/60"
           )}
         >
           {isActive && isPlaying
@@ -367,7 +367,7 @@ function QuranCard({
           }
         </button>
       </div>
-      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
+      <div className="bg-amber-50 dark:from-amber-950/30 dark:to-yellow-950/20 dark:bg-gradient-to-br px-4 py-4">
         {verseLoading ? (
           <div className="flex justify-center py-2">
             <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "0ms" }} />
@@ -388,7 +388,7 @@ function QuranCard({
           </div>
         )}
         {audioError && (
-          <p className="text-[10px] text-amber-500/70 text-center mt-1">تعذّر تشغيل الصوت</p>
+          <p className="text-[10px] text-amber-600/80 text-center mt-1">تعذّر تشغيل الصوت</p>
         )}
       </div>
     </div>
@@ -404,25 +404,25 @@ function FatwaCard({ seg }: { seg: MessageSegment }) {
   const preview = (seg.text?.length ?? 0) > 120 ? seg.text!.slice(0, 120) + "..." : seg.text;
 
   return (
-    <div className="my-2 rounded-2xl border border-emerald-400/50 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-l from-emerald-600 to-teal-700 dark:from-emerald-800 dark:to-teal-900 px-4 py-2 flex items-center gap-2">
-        <Scale size={13} className="text-emerald-100 dark:text-emerald-300" />
-        <span className="text-[11px] font-bold text-emerald-50 dark:text-emerald-200 tracking-wide">حكم شرعي</span>
-        <span className="mr-auto text-[10px] text-emerald-100/80 dark:text-emerald-400/80">📚 {seg.source}</span>
+    <div className="my-2 rounded-2xl border border-emerald-300 dark:border-emerald-400/50 overflow-hidden shadow-sm">
+      <div className="bg-emerald-100 dark:bg-gradient-to-l dark:from-emerald-800 dark:to-teal-900 border-b border-emerald-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
+        <Scale size={13} className="text-emerald-700 dark:text-emerald-300" />
+        <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200 tracking-wide">حكم شرعي</span>
+        <span className="mr-auto text-[10px] text-emerald-700/80 dark:text-emerald-400/80">📚 {seg.source}</span>
       </div>
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
+      <div className="bg-emerald-50 dark:bg-gradient-to-br dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
         <p className="text-sm leading-relaxed text-emerald-900 dark:text-emerald-200 text-right">
           {expanded ? seg.text : preview}
         </p>
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200/50 dark:border-emerald-800/30">
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/30">
           {(seg.text?.length ?? 0) > 120 && (
-            <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
+            <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-medium">
               {expanded ? "إخفاء" : "عرض الكامل"}
             </button>
           )}
           {seg.url && (
             <a href={seg.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium mr-auto">
+              className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-medium mr-auto">
               <ExternalLink size={10} /> المصدر
             </a>
           )}
@@ -457,13 +457,13 @@ function PromiseCard({ seg, sessionId }: { seg: MessageSegment; sessionId: strin
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="my-3 rounded-2xl border border-amber-400/60 overflow-hidden shadow-md"
+      className="my-3 rounded-2xl border border-amber-300 dark:border-amber-400/60 overflow-hidden shadow-md"
     >
-      <div className="bg-gradient-to-l from-amber-500 to-yellow-600 dark:from-amber-700 dark:to-yellow-800 px-4 py-2 flex items-center gap-2">
-        <Handshake size={13} className="text-amber-100 dark:text-amber-200" />
-        <span className="text-[11px] font-bold text-amber-50 dark:text-amber-100 tracking-wide">وعد أمام الله</span>
+      <div className="bg-amber-100 dark:bg-gradient-to-l dark:from-amber-700 dark:to-yellow-800 border-b border-amber-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
+        <Handshake size={13} className="text-amber-700 dark:text-amber-200" />
+        <span className="text-[11px] font-bold text-amber-900 dark:text-amber-100 tracking-wide">وعد أمام الله</span>
       </div>
-      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
+      <div className="bg-amber-50 dark:bg-gradient-to-br dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
         <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200 text-right font-medium mb-4">
           "{seg.text}"
         </p>
@@ -498,16 +498,16 @@ function SurahLinkCard({ seg }: { seg: MessageSegment }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="my-2 rounded-2xl border border-teal-400/50 overflow-hidden shadow-sm"
+      className="my-2 rounded-2xl border border-teal-300 dark:border-teal-400/50 overflow-hidden shadow-sm"
     >
-      <div className="bg-gradient-to-l from-teal-700 to-emerald-800 dark:from-teal-950 dark:to-emerald-950 px-4 py-2 flex items-center gap-2">
-        <BookMarked size={13} className="text-teal-200" />
-        <span className="text-[11px] font-bold text-teal-100 tracking-wide">السورة كاملة</span>
+      <div className="bg-teal-100 dark:bg-gradient-to-l dark:from-teal-950 dark:to-emerald-950 border-b border-teal-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
+        <BookMarked size={13} className="text-teal-700 dark:text-teal-200" />
+        <span className="text-[11px] font-bold text-teal-900 dark:text-teal-100 tracking-wide">السورة كاملة</span>
       </div>
-      <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 px-4 py-3 flex items-center justify-between">
+      <div className="bg-teal-50 dark:bg-gradient-to-br dark:from-teal-950/30 dark:to-emerald-950/20 px-4 py-3 flex items-center justify-between">
         <div>
           <p className="text-sm font-bold text-teal-900 dark:text-teal-200">سورة {seg.text}</p>
-          <p className="text-[11px] text-teal-600 dark:text-teal-400 mt-0.5">تابع قراءة باقي السورة من الآية {seg.ayah}</p>
+          <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-0.5">تابع قراءة باقي السورة من الآية {seg.ayah}</p>
         </div>
         <a
           href={seg.url}
