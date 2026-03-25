@@ -51,6 +51,13 @@ import QuranReadPage from "@/pages/quran/read";
 import QuranListenPage from "@/pages/quran/listen";
 import QuranMemorizePage from "@/pages/quran/memorize";
 import QuranTafsirPage from "@/pages/quran/tafsir";
+import QuranKhatmaPage from "@/pages/quran/khatma";
+import QuranChallengesPage from "@/pages/quran/challenges";
+import QuranMapPage from "@/pages/quran/map";
+import QuranAiPage from "@/pages/quran/ai";
+import QuranCardsPage from "@/pages/quran/cards";
+import QuranMiraclesPage from "@/pages/quran/miracles";
+import QuranKhatmatPage from "@/pages/quran/khatmat";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -106,6 +113,13 @@ function Router() {
         <Route path="/quran/listen" component={QuranListenPage} />
         <Route path="/quran/memorize" component={QuranMemorizePage} />
         <Route path="/quran/tafsir" component={QuranTafsirPage} />
+        <Route path="/quran/khatma" component={QuranKhatmaPage} />
+        <Route path="/quran/challenges" component={QuranChallengesPage} />
+        <Route path="/quran/map" component={QuranMapPage} />
+        <Route path="/quran/ai" component={QuranAiPage} />
+        <Route path="/quran/cards" component={QuranCardsPage} />
+        <Route path="/quran/miracles" component={QuranMiraclesPage} />
+        <Route path="/quran/khatmat" component={QuranKhatmatPage} />
         <Route path="/quran" component={QuranPage} />
         <Route component={NotFound} />
       </Switch>

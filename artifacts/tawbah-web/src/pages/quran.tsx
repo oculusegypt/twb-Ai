@@ -331,7 +331,7 @@ const SCIENCES: QuranScience[] = [
     description: "الوجوه الإعجازية العلمية والأدبية والتشريعية",
     gradient: "from-cyan-500/15 to-blue-400/5",
     border: "border-cyan-400/30",
-    route: "/quran/ijaz",
+    route: "/quran/miracles",
   },
 ];
 
@@ -1092,6 +1092,8 @@ function SurahBrowser({ onSelect }: { onSelect: (s: Surah) => void }) {
 
 function MiraclesSection() {
   const [expanded, setExpanded] = useState<number | null>(null);
+  const { theme } = useSettings();
+  const isDark = theme === "dark";
 
   return (
     <div className="flex flex-col gap-3">
@@ -1104,7 +1106,7 @@ function MiraclesSection() {
           className="rounded-xl overflow-hidden cursor-pointer"
           style={{
             background: `linear-gradient(145deg, ${m.color})`,
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
           }}
           onClick={() => setExpanded(expanded === m.id ? null : m.id)}
         >
@@ -1114,7 +1116,10 @@ function MiraclesSection() {
               <div className="flex items-center gap-2 mb-0.5">
                 <span
                   className="text-[9px] px-1.5 py-0.5 rounded font-bold"
-                  style={{ background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)" }}
+                  style={{
+                    background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
+                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.55)",
+                  }}
                 >
                   {m.category}
                 </span>
@@ -1138,9 +1143,12 @@ function MiraclesSection() {
               >
                 <div
                   className="mx-3 mb-3 p-3 rounded-xl"
-                  style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.06)" }}
+                  style={{
+                    background: isDark ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.05)",
+                    border: isDark ? "1px solid rgba(255,255,255,0.06)" : "1px solid rgba(0,0,0,0.06)",
+                  }}
                 >
-                  <p className="text-[12px] leading-loose text-right" style={{ color: "rgba(255,255,255,0.82)" }}>
+                  <p className="text-[12px] leading-loose text-right text-foreground/80">
                     {m.detail}
                   </p>
                 </div>
@@ -1156,25 +1164,36 @@ function MiraclesSection() {
 // ─── Sciences Grid ────────────────────────────────────────────────────────────
 
 function SciencesGrid() {
+  const hasRoute = (route: string) => ["/quran/tafsir", "/quran/miracles"].includes(route);
   return (
     <div className="grid grid-cols-2 gap-2.5">
-      {SCIENCES.map((s, i) => (
-        <motion.div
-          key={s.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.06 }}
-          className={`rounded-2xl p-4 bg-gradient-to-br ${s.gradient} border ${s.border} active:scale-[0.96] transition-all cursor-pointer`}
-        >
-          <span className="text-[24px] mb-2 block">{s.icon}</span>
-          <p className="font-bold text-sm leading-tight mb-1">{s.title}</p>
-          <p className="text-[10px] text-muted-foreground leading-snug">{s.description}</p>
-          <div className="flex items-center gap-1 mt-2">
-            <span className="text-[9px] font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>قريباً</span>
-            <Sparkles size={9} style={{ color: "rgba(255,255,255,0.3)" }} />
-          </div>
-        </motion.div>
-      ))}
+      {SCIENCES.map((s, i) => {
+        const active = hasRoute(s.route);
+        const inner = (
+          <motion.div
+            key={s.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.06 }}
+            className={`rounded-2xl p-4 bg-gradient-to-br ${s.gradient} border ${s.border} active:scale-[0.96] transition-all cursor-pointer`}
+          >
+            <span className="text-[24px] mb-2 block">{s.icon}</span>
+            <p className="font-bold text-sm leading-tight mb-1">{s.title}</p>
+            <p className="text-[10px] text-muted-foreground leading-snug">{s.description}</p>
+            <div className="flex items-center gap-1 mt-2">
+              {active ? (
+                <span className="text-[9px] font-bold" style={{ color: "#22c55e" }}>مفعّل ✓</span>
+              ) : (
+                <>
+                  <span className="text-[9px] font-bold text-foreground/35">قريباً</span>
+                  <Sparkles size={9} className="text-foreground/30" />
+                </>
+              )}
+            </div>
+          </motion.div>
+        );
+        return active ? <Link key={s.id} href={s.route}>{inner}</Link> : <div key={s.id}>{inner}</div>;
+      })}
     </div>
   );
 }
@@ -1370,6 +1389,31 @@ export default function QuranPage() {
         <div>
           <SectionTitle icon={<Zap size={16} />} title="ابدأ الآن" sub="تلاوة · بحث · حفظ · استماع" />
           <QuickActions />
+        </div>
+
+        {/* New Phase 3 & 4 Features */}
+        <div>
+          <SectionTitle icon={<Sparkles size={16} />} title="ميزات جديدة" sub="مجتمع · ذكاء · إبداع" accent="#8b5cf6" />
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { icon: "👥", label: "الختمة الجماعية", sub: "اختم مع أصدقائك", color: "#8b5cf6", bg: "rgba(139,92,246,0.1)", border: "rgba(139,92,246,0.2)", href: "/quran/khatma" },
+              { icon: "🔥", label: "تحديات القرآن", sub: "تحدّ نفسك", color: "#f59e0b", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.2)", href: "/quran/challenges" },
+              { icon: "🗺️", label: "خريطة القرآن", sub: "استكشف البنية", color: "#06b6d4", bg: "rgba(6,182,212,0.1)", border: "rgba(6,182,212,0.2)", href: "/quran/map" },
+              { icon: "🤖", label: "مساعد القرآن", sub: "اسأل بالذكاء الاصطناعي", color: "#ec4899", bg: "rgba(236,72,153,0.1)", border: "rgba(236,72,153,0.2)", href: "/quran/ai" },
+              { icon: "🎨", label: "بطاقات القرآن", sub: "أنشئ وشارك", color: "#22c55e", bg: "rgba(34,197,94,0.1)", border: "rgba(34,197,94,0.2)", href: "/quran/cards" },
+              { icon: "📅", label: "الختمات التاريخية", sub: "رمضان · ذو الحجة", color: "#a855f7", bg: "rgba(168,85,247,0.1)", border: "rgba(168,85,247,0.2)", href: "/quran/khatmat" },
+            ].map(a => (
+              <Link key={a.label} href={a.href}
+                className="flex items-center gap-2.5 p-3 rounded-2xl active:scale-[0.97] transition-all"
+                style={{ background: a.bg, border: `1px solid ${a.border}` }}>
+                <span className="text-xl shrink-0">{a.icon}</span>
+                <div className="min-w-0">
+                  <p className="font-bold text-[12px] leading-tight" style={{ color: a.color }}>{a.label}</p>
+                  <p className="text-[9px] text-muted-foreground">{a.sub}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
         {/* Daily Ayah */}

@@ -272,7 +272,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
   return (
     <div className={cn(
       "space-y-0.5 rounded-xl transition-colors duration-300",
-      isActivePlaying && "bg-teal-50/60 dark:bg-teal-950/30 px-2 py-1 -mx-2"
+      isActivePlaying && "bg-teal-100 dark:bg-teal-950/30 px-2 py-1 -mx-2"
     )}>
       {elements}
     </div>
@@ -315,14 +315,12 @@ function QuranCard({
 
   useEffect(() => {
     const audio = new Audio();
-    audio.preload = "auto";
+    audio.preload = "none";
     audio.src = reciterAudioUrl(seg.surah!, seg.ayah!, reciterId);
     audioRef.current = audio;
     setAudioError(false);
     audio.onended = () => onEndedRef.current();
     audio.onerror = () => { setAudioError(true); onEndedRef.current(); };
-    // Start buffering immediately so audio is ready when this card becomes active
-    audio.load();
     return () => { audio.pause(); audio.src = ""; audio.onended = null; audio.onerror = null; audioRef.current = null; };
   }, [seg.surah, seg.ayah, reciterId]);
 
@@ -347,10 +345,10 @@ function QuranCard({
 
   return (
     <div className="my-2 rounded-2xl border border-amber-400/50 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-l from-amber-800 to-amber-900 dark:from-amber-950 dark:to-yellow-950 px-4 py-2 flex items-center justify-between">
+      <div className="bg-gradient-to-l from-amber-500 to-amber-600 dark:from-amber-800 dark:to-amber-900 px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <BookOpen size={13} className="text-amber-300" />
-          <span className="text-[11px] font-bold text-amber-200 tracking-wide">
+          <BookOpen size={13} className="text-amber-100 dark:text-amber-300" />
+          <span className="text-[11px] font-bold text-amber-50 dark:text-amber-200 tracking-wide">
             سورة {getSurahName(seg.surah!)} — آية {seg.ayah}
           </span>
         </div>
@@ -359,8 +357,8 @@ function QuranCard({
           className={cn(
             "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full transition-all font-medium",
             isActive && isPlaying
-              ? "bg-amber-400 text-amber-900"
-              : "bg-amber-900/60 text-amber-300 hover:bg-amber-800/60"
+              ? "bg-white/30 text-amber-900 dark:bg-amber-400 dark:text-amber-900"
+              : "bg-white/20 text-amber-900 hover:bg-white/30 dark:bg-amber-900/60 dark:text-amber-300 dark:hover:bg-amber-800/60"
           )}
         >
           {isActive && isPlaying
@@ -407,10 +405,10 @@ function FatwaCard({ seg }: { seg: MessageSegment }) {
 
   return (
     <div className="my-2 rounded-2xl border border-emerald-400/50 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-l from-emerald-800 to-teal-900 dark:from-emerald-950 dark:to-teal-950 px-4 py-2 flex items-center gap-2">
-        <Scale size={13} className="text-emerald-300" />
-        <span className="text-[11px] font-bold text-emerald-200 tracking-wide">حكم شرعي</span>
-        <span className="mr-auto text-[10px] text-emerald-400/80">📚 {seg.source}</span>
+      <div className="bg-gradient-to-l from-emerald-600 to-teal-700 dark:from-emerald-800 dark:to-teal-900 px-4 py-2 flex items-center gap-2">
+        <Scale size={13} className="text-emerald-100 dark:text-emerald-300" />
+        <span className="text-[11px] font-bold text-emerald-50 dark:text-emerald-200 tracking-wide">حكم شرعي</span>
+        <span className="mr-auto text-[10px] text-emerald-100/80 dark:text-emerald-400/80">📚 {seg.source}</span>
       </div>
       <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
         <p className="text-sm leading-relaxed text-emerald-900 dark:text-emerald-200 text-right">
@@ -461,9 +459,9 @@ function PromiseCard({ seg, sessionId }: { seg: MessageSegment; sessionId: strin
       animate={{ opacity: 1, y: 0 }}
       className="my-3 rounded-2xl border border-amber-400/60 overflow-hidden shadow-md"
     >
-      <div className="bg-gradient-to-l from-amber-700 to-yellow-800 dark:from-amber-900 dark:to-yellow-950 px-4 py-2 flex items-center gap-2">
-        <Handshake size={13} className="text-amber-200" />
-        <span className="text-[11px] font-bold text-amber-100 tracking-wide">وعد أمام الله</span>
+      <div className="bg-gradient-to-l from-amber-500 to-yellow-600 dark:from-amber-700 dark:to-yellow-800 px-4 py-2 flex items-center gap-2">
+        <Handshake size={13} className="text-amber-100 dark:text-amber-200" />
+        <span className="text-[11px] font-bold text-amber-50 dark:text-amber-100 tracking-wide">وعد أمام الله</span>
       </div>
       <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
         <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200 text-right font-medium mb-4">
