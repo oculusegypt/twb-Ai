@@ -378,6 +378,8 @@ function MushafDisplay({
   const preloadRef = useRef<HTMLAudioElement | null>(null);
   const preloadedIdxRef = useRef<number | null>(null);
   const spanRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  // Ref holding latest playIdx to avoid stale closures inside onended
+  const playIdxRef = useRef<(idx: number) => void>(() => {});
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
@@ -386,6 +388,7 @@ function MushafDisplay({
       audioRef.current.src = "";
     }
     if (preloadRef.current) {
+      preloadRef.current.pause();
       preloadRef.current.src = "";
     }
     preloadedIdxRef.current = null;
@@ -399,26 +402,40 @@ function MushafDisplay({
     if (!ayah) return;
     if (!preloadRef.current) preloadRef.current = new Audio();
     const pre = preloadRef.current;
+    // Cancel any previous preload
+    pre.pause();
+    pre.onended = null;
+    // preload="auto" tells the browser to download the full file, not just metadata
+    pre.preload = "auto";
     pre.src = cdnAudioUrl(surahId, ayah.numberInSurah, reciterId);
     pre.load();
     preloadedIdxRef.current = idx;
+    // Warm up the audio pipeline: start silent playback then pause immediately.
+    // This primes the OS audio stack so switching to this element is instant.
+    pre.volume = 0;
+    pre.play()
+      .then(() => { pre.pause(); pre.currentTime = 0; pre.volume = 1; })
+      .catch(() => { pre.volume = 1; }); // Ignore autoplay errors
   }, [ayahs, surahId, reciterId]);
 
   const playIdx = useCallback((idx: number) => {
     const ayah = ayahs[idx];
     if (!ayah) return;
 
-    // If this verse was preloaded, swap it in instantly — no load() delay
-    if (preloadedIdxRef.current === idx && preloadRef.current?.src) {
+    // If this verse was preloaded, swap it in — it's already buffered and warmed up
+    if (preloadedIdxRef.current === idx && preloadRef.current && preloadRef.current.src) {
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.onended = null;
       }
-      audioRef.current = preloadRef.current;
+      const pre = preloadRef.current;
+      pre.volume = 1;
+      pre.currentTime = 0;
+      audioRef.current = pre;
       preloadRef.current = new Audio();
       preloadedIdxRef.current = null;
     } else {
-      // No preload available — load fresh
+      // No preload ready — load fresh
       if (!audioRef.current) audioRef.current = new Audio();
       const audio = audioRef.current;
       audio.pause();
@@ -434,19 +451,23 @@ function MushafDisplay({
     setIsPlaying(true);
     spanRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
 
-    // Start preloading the next verse immediately
+    // Preload the next verse immediately
     const next = idx + 1;
     if (next < ayahs.length) preloadIdx(next);
 
+    // Use playIdxRef so onended always calls the latest version of playIdx
     audio.onended = () => {
       if (next < ayahs.length) {
-        playIdx(next);
+        playIdxRef.current(next);
       } else {
         setPlayingIdx(null);
         setIsPlaying(false);
       }
     };
   }, [ayahs, surahId, reciterId, stopAudio, preloadIdx]);
+
+  // Keep the ref in sync with the latest playIdx
+  useEffect(() => { playIdxRef.current = playIdx; }, [playIdx]);
 
   const handleAyahTap = (idx: number) => {
     if (playingIdx === idx && isPlaying) {
