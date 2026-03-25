@@ -280,7 +280,6 @@ function QuranHero() {
           transition={{ duration: 2.5 + (i % 5) * 0.8, repeat: Infinity, delay: (i * 0.35) % 4 }}
         />
       ))}
-
       {/* Top glow */}
       <div
         className="absolute inset-x-0 top-0 h-[180px] pointer-events-none"
@@ -289,7 +288,6 @@ function QuranHero() {
           filter: "blur(20px)",
         }}
       />
-
       <div className="relative z-10 px-5 pt-7 pb-6">
         {/* Arabic calligraphy icon */}
         <div className="flex justify-center mb-4">
@@ -307,7 +305,7 @@ function QuranHero() {
 
         {/* Title */}
         <h1
-          className="text-center font-bold leading-tight mb-1"
+          className="text-center font-bold leading-tight mb-[16px] pt-[11px] pb-[11px]"
           style={{
             fontSize: 28,
             background: "linear-gradient(180deg, #ffffff 0%, #c8a84b 60%, #a07c2a 100%)",
