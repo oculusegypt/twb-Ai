@@ -272,7 +272,7 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
     if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
     audio.pause();
-    audio.src = `https://cdn.islamic.network/quran/audio/128/${reciterId}/${toGlobal(surah.id, ayah.numberInSurah)}.mp3`;
+    audio.src = `/api/audio-proxy/quran/${reciterId}/${toGlobal(surah.id, ayah.numberInSurah)}.mp3`;
     audio.load();
     audio.play().catch(() => {});
     setCurrentIdx(idx);

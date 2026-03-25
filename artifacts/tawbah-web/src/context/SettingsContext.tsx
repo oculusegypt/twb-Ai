@@ -90,7 +90,7 @@ export const QURAN_RECITERS: QuranReciter[] = [
   { id: "ar.alafasy",            name: "Mishary Rashid Alafasy",      nameAr: "مشاري راشد العفاسي"       },
   { id: "ar.abdurrahmaansudais", name: "Abdurrahman As-Sudais",       nameAr: "عبد الرحمن السديس"        },
   { id: "ar.mahermuaiqly",       name: "Maher Al Muaiqly",            nameAr: "ماهر المعيقلي"            },
-  { id: "ar.islamsobhi",         name: "Islam Sobhi",                 nameAr: "إسلام صبحي"               },
+  { id: "ar.muhammadjibreel",     name: "Muhammad Jibreel",            nameAr: "محمد جبريل"               },
   { id: "ar.saoodshuraym",       name: "Saud Al-Shuraim",             nameAr: "سعود الشريم"              },
   { id: "ar.shaatree",           name: "Abu Bakr Al-Shatri",          nameAr: "أبو بكر الشاطري"          },
   { id: "ar.saadalghamdi",       name: "Saad Al-Ghamdi",              nameAr: "سعد الغامدي"              },
