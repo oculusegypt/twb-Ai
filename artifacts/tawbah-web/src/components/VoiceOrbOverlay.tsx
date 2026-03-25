@@ -4,23 +4,13 @@ import { Mic } from "lucide-react";
 import { useLocation } from "wouter";
 import { voicePending } from "@/lib/voice-pending";
 
-const NUM_BARS = 32;
+const NUM_BARS = 34;
 
 const IDLE_HEIGHTS = Array.from({ length: NUM_BARS }, (_, i) => {
   const x = i / (NUM_BARS - 1);
-  const bell = Math.exp(-Math.pow((x - 0.5) * 3.5, 2));
-  return 0.06 + bell * 0.22;
+  const bell = Math.exp(-Math.pow((x - 0.5) * 3.8, 2));
+  return 0.05 + bell * 0.18;
 });
-
-const BAR_COLORS = Array.from({ length: NUM_BARS }, (_, i) => {
-  const t = i / (NUM_BARS - 1);
-  if (t < 0.25) return `hsl(${250 + t * 40}, 90%, 68%)`;
-  if (t < 0.5)  return `hsl(${200 + t * 30}, 95%, 65%)`;
-  if (t < 0.75) return `hsl(${175 + t * 20}, 95%, 60%)`;
-  return `hsl(${240 + t * 40}, 88%, 68%)`;
-});
-
-const PARTICLE_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 
 export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
   const [, navigate] = useLocation();
@@ -47,8 +37,8 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
         prev.map((h, i) => {
           const center = NUM_BARS / 2;
           const dist = Math.abs(i - center) / center;
-          const maxH = 0.85 - dist * 0.3;
-          const speed = 0.5 - dist * 0.18;
+          const maxH = 0.92 - dist * 0.28;
+          const speed = 0.52 - dist * 0.15;
           const delta = (Math.random() - 0.5) * speed;
           return Math.max(0.04, Math.min(maxH, h + delta));
         })
@@ -81,50 +71,30 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
   const startListening = useCallback(() => {
     setPhase("listening");
     startBarAnim();
-
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      finishAndNavigate("");
-      return;
-    }
+    if (!SR) { finishAndNavigate(""); return; }
     const recognition = new SR();
     recognitionRef.current = recognition;
     recognition.lang = "ar-SA";
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-
     recognition.onresult = (e: any) => {
-      let interim = "";
-      let final = "";
+      let interim = "", final = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const t = e.results[i][0].transcript;
-        if (e.results[i].isFinal) final += t;
-        else interim += t;
+        if (e.results[i].isFinal) final += t; else interim += t;
       }
       if (interim) setInterimText(interim);
-      if (final.trim()) {
-        capturedTextRef.current = final.trim();
-        setFinalText(final.trim());
-        setInterimText("");
-      }
+      if (final.trim()) { capturedTextRef.current = final.trim(); setFinalText(final.trim()); setInterimText(""); }
     };
     recognition.onend = () => finishAndNavigate(capturedTextRef.current);
     recognition.onerror = () => finishAndNavigate(capturedTextRef.current);
     recognition.start();
   }, [startBarAnim, finishAndNavigate]);
 
-  useEffect(() => {
-    const t = setTimeout(startListening, 520);
-    return () => clearTimeout(t);
-  }, [startListening]);
-
-  useEffect(() => {
-    return () => {
-      stopBarAnim();
-      recognitionRef.current?.abort();
-    };
-  }, [stopBarAnim]);
+  useEffect(() => { const t = setTimeout(startListening, 520); return () => clearTimeout(t); }, [startListening]);
+  useEffect(() => { return () => { stopBarAnim(); recognitionRef.current?.abort(); }; }, [stopBarAnim]);
 
   const displayText = finalText || interimText;
   const isListening = phase === "listening";
@@ -136,37 +106,29 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      style={{
-        background: "radial-gradient(ellipse at 50% 60%, rgba(10,8,28,0.97) 0%, rgba(2,4,16,0.99) 100%)",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
-      }}
+      style={{ background: "radial-gradient(ellipse 90% 80% at 50% 55%, #0a0c1a 0%, #050609 100%)" }}
       onClick={onClose}
     >
-      {/* ── Ambient background aurora ── */}
-      <motion.div
+      {/* ── Ambient background glow — single hue, like Gemini ── */}
+      <div
         className="absolute pointer-events-none"
         style={{
-          width: 600, height: 600,
+          width: 480, height: 480,
           top: "50%", left: "50%",
           transform: "translate(-50%, -50%)",
-          background:
-            "conic-gradient(from 0deg at 50% 50%, rgba(99,102,241,0.07), rgba(6,182,212,0.09), rgba(168,85,247,0.07), rgba(236,72,153,0.06), rgba(99,102,241,0.07))",
+          background: "radial-gradient(circle, rgba(108,87,255,0.13) 0%, rgba(56,140,255,0.07) 50%, transparent 75%)",
           borderRadius: "50%",
-          filter: "blur(60px)",
+          filter: "blur(40px)",
         }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
       />
 
-      {/* ── Subtle grid lines ── */}
+      {/* ── Subtle dot grid ── */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)",
+          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+          backgroundSize: "36px 36px",
+          maskImage: "radial-gradient(ellipse 70% 65% at 50% 50%, black 20%, transparent 100%)",
         }}
       />
 
@@ -174,64 +136,67 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
         className="flex flex-col items-center gap-8 relative z-10"
         onClick={(e) => e.stopPropagation()}
       >
-
-        {/* ── Waveform Visualizer ── */}
-        <div className="flex flex-col items-center gap-0" style={{ height: 80 }}>
-          {/* mirror top */}
-          <div className="flex items-end justify-center gap-[3px]" style={{ height: 40 }}>
+        {/* ══ WAVEFORM — symmetric, monochrome-ish like ChatGPT/Apple ══ */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", height: 88 }}>
+          {/* Top half */}
+          <div style={{ display: "flex", alignItems: "flex-end", gap: "2.5px", height: 44 }}>
             {bars.map((h, i) => {
-              const barH = Math.max(3, h * 40);
+              const t = i / (NUM_BARS - 1);
+              const distFromCenter = Math.abs(t - 0.5) * 2;
+              const barH = Math.max(2, h * 44);
+              const opacity = isListening ? 0.7 + (1 - distFromCenter) * 0.3 : 0.18;
+              const w = i % 3 === 1 ? 3.5 : 2.5;
               return (
                 <motion.div
-                  key={`top-${i}`}
+                  key={`t${i}`}
                   animate={{ height: barH }}
-                  transition={{ duration: 0.1, ease: "easeOut" }}
+                  transition={{ duration: 0.09, ease: "easeOut" }}
                   style={{
-                    width: i % 4 === 0 ? 4 : i % 2 === 0 ? 3 : 2.5,
+                    width: w,
                     borderRadius: "3px 3px 1px 1px",
                     flexShrink: 0,
                     background: isListening
-                      ? `linear-gradient(to top, ${BAR_COLORS[i]}, ${BAR_COLORS[i]?.replace(/68%|65%|60%/, "88%")})`
-                      : "rgba(255,255,255,0.12)",
-                    boxShadow: isListening && barH > 20
-                      ? `0 0 6px 1px ${BAR_COLORS[i]}60`
-                      : "none",
-                    opacity: isListening ? 1 : 0.35,
-                    transition: "opacity 0.4s ease, box-shadow 0.2s ease",
+                      ? `linear-gradient(to top, rgba(108,87,255,${opacity}), rgba(130,160,255,${opacity * 0.85}))`
+                      : `rgba(255,255,255,${opacity})`,
+                    transition: "background 0.5s ease",
                   }}
                 />
               );
             })}
           </div>
-          {/* center divider line */}
+
+          {/* Center line */}
           <div
             style={{
-              width: "100%",
-              height: 1,
+              width: "100%", height: 1,
               background: isListening
-                ? "linear-gradient(90deg, transparent, rgba(139,92,246,0.5), rgba(6,182,212,0.6), rgba(139,92,246,0.5), transparent)"
+                ? "linear-gradient(90deg, transparent, rgba(108,87,255,0.6), rgba(160,180,255,0.7), rgba(108,87,255,0.6), transparent)"
                 : "rgba(255,255,255,0.06)",
-              transition: "background 0.4s ease",
+              transition: "background 0.5s ease",
             }}
           />
-          {/* mirror bottom */}
-          <div className="flex items-start justify-center gap-[3px]" style={{ height: 39 }}>
+
+          {/* Bottom half (mirror) */}
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "2.5px", height: 43 }}>
             {bars.map((h, i) => {
-              const barH = Math.max(3, h * 36);
+              const t = i / (NUM_BARS - 1);
+              const distFromCenter = Math.abs(t - 0.5) * 2;
+              const barH = Math.max(2, h * 36);
+              const opacity = isListening ? 0.3 + (1 - distFromCenter) * 0.18 : 0.07;
+              const w = i % 3 === 1 ? 3.5 : 2.5;
               return (
                 <motion.div
-                  key={`bot-${i}`}
+                  key={`b${i}`}
                   animate={{ height: barH }}
-                  transition={{ duration: 0.1, ease: "easeOut" }}
+                  transition={{ duration: 0.09, ease: "easeOut" }}
                   style={{
-                    width: i % 4 === 0 ? 4 : i % 2 === 0 ? 3 : 2.5,
+                    width: w,
                     borderRadius: "1px 1px 3px 3px",
                     flexShrink: 0,
                     background: isListening
-                      ? `linear-gradient(to bottom, ${BAR_COLORS[i]}, ${BAR_COLORS[i]?.replace(/68%|65%|60%/, "35%")})`
-                      : "rgba(255,255,255,0.06)",
-                    opacity: isListening ? 0.55 : 0.15,
-                    transition: "opacity 0.4s ease",
+                      ? `rgba(108,87,255,${opacity})`
+                      : `rgba(255,255,255,${opacity})`,
+                    transition: "background 0.5s ease",
                   }}
                 />
               );
@@ -239,234 +204,151 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
           </div>
         </div>
 
-        {/* ── AI Mic Orb ── */}
+        {/* ══ MIC ORB — Gemini-style clean gradient ══ */}
         <motion.div
-          initial={{ scale: 0.4, y: 60, opacity: 0 }}
+          initial={{ scale: 0.4, y: 55, opacity: 0 }}
           animate={{ scale: 1, y: 0, opacity: 1 }}
-          exit={{ scale: 0.5, y: 30, opacity: 0 }}
-          transition={{ type: "spring", stiffness: 190, damping: 20 }}
+          exit={{ scale: 0.5, y: 28, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 200, damping: 22 }}
           className="relative flex items-center justify-center"
-          style={{ width: 156, height: 156 }}
+          style={{ width: 152, height: 152 }}
         >
-          {/* Outermost diffuse aurora glow */}
+          {/* Far glow — soft, single hue */}
           <motion.div
             className="absolute rounded-full pointer-events-none"
             style={{
-              inset: -32,
-              background:
-                "conic-gradient(from 0deg, rgba(99,102,241,0.25), rgba(6,182,212,0.3), rgba(168,85,247,0.25), rgba(236,72,153,0.18), rgba(6,182,212,0.22), rgba(99,102,241,0.25))",
-              filter: "blur(22px)",
-              opacity: isListening ? 0.9 : 0.45,
-              transition: "opacity 0.5s ease",
+              inset: -28,
+              background: "radial-gradient(circle, rgba(108,87,255,0.22) 0%, rgba(80,130,255,0.1) 50%, transparent 75%)",
+              filter: "blur(20px)",
+              opacity: isListening ? 1 : 0.4,
+              transition: "opacity 0.6s ease",
             }}
-            animate={{ rotate: -360 }}
-            transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
+            animate={{ scale: isListening ? [1, 1.06, 1] : 1 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           />
 
-          {/* Secondary focused glow ring */}
+          {/* Slow-rotating gradient halo — like Gemini's outer shimmer */}
           <motion.div
             className="absolute rounded-full pointer-events-none"
             style={{
-              inset: -14,
+              inset: -5,
               background:
-                "conic-gradient(from 90deg, #6366f1, #06b6d4, #a855f7, #ec4899, #22d3ee, #6366f1)",
-              filter: "blur(10px)",
-              opacity: isListening ? 0.55 : 0.2,
-              transition: "opacity 0.5s ease",
+                "conic-gradient(from 0deg, rgba(108,87,255,0.55), rgba(80,140,255,0.35), rgba(160,120,255,0.5), rgba(60,120,255,0.3), rgba(108,87,255,0.55))",
+              filter: "blur(7px)",
+              opacity: isListening ? 0.75 : 0.28,
+              transition: "opacity 0.6s ease",
             }}
             animate={{ rotate: 360 }}
-            transition={{ duration: 4.5, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
           />
 
-          {/* Spinning rainbow border */}
-          <motion.div
-            className="absolute rounded-full"
-            style={{
-              inset: -2.5,
-              background:
-                "conic-gradient(from 0deg, #6366f1, #8b5cf6, #a855f7, #ec4899, #f97316, #eab308, #22c55e, #06b6d4, #3b82f6, #6366f1)",
-              padding: "2.5px",
-            }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-          />
-
-          {/* Inner glass sphere */}
+          {/* Thin crisp border — subtle */}
           <div
-            className="absolute rounded-full overflow-hidden"
+            className="absolute rounded-full pointer-events-none"
             style={{
-              inset: 2.5,
+              inset: -1,
               background:
-                "radial-gradient(circle at 38% 28%, rgba(255,255,255,0.06) 0%, rgba(8,6,24,0.97) 55%, rgba(4,3,16,0.99) 100%)",
-              boxShadow: "inset 0 0 30px rgba(0,0,0,0.8), inset 0 2px 8px rgba(255,255,255,0.04)",
+                "conic-gradient(from 180deg, rgba(140,110,255,0.7), rgba(80,150,255,0.5), rgba(180,140,255,0.65), rgba(90,130,255,0.5), rgba(140,110,255,0.7))",
+              padding: "1.5px",
+              borderRadius: "50%",
+              opacity: isListening ? 0.9 : 0.4,
+              transition: "opacity 0.5s ease",
             }}
           />
 
-          {/* Inner color nebula pulse */}
+          {/* Inner sphere — dark, deep, like ChatGPT's core */}
+          <div
+            className="absolute rounded-full"
+            style={{
+              inset: 1.5,
+              background:
+                "radial-gradient(circle at 40% 32%, rgba(255,255,255,0.055) 0%, rgba(12,11,28,0.98) 52%, rgba(6,5,18,1) 100%)",
+              boxShadow:
+                "inset 0 0 24px rgba(0,0,0,0.7), inset 0 2px 6px rgba(255,255,255,0.03)",
+            }}
+          />
+
+          {/* Inner color breathe — very subtle, single hue */}
           <motion.div
             className="absolute rounded-full"
-            style={{ inset: 2.5 }}
+            style={{ inset: 1.5 }}
             animate={{
               background: [
-                "radial-gradient(circle at 42% 42%, rgba(99,102,241,0.35) 0%, rgba(6,182,212,0.15) 45%, transparent 70%)",
-                "radial-gradient(circle at 58% 38%, rgba(168,85,247,0.35) 0%, rgba(236,72,153,0.15) 45%, transparent 70%)",
-                "radial-gradient(circle at 46% 58%, rgba(6,182,212,0.35) 0%, rgba(99,102,241,0.15) 45%, transparent 70%)",
-                "radial-gradient(circle at 54% 44%, rgba(236,72,153,0.28) 0%, rgba(168,85,247,0.15) 45%, transparent 70%)",
-                "radial-gradient(circle at 42% 42%, rgba(99,102,241,0.35) 0%, rgba(6,182,212,0.15) 45%, transparent 70%)",
+                "radial-gradient(circle at 44% 40%, rgba(108,87,255,0.28) 0%, transparent 60%)",
+                "radial-gradient(circle at 54% 36%, rgba(80,130,255,0.22) 0%, transparent 60%)",
+                "radial-gradient(circle at 46% 52%, rgba(120,100,255,0.28) 0%, transparent 60%)",
+                "radial-gradient(circle at 44% 40%, rgba(108,87,255,0.28) 0%, transparent 60%)",
               ],
             }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
           />
 
-          {/* Orbiting particles */}
-          {PARTICLE_ANGLES.map((angle, idx) => (
-            <motion.div
-              key={idx}
-              className="absolute rounded-full pointer-events-none"
-              style={{
-                width: idx % 2 === 0 ? 4 : 3,
-                height: idx % 2 === 0 ? 4 : 3,
-                background: [
-                  "#818cf8", "#06b6d4", "#c084fc", "#fb7185",
-                  "#34d399", "#fbbf24", "#60a5fa", "#e879f9",
-                ][idx],
-                boxShadow: `0 0 6px 2px ${["#818cf8", "#06b6d4", "#c084fc", "#fb7185", "#34d399", "#fbbf24", "#60a5fa", "#e879f9"][idx]}90`,
-                top: "50%",
-                left: "50%",
-                marginTop: -2,
-                marginLeft: -2,
-                opacity: isListening ? 1 : 0.3,
-                transition: "opacity 0.5s ease",
-              }}
-              animate={{
-                x: [
-                  Math.cos(((angle) * Math.PI) / 180) * 82,
-                  Math.cos(((angle + 45) * Math.PI) / 180) * 86,
-                  Math.cos(((angle + 90) * Math.PI) / 180) * 82,
-                  Math.cos(((angle + 135) * Math.PI) / 180) * 86,
-                  Math.cos(((angle + 180) * Math.PI) / 180) * 82,
-                  Math.cos(((angle + 225) * Math.PI) / 180) * 86,
-                  Math.cos(((angle + 270) * Math.PI) / 180) * 82,
-                  Math.cos(((angle + 315) * Math.PI) / 180) * 86,
-                  Math.cos(((angle + 360) * Math.PI) / 180) * 82,
-                ],
-                y: [
-                  Math.sin(((angle) * Math.PI) / 180) * 82,
-                  Math.sin(((angle + 45) * Math.PI) / 180) * 86,
-                  Math.sin(((angle + 90) * Math.PI) / 180) * 82,
-                  Math.sin(((angle + 135) * Math.PI) / 180) * 86,
-                  Math.sin(((angle + 180) * Math.PI) / 180) * 82,
-                  Math.sin(((angle + 225) * Math.PI) / 180) * 86,
-                  Math.sin(((angle + 270) * Math.PI) / 180) * 82,
-                  Math.sin(((angle + 315) * Math.PI) / 180) * 86,
-                  Math.sin(((angle + 360) * Math.PI) / 180) * 82,
-                ],
-              }}
-              transition={{
-                duration: 6 + idx * 0.5,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
-          ))}
-
-          {/* Mic icon */}
+          {/* Mic icon — clean white, Apple-style */}
           <div className="relative z-10 flex items-center justify-center">
             <motion.div
-              animate={isListening ? { scale: [1, 1.06, 1] } : { scale: 1 }}
-              transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+              animate={isListening ? { scale: [1, 1.05, 1] } : { scale: 1 }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             >
               <Mic
-                size={54}
-                strokeWidth={1.25}
+                size={52}
+                strokeWidth={1.3}
                 style={{
-                  color: "transparent",
-                  stroke: "url(#micGrad)",
-                  filter: "drop-shadow(0 0 12px rgba(139,92,246,0.7)) drop-shadow(0 0 24px rgba(6,182,212,0.4))",
+                  color: "rgba(255,255,255,0.9)",
+                  filter: isListening
+                    ? "drop-shadow(0 0 10px rgba(160,140,255,0.6)) drop-shadow(0 0 22px rgba(108,87,255,0.35))"
+                    : "drop-shadow(0 0 6px rgba(255,255,255,0.15))",
+                  transition: "filter 0.5s ease",
                 }}
               />
-              <svg width="0" height="0" style={{ position: "absolute" }}>
-                <defs>
-                  <linearGradient id="micGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#a5b4fc" />
-                    <stop offset="40%" stopColor="#22d3ee" />
-                    <stop offset="75%" stopColor="#c084fc" />
-                    <stop offset="100%" stopColor="#fb7185" />
-                  </linearGradient>
-                </defs>
-              </svg>
             </motion.div>
           </div>
 
-          {/* Pulse ripple when listening */}
+          {/* Ripple rings when listening — clean, like Apple Siri */}
           {isListening && [0, 1, 2].map((i) => (
             <motion.div
-              key={`ripple-${i}`}
-              className="absolute rounded-full border pointer-events-none"
+              key={`rpl-${i}`}
+              className="absolute rounded-full pointer-events-none"
               style={{
                 inset: 0,
-                borderColor: "rgba(139,92,246,0.35)",
-                borderWidth: 1.5,
+                border: "1px solid rgba(108,87,255,0.4)",
               }}
-              animate={{ scale: [1, 1.6, 1.9], opacity: [0.6, 0.2, 0] }}
-              transition={{
-                duration: 2.2,
-                repeat: Infinity,
-                delay: i * 0.7,
-                ease: "easeOut",
-              }}
+              animate={{ scale: [1, 1.55, 1.9], opacity: [0.5, 0.15, 0] }}
+              transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.75, ease: "easeOut" }}
             />
           ))}
         </motion.div>
 
-        {/* ── Status label ── */}
+        {/* ══ STATUS ══ */}
         <AnimatePresence mode="wait">
           <motion.div
             key={phase}
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            className="flex flex-col items-center gap-1.5"
+            exit={{ opacity: 0, y: -5 }}
+            className="flex flex-col items-center gap-2"
           >
-            <p
-              style={{
-                fontSize: 13,
-                fontWeight: 600,
-                letterSpacing: "0.1em",
-                background: isListening
-                  ? "linear-gradient(90deg, #a5b4fc, #22d3ee, #c084fc)"
-                  : "rgba(255,255,255,0.45)",
-                WebkitBackgroundClip: isListening ? "text" : undefined,
-                WebkitTextFillColor: isListening ? "transparent" : undefined,
-                color: isListening ? undefined : "rgba(255,255,255,0.45)",
-              }}
-            >
-              {phase === "entering"
-                ? "جاري التجهيز..."
-                : phase === "listening"
-                ? "تحدث الآن..."
-                : "جاري الإرسال..."}
+            <p style={{
+              fontSize: 13,
+              fontWeight: 500,
+              letterSpacing: "0.08em",
+              color: isListening ? "rgba(180,170,255,0.9)" : "rgba(255,255,255,0.38)",
+              transition: "color 0.5s ease",
+            }}>
+              {phase === "entering" ? "جاري التجهيز..." : phase === "listening" ? "تحدث الآن..." : "جاري الإرسال..."}
             </p>
 
-            {/* Animated dots when listening */}
+            {/* Minimal equalizer indicator — like Siri's */}
             {isListening && (
-              <div className="flex items-center gap-1">
-                {[0, 1, 2, 3, 4].map((i) => (
+              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                {[0.5, 0.9, 0.6, 1, 0.7, 0.85, 0.5].map((h, i) => (
                   <motion.div
                     key={i}
-                    className="rounded-full"
                     style={{
-                      width: 4,
-                      height: 4,
-                      background: ["#818cf8", "#22d3ee", "#c084fc", "#22d3ee", "#818cf8"][i],
+                      width: 3, borderRadius: 2,
+                      background: "rgba(140,120,255,0.7)",
                     }}
-                    animate={{ scaleY: [0.4, 1.4, 0.4], opacity: [0.4, 1, 0.4] }}
-                    transition={{
-                      duration: 0.9,
-                      repeat: Infinity,
-                      delay: i * 0.12,
-                      ease: "easeInOut",
-                    }}
+                    animate={{ height: [4, Math.round(h * 16), 4] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
                   />
                 ))}
               </div>
@@ -474,59 +356,45 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
           </motion.div>
         </AnimatePresence>
 
-        {/* ── Transcript text ── */}
+        {/* ══ TRANSCRIPT ══ */}
         <AnimatePresence mode="wait">
           {displayText ? (
             <motion.div
               key="transcript"
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.22 }}
-              className="max-w-[280px] text-center px-2"
+              exit={{ opacity: 0, y: -5 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-[280px] text-center"
             >
-              <p
-                style={{
-                  fontSize: 14,
-                  lineHeight: "1.65",
-                  padding: "10px 18px",
-                  borderRadius: 16,
-                  color: finalText ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.5)",
-                  background: finalText
-                    ? "linear-gradient(135deg, rgba(99,102,241,0.18), rgba(6,182,212,0.12))"
-                    : "rgba(255,255,255,0.05)",
-                  border: finalText
-                    ? "1px solid rgba(139,92,246,0.4)"
-                    : "1px solid rgba(255,255,255,0.07)",
-                  fontStyle: finalText ? "normal" : "italic",
-                  boxShadow: finalText
-                    ? "0 0 20px rgba(99,102,241,0.12), inset 0 1px 0 rgba(255,255,255,0.06)"
-                    : "none",
-                }}
-              >
+              <p style={{
+                fontSize: 14,
+                lineHeight: "1.65",
+                padding: "10px 20px",
+                borderRadius: 14,
+                color: finalText ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.45)",
+                background: finalText ? "rgba(108,87,255,0.14)" : "rgba(255,255,255,0.04)",
+                border: `1px solid ${finalText ? "rgba(120,100,255,0.35)" : "rgba(255,255,255,0.07)"}`,
+                fontStyle: finalText ? "normal" : "italic",
+                backdropFilter: "blur(8px)",
+                transition: "all 0.3s ease",
+              }}>
                 {displayText}
               </p>
             </motion.div>
           ) : phase === "listening" ? (
-            <motion.div
-              key="placeholder"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.22)", fontStyle: "italic" }}>
-                ما تقوله سيظهر هنا...
-              </p>
+            <motion.div key="placeholder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <p style={{ fontSize: 12, color: "rgba(255,255,255,0.2)", fontStyle: "italic" }}>ما تقوله سيظهر هنا...</p>
             </motion.div>
           ) : null}
         </AnimatePresence>
 
-        {/* ── Tap to close hint ── */}
+        {/* Hint */}
         <motion.p
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.28 }}
+          animate={{ opacity: 0.22 }}
           transition={{ delay: 1.2 }}
-          style={{ fontSize: 11, color: "rgba(255,255,255,0.28)", letterSpacing: "0.05em" }}
+          style={{ fontSize: 11, color: "rgba(255,255,255,0.22)", letterSpacing: "0.04em" }}
         >
           اضغط للإغلاق
         </motion.p>
