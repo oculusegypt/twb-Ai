@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   CheckCircle2, Lock, Star, Trophy, Flame, ChevronDown, ChevronUp,
   BookOpen, BookText, X, Loader2, Play, Square, CheckSquare,
-  Scale, Sparkles, ChevronRight, Bell, RotateCcw
+  Scale, Sparkles, ChevronRight, Bell, RotateCcw, ArrowLeft, ArrowRight
 } from "lucide-react";
 import { Link } from "wouter";
 import { getSessionId } from "@/lib/session";
@@ -817,13 +817,11 @@ function DayTaskList({
   const [optimistic, setOptimistic] = useState<boolean[]>(
     day.taskChecks?.length ? day.taskChecks : Array(day.tasks.length).fill(false)
   );
-  const [showCongrats, setShowCongrats] = useState(false);
   const calledDone = useRef(false);
 
   useEffect(() => {
     setOptimistic(day.taskChecks?.length ? day.taskChecks : Array(day.tasks.length).fill(false));
     calledDone.current = false;
-    setShowCongrats(false);
   }, [day.taskChecks, day.day]);
 
   const toggleMutation = useMutation({
@@ -839,11 +837,7 @@ function DayTaskList({
       queryClient.invalidateQueries({ queryKey: ["journey30", sessionId] });
       if (data.allDone && !calledDone.current) {
         calledDone.current = true;
-        setShowCongrats(true);
-        setTimeout(() => {
-          setShowCongrats(false);
-          onAllDone();
-        }, 2800);
+        onAllDone();
       }
     },
   });
@@ -855,11 +849,21 @@ function DayTaskList({
     toggleMutation.mutate({ taskIndex: i, completed: next[i]! });
   };
 
-  const allDoneOptimistic = optimistic.every(Boolean);
+  const doneCount = optimistic.filter(Boolean).length;
 
   return (
     <div>
-      <h4 className="text-xs font-bold text-muted-foreground mb-2">مهام اليوم:</h4>
+      <div className="flex items-center justify-between mb-3 px-1">
+        <span className="text-xs font-bold text-muted-foreground">مهام اليوم {day.day}</span>
+        <motion.span
+          key={doneCount}
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          className="text-xs font-black text-primary"
+        >
+          {doneCount}/{day.tasks.length}
+        </motion.span>
+      </div>
       <div className="flex flex-col gap-2.5">
         {day.tasks.map((task, i) => {
           const surahsForTask = extractSurahsFromTask(task);
@@ -867,18 +871,49 @@ function DayTaskList({
           const isPrayer = isPrayerTask(task);
           const isPages = isQuranPagesTask(task);
           return (
-            <div key={i} className={`rounded-xl border transition-all ${optimistic[i] ? "bg-primary/5 border-primary/15" : "bg-muted/20 border-border/50"}`}>
-              <div className="flex items-start gap-2.5 p-2.5">
-                <button onClick={() => toggle(i)} className="shrink-0 mt-0.5" disabled={day.completed}>
-                  {optimistic[i] ? <CheckSquare size={18} className="text-primary" /> : <Square size={18} className="text-muted-foreground/50" />}
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, x: 12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.04 * i, duration: 0.3 }}
+              className={`rounded-2xl border transition-all ${
+                optimistic[i]
+                  ? "bg-primary/5 border-primary/20 shadow-sm"
+                  : "bg-muted/20 border-border/50"
+              }`}
+            >
+              <div className="flex items-start gap-3 p-3.5">
+                <button
+                  onClick={() => toggle(i)}
+                  className="shrink-0 mt-0.5"
+                  disabled={day.completed}
+                >
+                  <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+                    optimistic[i] ? "bg-primary border-primary shadow-md shadow-primary/25" : "border-muted-foreground/25"
+                  }`}>
+                    <AnimatePresence>
+                      {optimistic[i] && (
+                        <motion.div
+                          initial={{ scale: 0, rotate: -45 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          exit={{ scale: 0 }}
+                          transition={{ duration: 0.18, type: "spring", stiffness: 400, damping: 18 }}
+                        >
+                          <CheckCircle2 size={13} strokeWidth={3} className="text-primary-foreground" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </button>
-                <span className={`text-sm flex-1 leading-relaxed ${optimistic[i] ? "line-through text-muted-foreground" : ""}`}>
+                <span className={`text-sm flex-1 leading-relaxed font-medium ${
+                  optimistic[i] ? "line-through text-muted-foreground" : "text-foreground"
+                }`}>
                   {task}
                 </span>
               </div>
               {/* Task-specific interactive widgets */}
               {!day.completed && (
-                <div className="px-2.5 pb-2.5 flex flex-col gap-1.5">
+                <div className="px-3.5 pb-3.5 flex flex-col gap-1.5">
                   {isCounter && (
                     <IstighfarCounter
                       count={parseIstighfarCount(task)}
@@ -898,25 +933,10 @@ function DayTaskList({
                   )}
                 </div>
               )}
-            </div>
+            </motion.div>
           );
         })}
       </div>
-
-      {/* Inline completion congratulations — رسالة مؤقتة تختفي */}
-      <AnimatePresence>
-        {(showCongrats || (allDoneOptimistic && !day.completed && !showCongrats && calledDone.current)) && (
-          <motion.div
-            initial={{ opacity: 0, y: 8, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="mt-4 bg-muted/40 border border-border rounded-2xl p-3 text-center"
-          >
-            <p className="text-sm font-bold text-muted-foreground">أُنجز بحمد الله ✓</p>
-            <p className="text-xs text-muted-foreground/70 mt-0.5">سيُفتح اليوم التالي بعد لحظات</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -1134,9 +1154,8 @@ function RestoreCodePanel({ sessionId, onClose }: { sessionId: string; onClose: 
 export default function Journey30() {
   const sessionId = getSessionId();
   const queryClient = useQueryClient();
-  const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [showRestoreCode, setShowRestoreCode] = useState(false);
-  const [justCompleted, setJustCompleted] = useState<number | null>(null);
+  const [localAllDone, setLocalAllDone] = useState(false);
 
   const { data, isLoading } = useQuery<JourneyData>({
     queryKey: ["journey30", sessionId],
@@ -1158,6 +1177,7 @@ export default function Journey30() {
       return res.json();
     },
     onSuccess: () => {
+      setLocalAllDone(false);
       queryClient.invalidateQueries({ queryKey: ["journey30", sessionId] });
     },
   });
@@ -1170,195 +1190,379 @@ export default function Journey30() {
     );
   }
 
+  const currentDay = data.days.find((d) => d.isCurrent);
+  const completedDays = [...data.days.filter((d) => d.completed)].reverse();
   const progress = (data.completedCount / 30) * 100;
+  const tasksAllDone = localAllDone || ((currentDay?.taskChecks?.length ?? 0) > 0 && (currentDay?.taskChecks?.every(Boolean) ?? false));
+  const nextDayNum = (currentDay?.day ?? 0) + 1;
+
+  // ── Completed journey ──────────────────────────────────────────────────────
+  if (data.completedCount === 30) {
+    return (
+      <div className="flex-1 flex flex-col bg-background" dir="rtl">
+        <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border/40">
+          <div className="flex items-center h-14 px-4">
+            <Link href="/" className="w-10 h-10 rounded-xl hover:bg-muted/70 active:scale-95 transition-all text-muted-foreground flex items-center justify-center">
+              <ArrowRight size={20} />
+            </Link>
+            <div className="flex-1 text-center">
+              <p className="font-bold text-sm">رحلة ٣٠ يوماً</p>
+              <p className="text-[10px] text-muted-foreground mt-0.5">مكتملة</p>
+            </div>
+            <div className="w-10" />
+          </div>
+          <div className="h-1 bg-primary" />
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6 text-center">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 200, damping: 15 }}>
+            <Trophy size={72} className="text-amber-500 mx-auto" />
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+            <h1 className="text-2xl font-black mb-2">تهانينا! أتممت الرحلة</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              أتممت رحلة الثلاثين يوماً — سجّل الله لك هذا الجهد وقبل منك التوبة إن شاء الله
+            </p>
+            <div className="flex justify-center gap-1 mt-4">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <motion.div key={i} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.5 + i * 0.1, type: "spring" }}>
+                  <Star size={20} className="text-amber-400 fill-amber-400" />
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }} className="w-full bg-muted/40 rounded-2xl p-4 border border-border">
+            <p className="text-xs font-bold text-muted-foreground">٣٠ يوماً · {data.streakDays} يوم متتالٍ</p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col flex-1 pb-8 gap-5" dir="rtl">
-      <PageHeader
-        title="رحلة ٣٠ يوماً"
-        subtitle="طريق التوبة خطوة بخطوة"
-        icon={<Flame size={16} />}
-      />
+    <div className="flex-1 flex flex-col bg-background" dir="rtl">
 
-      <div className="px-5 flex flex-col gap-5 pt-2">
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <button
-          onClick={() => setShowRestoreCode(!showRestoreCode)}
-          className="mt-2 text-[11px] text-muted-foreground/60 hover:text-muted-foreground underline underline-offset-2 transition-colors"
-        >
-          استعادة رحلتي من جهاز آخر
-        </button>
-      </motion.div>
-
-      <AnimatePresence>
-        {showRestoreCode && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
+      {/* ── Sticky header ─────────────────────────────────────────────────────── */}
+      <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border/40">
+        <div className="flex items-center h-14 px-2 relative">
+          <Link
+            href="/"
+            className="w-10 h-10 rounded-xl hover:bg-muted/70 active:scale-95 transition-all text-muted-foreground flex items-center justify-center"
           >
-            <RestoreCodePanel sessionId={sessionId} onClose={() => setShowRestoreCode(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-2xl p-5 border border-primary/20"
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Flame className="text-orange-500" size={22} />
-            <span className="font-bold text-lg">{data.completedCount} / 30 يوم</span>
+            <ArrowRight size={20} />
+          </Link>
+          <div className="absolute inset-x-0 flex flex-col items-center pointer-events-none px-14">
+            <p className="font-bold text-sm text-foreground">رحلة ٣٠ يوماً</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {currentDay ? `اليوم ${currentDay.day} من ٣٠` : "طريق التوبة"}
+            </p>
           </div>
-          <div className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/30 px-3 py-1 rounded-full">
-            <Star size={14} className="text-amber-500 fill-amber-500" />
+          <button
+            onClick={() => setShowRestoreCode((v) => !v)}
+            className="mr-auto text-[11px] text-muted-foreground hover:text-primary transition-colors px-2 py-1 rounded-lg"
+          >
+            استعادة
+          </button>
+        </div>
+        {/* Overall progress bar */}
+        <div className="h-1 bg-muted/40">
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
+        </div>
+      </div>
+
+      {/* ── Scrollable content ──────────────────────────────────────────────── */}
+      <div className="flex-1 px-4 pt-5 pb-36 overflow-y-auto flex flex-col gap-5">
+
+        {/* Restore code panel */}
+        <AnimatePresence>
+          {showRestoreCode && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <RestoreCodePanel sessionId={sessionId} onClose={() => setShowRestoreCode(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Stats row */}
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-1.5 bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-full">
+            <Flame size={13} className="text-orange-500" />
             <span className="text-xs font-bold text-amber-700 dark:text-amber-400">
-              يوم {data.currentDay}
+              {data.streakDays} يوم متتالٍ
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1.5 rounded-full">
+            <Star size={13} className="text-primary fill-primary" />
+            <span className="text-xs font-bold text-primary">
+              {data.completedCount} / 30 مكتمل
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-muted/50 px-3 py-1.5 rounded-full mr-auto">
+            <span className="text-xs text-muted-foreground font-bold">
+              {30 - data.completedCount} يوم متبقٍ
             </span>
           </div>
         </div>
-        <div className="w-full bg-primary/10 rounded-full h-3 overflow-hidden">
+
+        {/* Sin integration panel */}
+        <SinIntegrationPanel />
+
+        {/* ── Current day hero ─────────────────────────────────────────────── */}
+        {currentDay && (
           <motion.div
-            className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          />
-        </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          {data.completedCount === 30
-            ? "🎉 أكملت رحلة الـ 30 يوم — بارك الله فيك!"
-            : `${30 - data.completedCount} يوم متبقٍ للإنجاز`}
-        </p>
-      </motion.div>
-
-      {data.completedCount === 30 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-amber-500/20 to-yellow-500/10 rounded-2xl p-5 border border-amber-400/30 text-center"
-        >
-          <Trophy size={48} className="text-amber-500 mx-auto mb-3" />
-          <h2 className="text-xl font-bold mb-1">تهانينا! أتممت الرحلة 🎉</h2>
-          <p className="text-sm text-muted-foreground">
-            أتممت رحلة الثلاثين يوماً — سجّل الله لك هذا الجهد وقبل منك التوبة إن شاء الله
-          </p>
-        </motion.div>
-      )}
-
-      {/* Sin-specific tasks panel */}
-      <SinIntegrationPanel />
-
-      <div className="flex flex-col gap-3">
-        {data.days.map((day, idx) => (
-          <motion.div
-            key={day.day}
-            initial={{ opacity: 0, y: 10 }}
+            key={currentDay.day}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(idx * 0.02, 0.3) }}
+            transition={{ duration: 0.4 }}
+            className="rounded-3xl overflow-hidden relative"
+            style={{
+              background: tasksAllDone
+                ? "linear-gradient(135deg, rgba(5,150,105,0.15) 0%, rgba(4,120,87,0.08) 100%)"
+                : "linear-gradient(135deg, rgba(var(--primary-rgb, 14,165,233), 0.12) 0%, rgba(var(--primary-rgb, 14,165,233), 0.05) 40%, rgba(245,158,11,0.08) 100%)",
+              border: tasksAllDone
+                ? "1px solid rgba(5,150,105,0.25)"
+                : "1px solid color-mix(in srgb, var(--primary) 25%, transparent)",
+            }}
           >
+            {/* Decorative dots */}
             <div
-              className={`rounded-2xl border transition-all ${
-                justCompleted === day.day
-                  ? "bg-primary/10 border-primary/40 shadow-lg shadow-primary/15"
-                  : day.completed
-                  ? "bg-primary/5 border-primary/20 opacity-80"
-                  : day.isCurrent
-                  ? "bg-card border-primary/40 shadow-lg shadow-primary/10"
-                  : day.isLocked
-                  ? "bg-muted/30 border-border opacity-50"
-                  : "bg-card border-border"
-              }`}
-            >
-              <button
-                className="w-full flex items-center gap-3 p-4 text-right"
-                onClick={() => !day.isLocked && setExpandedDay(expandedDay === day.day ? null : day.day)}
-                disabled={day.isLocked}
-              >
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${
-                    day.completed
-                      ? "bg-primary text-primary-foreground"
-                      : day.isCurrent
-                      ? "bg-primary/20 text-primary border-2 border-primary"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {day.completed ? (
-                    <CheckCircle2 size={20} />
-                  ) : day.isLocked ? (
-                    <Lock size={16} />
-                  ) : (
-                    day.day
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm">{day.title}</span>
-                    {day.isCurrent && (
-                      <span className="bg-primary text-primary-foreground text-[10px] px-2 py-0.5 rounded-full font-bold">
-                        اليوم
-                      </span>
+              className="absolute inset-0 opacity-[0.05]"
+              style={{
+                backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)",
+                backgroundSize: "24px 24px",
+              }}
+            />
+
+            <div className="relative p-5">
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    {tasksAllDone ? (
+                      <CheckCircle2 size={13} className="text-emerald-500" />
+                    ) : (
+                      <Flame size={13} className="text-primary" />
                     )}
+                    <span className={`text-[11px] font-bold tracking-widest uppercase ${tasksAllDone ? "text-emerald-600 dark:text-emerald-400" : "text-primary"}`}>
+                      {tasksAllDone ? "أحسنت! اكتمل اليوم" : `اليوم ${currentDay.day} من ٣٠`}
+                    </span>
                   </div>
-                  <span className="text-xs text-muted-foreground">اليوم {day.day}</span>
+                  <h1 className="text-2xl font-black text-foreground leading-tight">
+                    {currentDay.title}
+                  </h1>
                 </div>
-                {!day.isLocked && (
-                  expandedDay === day.day ? (
-                    <ChevronUp size={16} className="text-muted-foreground" />
-                  ) : (
-                    <ChevronDown size={16} className="text-muted-foreground" />
-                  )
-                )}
-              </button>
 
-              <AnimatePresence>
-                {expandedDay === day.day && !day.isLocked && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="px-4 pb-4 flex flex-col gap-4">
-                      <div className="bg-primary/5 rounded-xl p-3 border border-primary/10">
-                        <p className="text-sm font-medium text-center text-primary leading-relaxed">
-                          {day.verse}
-                        </p>
-                      </div>
+                {/* Progress circle */}
+                <div className="shrink-0 relative w-16 h-16 mr-3">
+                  <svg viewBox="0 0 64 64" className="w-full h-full -rotate-90">
+                    <circle cx="32" cy="32" r="27" fill="none" stroke="currentColor" strokeWidth="4" className="text-muted/30" />
+                    <motion.circle
+                      cx="32" cy="32" r="27"
+                      fill="none"
+                      stroke={tasksAllDone ? "#10b981" : "var(--primary)"}
+                      strokeWidth="4"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 27}`}
+                      animate={{ strokeDashoffset: (1 - progress / 100) * 2 * Math.PI * 27 }}
+                      transition={{ duration: 0.8 }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className={`text-xs font-black ${tasksAllDone ? "text-emerald-500" : "text-primary"}`}>
+                      {Math.round(progress)}%
+                    </span>
+                  </div>
+                </div>
+              </div>
 
-                      <DayTaskList
-                        day={day}
-                        sessionId={sessionId}
-                        onAllDone={() => {
-                          completeMutation.mutate(day.day);
-                          setJustCompleted(day.day);
-                          setExpandedDay(null);
-                          setTimeout(() => setJustCompleted(null), 4000);
-                        }}
-                      />
-
-                      {day.completed && (
-                        <div className="flex items-center justify-center gap-2 py-3 px-4 bg-gradient-to-r from-primary/20 to-primary/10 border border-primary/30 rounded-2xl text-primary">
-                          <span className="text-lg">🎉</span>
-                          <span className="font-bold text-sm">أحسنت! اليوم {day.day} مكتمل</span>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Verse */}
+              <div
+                className="rounded-2xl px-4 py-3 border"
+                style={{
+                  background: "color-mix(in srgb, var(--background) 50%, transparent)",
+                  borderColor: "color-mix(in srgb, var(--border) 60%, transparent)",
+                }}
+              >
+                <p
+                  className="text-sm leading-relaxed text-center text-primary"
+                  style={{ fontFamily: "'Amiri Quran', 'Amiri', serif" }}
+                >
+                  {currentDay.verse}
+                </p>
+              </div>
             </div>
           </motion.div>
-        ))}
+        )}
+
+        {/* ── Task section ─────────────────────────────────────────────────── */}
+        {currentDay && !tasksAllDone && (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-border/60" />
+              <span className="text-[10px] font-bold text-muted-foreground tracking-widest px-2">مهام اليوم {currentDay.day}</span>
+              <div className="h-px flex-1 bg-border/60" />
+            </div>
+
+            <DayTaskList
+              day={currentDay}
+              sessionId={sessionId}
+              onAllDone={() => setLocalAllDone(true)}
+            />
+          </>
+        )}
+
+        {/* ── Success state when all tasks done ────────────────────────────── */}
+        <AnimatePresence>
+          {tasksAllDone && currentDay && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 18 }}
+              className="rounded-2xl px-5 py-6 text-center border border-emerald-400/30"
+              style={{
+                background: "linear-gradient(135deg, rgba(5,150,105,0.08), rgba(4,120,87,0.04))",
+              }}
+            >
+              <div className="flex justify-center gap-1 mb-3">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: i * 0.12, type: "spring" }}
+                  >
+                    <Star size={20} className="text-amber-400 fill-amber-400" />
+                  </motion.div>
+                ))}
+              </div>
+              <p className="text-[14px] font-bold text-emerald-700 dark:text-emerald-400 mb-1.5">
+                أحسنت! اكتملت مهام اليوم {currentDay.day}
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed mb-2">
+                «إِنَّ اللَّهَ يُحِبُّ التَّوَّابِينَ وَيُحِبُّ الْمُتَطَهِّرِينَ» — البقرة ٢٢٢
+              </p>
+              {nextDayNum <= 30 && (
+                <p className="text-[11px] text-muted-foreground/70">
+                  اضغط على زر الانتقال لتبدأ اليوم {nextDayNum}
+                </p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Completed days history ────────────────────────────────────────── */}
+        {completedDays.length > 0 && (
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px flex-1 bg-border/60" />
+              <span className="text-[10px] font-bold text-muted-foreground tracking-widest px-2">الأيام المكتملة</span>
+              <div className="h-px flex-1 bg-border/60" />
+            </div>
+            <div className="flex flex-col gap-2">
+              {completedDays.map((day, idx) => (
+                <motion.div
+                  key={day.day}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.03 }}
+                  className="flex items-center gap-3 px-3.5 py-3 rounded-2xl bg-primary/5 border border-primary/15"
+                >
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+                    <CheckCircle2 size={16} className="text-primary-foreground" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold truncate">{day.title}</p>
+                    <p className="text-[10px] text-muted-foreground">اليوم {day.day}</p>
+                  </div>
+                  <Trophy size={13} className="text-amber-400 shrink-0" />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* ── Floating "Next Day" button ────────────────────────────────────────── */}
+      <div
+        className="fixed inset-x-0 z-[55] px-4 max-w-md mx-auto"
+        style={{ bottom: "108px" }}
+      >
+        <AnimatePresence mode="wait">
+          {tasksAllDone && (
+            <motion.div
+              initial={{ opacity: 0, y: 12, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 12, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+            >
+              <div
+                className="p-2.5 rounded-2xl border border-border/60 shadow-2xl"
+                style={{
+                  background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.18)",
+                }}
+              >
+                {nextDayNum <= 30 ? (
+                  <motion.button
+                    onClick={() => currentDay && completeMutation.mutate(currentDay.day)}
+                    disabled={completeMutation.isPending}
+                    whileTap={{ scale: 0.97 }}
+                    animate={{
+                      boxShadow: [
+                        "0 4px 20px rgba(5,150,105,0.40)",
+                        "0 6px 28px rgba(5,150,105,0.65)",
+                        "0 4px 20px rgba(5,150,105,0.40)",
+                      ],
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="w-full h-[50px] rounded-xl font-bold text-[15px] flex items-center justify-center gap-2.5 disabled:opacity-60"
+                    style={{
+                      background: "linear-gradient(to left, #059669, #047857)",
+                      color: "#fff",
+                    }}
+                  >
+                    {completeMutation.isPending ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <span>انطلق لليوم {nextDayNum}</span>
+                        <ArrowLeft size={17} className="text-white" />
+                      </>
+                    )}
+                  </motion.button>
+                ) : (
+                  <motion.button
+                    onClick={() => currentDay && completeMutation.mutate(currentDay.day)}
+                    disabled={completeMutation.isPending}
+                    whileTap={{ scale: 0.97 }}
+                    className="w-full h-[50px] rounded-xl font-bold text-[15px] flex items-center justify-center gap-2.5 disabled:opacity-60"
+                    style={{
+                      background: "linear-gradient(to left, #d97706, #b45309)",
+                      color: "#fff",
+                    }}
+                  >
+                    {completeMutation.isPending ? (
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Trophy size={17} className="text-white" />
+                        <span>أتممت رحلتك! احصل على الشهادة</span>
+                      </>
+                    )}
+                  </motion.button>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
