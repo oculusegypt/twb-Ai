@@ -1871,6 +1871,127 @@ function SortableUnifiedItem({ id, editMode }: { id: SectionId; editMode: boolea
   );
 }
 
+// ─── Quick Access Bar ─────────────────────────────────────────────────────────
+
+const QUICK_ACCESS = [
+  { href: "/quran",             emoji: "📖", label: "القرآن",       color: "#c8a84b" },
+  { href: "/prayer-times",      emoji: "🕌", label: "الصلاة",       color: "#6366f1" },
+  { href: "/dhikr",             emoji: "📿", label: "مسبحة",        color: "#f59e0b" },
+  { href: "/rajaa",             emoji: "💚", label: "مكتبة الرجاء", color: "#059669" },
+  { href: "/islamic-programs",  emoji: "🎓", label: "برامج",        color: "#10b981" },
+  { href: "/dhikr-rooms",       emoji: "👥", label: "غرف الذكر",    color: "#14b8a6" },
+  { href: "/journal",           emoji: "✍️",  label: "يومياتي",      color: "#8b5cf6" },
+  { href: "/adhkar",            emoji: "🤲", label: "الأذكار",      color: "#ec4899" },
+];
+
+function QuickAccessBar() {
+  return (
+    <div
+      className="flex gap-2 overflow-x-auto py-0.5"
+      style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}
+    >
+      {QUICK_ACCESS.map((item) => (
+        <Link key={item.href} href={item.href}>
+          <motion.div
+            whileTap={{ scale: 0.90 }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-2xl whitespace-nowrap shrink-0 cursor-pointer"
+            style={{
+              background: `${item.color}16`,
+              border: `1px solid ${item.color}2e`,
+            }}
+          >
+            <span style={{ fontSize: 13 }}>{item.emoji}</span>
+            <span className="text-[11px] font-bold" style={{ color: item.color }}>
+              {item.label}
+            </span>
+          </motion.div>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+// ─── Daily Focus Card ─────────────────────────────────────────────────────────
+
+const DAILY_TASKS = [
+  { icon: "📖", task: "اقرأ صفحتين من القرآن الكريم بتدبر وخشوع",          category: "قرآن",    color: "#c8a84b" },
+  { icon: "🌙", task: "صلِّ ركعتي الضحى قبل الظهر واسأل الله حاجتك",        category: "صلاة",    color: "#6366f1" },
+  { icon: "📿", task: "سبّح الله ١٠٠ مرة بالمسبحة مع التركيز",              category: "ذكر",     color: "#f59e0b" },
+  { icon: "✍️",  task: "اكتب في يوميات توبتك تأملاً أو دعاءً صادقاً",         category: "يوميات",  color: "#8b5cf6" },
+  { icon: "🤝", task: "ادعُ لأخٍ مجهول في الصديق السري بظهر الغيب",         category: "دعاء",    color: "#ec4899" },
+  { icon: "💪", task: "أتمم مهمة واحدة من مهام هادي اليوم بنية صادقة",       category: "عمل",     color: "#10b981" },
+  { icon: "🌟", task: "راجع تقدمك في رحلة الثلاثين يوماً واحتفل بيوم جديد", category: "تقدم",    color: "#0ea5e9" },
+];
+
+function DailyFocusCard() {
+  const todayTask = DAILY_TASKS[new Date().getDay() % DAILY_TASKS.length]!;
+  const todayKey = `focus_done_${new Date().toDateString()}`;
+  const [done, setDone] = useState<boolean>(() => {
+    try { return localStorage.getItem(todayKey) === "1"; } catch { return false; }
+  });
+
+  const markDone = () => {
+    setDone(true);
+    try { localStorage.setItem(todayKey, "1"); } catch {}
+    if (navigator.vibrate) navigator.vibrate([12, 8, 12]);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+      className="rounded-[20px] p-4"
+      style={{
+        background: `linear-gradient(135deg, ${todayTask.color}12 0%, ${todayTask.color}05 100%)`,
+        border: `1px solid ${todayTask.color}26`,
+      }}
+    >
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-2">
+          <span style={{ fontSize: 18 }}>{todayTask.icon}</span>
+          <div>
+            <p className="text-[10px] font-extrabold tracking-wide" style={{ color: todayTask.color }}>
+              تركيزك اليوم
+            </p>
+            <p className="text-[9px] text-muted-foreground">{todayTask.category}</p>
+          </div>
+        </div>
+        {done && (
+          <motion.div
+            initial={{ scale: 0 }} animate={{ scale: 1 }}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full"
+            style={{ background: `${todayTask.color}20` }}
+          >
+            <CheckCircle2 size={11} style={{ color: todayTask.color }} />
+            <span className="text-[10px] font-bold" style={{ color: todayTask.color }}>أحسنت!</span>
+          </motion.div>
+        )}
+      </div>
+
+      <p className="text-[13px] font-semibold leading-relaxed text-right mb-3">{todayTask.task}</p>
+
+      {!done ? (
+        <button
+          onClick={markDone}
+          className="w-full py-2 rounded-xl text-[12px] font-bold transition-all active:scale-95"
+          style={{
+            background: `${todayTask.color}1a`,
+            color: todayTask.color,
+            border: `1px solid ${todayTask.color}30`,
+          }}
+        >
+          ✓ أتممت هذه المهمة
+        </button>
+      ) : (
+        <p className="text-center text-[11px] text-muted-foreground">
+          بارك الله فيك 🌟 واصل الاستمرارية كل يوم
+        </p>
+      )}
+    </motion.div>
+  );
+}
+
 // ─── Home ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
@@ -1934,11 +2055,17 @@ export default function Home() {
       </div>
       <div className="px-5 relative z-10 flex flex-col gap-4 pl-[7px] pr-[7px] mt-[-88px]">
 
+        {/* ── Quick Access Bar ── */}
+        <QuickAccessBar />
+
         <EidEntryCard />
         <div className="hidden"><DynamicBanner /></div>
 
         {/* ── Mood Selector ── */}
         <MoodSelector />
+
+        {/* ── Daily Focus Card ── */}
+        <DailyFocusCard />
 
         {/* Edit mode banner */}
         <AnimatePresence>

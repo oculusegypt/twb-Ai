@@ -1,13 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Search, ChevronDown, ChevronUp,
   Star, Sparkles, Zap, BookMarked, Brain,
   Check, Bookmark, Share2,
-  Sun, Flame, Award
+  Sun, Flame, Play, Pause, Loader2, X, Volume2,
 } from "lucide-react";
 import { Link } from "wouter";
 import { PageHeader } from "@/components/PageHeader";
+import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
+
+// ─── Audio helpers (same pattern as مكتبة الرجاء) ──────────────────────────
+
+const SURAH_LENGTHS = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+
+function toGlobalAyah(surah: number, ayah: number): number {
+  let count = 0;
+  for (let i = 0; i < surah - 1; i++) count += SURAH_LENGTHS[i] ?? 0;
+  return count + ayah;
+}
+
+function reciterAudioUrl(surah: number, ayah: number, reciterId: string): string {
+  return `/api/audio-proxy/quran/${reciterId}/${toGlobalAyah(surah, ayah)}.mp3`;
+}
+
+let activeQuranAudio: { element: HTMLAudioElement; stop: () => void } | null = null;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -52,34 +69,120 @@ interface DailyAyah {
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const SURAHS: Surah[] = [
-  { id: 1,  name: "الفاتحة",      nameEn: "Al-Fatiha",     revelation: "مكية",  ayahCount: 7,   juz: 1,  meaning: "الفاتحة" },
-  { id: 2,  name: "البقرة",       nameEn: "Al-Baqara",     revelation: "مدنية", ayahCount: 286, juz: 1,  meaning: "البقرة" },
-  { id: 3,  name: "آل عمران",     nameEn: "Aal Imran",     revelation: "مدنية", ayahCount: 200, juz: 3,  meaning: "آل عمران" },
-  { id: 4,  name: "النساء",       nameEn: "An-Nisa",       revelation: "مدنية", ayahCount: 176, juz: 4,  meaning: "النساء" },
-  { id: 5,  name: "المائدة",      nameEn: "Al-Maida",      revelation: "مدنية", ayahCount: 120, juz: 6,  meaning: "المائدة" },
-  { id: 6,  name: "الأنعام",      nameEn: "Al-Anam",       revelation: "مكية",  ayahCount: 165, juz: 7,  meaning: "الأنعام" },
-  { id: 7,  name: "الأعراف",      nameEn: "Al-Araf",       revelation: "مكية",  ayahCount: 206, juz: 8,  meaning: "الأعراف" },
-  { id: 8,  name: "الأنفال",      nameEn: "Al-Anfal",      revelation: "مدنية", ayahCount: 75,  juz: 9,  meaning: "الأنفال" },
-  { id: 9,  name: "التوبة",       nameEn: "At-Tawba",      revelation: "مدنية", ayahCount: 129, juz: 10, meaning: "التوبة" },
-  { id: 10, name: "يونس",         nameEn: "Yunus",          revelation: "مكية",  ayahCount: 109, juz: 11, meaning: "نبي الله يونس" },
-  { id: 11, name: "هود",          nameEn: "Hud",            revelation: "مكية",  ayahCount: 123, juz: 11, meaning: "نبي الله هود" },
-  { id: 12, name: "يوسف",         nameEn: "Yusuf",          revelation: "مكية",  ayahCount: 111, juz: 12, meaning: "نبي الله يوسف" },
-  { id: 13, name: "الرعد",        nameEn: "Ar-Rad",         revelation: "مدنية", ayahCount: 43,  juz: 13, meaning: "الرعد" },
-  { id: 14, name: "إبراهيم",      nameEn: "Ibrahim",        revelation: "مكية",  ayahCount: 52,  juz: 13, meaning: "نبي الله إبراهيم" },
-  { id: 15, name: "الحجر",        nameEn: "Al-Hijr",        revelation: "مكية",  ayahCount: 99,  juz: 14, meaning: "الحجر" },
-  { id: 16, name: "النحل",        nameEn: "An-Nahl",        revelation: "مكية",  ayahCount: 128, juz: 14, meaning: "النحل" },
-  { id: 17, name: "الإسراء",      nameEn: "Al-Isra",        revelation: "مكية",  ayahCount: 111, juz: 15, meaning: "الإسراء" },
-  { id: 18, name: "الكهف",        nameEn: "Al-Kahf",        revelation: "مكية",  ayahCount: 110, juz: 15, meaning: "الكهف" },
-  { id: 19, name: "مريم",         nameEn: "Maryam",         revelation: "مكية",  ayahCount: 98,  juz: 16, meaning: "مريم" },
-  { id: 20, name: "طه",           nameEn: "Ta-Ha",          revelation: "مكية",  ayahCount: 135, juz: 16, meaning: "طه" },
-  { id: 36, name: "يس",           nameEn: "Ya-Sin",         revelation: "مكية",  ayahCount: 83,  juz: 22, meaning: "قلب القرآن" },
-  { id: 55, name: "الرحمن",       nameEn: "Ar-Rahman",      revelation: "مدنية", ayahCount: 78,  juz: 27, meaning: "عروس القرآن" },
-  { id: 56, name: "الواقعة",      nameEn: "Al-Waqia",       revelation: "مكية",  ayahCount: 96,  juz: 27, meaning: "الواقعة" },
-  { id: 67, name: "الملك",        nameEn: "Al-Mulk",        revelation: "مكية",  ayahCount: 30,  juz: 29, meaning: "المانعة" },
-  { id: 78, name: "النبأ",        nameEn: "An-Naba",        revelation: "مكية",  ayahCount: 40,  juz: 30, meaning: "النبأ العظيم" },
-  { id: 112, name: "الإخلاص",     nameEn: "Al-Ikhlas",      revelation: "مكية",  ayahCount: 4,   juz: 30, meaning: "ثلث القرآن" },
-  { id: 113, name: "الفلق",       nameEn: "Al-Falaq",       revelation: "مكية",  ayahCount: 5,   juz: 30, meaning: "المعوذتان" },
-  { id: 114, name: "الناس",       nameEn: "An-Nas",         revelation: "مكية",  ayahCount: 6,   juz: 30, meaning: "المعوذتان" },
+  { id: 1,   name: "الفاتحة",    nameEn: "Al-Fatiha",      revelation: "مكية",  ayahCount: 7,   juz: 1,  meaning: "الفاتحة" },
+  { id: 2,   name: "البقرة",     nameEn: "Al-Baqara",      revelation: "مدنية", ayahCount: 286, juz: 1,  meaning: "البقرة" },
+  { id: 3,   name: "آل عمران",   nameEn: "Aal Imran",      revelation: "مدنية", ayahCount: 200, juz: 3,  meaning: "آل عمران" },
+  { id: 4,   name: "النساء",     nameEn: "An-Nisa",        revelation: "مدنية", ayahCount: 176, juz: 4,  meaning: "النساء" },
+  { id: 5,   name: "المائدة",    nameEn: "Al-Maida",       revelation: "مدنية", ayahCount: 120, juz: 6,  meaning: "المائدة" },
+  { id: 6,   name: "الأنعام",    nameEn: "Al-Anam",        revelation: "مكية",  ayahCount: 165, juz: 7,  meaning: "الأنعام" },
+  { id: 7,   name: "الأعراف",    nameEn: "Al-Araf",        revelation: "مكية",  ayahCount: 206, juz: 8,  meaning: "الأعراف" },
+  { id: 8,   name: "الأنفال",    nameEn: "Al-Anfal",       revelation: "مدنية", ayahCount: 75,  juz: 9,  meaning: "الأنفال" },
+  { id: 9,   name: "التوبة",     nameEn: "At-Tawba",       revelation: "مدنية", ayahCount: 129, juz: 10, meaning: "التوبة" },
+  { id: 10,  name: "يونس",       nameEn: "Yunus",           revelation: "مكية",  ayahCount: 109, juz: 11, meaning: "نبي الله يونس" },
+  { id: 11,  name: "هود",        nameEn: "Hud",             revelation: "مكية",  ayahCount: 123, juz: 11, meaning: "نبي الله هود" },
+  { id: 12,  name: "يوسف",       nameEn: "Yusuf",           revelation: "مكية",  ayahCount: 111, juz: 12, meaning: "نبي الله يوسف" },
+  { id: 13,  name: "الرعد",      nameEn: "Ar-Rad",          revelation: "مدنية", ayahCount: 43,  juz: 13, meaning: "الرعد" },
+  { id: 14,  name: "إبراهيم",    nameEn: "Ibrahim",         revelation: "مكية",  ayahCount: 52,  juz: 13, meaning: "نبي الله إبراهيم" },
+  { id: 15,  name: "الحجر",      nameEn: "Al-Hijr",         revelation: "مكية",  ayahCount: 99,  juz: 14, meaning: "الحجر" },
+  { id: 16,  name: "النحل",      nameEn: "An-Nahl",         revelation: "مكية",  ayahCount: 128, juz: 14, meaning: "النحل" },
+  { id: 17,  name: "الإسراء",    nameEn: "Al-Isra",         revelation: "مكية",  ayahCount: 111, juz: 15, meaning: "الإسراء" },
+  { id: 18,  name: "الكهف",      nameEn: "Al-Kahf",         revelation: "مكية",  ayahCount: 110, juz: 15, meaning: "الكهف" },
+  { id: 19,  name: "مريم",       nameEn: "Maryam",          revelation: "مكية",  ayahCount: 98,  juz: 16, meaning: "مريم" },
+  { id: 20,  name: "طه",         nameEn: "Ta-Ha",           revelation: "مكية",  ayahCount: 135, juz: 16, meaning: "طه" },
+  { id: 21,  name: "الأنبياء",   nameEn: "Al-Anbiya",       revelation: "مكية",  ayahCount: 112, juz: 17, meaning: "الأنبياء" },
+  { id: 22,  name: "الحج",       nameEn: "Al-Hajj",         revelation: "مدنية", ayahCount: 78,  juz: 17, meaning: "الحج" },
+  { id: 23,  name: "المؤمنون",   nameEn: "Al-Muminun",      revelation: "مكية",  ayahCount: 118, juz: 18, meaning: "المؤمنون" },
+  { id: 24,  name: "النور",      nameEn: "An-Nur",          revelation: "مدنية", ayahCount: 64,  juz: 18, meaning: "النور" },
+  { id: 25,  name: "الفرقان",    nameEn: "Al-Furqan",       revelation: "مكية",  ayahCount: 77,  juz: 18, meaning: "الفرقان" },
+  { id: 26,  name: "الشعراء",    nameEn: "Ash-Shuara",      revelation: "مكية",  ayahCount: 227, juz: 19, meaning: "الشعراء" },
+  { id: 27,  name: "النمل",      nameEn: "An-Naml",         revelation: "مكية",  ayahCount: 93,  juz: 19, meaning: "النمل" },
+  { id: 28,  name: "القصص",      nameEn: "Al-Qasas",        revelation: "مكية",  ayahCount: 88,  juz: 20, meaning: "القصص" },
+  { id: 29,  name: "العنكبوت",   nameEn: "Al-Ankabut",      revelation: "مكية",  ayahCount: 69,  juz: 20, meaning: "العنكبوت" },
+  { id: 30,  name: "الروم",      nameEn: "Ar-Rum",          revelation: "مكية",  ayahCount: 60,  juz: 21, meaning: "الروم" },
+  { id: 31,  name: "لقمان",      nameEn: "Luqman",          revelation: "مكية",  ayahCount: 34,  juz: 21, meaning: "لقمان الحكيم" },
+  { id: 32,  name: "السجدة",     nameEn: "As-Sajda",        revelation: "مكية",  ayahCount: 30,  juz: 21, meaning: "السجدة" },
+  { id: 33,  name: "الأحزاب",    nameEn: "Al-Ahzab",        revelation: "مدنية", ayahCount: 73,  juz: 21, meaning: "الأحزاب" },
+  { id: 34,  name: "سبأ",        nameEn: "Saba",            revelation: "مكية",  ayahCount: 54,  juz: 22, meaning: "سبأ" },
+  { id: 35,  name: "فاطر",       nameEn: "Fatir",           revelation: "مكية",  ayahCount: 45,  juz: 22, meaning: "الملائكة" },
+  { id: 36,  name: "يس",         nameEn: "Ya-Sin",          revelation: "مكية",  ayahCount: 83,  juz: 22, meaning: "قلب القرآن" },
+  { id: 37,  name: "الصافات",    nameEn: "As-Saffat",       revelation: "مكية",  ayahCount: 182, juz: 23, meaning: "الصافات" },
+  { id: 38,  name: "ص",          nameEn: "Sad",             revelation: "مكية",  ayahCount: 88,  juz: 23, meaning: "ص" },
+  { id: 39,  name: "الزمر",      nameEn: "Az-Zumar",        revelation: "مكية",  ayahCount: 75,  juz: 23, meaning: "الزمر" },
+  { id: 40,  name: "غافر",       nameEn: "Ghafir",          revelation: "مكية",  ayahCount: 85,  juz: 24, meaning: "المؤمن" },
+  { id: 41,  name: "فصلت",       nameEn: "Fussilat",        revelation: "مكية",  ayahCount: 54,  juz: 24, meaning: "فصلت" },
+  { id: 42,  name: "الشورى",     nameEn: "Ash-Shura",       revelation: "مكية",  ayahCount: 53,  juz: 25, meaning: "الشورى" },
+  { id: 43,  name: "الزخرف",     nameEn: "Az-Zukhruf",      revelation: "مكية",  ayahCount: 89,  juz: 25, meaning: "الزخرف" },
+  { id: 44,  name: "الدخان",     nameEn: "Ad-Dukhan",       revelation: "مكية",  ayahCount: 59,  juz: 25, meaning: "الدخان" },
+  { id: 45,  name: "الجاثية",    nameEn: "Al-Jathiya",      revelation: "مكية",  ayahCount: 37,  juz: 25, meaning: "الجاثية" },
+  { id: 46,  name: "الأحقاف",    nameEn: "Al-Ahqaf",        revelation: "مكية",  ayahCount: 35,  juz: 26, meaning: "الأحقاف" },
+  { id: 47,  name: "محمد",       nameEn: "Muhammad",        revelation: "مدنية", ayahCount: 38,  juz: 26, meaning: "محمد ﷺ" },
+  { id: 48,  name: "الفتح",      nameEn: "Al-Fath",         revelation: "مدنية", ayahCount: 29,  juz: 26, meaning: "الفتح" },
+  { id: 49,  name: "الحجرات",    nameEn: "Al-Hujurat",      revelation: "مدنية", ayahCount: 18,  juz: 26, meaning: "الحجرات" },
+  { id: 50,  name: "ق",          nameEn: "Qaf",             revelation: "مكية",  ayahCount: 45,  juz: 26, meaning: "ق" },
+  { id: 51,  name: "الذاريات",   nameEn: "Adh-Dhariyat",    revelation: "مكية",  ayahCount: 60,  juz: 26, meaning: "الذاريات" },
+  { id: 52,  name: "الطور",      nameEn: "At-Tur",          revelation: "مكية",  ayahCount: 49,  juz: 27, meaning: "الطور" },
+  { id: 53,  name: "النجم",      nameEn: "An-Najm",         revelation: "مكية",  ayahCount: 62,  juz: 27, meaning: "النجم" },
+  { id: 54,  name: "القمر",      nameEn: "Al-Qamar",        revelation: "مكية",  ayahCount: 55,  juz: 27, meaning: "القمر" },
+  { id: 55,  name: "الرحمن",     nameEn: "Ar-Rahman",       revelation: "مدنية", ayahCount: 78,  juz: 27, meaning: "عروس القرآن" },
+  { id: 56,  name: "الواقعة",    nameEn: "Al-Waqia",        revelation: "مكية",  ayahCount: 96,  juz: 27, meaning: "الواقعة" },
+  { id: 57,  name: "الحديد",     nameEn: "Al-Hadid",        revelation: "مدنية", ayahCount: 29,  juz: 27, meaning: "الحديد" },
+  { id: 58,  name: "المجادلة",   nameEn: "Al-Mujadila",     revelation: "مدنية", ayahCount: 22,  juz: 28, meaning: "المجادلة" },
+  { id: 59,  name: "الحشر",      nameEn: "Al-Hashr",        revelation: "مدنية", ayahCount: 24,  juz: 28, meaning: "الحشر" },
+  { id: 60,  name: "الممتحنة",   nameEn: "Al-Mumtahina",    revelation: "مدنية", ayahCount: 13,  juz: 28, meaning: "الممتحنة" },
+  { id: 61,  name: "الصف",       nameEn: "As-Saf",          revelation: "مدنية", ayahCount: 14,  juz: 28, meaning: "الصف" },
+  { id: 62,  name: "الجمعة",     nameEn: "Al-Jumua",        revelation: "مدنية", ayahCount: 11,  juz: 28, meaning: "الجمعة" },
+  { id: 63,  name: "المنافقون",  nameEn: "Al-Munafiqun",    revelation: "مدنية", ayahCount: 11,  juz: 28, meaning: "المنافقون" },
+  { id: 64,  name: "التغابن",    nameEn: "At-Taghabun",     revelation: "مدنية", ayahCount: 18,  juz: 28, meaning: "التغابن" },
+  { id: 65,  name: "الطلاق",     nameEn: "At-Talaq",        revelation: "مدنية", ayahCount: 12,  juz: 28, meaning: "الطلاق" },
+  { id: 66,  name: "التحريم",    nameEn: "At-Tahrim",       revelation: "مدنية", ayahCount: 12,  juz: 28, meaning: "التحريم" },
+  { id: 67,  name: "الملك",      nameEn: "Al-Mulk",         revelation: "مكية",  ayahCount: 30,  juz: 29, meaning: "المانعة" },
+  { id: 68,  name: "القلم",      nameEn: "Al-Qalam",        revelation: "مكية",  ayahCount: 52,  juz: 29, meaning: "ن" },
+  { id: 69,  name: "الحاقة",     nameEn: "Al-Haaqqa",       revelation: "مكية",  ayahCount: 52,  juz: 29, meaning: "الحاقة" },
+  { id: 70,  name: "المعارج",    nameEn: "Al-Maarij",       revelation: "مكية",  ayahCount: 44,  juz: 29, meaning: "المعارج" },
+  { id: 71,  name: "نوح",        nameEn: "Nuh",             revelation: "مكية",  ayahCount: 28,  juz: 29, meaning: "نبي الله نوح" },
+  { id: 72,  name: "الجن",       nameEn: "Al-Jinn",         revelation: "مكية",  ayahCount: 28,  juz: 29, meaning: "الجن" },
+  { id: 73,  name: "المزمل",     nameEn: "Al-Muzzammil",    revelation: "مكية",  ayahCount: 20,  juz: 29, meaning: "المزمل" },
+  { id: 74,  name: "المدثر",     nameEn: "Al-Muddaththir",  revelation: "مكية",  ayahCount: 56,  juz: 29, meaning: "المدثر" },
+  { id: 75,  name: "القيامة",    nameEn: "Al-Qiyama",       revelation: "مكية",  ayahCount: 40,  juz: 29, meaning: "القيامة" },
+  { id: 76,  name: "الإنسان",    nameEn: "Al-Insan",        revelation: "مدنية", ayahCount: 31,  juz: 29, meaning: "الإنسان" },
+  { id: 77,  name: "المرسلات",   nameEn: "Al-Mursalat",     revelation: "مكية",  ayahCount: 50,  juz: 29, meaning: "المرسلات" },
+  { id: 78,  name: "النبأ",      nameEn: "An-Naba",         revelation: "مكية",  ayahCount: 40,  juz: 30, meaning: "النبأ العظيم" },
+  { id: 79,  name: "النازعات",   nameEn: "An-Naziat",       revelation: "مكية",  ayahCount: 46,  juz: 30, meaning: "النازعات" },
+  { id: 80,  name: "عبس",        nameEn: "Abasa",           revelation: "مكية",  ayahCount: 42,  juz: 30, meaning: "عبس" },
+  { id: 81,  name: "التكوير",    nameEn: "At-Takwir",       revelation: "مكية",  ayahCount: 29,  juz: 30, meaning: "التكوير" },
+  { id: 82,  name: "الانفطار",   nameEn: "Al-Infitar",      revelation: "مكية",  ayahCount: 19,  juz: 30, meaning: "الانفطار" },
+  { id: 83,  name: "المطففين",   nameEn: "Al-Mutaffifin",   revelation: "مكية",  ayahCount: 36,  juz: 30, meaning: "المطففين" },
+  { id: 84,  name: "الانشقاق",   nameEn: "Al-Inshiqaq",     revelation: "مكية",  ayahCount: 25,  juz: 30, meaning: "الانشقاق" },
+  { id: 85,  name: "البروج",     nameEn: "Al-Buruj",        revelation: "مكية",  ayahCount: 22,  juz: 30, meaning: "البروج" },
+  { id: 86,  name: "الطارق",     nameEn: "At-Tariq",        revelation: "مكية",  ayahCount: 17,  juz: 30, meaning: "الطارق" },
+  { id: 87,  name: "الأعلى",     nameEn: "Al-Ala",          revelation: "مكية",  ayahCount: 19,  juz: 30, meaning: "الأعلى" },
+  { id: 88,  name: "الغاشية",    nameEn: "Al-Ghashiya",     revelation: "مكية",  ayahCount: 26,  juz: 30, meaning: "الغاشية" },
+  { id: 89,  name: "الفجر",      nameEn: "Al-Fajr",         revelation: "مكية",  ayahCount: 30,  juz: 30, meaning: "الفجر" },
+  { id: 90,  name: "البلد",      nameEn: "Al-Balad",        revelation: "مكية",  ayahCount: 20,  juz: 30, meaning: "البلد" },
+  { id: 91,  name: "الشمس",      nameEn: "Ash-Shams",       revelation: "مكية",  ayahCount: 15,  juz: 30, meaning: "الشمس" },
+  { id: 92,  name: "الليل",      nameEn: "Al-Layl",         revelation: "مكية",  ayahCount: 21,  juz: 30, meaning: "الليل" },
+  { id: 93,  name: "الضحى",      nameEn: "Ad-Duha",         revelation: "مكية",  ayahCount: 11,  juz: 30, meaning: "الضحى" },
+  { id: 94,  name: "الشرح",      nameEn: "Ash-Sharh",       revelation: "مكية",  ayahCount: 8,   juz: 30, meaning: "ألم نشرح" },
+  { id: 95,  name: "التين",      nameEn: "At-Tin",          revelation: "مكية",  ayahCount: 8,   juz: 30, meaning: "التين" },
+  { id: 96,  name: "العلق",      nameEn: "Al-Alaq",         revelation: "مكية",  ayahCount: 19,  juz: 30, meaning: "اقرأ" },
+  { id: 97,  name: "القدر",      nameEn: "Al-Qadr",         revelation: "مكية",  ayahCount: 5,   juz: 30, meaning: "ليلة القدر" },
+  { id: 98,  name: "البينة",     nameEn: "Al-Bayyina",      revelation: "مدنية", ayahCount: 8,   juz: 30, meaning: "البينة" },
+  { id: 99,  name: "الزلزلة",    nameEn: "Az-Zalzala",      revelation: "مدنية", ayahCount: 8,   juz: 30, meaning: "الزلزلة" },
+  { id: 100, name: "العاديات",   nameEn: "Al-Adiyat",       revelation: "مكية",  ayahCount: 11,  juz: 30, meaning: "العاديات" },
+  { id: 101, name: "القارعة",    nameEn: "Al-Qaria",        revelation: "مكية",  ayahCount: 11,  juz: 30, meaning: "القارعة" },
+  { id: 102, name: "التكاثر",    nameEn: "At-Takathur",     revelation: "مكية",  ayahCount: 8,   juz: 30, meaning: "التكاثر" },
+  { id: 103, name: "العصر",      nameEn: "Al-Asr",          revelation: "مكية",  ayahCount: 3,   juz: 30, meaning: "العصر" },
+  { id: 104, name: "الهمزة",     nameEn: "Al-Humaza",       revelation: "مكية",  ayahCount: 9,   juz: 30, meaning: "الهمزة" },
+  { id: 105, name: "الفيل",      nameEn: "Al-Fil",          revelation: "مكية",  ayahCount: 5,   juz: 30, meaning: "الفيل" },
+  { id: 106, name: "قريش",       nameEn: "Quraysh",         revelation: "مكية",  ayahCount: 4,   juz: 30, meaning: "قريش" },
+  { id: 107, name: "الماعون",    nameEn: "Al-Maun",         revelation: "مكية",  ayahCount: 7,   juz: 30, meaning: "الماعون" },
+  { id: 108, name: "الكوثر",     nameEn: "Al-Kawthar",      revelation: "مكية",  ayahCount: 3,   juz: 30, meaning: "نهر الجنة" },
+  { id: 109, name: "الكافرون",   nameEn: "Al-Kafirun",      revelation: "مكية",  ayahCount: 6,   juz: 30, meaning: "الكافرون" },
+  { id: 110, name: "النصر",      nameEn: "An-Nasr",         revelation: "مدنية", ayahCount: 3,   juz: 30, meaning: "نصر الله" },
+  { id: 111, name: "المسد",      nameEn: "Al-Masad",        revelation: "مكية",  ayahCount: 5,   juz: 30, meaning: "أبو لهب" },
+  { id: 112, name: "الإخلاص",    nameEn: "Al-Ikhlas",       revelation: "مكية",  ayahCount: 4,   juz: 30, meaning: "ثلث القرآن" },
+  { id: 113, name: "الفلق",      nameEn: "Al-Falaq",        revelation: "مكية",  ayahCount: 5,   juz: 30, meaning: "المعوذتان" },
+  { id: 114, name: "الناس",      nameEn: "An-Nas",          revelation: "مكية",  ayahCount: 6,   juz: 30, meaning: "المعوذتان" },
 ];
 
 const DAILY_AYAHS: DailyAyah[] = [
@@ -235,6 +338,307 @@ const VIRTUES = [
   { icon: "🏠", text: "البيت الذي يُقرأ فيه القرآن يتسع على أهله وتحضره الملائكة", source: "أحمد" },
   { icon: "💫", text: "يُقال لصاحب القرآن اقرأ وارتقِ ورتّل كما كنت ترتّل في الدنيا", source: "أبو داود" },
 ];
+
+// ─── Surah Reader Sheet ───────────────────────────────────────────────────────
+
+interface AlQuranAyah {
+  numberInSurah: number;
+  text: string;
+}
+
+interface AlQuranResponse {
+  code: number;
+  data: {
+    name: string;
+    englishName: string;
+    numberOfAyahs: number;
+    ayahs: AlQuranAyah[];
+  };
+}
+
+function AyahRow({
+  surahId, ayah, reciterId,
+}: {
+  surahId: number;
+  ayah: AlQuranAyah;
+  reciterId: string;
+}) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const url = reciterAudioUrl(surahId, ayah.numberInSurah, reciterId);
+
+  const stopSelf = useCallback(() => {
+    const el = audioRef.current;
+    if (el) { el.pause(); el.currentTime = 0; }
+    setIsPlaying(false);
+    setProgress(0);
+    if (activeQuranAudio?.element === el) activeQuranAudio = null;
+  }, []);
+
+  const toggle = () => {
+    const el = audioRef.current;
+    if (!el) return;
+    if (isPlaying) {
+      el.pause();
+      setIsPlaying(false);
+      if (activeQuranAudio?.element === el) activeQuranAudio = null;
+    } else {
+      if (activeQuranAudio && activeQuranAudio.element !== el) activeQuranAudio.stop();
+      activeQuranAudio = { element: el, stop: stopSelf };
+      el.play().catch(() => {});
+      setIsPlaying(true);
+    }
+  };
+
+  useEffect(() => {
+    const el = audioRef.current;
+    if (!el) return;
+    const onTimeUpdate = () => {
+      if (el.duration > 0) setProgress((el.currentTime / el.duration) * 100);
+    };
+    const onEnded = () => { setIsPlaying(false); setProgress(0); };
+    el.addEventListener("timeupdate", onTimeUpdate);
+    el.addEventListener("ended", onEnded);
+    return () => {
+      el.removeEventListener("timeupdate", onTimeUpdate);
+      el.removeEventListener("ended", onEnded);
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => { if (audioRef.current) audioRef.current.pause(); };
+  }, []);
+
+  return (
+    <div
+      className="flex flex-col gap-2 px-4 py-4 border-b"
+      style={{ borderColor: "rgba(200,168,75,0.1)" }}
+    >
+      {/* Ayah number badge */}
+      <div className="flex items-start justify-between gap-3">
+        <button
+          onClick={toggle}
+          className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center mt-1 transition-all active:scale-90"
+          style={{
+            background: isPlaying ? "rgba(200,168,75,0.25)" : "rgba(200,168,75,0.1)",
+            border: "1px solid rgba(200,168,75,0.3)",
+          }}
+        >
+          {isPlaying
+            ? <Pause size={13} style={{ color: "#c8a84b" }} />
+            : <Play size={13} style={{ color: "#c8a84b" }} />
+          }
+        </button>
+        <p
+          className="flex-1 text-right leading-[2.1]"
+          style={{
+            fontFamily: "'Amiri Quran', 'Scheherazade New', serif",
+            fontSize: 18,
+            color: "var(--foreground)",
+            direction: "rtl",
+          }}
+        >
+          {ayah.text}
+          <span
+            className="inline-block mx-2 text-[14px] font-bold"
+            style={{ color: "rgba(200,168,75,0.7)", fontFamily: "inherit" }}
+          >
+            ﴿{ayah.numberInSurah}﴾
+          </span>
+        </p>
+      </div>
+
+      {/* Progress bar */}
+      {isPlaying && (
+        <div
+          className="h-0.5 rounded-full overflow-hidden mx-11"
+          style={{ background: "rgba(200,168,75,0.15)" }}
+        >
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: "#c8a84b", width: `${progress}%` }}
+          />
+        </div>
+      )}
+
+      <audio ref={audioRef} src={url} preload="none" />
+    </div>
+  );
+}
+
+function SurahReaderSheet({
+  surah, onClose,
+}: {
+  surah: Surah;
+  onClose: () => void;
+}) {
+  const { quranReciterId, setQuranReciterId } = useSettings();
+  const [ayahs, setAyahs] = useState<AlQuranAyah[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [showReciterPicker, setShowReciterPicker] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    setError(false);
+    setAyahs([]);
+    fetch(`/api/quran/surah/${surah.id}`)
+      .then((r) => r.json())
+      .then((data: AlQuranResponse) => {
+        if (data.code === 200 && data.data?.ayahs) {
+          setAyahs(data.data.ayahs);
+        } else {
+          setError(true);
+        }
+      })
+      .catch(() => setError(true))
+      .finally(() => setLoading(false));
+  }, [surah.id]);
+
+  // Stop all audio when closing
+  useEffect(() => {
+    return () => {
+      if (activeQuranAudio) { activeQuranAudio.stop(); activeQuranAudio = null; }
+    };
+  }, []);
+
+  const currentReciter = QURAN_RECITERS.find((r) => r.id === quranReciterId);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end justify-center"
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 28, stiffness: 260 }}
+        className="w-full max-w-md bg-card rounded-t-3xl overflow-hidden flex flex-col"
+        style={{ maxHeight: "92dvh" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-2 shrink-0">
+          <div className="w-10 h-1 bg-muted-foreground/20 rounded-full" />
+        </div>
+
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-5 py-3 border-b shrink-0"
+          style={{ borderColor: "rgba(200,168,75,0.15)" }}
+        >
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl bg-muted/60 flex items-center justify-center"
+          >
+            <X size={16} className="text-muted-foreground" />
+          </button>
+          <div className="text-center">
+            <p
+              className="font-bold text-base"
+              style={{ fontFamily: "'Amiri Quran', serif", color: "#c8a84b" }}
+            >
+              سورة {surah.name}
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              {surah.ayahCount} آية · {surah.revelation} · الجزء {surah.juz}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowReciterPicker((s) => !s)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl transition-colors"
+            style={{ background: "rgba(200,168,75,0.1)", border: "1px solid rgba(200,168,75,0.25)" }}
+          >
+            <Volume2 size={12} style={{ color: "#c8a84b" }} />
+            <span className="text-[10px] font-bold" style={{ color: "#c8a84b" }}>
+              {currentReciter?.nameAr.split(" ")[0]}
+            </span>
+          </button>
+        </div>
+
+        {/* Reciter Picker */}
+        <AnimatePresence>
+          {showReciterPicker && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden shrink-0 border-b"
+              style={{ borderColor: "rgba(200,168,75,0.1)" }}
+            >
+              <div className="flex flex-col gap-1 px-4 py-3">
+                {QURAN_RECITERS.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => { setQuranReciterId(r.id); setShowReciterPicker(false); }}
+                    className="flex items-center justify-between px-3 py-2.5 rounded-xl text-right transition-colors"
+                    style={{
+                      background: quranReciterId === r.id ? "rgba(200,168,75,0.15)" : "transparent",
+                      border: quranReciterId === r.id ? "1px solid rgba(200,168,75,0.3)" : "1px solid transparent",
+                    }}
+                  >
+                    <span className="text-[11px] text-muted-foreground">{r.nameAr}</span>
+                    {quranReciterId === r.id && <Check size={13} style={{ color: "#c8a84b" }} />}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bismillah */}
+        {surah.id !== 1 && surah.id !== 9 && (
+          <div
+            className="px-5 py-4 text-center border-b shrink-0"
+            style={{ borderColor: "rgba(200,168,75,0.1)" }}
+          >
+            <p
+              style={{
+                fontFamily: "'Amiri Quran', 'Scheherazade New', serif",
+                fontSize: 20,
+                color: "rgba(200,168,75,0.9)",
+              }}
+            >
+              بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ
+            </p>
+          </div>
+        )}
+
+        {/* Ayahs list */}
+        <div className="overflow-y-auto flex-1">
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader2 size={28} className="animate-spin" style={{ color: "#c8a84b" }} />
+              <p className="text-sm text-muted-foreground">جارٍ تحميل السورة...</p>
+            </div>
+          )}
+          {error && !loading && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <p className="text-sm text-muted-foreground">تعذّر التحميل — تحقق من اتصالك</p>
+            </div>
+          )}
+          {!loading && !error && ayahs.map((ayah) => (
+            <AyahRow
+              key={ayah.numberInSurah}
+              surahId={surah.id}
+              ayah={ayah}
+              reciterId={quranReciterId}
+            />
+          ))}
+          <div className="h-8" />
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -497,7 +901,7 @@ function DailyAyahCard() {
 
 // ─── Surah Browser ────────────────────────────────────────────────────────────
 
-function SurahBrowser() {
+function SurahBrowser({ onSelect }: { onSelect: (s: Surah) => void }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"الكل" | "مكية" | "مدنية">("الكل");
   const [expanded, setExpanded] = useState(false);
@@ -508,7 +912,7 @@ function SurahBrowser() {
     return matchFilter && matchQuery;
   });
 
-  const displayed = expanded ? filtered : filtered.slice(0, 8);
+  const displayed = expanded ? filtered : filtered.slice(0, 12);
 
   return (
     <div>
@@ -517,7 +921,7 @@ function SurahBrowser() {
           <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setExpanded(true); }}
             placeholder="ابحث عن سورة..."
             className="w-full h-9 pr-9 pl-3 rounded-xl text-sm bg-card border border-border/60 focus:outline-none focus:border-primary/50 text-right"
             dir="rtl"
@@ -548,13 +952,11 @@ function SurahBrowser() {
               key={surah.id}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.04 }}
+              transition={{ delay: i * 0.03 }}
             >
-              <a
-                href={`https://quran.com/${surah.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-col gap-1 p-3 rounded-xl border border-border/40 bg-card hover:border-amber-400/40 active:scale-[0.97] transition-all block"
+              <button
+                onClick={() => onSelect(surah)}
+                className="w-full text-right flex flex-col gap-1 p-3 rounded-xl border border-border/40 bg-card hover:border-amber-400/40 active:scale-[0.97] transition-all"
               >
                 <div className="flex items-center justify-between">
                   <div
@@ -573,9 +975,13 @@ function SurahBrowser() {
                     {surah.revelation}
                   </span>
                 </div>
-                <p className="font-bold text-sm text-right leading-tight">{surah.name}</p>
-                <p className="text-[10px] text-muted-foreground text-right">{surah.ayahCount} آية · ج{surah.juz}</p>
-              </a>
+                <p className="font-bold text-sm leading-tight">{surah.name}</p>
+                <p className="text-[10px] text-muted-foreground">{surah.ayahCount} آية · ج{surah.juz}</p>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <Play size={9} style={{ color: "#c8a84b" }} />
+                  <span className="text-[9px]" style={{ color: "rgba(200,168,75,0.6)" }}>استمع وتلاوة</span>
+                </div>
+              </button>
             </motion.div>
           ))}
         </AnimatePresence>
@@ -867,6 +1273,8 @@ function QuickActions() {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function QuranPage() {
+  const [selectedSurah, setSelectedSurah] = useState<Surah | null>(null);
+
   return (
     <div className="min-h-screen pb-24" dir="rtl">
       <PageHeader title="القرآن الكريم" subtitle="مكتبة شاملة" />
@@ -890,14 +1298,14 @@ export default function QuranPage() {
 
         {/* Reading Tracker */}
         <div>
-          <SectionTitle icon={<Award size={16} />} title="ورد القرآن" sub="تتبع قراءتك اليومية" />
+          <SectionTitle icon={<BookMarked size={16} />} title="ورد القرآن" sub="تتبع قراءتك اليومية" />
           <ReadingTracker />
         </div>
 
         {/* Surah Browser */}
         <div>
-          <SectionTitle icon={<BookOpen size={16} />} title="استعرض السور" sub="١١٤ سورة — ابحث أو تصفح" />
-          <SurahBrowser />
+          <SectionTitle icon={<BookOpen size={16} />} title="استعرض السور" sub="١١٤ سورة — انقر للقراءة والاستماع" />
+          <SurahBrowser onSelect={setSelectedSurah} />
         </div>
 
         {/* Sciences */}
@@ -950,6 +1358,16 @@ export default function QuranPage() {
         </div>
 
       </div>
+
+      {/* ── In-App Surah Reader Sheet ── */}
+      <AnimatePresence>
+        {selectedSurah && (
+          <SurahReaderSheet
+            surah={selectedSurah}
+            onClose={() => setSelectedSurah(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

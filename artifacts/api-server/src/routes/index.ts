@@ -10,10 +10,12 @@ import adminRouter from "./admin";
 import heroRouter from "./hero";
 import pushRouter from "./push";
 import audioProxyRouter from "./audio-proxy";
+import quranRouter from "./quran";
 
 const router: IRouter = Router();
 
 router.use(audioProxyRouter);
+router.use(quranRouter);
 router.use(healthRouter);
 router.use(heroRouter);
 router.use(tawbahRouter);
