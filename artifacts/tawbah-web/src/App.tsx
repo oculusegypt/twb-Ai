@@ -43,6 +43,8 @@ import DuaTiming from "@/pages/dua-timing";
 import HabitsPage from "@/pages/habits";
 import IslamicPrograms from "@/pages/islamic-programs";
 import ProgramDetail from "@/pages/program-detail";
+import Garden from "@/pages/garden";
+import Munajat from "@/pages/munajat";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -91,6 +93,8 @@ function Router() {
         <Route path="/dua-timing" component={DuaTiming} />
         <Route path="/islamic-programs" component={IslamicPrograms} />
         <Route path="/islamic-programs/:id" component={ProgramDetail} />
+        <Route path="/garden" component={Garden} />
+        <Route path="/munajat" component={Munajat} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

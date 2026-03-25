@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress } from "@/hooks/use-app-data";
 import { LiveStats } from "@/components/live-stats";
 import { useState, useEffect, useRef, useCallback, Fragment } from "react";
-import { useSettings } from "@/context/SettingsContext";
 import { useAppNotifications } from "@/context/AppNotificationsContext";
 import { IslamicHero } from "@/components/IslamicHero";
 import { KnowledgeSlider } from "@/components/KnowledgeSlider";
@@ -579,8 +578,6 @@ interface Journey30Summary {
 
 function Journey30HeroCard() {
   const sessionId = getSessionId();
-  const { theme } = useSettings();
-  const isDark = theme === "dark";
 
   const { data: j30 } = useQuery<Journey30Summary>({
     queryKey: ["journey30-home", sessionId],
@@ -598,108 +595,109 @@ function Journey30HeroCard() {
   const streak = j30?.streakDays ?? 0;
   const progress = Math.round((completed / 30) * 100);
   const isFinished = completed >= 30;
-  const circumference = 2 * Math.PI * 26;
 
   return (
-    <div className="relative overflow-hidden rounded-2xl shadow-xl" style={{ minHeight: 230 }}>
-      {/* Background image */}
-      <img
-        src="/images/journey-card-bg.jpg"
-        alt=""
-        aria-hidden
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        style={{
-          objectFit: "cover",
-          objectPosition: "center",
-          filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.82) saturate(0.82) sepia(0.07)",
-        }}
-      />
-      {/* Gradient overlay — dark at bottom for button readability */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: isDark
-            ? "linear-gradient(to bottom, rgba(0,18,12,0.52) 0%, rgba(0,18,12,0.72) 100%)"
-            : "linear-gradient(to bottom, rgba(0,30,20,0.38) 0%, rgba(0,30,20,0.62) 100%)",
-        }}
-      />
+    <div
+      className="relative overflow-hidden rounded-[24px]"
+      style={{
+        background: "linear-gradient(160deg, #0d1a12 0%, #162512 45%, #0a1510 100%)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.45), 0 3px 10px rgba(0,0,0,0.25)",
+      }}
+    >
+      <StarDots />
+      <div className="absolute top-[-30px] left-[30%] right-[30%] h-[100px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse, rgba(251,191,36,0.14) 0%, transparent 70%)", filter: "blur(18px)" }} />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col justify-between p-5" style={{ minHeight: 230 }}>
-
-        {/* ── Top: title centered ── */}
-        <div className="text-center">
-          <h2
-            className="text-[20px] font-bold leading-tight"
-            style={{ color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
-          >
-            رحلة الـ ٣٠ يوماً
-          </h2>
-          <p className="text-[12px] mt-1" style={{ color: "rgba(255,255,255,0.78)" }}>
-            {isFinished
-              ? "🎉 أتممت الرحلة — بارك الله فيك"
-              : <>اليوم <span style={{ color: "#fbbf24", fontWeight: 700, fontSize: 14 }}>{currentDay}</span> من ٣٠</>}
-          </p>
+      <div className="relative z-10 p-4 flex flex-col gap-3">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2
+              className="font-bold leading-tight"
+              style={{
+                fontSize: 20,
+                background: "linear-gradient(90deg, #ffffff 0%, #fde68a 55%, #f59e0b 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              رحلة الـ ٣٠ يوماً
+            </h2>
+            <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+              {isFinished ? "🎉 أتممت الرحلة — بارك الله فيك" : `اليوم ${currentDay} من ٣٠`}
+            </p>
+          </div>
+          <BentoCompassWidget />
         </div>
 
-        {/* ── Middle: circular progress centered ── */}
-        <div className="flex justify-center my-1">
-          <div className="relative w-[80px] h-[80px]">
-            <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
-              <circle cx="40" cy="40" r="34" fill="rgba(0,0,0,0.22)" stroke="rgba(255,255,255,0.18)" strokeWidth="5.5" />
-              <motion.circle
-                cx="40" cy="40" r="34" fill="none" stroke="#fbbf24" strokeWidth="5.5"
-                strokeLinecap="round"
-                strokeDasharray={2 * Math.PI * 34}
-                initial={{ strokeDashoffset: 2 * Math.PI * 34 }}
-                animate={{ strokeDashoffset: 2 * Math.PI * 34 * (1 - progress / 100) }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
-              <span className="text-[17px] font-bold leading-none" style={{ color: "#fbbf24" }}>{progress}%</span>
-              <span className="text-[9px] leading-none" style={{ color: "rgba(255,255,255,0.65)" }}>تقدّم</span>
-            </div>
-          </div>
-        </div>
+        {/* Verse — full width */}
+        <VerseCellBento />
 
-        {/* ── Bottom: progress bar with labels + button ── */}
-        <div className="flex flex-col items-center gap-3">
-          {/* Progress bar with start/end labels — narrower (80%) */}
-          <div className="w-[82%]">
-            <div className="flex justify-between mb-1">
-              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.72)" }}>{30 - completed} متبقٍ</span>
-              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.72)" }}>{completed} مكتمل</span>
-            </div>
-            <div className="w-full rounded-full overflow-hidden" style={{ height: 5, background: "rgba(255,255,255,0.18)" }}>
-              <motion.div
-                className="h-full rounded-full"
-                style={{ background: "linear-gradient(to left, #fbbf24, #f59e0b)" }}
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-              />
-            </div>
-          </div>
-
-          {/* CTA button — 60% width, centered */}
-          <Link
-            href="/journey"
-            className="py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
+        {/* Progress row */}
+        <div className="flex gap-2">
+          {/* Circular progress */}
+          <div
+            className="flex-[3] flex flex-col items-center justify-center gap-1 rounded-[18px] py-3"
             style={{
-              width: "60%",
-              background: "linear-gradient(to left, #fbbf24, #d97706)",
-              color: "#1c0f00",
-              boxShadow: "0 4px 18px rgba(251,191,36,0.45), 0 2px 8px rgba(0,0,0,0.3)",
+              background: "linear-gradient(145deg, rgba(251,191,36,0.15) 0%, rgba(217,119,6,0.06) 100%)",
+              border: "1px solid rgba(251,191,36,0.22)",
             }}
           >
-            {isFinished ? (
-              <><TrendingUp size={16} /><span>استعرض إنجازك</span></>
-            ) : (
-              <><span>متابعة اليوم {currentDay}</span><ArrowLeft size={15} /></>
-            )}
-          </Link>
+            <div className="relative w-[72px] h-[72px]">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
+                <circle cx="36" cy="36" r="30" fill="rgba(0,0,0,0.18)" stroke="rgba(255,255,255,0.14)" strokeWidth="5" />
+                <motion.circle
+                  cx="36" cy="36" r="30" fill="none" stroke="#fbbf24" strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 30}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 30 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 30 * (1 - progress / 100) }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-[16px] font-bold leading-none" style={{ color: "#fbbf24" }}>{progress}%</span>
+                <span className="text-[8px] leading-none mt-0.5" style={{ color: "rgba(255,255,255,0.5)" }}>تقدّم</span>
+              </div>
+            </div>
+            <div className="flex justify-between w-full px-3">
+              <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.55)" }}>{30 - completed} متبقٍ</span>
+              <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.55)" }}>{completed} مكتمل</span>
+            </div>
+          </div>
+          {/* Streak */}
+          <div
+            className="flex-[2] flex flex-col items-center justify-center gap-1 rounded-[18px]"
+            style={{
+              background: "linear-gradient(145deg, rgba(16,185,129,0.15) 0%, rgba(5,150,105,0.06) 100%)",
+              border: "1px solid rgba(16,185,129,0.2)",
+              minHeight: 100,
+            }}
+          >
+            <motion.span
+              className="text-[26px] leading-none"
+              animate={{ scale: streak > 0 ? [1, 1.08, 1] : 1 }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >🔥</motion.span>
+            <p className="font-bold text-[18px] leading-none" style={{ color: "#10b981" }}>{streak}</p>
+            <p className="text-[9px]" style={{ color: "rgba(16,185,129,0.65)" }}>يوم متتالٍ</p>
+          </div>
         </div>
+
+        {/* CTA */}
+        <Link
+          href="/journey"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-[16px] font-bold text-sm active:scale-[0.97] transition-all"
+          style={{
+            background: "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
+            color: "#1c0f00",
+            boxShadow: "0 4px 20px rgba(251,191,36,0.38), 0 2px 8px rgba(0,0,0,0.3)",
+          }}
+        >
+          {isFinished ? <><TrendingUp size={15} /><span>استعرض إنجازك</span></> : <><span>متابعة اليوم {currentDay}</span><ArrowLeft size={15} /></>}
+        </Link>
       </div>
     </div>
   );
@@ -908,6 +906,8 @@ const SECTION_LABELS: Record<ListId, string> = {
   "map":                "خريطة التوبة",
   "live-stats":         "إحصاءات حية",
   "islamic-programs":   "برامج إسلامية",
+  "garden":             "شجرة التوبة",
+  "munajat":            "وضع المناجاة",
 };
 
 function SectionSoulMeter() {
@@ -998,30 +998,32 @@ function VerseCellBento() {
   const v = BENTO_VERSES[idx]!;
   return (
     <div
-      className="flex flex-col justify-between w-full h-full rounded-[18px] p-3"
+      className="flex items-center gap-3 w-full rounded-[18px] px-4 py-3"
       style={{
         background: "linear-gradient(145deg, rgba(16,185,129,0.18) 0%, rgba(5,150,105,0.06) 100%)",
         border: "1px solid rgba(16,185,129,0.24)",
-        minHeight: 112,
+        minHeight: 68,
       }}
     >
-      <div className="w-[22px] h-[22px] rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.22)" }}>
-        <BookMarked size={11} style={{ color: "#10b981" }} />
+      <div className="w-[26px] h-[26px] rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(16,185,129,0.22)" }}>
+        <BookMarked size={12} style={{ color: "#10b981" }} />
       </div>
-      <AnimatePresence mode="wait">
-        <motion.p
-          key={idx}
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -5 }}
-          transition={{ duration: 0.35 }}
-          className="text-[10px] font-bold leading-relaxed text-center"
-          style={{ color: "rgba(255,255,255,0.9)", fontFamily: "'Amiri Quran', serif", fontSize: 11 }}
-        >
-          ﴿{v.text}﴾
-        </motion.p>
-      </AnimatePresence>
-      <p className="text-[9px] text-center" style={{ color: "rgba(16,185,129,0.75)" }}>{v.ref}</p>
+      <div className="flex-1 min-w-0">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={idx}
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.35 }}
+            className="font-bold leading-relaxed text-right truncate"
+            style={{ color: "rgba(255,255,255,0.9)", fontFamily: "'Amiri Quran', serif", fontSize: 12 }}
+          >
+            ﴿{v.text}﴾
+          </motion.p>
+        </AnimatePresence>
+        <p className="text-[9px] text-right mt-0.5" style={{ color: "rgba(16,185,129,0.75)" }}>{v.ref}</p>
+      </div>
     </div>
   );
 }
@@ -1052,7 +1054,7 @@ function LiveCounterCellBento() {
           {count.toLocaleString("ar-EG")}
         </p>
       </div>
-      <p className="text-[9px]" style={{ color: "rgba(129,140,248,0.65)" }}>مستغفر معك الآن</p>
+      <p className="text-[9px]" style={{ color: "rgba(129,140,248,0.65)" }}>يتوبون الآن</p>
     </div>
   );
 }
@@ -1188,22 +1190,15 @@ function SectionJourneyCard() {
           <BentoCompassWidget />
         </div>
 
-        {/* Bento row 1: Counter (60%) + Verse (40%) */}
+        {/* Verse — full width at top */}
+        <VerseCellBento />
+
+        {/* Bento row: Counter (60%) + Secret (40%) */}
         <div className="flex gap-2">
           <div className="flex-[3]">
             <DhikrCounterCell />
           </div>
           <div className="flex-[2]">
-            <VerseCellBento />
-          </div>
-        </div>
-
-        {/* Bento row 2: Live (50%) + Secret (50%) */}
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <LiveCounterCellBento />
-          </div>
-          <div className="flex-1">
             <SecretOfTheDayCellBento />
           </div>
         </div>
@@ -1273,6 +1268,53 @@ function SectionIslamicPrograms() {
   );
 }
 
+function SectionGarden() {
+  const count = (() => { try { return parseInt(localStorage.getItem("home_dhikr_count") ?? "0") || 0; } catch { return 0; } })();
+  const stage = count >= 500 ? { emoji: "🌲", name: "غابة", color: "#10b981" }
+    : count >= 200 ? { emoji: "🌳", name: "شجرة", color: "#34d399" }
+    : count >= 50  ? { emoji: "🌿", name: "شتلة", color: "#6ee7b7" }
+    : { emoji: "🌱", name: "بذرة", color: "#a7f3d0" };
+  return (
+    <Link href="/garden" className="flex items-center gap-4 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all overflow-hidden relative"
+      style={{ background: "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)", border: "1px solid rgba(16,185,129,0.3)" }}>
+      <div className="absolute top-[-15px] right-[-15px] w-[80px] h-[80px] rounded-full opacity-10 bg-white pointer-events-none" />
+      <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-2xl"
+        style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(6px)" }}>
+        {stage.emoji}
+      </div>
+      <div className="flex-1">
+        <h3 className="font-bold text-[15px]" style={{ color: "#fff" }}>شجرة التوبة</h3>
+        <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
+          حديقتك الروحية — {stage.name} • {count.toLocaleString("ar-EG")} ذكر
+        </p>
+      </div>
+      <ArrowLeft size={16} style={{ color: "rgba(255,255,255,0.5)" }} className="shrink-0" />
+    </Link>
+  );
+}
+
+function SectionMunajat() {
+  const hour = new Date().getHours();
+  const isAfterIsha = hour >= 20 || hour < 4;
+  return (
+    <Link href="/munajat" className="flex items-center gap-4 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all overflow-hidden relative"
+      style={{ background: "linear-gradient(135deg, #0c0a1e 0%, #1e1b4b 50%, #1a1040 100%)", border: "1px solid rgba(139,92,246,0.3)" }}>
+      <div className="absolute top-[-15px] left-[-15px] w-[80px] h-[80px] rounded-full opacity-10 bg-white pointer-events-none" />
+      <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-2xl"
+        style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(6px)" }}>
+        🌙
+      </div>
+      <div className="flex-1">
+        <h3 className="font-bold text-[15px]" style={{ color: "#fff" }}>وضع المناجاة</h3>
+        <p className="text-[11px] mt-0.5" style={{ color: "rgba(200,180,255,0.65)" }}>
+          {isAfterIsha ? "⭐ الليل — وقت المناجاة" : "شاشة هادئة • صوت أمبيانت • ذكر"}
+        </p>
+      </div>
+      <ArrowLeft size={16} style={{ color: "rgba(200,180,255,0.4)" }} className="shrink-0" />
+    </Link>
+  );
+}
+
 function renderSection(id: ListId) {
   switch (id) {
     case "soul-meter":         return <SectionSoulMeter />;
@@ -1285,6 +1327,8 @@ function renderSection(id: ListId) {
     case "map":                return <SectionMap />;
     case "live-stats":         return <SectionLiveStats />;
     case "islamic-programs":   return <SectionIslamicPrograms />;
+    case "garden":             return <SectionGarden />;
+    case "munajat":            return <SectionMunajat />;
   }
 }
 
