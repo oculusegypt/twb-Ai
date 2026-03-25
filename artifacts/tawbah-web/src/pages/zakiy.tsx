@@ -887,12 +887,7 @@ function BotMessageBody({
         {hasAudio && (
           <button
             onClick={handlePlayToggle}
-            className={cn(
-              "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all",
-              isCurrentlyPlaying
-                ? "bg-teal-600 text-white"
-                : "bg-teal-100 dark:bg-teal-950/40 text-teal-800 dark:text-teal-400 border border-teal-400/60 hover:bg-teal-200"
-            )}
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all dark:bg-teal-950/40 dark:text-teal-400 border border-teal-400/60 hover:bg-teal-200 text-[#dff5f0] bg-[#00d5be]"
           >
             {isCurrentlyPlaying ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
           </button>
