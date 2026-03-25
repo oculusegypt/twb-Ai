@@ -76,7 +76,8 @@ type ListId =
   | "live-stats"
   | "islamic-programs"
   | "garden"
-  | "munajat";
+  | "munajat"
+  | "adhkar";
 
 type SectionId = GridId | ListId;
 
@@ -94,7 +95,7 @@ const GRID_DEFAULT: GridId[] = [
 ];
 
 const LIST_DEFAULT: ListId[] = [
-  "soul-meter", "journey-card", "garden", "live-stats", "munajat", "ameen", "invite", "islamic-programs", "signs", "journey30", "tawbah-card", "map",
+  "soul-meter", "journey-card", "garden", "live-stats", "munajat", "adhkar", "ameen", "invite", "islamic-programs", "signs", "journey30", "tawbah-card", "map",
 ];
 
 const ALL_SECTIONS: SectionId[] = [
@@ -105,10 +106,10 @@ const ALL_SECTIONS: SectionId[] = [
   "ameen", "invite", "islamic-programs", "signs",
   "danger-times", "secret-dua",
   "journey30", "tawbah-card", "map",
-  "garden", "munajat",
+  "garden", "munajat", "adhkar",
 ];
 
-const COMBINED_STORAGE_KEY = "home_combined_order_v7";
+const COMBINED_STORAGE_KEY = "home_combined_order_v8";
 
 function loadCombinedOrder(): SectionId[] {
   try {
@@ -908,6 +909,7 @@ const SECTION_LABELS: Record<ListId, string> = {
   "islamic-programs":   "برامج إسلامية",
   "garden":             "شجرة التوبة",
   "munajat":            "وضع المناجاة",
+  "adhkar":             "الأذكار والأدعية",
 };
 
 function SectionSoulMeter() {
@@ -1315,6 +1317,27 @@ function SectionMunajat() {
   );
 }
 
+function SectionAdhkar() {
+  return (
+    <Link href="/adhkar" className="flex items-center gap-4 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all overflow-hidden relative"
+      style={{ background: "linear-gradient(135deg, #0d1f1a 0%, #0a2218 50%, #071a14 100%)", border: "1px solid rgba(52,211,153,0.28)" }}>
+      <div className="absolute top-[-15px] right-[-15px] w-[80px] h-[80px] rounded-full pointer-events-none"
+        style={{ background: "rgba(52,211,153,0.15)", filter: "blur(16px)" }} />
+      <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-2xl"
+        style={{ background: "rgba(52,211,153,0.12)", border: "1px solid rgba(52,211,153,0.2)" }}>
+        📿
+      </div>
+      <div className="flex-1">
+        <h3 className="font-bold text-[15px]" style={{ color: "#6ee7b7" }}>الأذكار والأدعية</h3>
+        <p className="text-[11px] mt-0.5" style={{ color: "rgba(110,231,183,0.55)" }}>
+          ٢٨ قسماً شاملاً — صباح ومساء وصلاة وحياة
+        </p>
+      </div>
+      <ArrowLeft size={16} style={{ color: "rgba(110,231,183,0.35)" }} className="shrink-0" />
+    </Link>
+  );
+}
+
 function renderSection(id: ListId) {
   switch (id) {
     case "soul-meter":         return <SectionSoulMeter />;
@@ -1329,6 +1352,7 @@ function renderSection(id: ListId) {
     case "islamic-programs":   return <SectionIslamicPrograms />;
     case "garden":             return <SectionGarden />;
     case "munajat":            return <SectionMunajat />;
+    case "adhkar":             return <SectionAdhkar />;
   }
 }
 

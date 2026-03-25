@@ -45,6 +45,7 @@ import IslamicPrograms from "@/pages/islamic-programs";
 import ProgramDetail from "@/pages/program-detail";
 import Garden from "@/pages/garden";
 import Munajat from "@/pages/munajat";
+import Adhkar from "@/pages/adhkar";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -95,6 +96,7 @@ function Router() {
         <Route path="/islamic-programs/:id" component={ProgramDetail} />
         <Route path="/garden" component={Garden} />
         <Route path="/munajat" component={Munajat} />
+        <Route path="/adhkar" component={Adhkar} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
