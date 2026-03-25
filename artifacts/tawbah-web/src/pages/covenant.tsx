@@ -548,46 +548,56 @@ export default function Covenant() {
                 )}
             </div>
 
-            {/* ── Floating footer ── */}
-            <div className="fixed bottom-0 inset-x-0 z-30 px-4 pb-6 pt-3"
-              style={{ background: "linear-gradient(to top, var(--background) 70%, transparent)" }}>
-              <div className="flex items-center gap-3 max-w-md mx-auto">
-                {selectedIds.size > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="shrink-0 min-w-[48px] h-[48px] rounded-xl bg-primary/10 border border-primary/25 flex flex-col items-center justify-center"
-                  >
-                    <span className="text-sm font-bold text-primary leading-none">{selectedIds.size}</span>
-                    <span className="text-[8px] text-muted-foreground mt-0.5">ذنب</span>
-                  </motion.div>
-                )}
-                <motion.button
-                  layout
-                  onClick={() => setStep("review")}
-                  disabled={!canProceed}
-                  whileTap={{ scale: 0.97 }}
-                  className="flex-1 h-[48px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40 shadow-lg active:scale-[0.98]"
-                  style={canProceed ? {
-                    background: "linear-gradient(to left, var(--primary), color-mix(in srgb, var(--primary) 80%, #6366f1))",
-                    color: "var(--primary-foreground)",
-                    boxShadow: "0 4px 20px rgba(var(--primary-rgb,99,102,241),0.35)",
-                  } : {
-                    background: "var(--muted)",
-                    color: "var(--muted-foreground)",
-                  }}
+            {/* ── Floating footer (appears only when sin selected, above nav + Zaki) ── */}
+            <AnimatePresence>
+              {canProceed && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 28 }}
+                  className="fixed inset-x-0 z-[55] px-4 max-w-md mx-auto"
+                  style={{ bottom: "108px" }}
                 >
-                  {canProceed ? (
-                    <>
+                  <div
+                    className="flex items-center gap-2.5 p-2.5 rounded-2xl border border-border/60 shadow-2xl"
+                    style={{
+                      background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                      backdropFilter: "blur(20px)",
+                      WebkitBackdropFilter: "blur(20px)",
+                      boxShadow: "0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)",
+                    }}
+                  >
+                    {/* Count badge */}
+                    <motion.div
+                      key={selectedIds.size}
+                      initial={{ scale: 0.7 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                      className="shrink-0 w-[46px] h-[46px] rounded-xl bg-primary/12 border border-primary/25 flex flex-col items-center justify-center gap-0.5"
+                    >
+                      <span className="text-base font-black text-primary leading-none">{selectedIds.size}</span>
+                      <span className="text-[8px] font-bold text-muted-foreground">ذنب</span>
+                    </motion.div>
+
+                    {/* Next button */}
+                    <motion.button
+                      onClick={() => setStep("review")}
+                      whileTap={{ scale: 0.97 }}
+                      className="flex-1 h-[46px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all"
+                      style={{
+                        background: "linear-gradient(to left, var(--primary), color-mix(in srgb, var(--primary) 80%, #6366f1))",
+                        color: "var(--primary-foreground)",
+                        boxShadow: "0 4px 16px rgba(var(--primary-rgb,99,102,241),0.40)",
+                      }}
+                    >
                       <span>التالي — مراجعة وتوقيع</span>
-                      <ChevronLeft size={16} />
-                    </>
-                  ) : (
-                    <span>اختر ذنباً واحداً على الأقل</span>
-                  )}
-                </motion.button>
-              </div>
-            </div>
+                      <ChevronLeft size={15} />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
 
@@ -720,36 +730,55 @@ export default function Covenant() {
 
             </div>
 
-            {/* ── Sign button (fixed bottom) ── */}
-            <div className="fixed bottom-0 inset-x-0 z-30 px-4 pb-6 pt-3"
-              style={{ background: "linear-gradient(to top, var(--background) 70%, transparent)" }}>
-              <motion.button
-                onClick={handleSign}
-                disabled={createCovenant.isPending}
-                whileTap={{ scale: 0.97 }}
-                className="w-full max-w-md mx-auto h-[52px] rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2.5 transition-all shadow-xl active:scale-[0.98] disabled:opacity-60"
+            {/* ── Sign button (floating above nav + Zaki) ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: "spring", stiffness: 280, damping: 26, delay: 0.4 }}
+              className="fixed inset-x-0 z-[55] px-4 max-w-md mx-auto"
+              style={{ bottom: "108px" }}
+            >
+              <div
+                className="p-2.5 rounded-2xl border border-border/60 shadow-2xl"
                 style={{
-                  background: "linear-gradient(to left, #059669, #047857)",
-                  color: "#fff",
-                  boxShadow: "0 6px 28px rgba(5,150,105,0.40), 0 2px 8px rgba(0,0,0,0.2)",
-                  display: "flex",
+                  background: "color-mix(in srgb, var(--background) 88%, transparent)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)",
                 }}
-                animate={createCovenant.isPending ? {} : { boxShadow: ["0 6px 28px rgba(5,150,105,0.40)", "0 8px 36px rgba(5,150,105,0.55)", "0 6px 28px rgba(5,150,105,0.40)"] }}
-                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
               >
-                {createCovenant.isPending ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>جارٍ توثيق الميثاق...</span>
-                  </>
-                ) : (
-                  <>
-                    <HandHeart size={18} className="text-white" />
-                    <span>أُعاهِدُ الله الآن على التوبة النصوح</span>
-                  </>
-                )}
-              </motion.button>
-            </div>
+                <motion.button
+                  onClick={handleSign}
+                  disabled={createCovenant.isPending}
+                  whileTap={{ scale: 0.97 }}
+                  className="w-full h-[50px] rounded-xl font-bold text-[15px] flex items-center justify-center gap-2.5 transition-all active:scale-[0.98] disabled:opacity-60"
+                  style={{
+                    background: "linear-gradient(to left, #059669, #047857)",
+                    color: "#fff",
+                  }}
+                  animate={createCovenant.isPending ? {} : {
+                    boxShadow: [
+                      "0 4px 20px rgba(5,150,105,0.45)",
+                      "0 6px 28px rgba(5,150,105,0.65)",
+                      "0 4px 20px rgba(5,150,105,0.45)",
+                    ],
+                  }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  {createCovenant.isPending ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>جارٍ توثيق الميثاق...</span>
+                    </>
+                  ) : (
+                    <>
+                      <HandHeart size={18} className="text-white" />
+                      <span>أُعاهِدُ الله الآن على التوبة النصوح</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
