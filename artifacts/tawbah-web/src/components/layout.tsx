@@ -225,70 +225,43 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
           </AnimatePresence>
 
-          {/* Bottom Navigation Bar */}
-          <nav className="fixed bottom-0 inset-x-0 z-40 max-w-md mx-auto">
+          {/* Floating Bottom Navigation Bar */}
+          <nav className="fixed bottom-3 inset-x-0 z-40 max-w-md mx-auto px-4">
             <div className="relative">
-
-              {/*
-                SVG notch — circular arc (k=0.5523) + rounded shoulders (Q curves) + inner shadow.
-                ViewBox 400×80. Button r=30, notch r=36 → 6px even gap.
-                Shoulders: flat → Q curve at x=152/248 → arc at x=164/236.
-                Spacer = 25% to cover full shoulder-to-shoulder width.
-              */}
-              <svg
-                className="absolute inset-x-0 top-0 w-full pointer-events-none"
-                style={{ height: "80px" }}
-                viewBox="0 0 400 80"
-                preserveAspectRatio="none"
-                xmlns="http://www.w3.org/2000/svg"
+              {/* Floating glass pill */}
+              <div
+                className="relative rounded-[28px] overflow-hidden bg-card/88 backdrop-blur-2xl"
+                style={{
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.12)",
+                  border: "1px solid hsl(var(--border)/0.6)",
+                }}
               >
-                <defs>
-                  <filter id="notch-inner-blur" x="-50%" y="-50%" width="200%" height="200%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" />
-                  </filter>
-                </defs>
-
-                {/* Nav bar fill — rounded shoulders via Q curves, circular arc in center */}
-                <path
-                  d="M0,0 L152,0 Q164,0 164,14 C164,26 180,36 200,36 C220,36 236,26 236,14 Q236,0 248,0 L400,0 L400,80 L0,80 Z"
-                  className="fill-card/95"
-                  style={{ filter: "drop-shadow(0 -4px 16px rgba(0,0,0,0.09))" }}
+                {/* Subtle top shine */}
+                <div
+                  className="absolute top-0 inset-x-0 h-[45%] pointer-events-none rounded-t-[28px]"
+                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%)" }}
                 />
-                {/* Border line — same shape */}
-                <path
-                  d="M0,0.5 L152,0.5 Q164,0.5 164,14.5 C164,26.5 180,36.5 200,36.5 C220,36.5 236,26.5 236,14.5 Q236,0.5 248,0.5 L400,0.5"
-                  fill="none"
-                  className="stroke-border/50"
-                  strokeWidth="0.8"
-                />
-                {/* Inner shadow — subtle blurred stroke following the notch edge */}
-                <path
-                  d="M154,1 Q164,1 164,13 C165,25 181,35 200,35 C219,35 235,25 236,13 Q236,1 246,1"
-                  fill="none"
-                  stroke="black"
-                  strokeWidth="5"
-                  strokeOpacity="0.07"
-                  filter="url(#notch-inner-blur)"
-                />
-              </svg>
 
-              {/* Nav content sits on top of the SVG */}
-              <div className="relative flex items-center h-[68px] pb-safe" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-                {leftItems.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
+                {/* Nav content */}
+                <div className="relative flex items-center h-[62px]" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+                  {leftItems.map((item) => (
+                    <NavItem key={item.href} {...item} />
+                  ))}
 
-                {/* Center spacer — 25% covers shoulder-to-shoulder (152→248 = 96/400) */}
-                <div className="flex-none" style={{ width: "25%" }} />
+                  {/* Center spacer for orb */}
+                  <div className="flex-none" style={{ width: "22%" }} />
 
-                {rightItems.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
+                  {rightItems.map((item) => (
+                    <NavItem key={item.href} {...item} />
+                  ))}
+                </div>
               </div>
 
-              {/* Zaki button — center at nav-top (y=0), sits in the notch */}
-              <div className="absolute left-1/2 -translate-x-1/2 -top-[30px] z-50"
-                style={{ filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.16)) drop-shadow(0 1px 4px rgba(0,0,0,0.10))" }}>
+              {/* Zaki orb — floats above pill center */}
+              <div
+                className="absolute left-1/2 -translate-x-1/2 -top-[26px] z-50"
+                style={{ filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.2)) drop-shadow(0 2px 5px rgba(0,0,0,0.12))" }}
+              >
                 <button
                   onClick={() => setVoiceOpen(true)}
                   className="block tap-highlight-transparent focus:outline-none"
@@ -302,7 +275,6 @@ export function Layout({ children }: { children: ReactNode }) {
                   </motion.div>
                 </button>
               </div>
-
             </div>
           </nav>
         </>

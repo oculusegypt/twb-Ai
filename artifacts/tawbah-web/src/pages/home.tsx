@@ -9,6 +9,8 @@ import { useAppNotifications } from "@/context/AppNotificationsContext";
 import { IslamicHero } from "@/components/IslamicHero";
 import { KnowledgeSlider } from "@/components/KnowledgeSlider";
 import { SoulMeter } from "@/components/SoulMeter";
+import { MoodSelector } from "@/components/MoodSelector";
+import { CommunityTicker } from "@/components/CommunityTicker";
 import { getEidStatus, type EidPeriod } from "@/lib/eid-utils";
 import { getSessionId } from "@/lib/session";
 import { useQuery } from "@tanstack/react-query";
@@ -1108,15 +1110,25 @@ function SortableUnifiedItem({ id, editMode }: { id: SectionId; editMode: boolea
       >
         <Link
           href={meta.href}
-          className={`flex flex-col items-center justify-center gap-2 bg-gradient-to-br ${meta.bg} border ${meta.border} rounded-2xl px-3 py-4 hover:shadow-md active:scale-[0.97] transition-all text-center`}
-          style={{ minHeight: "96px" }}
+          className={`relative flex flex-col items-center justify-center gap-2.5 bg-gradient-to-br ${meta.bg} border ${meta.border} px-3 py-5 active:scale-[0.96] transition-all text-center overflow-hidden`}
+          style={{
+            minHeight: "106px",
+            borderRadius: 22,
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            boxShadow: "0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.25)",
+          }}
         >
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${meta.iconBg}`}>
+          {/* Shine */}
+          <div className="absolute top-0 inset-x-0 h-[40%] pointer-events-none rounded-t-[22px]"
+            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.14) 0%, transparent 100%)" }} />
+          <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${meta.iconBg}`}
+            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
             {meta.icon}
           </div>
           <div>
-            <p className="font-bold text-[11px] leading-tight">{meta.label}</p>
-            <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight">{meta.sub}</p>
+            <p className="font-bold text-[11.5px] leading-tight">{meta.label}</p>
+            <p className="text-[9.5px] text-muted-foreground mt-0.5 leading-tight">{meta.sub}</p>
           </div>
         </Link>
         {editMode && (
@@ -1222,6 +1234,9 @@ export default function Home() {
         <EidEntryCard />
         <div className="hidden"><DynamicBanner /></div>
 
+        {/* ── Mood Selector ── */}
+        <MoodSelector />
+
         {/* Edit mode banner */}
         <AnimatePresence>
           {editMode && (
@@ -1289,6 +1304,9 @@ export default function Home() {
             ) : null}
           </DragOverlay>
         </DndContext>
+
+        {/* ── Community Ticker ── */}
+        <CommunityTicker />
 
         {/* Organize toggle button */}
         <motion.button
