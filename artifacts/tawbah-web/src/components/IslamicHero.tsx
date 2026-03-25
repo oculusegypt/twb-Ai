@@ -224,14 +224,14 @@ const LIGHT_HERO_FILTER: Record<string, string> = {
 };
 
 const LIGHT_LOGO_SHADOW: Record<string, string> = {
-  forest:   "drop-shadow(0 5px 14px rgba(23,77,43,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
-  mint:     "drop-shadow(0 5px 14px rgba(6,95,70,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
-  ocean:    "drop-shadow(0 5px 14px rgba(15,76,129,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
-  midnight: "drop-shadow(0 5px 14px rgba(30,58,138,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
-  aurora:   "drop-shadow(0 5px 14px rgba(107,33,168,0.28)) drop-shadow(0 2px 5px rgba(0,0,0,0.16))",
-  rose:     "drop-shadow(0 5px 14px rgba(159,18,57,0.28)) drop-shadow(0 2px 5px rgba(0,0,0,0.16))",
-  sunset:   "drop-shadow(0 5px 14px rgba(146,64,14,0.30)) drop-shadow(0 2px 5px rgba(0,0,0,0.18))",
-  slate:    "drop-shadow(0 5px 14px rgba(30,58,95,0.28)) drop-shadow(0 2px 5px rgba(0,0,0,0.16))",
+  forest:   "drop-shadow(3px 8px 18px rgba(23,77,43,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  mint:     "drop-shadow(3px 8px 18px rgba(6,95,70,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  ocean:    "drop-shadow(3px 8px 18px rgba(15,76,129,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  midnight: "drop-shadow(3px 8px 18px rgba(30,58,138,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  aurora:   "drop-shadow(3px 8px 18px rgba(107,33,168,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
+  rose:     "drop-shadow(3px 8px 18px rgba(159,18,57,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
+  sunset:   "drop-shadow(3px 8px 18px rgba(146,64,14,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  slate:    "drop-shadow(3px 8px 18px rgba(30,58,95,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
 };
 
 // ── Typing effect hook ──────────────────────────────────────────────────────
@@ -1007,7 +1007,7 @@ export function IslamicHero() {
                 marginRight: -4,
                 transition: "margin-top 0.48s cubic-bezier(0.34,1.26,0.64,1)",
                 filter: isDark
-                  ? "drop-shadow(0 6px 18px rgba(0,0,0,0.85)) drop-shadow(0 2px 6px rgba(0,0,0,0.55))"
+                  ? "drop-shadow(3px 8px 22px rgba(0,0,0,0.88)) drop-shadow(1px 3px 7px rgba(0,0,0,0.60))"
                   : `saturate(0.7) brightness(0.88) ${LIGHT_LOGO_SHADOW[accentColor] ?? LIGHT_LOGO_SHADOW["forest"]!}`,
               }}
             />

@@ -606,7 +606,7 @@ function Journey30HeroCard() {
         style={{
           objectFit: "cover",
           objectPosition: "center",
-          filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.85) saturate(1.15)",
+          filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.82) saturate(0.82) sepia(0.07)",
         }}
       />
       {/* Gradient overlay — dark at bottom for button readability */}
@@ -928,7 +928,7 @@ function SectionJourneyCard() {
             style={{
               objectFit: "cover",
               objectPosition: "center",
-              filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.85) saturate(1.15)",
+              filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.82) saturate(0.82) sepia(0.07)",
             }}
           />
           <div
@@ -977,7 +977,7 @@ function SectionJourneyCard() {
             style={{
               objectFit: "cover",
               objectPosition: "center",
-              filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.85) saturate(1.15)",
+              filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.82) saturate(0.82) sepia(0.07)",
             }}
           />
           <div
