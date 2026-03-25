@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Play, Pause, SkipBack, SkipForward, Search, ChevronRight,
-  Volume2, Loader2, RotateCcw, Check, X, Image, Radio,
+  Volume2, Loader2, RotateCcw, Check, X, Image, Activity,
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
@@ -154,100 +154,77 @@ function NatureGallery({ onClose }: { onClose: () => void }) {
   );
 }
 
-// ─── Waveform ─────────────────────────────────────────────────────────────────
+// ─── Waveform (pure canvas animation — no Web Audio API) ──────────────────────
 
-function Waveform({
-  analyserRef,
-  isPlaying,
-  onOpenGallery,
-}: {
-  analyserRef: React.RefObject<AnalyserNode | null>;
-  isPlaying: boolean;
-  onOpenGallery: () => void;
-}) {
+function Waveform({ isPlaying, onOpenGallery }: { isPlaying: boolean; onOpenGallery: () => void }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const analyser = analyserRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
     const draw = () => {
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
       const W = canvas.width;
       const H = canvas.height;
       ctx.clearRect(0, 0, W, H);
-
       const barCount = 40;
+      const barW = (W - (barCount - 1) * 2) / barCount;
+      const t = Date.now() / 500;
 
-      if (analyser && isPlaying) {
-        const buf = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(buf);
-        const step = Math.floor(analyser.frequencyBinCount / barCount);
-        const barW = W / barCount - 2;
-        for (let i = 0; i < barCount; i++) {
-          const val = buf[i * step] ?? 0;
-          const barH = Math.max(4, (val / 255) * H * 0.92);
-          const x = i * (barW + 2);
-          const alpha = 0.5 + (val / 255) * 0.5;
-          ctx.fillStyle = `rgba(200, 168, 75, ${alpha})`;
-          ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(x, H - barH, barW, barH, 2);
-          else ctx.rect(x, H - barH, barW, barH);
-          ctx.fill();
+      for (let i = 0; i < barCount; i++) {
+        let barH: number;
+        if (isPlaying) {
+          const v1 = Math.sin(t * 1.6 + i * 0.5) * 0.35;
+          const v2 = Math.sin(t * 2.8 + i * 0.8) * 0.25;
+          const v3 = Math.sin(t * 0.9 + i * 0.3) * 0.25;
+          const v4 = Math.sin(t * 3.5 + i * 1.2) * 0.15;
+          barH = Math.max(5, ((v1 + v2 + v3 + v4 + 1) / 2) * H * 0.90);
+        } else {
+          barH = 4 + Math.sin(Date.now() / 2200 + i * 0.6) * 2;
         }
-      } else {
-        // Idle: gentle sine wave bars
-        const t = Date.now() / 800;
-        const barW = W / barCount - 2;
-        for (let i = 0; i < barCount; i++) {
-          const wave = Math.sin(t + i * 0.35) * 0.5 + 0.5;
-          const barH = 4 + wave * 14;
-          const x = i * (barW + 2);
-          ctx.fillStyle = `rgba(200, 168, 75, 0.28)`;
-          ctx.beginPath();
-          if (ctx.roundRect) ctx.roundRect(x, H - barH, barW, barH, 2);
-          else ctx.rect(x, H - barH, barW, barH);
-          ctx.fill();
+        const x = i * (barW + 2);
+        const alpha = isPlaying ? 0.45 + (barH / H) * 0.55 : 0.22;
+        ctx.fillStyle = `rgba(200,168,75,${alpha})`;
+        ctx.beginPath();
+        if ((ctx as CanvasRenderingContext2D & { roundRect?: (...a: unknown[]) => void }).roundRect) {
+          (ctx as CanvasRenderingContext2D & { roundRect: (...a: unknown[]) => void }).roundRect(x, H - barH, barW, barH, 2);
+        } else {
+          ctx.rect(x, H - barH, barW, barH);
         }
+        ctx.fill();
       }
-
       rafRef.current = requestAnimationFrame(draw);
     };
 
     rafRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [isPlaying, analyserRef]);
+  }, [isPlaying]);
 
   return (
     <div
-      className="relative w-full rounded-2xl flex flex-col items-center justify-end overflow-hidden"
+      className="relative w-full rounded-2xl flex flex-col items-end justify-end overflow-hidden"
       style={{
         height: 156,
-        background: "linear-gradient(160deg, rgba(200,168,75,0.07) 0%, rgba(0,0,0,0) 100%)",
-        border: "1px solid rgba(200,168,75,0.12)",
+        background: "linear-gradient(160deg, rgba(200,168,75,0.06) 0%, rgba(0,0,0,0) 100%)",
+        border: "1px solid rgba(200,168,75,0.13)",
       }}
     >
-      <canvas
-        ref={canvasRef}
-        width={320}
-        height={100}
-        className="w-full"
-        style={{ height: 100, display: "block" }}
-      />
+      <canvas ref={canvasRef} width={360} height={120} className="w-full" style={{ height: 120 }} />
       <button
         onClick={onOpenGallery}
-        className="absolute top-2.5 left-2.5 w-7 h-7 rounded-full flex items-center justify-center transition-all active:scale-95"
-        style={{ background: "rgba(200,168,75,0.12)", border: "1px solid rgba(200,168,75,0.25)" }}
-        title="عرض معرض الصور"
+        className="absolute top-2.5 left-2.5 w-7 h-7 rounded-full flex items-center justify-center active:scale-95"
+        style={{ background: "rgba(200,168,75,0.12)", border: "1px solid rgba(200,168,75,0.28)" }}
       >
         <Image size={13} style={{ color: "#c8a84b" }} />
       </button>
       <div className="absolute top-3 right-3 flex items-center gap-1.5">
-        <Radio size={11} style={{ color: "rgba(200,168,75,0.6)" }} />
-        <span className="text-[10px]" style={{ color: "rgba(200,168,75,0.6)" }}>تردد الصوت</span>
+        <Activity size={11} style={{ color: "rgba(200,168,75,0.55)" }} />
+        <span className="text-[10px]" style={{ color: "rgba(200,168,75,0.55)" }}>
+          {isPlaying ? "يُشغَّل الآن" : "في انتظار التشغيل"}
+        </span>
       </div>
     </div>
   );
@@ -267,9 +244,6 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
   const [showGallery, setShowGallery] = useState(true);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const sourceConnectedRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -292,32 +266,15 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
       .finally(() => setLoading(false));
   }, [surah.id]);
 
-  const connectAnalyser = useCallback(() => {
-    if (!audioRef.current || sourceConnectedRef.current) return;
-    try {
-      const ctx = new AudioContext();
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 128;
-      analyser.smoothingTimeConstant = 0.82;
-      const source = ctx.createMediaElementSource(audioRef.current);
-      source.connect(analyser);
-      analyser.connect(ctx.destination);
-      audioCtxRef.current = ctx;
-      analyserRef.current = analyser;
-      sourceConnectedRef.current = true;
-    } catch {}
-  }, []);
-
   const playAyah = useCallback((idx: number) => {
     const ayah = ayahs[idx];
     if (!ayah) return;
     if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
+    audio.pause();
     audio.src = `https://cdn.islamic.network/quran/audio/128/${reciterId}/${toGlobal(surah.id, ayah.numberInSurah)}.mp3`;
     audio.load();
     audio.play().catch(() => {});
-    connectAnalyser();
-    if (audioCtxRef.current?.state === "suspended") audioCtxRef.current.resume();
     setCurrentIdx(idx);
     setIsPlaying(true);
     setProgress(0);
@@ -326,12 +283,11 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
       else if (idx + 1 < ayahs.length) playAyah(idx + 1);
       else { setIsPlaying(false); setProgress(0); }
     };
-    // scroll thumbnail into view
     setTimeout(() => {
       const el = scrollRef.current?.children[idx] as HTMLElement | undefined;
       el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     }, 100);
-  }, [ayahs, surah.id, reciterId, loop, connectAnalyser]);
+  }, [ayahs, surah.id, reciterId, loop]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -359,7 +315,6 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
       setIsPlaying(false);
     } else {
       audioRef.current.play().catch(() => {});
-      if (audioCtxRef.current?.state === "suspended") audioCtxRef.current.resume();
       setIsPlaying(true);
     }
   };
@@ -438,7 +393,7 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
                 </motion.div>
               ) : (
                 <motion.div key="waveform" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-                  <Waveform analyserRef={analyserRef} isPlaying={isPlaying} onOpenGallery={() => setShowGallery(true)} />
+                  <Waveform isPlaying={isPlaying} onOpenGallery={() => setShowGallery(true)} />
                 </motion.div>
               )}
             </AnimatePresence>

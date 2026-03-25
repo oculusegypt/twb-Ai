@@ -87,12 +87,18 @@ export type QuranReciter = {
 };
 
 export const QURAN_RECITERS: QuranReciter[] = [
-  { id: "ar.alafasy",            name: "Mishary Rashid Alafasy",      nameAr: "مشاري راشد العفاسي" },
-  { id: "ar.abdurrahmaansudais", name: "Abdurrahman As-Sudais",       nameAr: "عبد الرحمن السديس" },
-  { id: "ar.mahermuaiqly",       name: "Maher Al Muaiqly",            nameAr: "ماهر المعيقلي" },
-  { id: "ar.husary",             name: "Mahmoud Khalil Al-Husary",    nameAr: "محمود خليل الحصري" },
-  { id: "ar.minshawi",           name: "Mohammed Siddiq Al-Minshawi", nameAr: "محمد صديق المنشاوي" },
-  { id: "ar.abdulsamad",         name: "Abdul Samad",                 nameAr: "عبد الباسط عبد الصمد" },
+  { id: "ar.alafasy",            name: "Mishary Rashid Alafasy",      nameAr: "مشاري راشد العفاسي"       },
+  { id: "ar.abdurrahmaansudais", name: "Abdurrahman As-Sudais",       nameAr: "عبد الرحمن السديس"        },
+  { id: "ar.mahermuaiqly",       name: "Maher Al Muaiqly",            nameAr: "ماهر المعيقلي"            },
+  { id: "ar.islamsobhi",         name: "Islam Sobhi",                 nameAr: "إسلام صبحي"               },
+  { id: "ar.saoodshuraym",       name: "Saud Al-Shuraim",             nameAr: "سعود الشريم"              },
+  { id: "ar.shaatree",           name: "Abu Bakr Al-Shatri",          nameAr: "أبو بكر الشاطري"          },
+  { id: "ar.saadalghamdi",       name: "Saad Al-Ghamdi",              nameAr: "سعد الغامدي"              },
+  { id: "ar.hanirifai",          name: "Hani Ar-Rifai",               nameAr: "هاني الرفاعي"             },
+  { id: "ar.husary",             name: "Mahmoud Khalil Al-Husary",    nameAr: "محمود خليل الحصري"        },
+  { id: "ar.minshawi",           name: "Mohammed Siddiq Al-Minshawi", nameAr: "محمد صديق المنشاوي"       },
+  { id: "ar.abdulsamad",         name: "Abdul Basit Abdul Samad",     nameAr: "عبد الباسط عبد الصمد"     },
+  { id: "ar.ahmedajamy",         name: "Ahmed Al-Ajmy",               nameAr: "أحمد العجمي"              },
 ];
 
 interface SettingsContextType {
