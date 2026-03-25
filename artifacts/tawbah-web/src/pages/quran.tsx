@@ -375,33 +375,70 @@ function MushafDisplay({
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const preloadRef = useRef<HTMLAudioElement | null>(null);
+  const preloadedIdxRef = useRef<number | null>(null);
   const spanRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
+      audioRef.current.onended = null;
       audioRef.current.src = "";
     }
+    if (preloadRef.current) {
+      preloadRef.current.src = "";
+    }
+    preloadedIdxRef.current = null;
     setPlayingIdx(null);
     setIsPlaying(false);
     if (activeQuranAudio) activeQuranAudio = null;
   }, []);
 
+  const preloadIdx = useCallback((idx: number) => {
+    const ayah = ayahs[idx];
+    if (!ayah) return;
+    if (!preloadRef.current) preloadRef.current = new Audio();
+    const pre = preloadRef.current;
+    pre.src = cdnAudioUrl(surahId, ayah.numberInSurah, reciterId);
+    pre.load();
+    preloadedIdxRef.current = idx;
+  }, [ayahs, surahId, reciterId]);
+
   const playIdx = useCallback((idx: number) => {
     const ayah = ayahs[idx];
     if (!ayah) return;
-    if (!audioRef.current) audioRef.current = new Audio();
+
+    // If this verse was preloaded, swap it in instantly — no load() delay
+    if (preloadedIdxRef.current === idx && preloadRef.current?.src) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.onended = null;
+      }
+      audioRef.current = preloadRef.current;
+      preloadRef.current = new Audio();
+      preloadedIdxRef.current = null;
+    } else {
+      // No preload available — load fresh
+      if (!audioRef.current) audioRef.current = new Audio();
+      const audio = audioRef.current;
+      audio.pause();
+      audio.onended = null;
+      audio.src = cdnAudioUrl(surahId, ayah.numberInSurah, reciterId);
+      audio.load();
+    }
+
     const audio = audioRef.current;
-    audio.pause();
-    audio.src = cdnAudioUrl(surahId, ayah.numberInSurah, reciterId);
-    audio.load();
     audio.play().catch(() => {});
     activeQuranAudio = { element: audio, stop: stopAudio };
     setPlayingIdx(idx);
     setIsPlaying(true);
     spanRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+
+    // Start preloading the next verse immediately
+    const next = idx + 1;
+    if (next < ayahs.length) preloadIdx(next);
+
     audio.onended = () => {
-      const next = idx + 1;
       if (next < ayahs.length) {
         playIdx(next);
       } else {
@@ -409,7 +446,7 @@ function MushafDisplay({
         setIsPlaying(false);
       }
     };
-  }, [ayahs, surahId, reciterId, stopAudio]);
+  }, [ayahs, surahId, reciterId, stopAudio, preloadIdx]);
 
   const handleAyahTap = (idx: number) => {
     if (playingIdx === idx && isPlaying) {
