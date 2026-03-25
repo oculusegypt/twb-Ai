@@ -1136,7 +1136,11 @@ function SectionHadithCard() {
           </span>
         </div>
         <p
+<<<<<<< replit-agent
           className="font-semibold leading-relaxed text-right mb-1.5 text-foreground"
+=======
+          className="font-semibold leading-relaxed mb-1.5 dark:text-white/90 text-center text-[#5186dbe6]"
+>>>>>>> master
           style={{ fontSize: 13 }}
         >
           «{hadith.text}»

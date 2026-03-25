@@ -219,7 +219,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
           <ol key={`list-${i}`} className="space-y-1.5 my-2 pr-1">
             {listItems.map((item, idx) => (
               <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-600 dark:bg-teal-950/50 text-white dark:text-teal-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
                   {startNum + idx}
                 </span>
                 <span className="flex-1">{renderInline(item)}</span>
@@ -272,7 +272,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
   return (
     <div className={cn(
       "space-y-0.5 rounded-xl transition-colors duration-300",
-      isActivePlaying && "bg-teal-100 dark:bg-teal-950/30 px-2 py-1 -mx-2"
+      isActivePlaying && "bg-teal-200/80 dark:bg-teal-950/30 px-2 py-1 -mx-2 rounded-lg"
     )}>
       {elements}
     </div>
@@ -343,52 +343,80 @@ function QuranCard({
   // no-op to avoid lint warning (isPlaying state is managed by parent)
   function setIsPlaying_noop() {}
 
+  const reciterName = QURAN_RECITERS.find(r => r.id === reciterId)?.nameAr ?? "القرآن الكريم";
+
   return (
-    <div className="my-2 rounded-2xl border border-amber-400/50 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-l from-amber-500 to-amber-600 dark:from-amber-800 dark:to-amber-900 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <BookOpen size={13} className="text-amber-100 dark:text-amber-300" />
-          <span className="text-[11px] font-bold text-amber-50 dark:text-amber-200 tracking-wide">
-            سورة {getSurahName(seg.surah!)} — آية {seg.ayah}
-          </span>
+    <div className="my-3 rounded-2xl overflow-hidden shadow-lg border border-emerald-200/70 dark:border-emerald-700/30">
+      {/* ── Header ── */}
+      <div className="bg-gradient-to-l from-emerald-700 to-teal-800 dark:from-emerald-800 dark:to-teal-900 px-4 py-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-7 h-7 shrink-0 rounded-full bg-white/15 flex items-center justify-center">
+            <BookOpen size={12} className="text-white" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-[10px] text-emerald-200 leading-none mb-[3px] truncate">
+              {reciterName}
+            </div>
+            <div className="text-[12px] font-bold text-white leading-none">
+              سورة {getSurahName(seg.surah!)} — آية {seg.ayah}
+            </div>
+          </div>
         </div>
+
         <button
           onClick={onManualToggle}
           className={cn(
-            "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full transition-all font-medium",
+            "shrink-0 flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full transition-all font-semibold",
             isActive && isPlaying
-              ? "bg-white/30 text-amber-900 dark:bg-amber-400 dark:text-amber-900"
-              : "bg-white/20 text-amber-900 hover:bg-white/30 dark:bg-amber-900/60 dark:text-amber-300 dark:hover:bg-amber-800/60"
+              ? "bg-white text-emerald-800 shadow-sm"
+              : "bg-white/15 text-white border border-white/30 hover:bg-white/25 active:scale-95"
           )}
         >
           {isActive && isPlaying
-            ? <><Pause size={10} /> إيقاف</>
-            : <><Play size={10} /> {QURAN_RECITERS.find(r => r.id === reciterId)?.nameAr ?? "استمع"}</>
+            ? <><Pause size={10} strokeWidth={2.5} />إيقاف</>
+            : <><Play  size={10} strokeWidth={2.5} />استمع</>
           }
         </button>
       </div>
-      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
+
+      {/* ── Body ── */}
+      <div className="relative bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50/60 dark:from-emerald-950/25 dark:via-stone-950 dark:to-teal-950/20 px-5 pb-4 pt-5 overflow-hidden">
+
+        {/* Decorative brackets */}
+        <span className="pointer-events-none select-none absolute -top-1 left-2 text-[64px] leading-none text-amber-200/50 dark:text-emerald-900/50 font-serif">﴿</span>
+        <span className="pointer-events-none select-none absolute -bottom-3 right-2 text-[64px] leading-none text-amber-200/50 dark:text-emerald-900/50 font-serif">﴾</span>
+
         {verseLoading ? (
-          <div className="flex justify-center py-2">
-            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "0ms" }} />
-            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "150ms" }} />
-            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "300ms" }} />
+          <div className="flex justify-center items-center gap-1 py-6">
+            {[0, 150, 300].map((d) => (
+              <span key={d} className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+            ))}
           </div>
         ) : (
-          <p className="quran-text text-right text-amber-950 dark:text-amber-100">
+          <p className="quran-text text-right text-stone-800 dark:text-amber-100 leading-loose relative z-10 px-2">
             ﴿{verseText}﴾
           </p>
         )}
+
+        {/* Waveform */}
         {isActive && isPlaying && (
-          <div className="flex gap-0.5 items-end justify-center mt-2 h-4">
-            {[1,2,3,4,5,6,7].map((k) => (
-              <span key={k} className="w-0.5 bg-amber-500 rounded-full animate-bounce"
-                style={{ height: `${3 + (k % 4) * 3}px`, animationDelay: `${k * 60}ms` }} />
+          <div className="flex gap-[3px] items-end justify-center mt-4 h-5 relative z-10">
+            {[4,7,11,8,5,10,7,4,9,6,11,7,5].map((h, k) => (
+              <span
+                key={k}
+                className="quran-wave-bar w-[3px] rounded-full bg-emerald-500 dark:bg-emerald-400"
+                style={{
+                  height: `${h}px`,
+                  animation: "quranWave 0.8s ease-in-out infinite alternate",
+                  animationDelay: `${k * 65}ms`,
+                }}
+              />
             ))}
           </div>
         )}
+
         {audioError && (
-          <p className="text-[10px] text-amber-500/70 text-center mt-1">تعذّر تشغيل الصوت</p>
+          <p className="text-[10px] text-red-400/80 text-center mt-2 relative z-10">تعذّر تشغيل الصوت</p>
         )}
       </div>
     </div>
@@ -404,25 +432,25 @@ function FatwaCard({ seg }: { seg: MessageSegment }) {
   const preview = (seg.text?.length ?? 0) > 120 ? seg.text!.slice(0, 120) + "..." : seg.text;
 
   return (
-    <div className="my-2 rounded-2xl border border-emerald-400/50 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-l from-emerald-600 to-teal-700 dark:from-emerald-800 dark:to-teal-900 px-4 py-2 flex items-center gap-2">
-        <Scale size={13} className="text-emerald-100 dark:text-emerald-300" />
-        <span className="text-[11px] font-bold text-emerald-50 dark:text-emerald-200 tracking-wide">حكم شرعي</span>
-        <span className="mr-auto text-[10px] text-emerald-100/80 dark:text-emerald-400/80">📚 {seg.source}</span>
+    <div className="my-2 rounded-2xl border border-emerald-300 dark:border-emerald-400/50 overflow-hidden shadow-sm">
+      <div className="bg-emerald-100 dark:bg-gradient-to-l dark:from-emerald-800 dark:to-teal-900 border-b border-emerald-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
+        <Scale size={13} className="text-emerald-700 dark:text-emerald-300" />
+        <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200 tracking-wide">حكم شرعي</span>
+        <span className="mr-auto text-[10px] text-emerald-700/80 dark:text-emerald-400/80">📚 {seg.source}</span>
       </div>
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
+      <div className="bg-emerald-50 dark:bg-gradient-to-br dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
         <p className="text-sm leading-relaxed text-emerald-900 dark:text-emerald-200 text-right">
           {expanded ? seg.text : preview}
         </p>
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200/50 dark:border-emerald-800/30">
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/30">
           {(seg.text?.length ?? 0) > 120 && (
-            <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium">
+            <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-medium">
               {expanded ? "إخفاء" : "عرض الكامل"}
             </button>
           )}
           {seg.url && (
             <a href={seg.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 hover:underline font-medium mr-auto">
+              className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-medium mr-auto">
               <ExternalLink size={10} /> المصدر
             </a>
           )}
@@ -457,13 +485,13 @@ function PromiseCard({ seg, sessionId }: { seg: MessageSegment; sessionId: strin
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="my-3 rounded-2xl border border-amber-400/60 overflow-hidden shadow-md"
+      className="my-3 rounded-2xl border border-amber-300 dark:border-amber-400/60 overflow-hidden shadow-md"
     >
-      <div className="bg-gradient-to-l from-amber-500 to-yellow-600 dark:from-amber-700 dark:to-yellow-800 px-4 py-2 flex items-center gap-2">
-        <Handshake size={13} className="text-amber-100 dark:text-amber-200" />
-        <span className="text-[11px] font-bold text-amber-50 dark:text-amber-100 tracking-wide">وعد أمام الله</span>
+      <div className="bg-amber-100 dark:bg-gradient-to-l dark:from-amber-700 dark:to-yellow-800 border-b border-amber-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
+        <Handshake size={13} className="text-amber-700 dark:text-amber-200" />
+        <span className="text-[11px] font-bold text-amber-900 dark:text-amber-100 tracking-wide">وعد أمام الله</span>
       </div>
-      <div className="bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
+      <div className="bg-amber-50 dark:bg-gradient-to-br dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
         <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200 text-right font-medium mb-4">
           "{seg.text}"
         </p>
@@ -498,16 +526,16 @@ function SurahLinkCard({ seg }: { seg: MessageSegment }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="my-2 rounded-2xl border border-teal-400/50 overflow-hidden shadow-sm"
+      className="my-2 rounded-2xl border border-teal-300 dark:border-teal-400/50 overflow-hidden shadow-sm"
     >
-      <div className="bg-gradient-to-l from-teal-700 to-emerald-800 dark:from-teal-950 dark:to-emerald-950 px-4 py-2 flex items-center gap-2">
-        <BookMarked size={13} className="text-teal-200" />
-        <span className="text-[11px] font-bold text-teal-100 tracking-wide">السورة كاملة</span>
+      <div className="bg-teal-100 dark:bg-gradient-to-l dark:from-teal-950 dark:to-emerald-950 border-b border-teal-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
+        <BookMarked size={13} className="text-teal-700 dark:text-teal-200" />
+        <span className="text-[11px] font-bold text-teal-900 dark:text-teal-100 tracking-wide">السورة كاملة</span>
       </div>
-      <div className="bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-950/30 dark:to-emerald-950/20 px-4 py-3 flex items-center justify-between">
+      <div className="bg-teal-50 dark:bg-gradient-to-br dark:from-teal-950/30 dark:to-emerald-950/20 px-4 py-3 flex items-center justify-between">
         <div>
           <p className="text-sm font-bold text-teal-900 dark:text-teal-200">سورة {seg.text}</p>
-          <p className="text-[11px] text-teal-600 dark:text-teal-400 mt-0.5">تابع قراءة باقي السورة من الآية {seg.ayah}</p>
+          <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-0.5">تابع قراءة باقي السورة من الآية {seg.ayah}</p>
         </div>
         <a
           href={seg.url}
@@ -864,7 +892,7 @@ function BotMessageBody({
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all",
               isCurrentlyPlaying
                 ? "bg-teal-600 text-white"
-                : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 hover:bg-teal-100"
+                : "bg-teal-100 dark:bg-teal-950/40 text-teal-800 dark:text-teal-400 border border-teal-400/60 hover:bg-teal-200"
             )}
           >
             {isCurrentlyPlaying ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
@@ -879,7 +907,7 @@ function BotMessageBody({
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
               impressionOpen
                 ? "bg-rose-500 text-white border-rose-500"
-                : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-300/60 hover:bg-rose-100"
+                : "bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-400/60 hover:bg-rose-200"
             )}
           >
             {impressionLoading
@@ -897,7 +925,7 @@ function BotMessageBody({
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
               hadiDone
                 ? "bg-emerald-500 text-white border-emerald-500"
-                : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-300/60 hover:bg-emerald-100"
+                : "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-400 border-emerald-400/60 hover:bg-emerald-200"
             )}
           >
             {hadiLoading
@@ -925,50 +953,6 @@ function BotMessageBody({
 
 
 // ══════════════════════════════════════════
-// LONG RESPONSE SPLITTING
-// ══════════════════════════════════════════
-
-const PART_MAX_CHARS = 700;
-
-function splitIntoParts(text: string): string[] {
-  if (text.length <= PART_MAX_CHARS) return [text];
-
-  const tryParagraphs = text.split("\n\n").filter((p) => p.trim());
-  const parts: string[] = [];
-  let current = "";
-
-  for (const para of tryParagraphs) {
-    if (current && current.length + para.length + 2 > PART_MAX_CHARS) {
-      parts.push(current.trim());
-      current = para;
-    } else {
-      current = current ? current + "\n\n" + para : para;
-    }
-  }
-  if (current.trim()) parts.push(current.trim());
-
-  const result: string[] = [];
-  for (const part of parts) {
-    if (part.length <= PART_MAX_CHARS) {
-      result.push(part);
-    } else {
-      const lines = part.split("\n");
-      let cur = "";
-      for (const line of lines) {
-        if (cur && cur.length + line.length + 1 > PART_MAX_CHARS) {
-          result.push(cur.trim());
-          cur = line;
-        } else {
-          cur = cur ? cur + "\n" + line : line;
-        }
-      }
-      if (cur.trim()) result.push(cur.trim());
-    }
-  }
-  return result.filter((p) => p.length > 0);
-}
-
-// ══════════════════════════════════════════
 // MAIN PAGE
 // ══════════════════════════════════════════
 
@@ -982,7 +966,6 @@ export default function ZakiyPage() {
   const [riskAlert, setRiskAlert] = useState<{ level: "medium" | "high"; message: string; sign: string | null } | null>(null);
   const [riskDismissed, setRiskDismissed] = useState(false);
   const [anniversaryMilestone, setAnniversaryMilestone] = useState<string | null>(null);
-  const [pendingParts, setPendingParts] = useState<string[]>([]);
   const [autoPlayMsgId, setAutoPlayMsgId] = useState<string | null>(null);
   const autoPlayQueueRef = useRef<string[]>([]);
 
@@ -1144,60 +1127,8 @@ export default function ZakiyPage() {
     fetchSuggestions([...currentHistory, { role: "assistant", content: text }], msg.id);
   }
 
-  async function fetchTtsSegments(text: string): Promise<MessageSegment[]> {
-    try {
-      const res = await fetch(`${base}/api/zakiy/tts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data.segments ?? [];
-    } catch {
-      return [];
-    }
-  }
-
   function handleBotResponse(text: string, segments?: MessageSegment[]) {
-    const parts = splitIntoParts(text);
-    if (parts.length <= 1) {
-      addBotMessage(text, segments);
-      return;
-    }
-
-    const now = Date.now();
-    const partIds = parts.map((_, idx) => (now + idx).toString());
-
-    autoPlayQueueRef.current = partIds.slice(1);
-    setAutoPlayMsgId(partIds[0]);
-    setPendingParts(parts.slice(1));
-
-    parts.forEach((part, idx) => {
-      const isLast = idx === parts.length - 1;
-      setTimeout(async () => {
-        const partSegments = await fetchTtsSegments(part);
-        const partMsg: Message = {
-          id: partIds[idx],
-          role: "bot",
-          text: part,
-          segments: partSegments,
-          timestamp: new Date(),
-          suggestions: [],
-          suggestionsLoading: isLast,
-        };
-        setMessages((prev) => [...prev, partMsg]);
-        setPendingParts((prev) => prev.slice(1));
-        if (isLast) {
-          const currentHistory = buildHistory();
-          fetchSuggestions([...currentHistory, { role: "assistant", content: part }], partIds[idx]);
-        }
-      }, idx * 800);
-    });
-  }
-
-  function showNextPendingPart() {
-    // No-op: parts are now auto-delivered
+    addBotMessage(text, segments);
   }
 
   function addUserMessage(text: string) {
@@ -1211,18 +1142,10 @@ export default function ZakiyPage() {
     if (!text.trim() || loading) return;
 
     const trimmed = text.trim();
-    const isContinue = ["أكمل", "أكمل →", "أكمل ←", "كمّل", "التالي"].includes(trimmed);
-    if (isContinue && pendingParts.length > 0) {
-      addUserMessage(trimmed);
-      setInput("");
-      showNextPendingPart();
-      return;
-    }
 
     const history = buildHistory();
     addUserMessage(trimmed);
     setInput("");
-    setPendingParts([]);
     setLoading(true);
 
     try {

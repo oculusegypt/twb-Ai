@@ -918,12 +918,21 @@ function DailyAyahCard() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setSaved(s => !s)}
+<<<<<<< replit-agent
             className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
             style={{ background: saved ? "rgba(16,185,129,0.2)" : "rgba(0,0,0,0.05)" }}
           >
             <Bookmark size={13} className={saved ? "text-emerald-500" : "text-muted-foreground"} />
           </button>
           <button className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(0,0,0,0.05)" }}>
+=======
+            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${!saved ? "bg-muted/60" : ""}`}
+            style={{ background: saved ? "rgba(16,185,129,0.2)" : undefined }}
+          >
+            <Bookmark size={13} className={saved ? "text-emerald-500" : "text-muted-foreground"} />
+          </button>
+          <button className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center">
+>>>>>>> master
             <Share2 size={13} className="text-muted-foreground" />
           </button>
         </div>
