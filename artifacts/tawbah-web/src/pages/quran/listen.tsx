@@ -243,8 +243,19 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
   const [loop, setLoop] = useState(false);
   const [showGallery, setShowGallery] = useState(true);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Double-buffer: currentAudio plays, nextAudio preloads the upcoming ayah
+  const currentAudioRef = useRef<HTMLAudioElement>(new Audio());
+  const nextAudioRef = useRef<HTMLAudioElement>(new Audio());
+  const nextAudioUrlRef = useRef<string>("");
   const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Stable refs to avoid stale closures inside onended
+  const ayahsRef = useRef<Ayah[]>([]);
+  const loopRef = useRef(false);
+  const playAyahRef = useRef<(idx: number) => void>(() => {});
+
+  useEffect(() => { ayahsRef.current = ayahs; }, [ayahs]);
+  useEffect(() => { loopRef.current = loop; }, [loop]);
 
   useEffect(() => {
     setLoading(true);
@@ -266,55 +277,103 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
       .finally(() => setLoading(false));
   }, [surah.id]);
 
-  const playAyah = useCallback((idx: number) => {
-    const ayah = ayahs[idx];
-    if (!ayah) return;
-    if (!audioRef.current) audioRef.current = new Audio();
-    const audio = audioRef.current;
-    audio.pause();
-    audio.src = `/api/audio-proxy/quran/${reciterId}/${toGlobal(surah.id, ayah.numberInSurah)}.mp3`;
-    audio.load();
-    audio.play().catch(() => {});
-    setCurrentIdx(idx);
-    setIsPlaying(true);
-    setProgress(0);
-    audio.onended = () => {
-      if (loop) { audio.currentTime = 0; audio.play().catch(() => {}); }
-      else if (idx + 1 < ayahs.length) playAyah(idx + 1);
-      else { setIsPlaying(false); setProgress(0); }
-    };
-    setTimeout(() => {
-      const el = scrollRef.current?.children[idx] as HTMLElement | undefined;
-      el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
-    }, 100);
-  }, [ayahs, surah.id, reciterId, loop]);
-
+  // Poll progress from whichever audio element is currently active
   useEffect(() => {
-    if (!audioRef.current) return;
-    const audio = audioRef.current;
-    const onTime = () => {
+    const id = setInterval(() => {
+      const audio = currentAudioRef.current;
       if (audio.duration > 0) {
         setProgress((audio.currentTime / audio.duration) * 100);
         setCT(audio.currentTime);
         setDuration(audio.duration);
       }
-    };
-    audio.addEventListener("timeupdate", onTime);
-    return () => audio.removeEventListener("timeupdate", onTime);
+    }, 200);
+    return () => clearInterval(id);
   }, []);
 
-  useEffect(() => () => { audioRef.current?.pause(); }, []);
+  const playAyah = useCallback((idx: number) => {
+    const ayahs = ayahsRef.current;
+    const ayah = ayahs[idx];
+    if (!ayah) return;
+
+    const url = `/api/audio-proxy/quran/${reciterId}/${toGlobal(surah.id, ayah.numberInSurah)}.mp3`;
+
+    // If the next buffer already has this ayah preloaded, swap instantly — no gap
+    const isPreloaded =
+      nextAudioUrlRef.current === url &&
+      nextAudioRef.current.readyState >= 2;
+
+    if (isPreloaded) {
+      // Retire current, promote preloaded buffer to active
+      currentAudioRef.current.pause();
+      currentAudioRef.current.onended = null;
+      currentAudioRef.current = nextAudioRef.current;
+      nextAudioRef.current = new Audio();
+      nextAudioUrlRef.current = "";
+    } else {
+      // Cold start: load into current buffer
+      const audio = currentAudioRef.current;
+      audio.pause();
+      audio.onended = null;
+      audio.src = url;
+      audio.load();
+    }
+
+    const audio = currentAudioRef.current;
+    audio.play().catch(() => {});
+    setCurrentIdx(idx);
+    setIsPlaying(true);
+
+    audio.onended = () => {
+      if (loopRef.current) {
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else if (idx + 1 < ayahsRef.current.length) {
+        playAyahRef.current(idx + 1);
+      } else {
+        setIsPlaying(false);
+        setProgress(0);
+      }
+    };
+
+    // Preload the next ayah into the standby buffer right away
+    const nextIdx = idx + 1;
+    if (nextIdx < ayahs.length) {
+      const nextAyah = ayahs[nextIdx];
+      if (nextAyah) {
+        const nextUrl = `/api/audio-proxy/quran/${reciterId}/${toGlobal(surah.id, nextAyah.numberInSurah)}.mp3`;
+        if (nextAudioUrlRef.current !== nextUrl) {
+          nextAudioRef.current.src = nextUrl;
+          nextAudioRef.current.preload = "auto";
+          nextAudioRef.current.load();
+          nextAudioUrlRef.current = nextUrl;
+        }
+      }
+    }
+
+    setTimeout(() => {
+      const el = scrollRef.current?.children[idx] as HTMLElement | undefined;
+      el?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }, 100);
+  }, [reciterId, surah.id]);
+
+  useEffect(() => { playAyahRef.current = playAyah; }, [playAyah]);
+
+  useEffect(() => () => {
+    currentAudioRef.current.pause();
+    nextAudioRef.current.pause();
+  }, []);
 
   const togglePlay = () => {
-    if (!audioRef.current || !audioRef.current.src) {
+    const audio = currentAudioRef.current;
+    if (!audio.src) {
       if (ayahs.length > 0) playAyah(currentIdx);
       return;
     }
     if (isPlaying) {
-      audioRef.current.pause();
+      audio.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(() => {});
+      audio.play().catch(() => {});
       setIsPlaying(true);
     }
   };
@@ -436,10 +495,10 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
               className="h-1.5 rounded-full overflow-hidden mb-1 cursor-pointer"
               style={{ background: "rgba(255,255,255,0.08)" }}
               onClick={e => {
-                if (!audioRef.current || !duration) return;
+                if (!duration) return;
                 const rect = e.currentTarget.getBoundingClientRect();
                 const ratio = (e.clientX - rect.left) / rect.width;
-                audioRef.current.currentTime = ratio * duration;
+                currentAudioRef.current.currentTime = ratio * duration;
               }}
             >
               <motion.div
