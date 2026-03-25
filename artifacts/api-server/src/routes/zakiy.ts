@@ -687,7 +687,7 @@ async function generateZakiyResponse(
 
   const chatResponse = await openai.chat.completions.create({
     model: "gpt-4o",
-    max_completion_tokens: 900,
+    max_completion_tokens: 2500,
     messages,
   });
 

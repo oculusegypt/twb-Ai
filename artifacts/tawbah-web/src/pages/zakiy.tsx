@@ -925,50 +925,6 @@ function BotMessageBody({
 
 
 // ══════════════════════════════════════════
-// LONG RESPONSE SPLITTING
-// ══════════════════════════════════════════
-
-const PART_MAX_CHARS = 700;
-
-function splitIntoParts(text: string): string[] {
-  if (text.length <= PART_MAX_CHARS) return [text];
-
-  const tryParagraphs = text.split("\n\n").filter((p) => p.trim());
-  const parts: string[] = [];
-  let current = "";
-
-  for (const para of tryParagraphs) {
-    if (current && current.length + para.length + 2 > PART_MAX_CHARS) {
-      parts.push(current.trim());
-      current = para;
-    } else {
-      current = current ? current + "\n\n" + para : para;
-    }
-  }
-  if (current.trim()) parts.push(current.trim());
-
-  const result: string[] = [];
-  for (const part of parts) {
-    if (part.length <= PART_MAX_CHARS) {
-      result.push(part);
-    } else {
-      const lines = part.split("\n");
-      let cur = "";
-      for (const line of lines) {
-        if (cur && cur.length + line.length + 1 > PART_MAX_CHARS) {
-          result.push(cur.trim());
-          cur = line;
-        } else {
-          cur = cur ? cur + "\n" + line : line;
-        }
-      }
-      if (cur.trim()) result.push(cur.trim());
-    }
-  }
-  return result.filter((p) => p.length > 0);
-}
-
-// ══════════════════════════════════════════
 // MAIN PAGE
 // ══════════════════════════════════════════
 
@@ -982,7 +938,6 @@ export default function ZakiyPage() {
   const [riskAlert, setRiskAlert] = useState<{ level: "medium" | "high"; message: string; sign: string | null } | null>(null);
   const [riskDismissed, setRiskDismissed] = useState(false);
   const [anniversaryMilestone, setAnniversaryMilestone] = useState<string | null>(null);
-  const [pendingParts, setPendingParts] = useState<string[]>([]);
   const [autoPlayMsgId, setAutoPlayMsgId] = useState<string | null>(null);
   const autoPlayQueueRef = useRef<string[]>([]);
 
@@ -1144,60 +1099,8 @@ export default function ZakiyPage() {
     fetchSuggestions([...currentHistory, { role: "assistant", content: text }], msg.id);
   }
 
-  async function fetchTtsSegments(text: string): Promise<MessageSegment[]> {
-    try {
-      const res = await fetch(`${base}/api/zakiy/tts`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text }),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data.segments ?? [];
-    } catch {
-      return [];
-    }
-  }
-
   function handleBotResponse(text: string, segments?: MessageSegment[]) {
-    const parts = splitIntoParts(text);
-    if (parts.length <= 1) {
-      addBotMessage(text, segments);
-      return;
-    }
-
-    const now = Date.now();
-    const partIds = parts.map((_, idx) => (now + idx).toString());
-
-    autoPlayQueueRef.current = partIds.slice(1);
-    setAutoPlayMsgId(partIds[0]);
-    setPendingParts(parts.slice(1));
-
-    parts.forEach((part, idx) => {
-      const isLast = idx === parts.length - 1;
-      setTimeout(async () => {
-        const partSegments = await fetchTtsSegments(part);
-        const partMsg: Message = {
-          id: partIds[idx],
-          role: "bot",
-          text: part,
-          segments: partSegments,
-          timestamp: new Date(),
-          suggestions: [],
-          suggestionsLoading: isLast,
-        };
-        setMessages((prev) => [...prev, partMsg]);
-        setPendingParts((prev) => prev.slice(1));
-        if (isLast) {
-          const currentHistory = buildHistory();
-          fetchSuggestions([...currentHistory, { role: "assistant", content: part }], partIds[idx]);
-        }
-      }, idx * 800);
-    });
-  }
-
-  function showNextPendingPart() {
-    // No-op: parts are now auto-delivered
+    addBotMessage(text, segments);
   }
 
   function addUserMessage(text: string) {
@@ -1211,18 +1114,10 @@ export default function ZakiyPage() {
     if (!text.trim() || loading) return;
 
     const trimmed = text.trim();
-    const isContinue = ["أكمل", "أكمل →", "أكمل ←", "كمّل", "التالي"].includes(trimmed);
-    if (isContinue && pendingParts.length > 0) {
-      addUserMessage(trimmed);
-      setInput("");
-      showNextPendingPart();
-      return;
-    }
 
     const history = buildHistory();
     addUserMessage(trimmed);
     setInput("");
-    setPendingParts([]);
     setLoading(true);
 
     try {
