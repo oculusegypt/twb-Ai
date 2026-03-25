@@ -911,116 +911,313 @@ function SectionSoulMeter() {
   return <SoulMeter />;
 }
 
+// ─── Journey Bento Hero — sub-cells ──────────────────────────────────────────
+
+type BentoRipple = { id: string; x: number; y: number };
+
+const BENTO_VERSES = [
+  { text: "لَا تَقْنَطُوا مِن رَّحْمَةِ اللَّهِ", ref: "الزمر: ٥٣" },
+  { text: "إِنَّ اللَّهَ يُحِبُّ التَّوَّابِينَ", ref: "البقرة: ٢٢٢" },
+  { text: "وَهُوَ الَّذِي يَقْبَلُ التَّوْبَةَ عَنْ عِبَادِهِ", ref: "الشورى: ٢٥" },
+  { text: "إِنَّ الْحَسَنَاتِ يُذْهِبْنَ السَّيِّئَاتِ", ref: "هود: ١١٤" },
+];
+
+const DAILY_SECRETS = [
+  "«خيرُ الذِّكرِ الخفيّ» — ابدأ الآن",
+  "«من قرأ آية الكرسي دبر كل صلاة»",
+  "صلِّ على النبي ﷺ ٣ مرات الآن",
+  "«سبحان الله وبحمده» مئة مرة",
+];
+
+function DhikrCounterCell() {
+  const [count, setCount] = useState(() => {
+    try { return parseInt(localStorage.getItem("home_dhikr_count") ?? "0") || 0; } catch { return 0; }
+  });
+  const [ripples, setRipples] = useState<BentoRipple[]>([]);
+
+  const handleTap = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const id = Date.now().toString();
+    setRipples(prev => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+    const next = count + 1;
+    setCount(next);
+    try { localStorage.setItem("home_dhikr_count", String(next)); } catch {}
+    if (navigator.vibrate) navigator.vibrate(14);
+    setTimeout(() => setRipples(prev => prev.filter(r => r.id !== id)), 700);
+  };
+
+  return (
+    <button
+      onClick={handleTap}
+      className="relative overflow-hidden flex flex-col items-center justify-center gap-2 w-full h-full rounded-[18px] active:scale-[0.96] transition-transform select-none"
+      style={{
+        background: "linear-gradient(145deg, rgba(251,191,36,0.2) 0%, rgba(217,119,6,0.08) 100%)",
+        border: "1px solid rgba(251,191,36,0.28)",
+        minHeight: 112,
+      }}
+    >
+      {ripples.map(r => (
+        <motion.div
+          key={r.id}
+          className="absolute rounded-full pointer-events-none"
+          style={{ left: r.x, top: r.y, x: "-50%", y: "-50%", background: "rgba(251,191,36,0.32)" }}
+          initial={{ width: 0, height: 0, opacity: 0.9 }}
+          animate={{ width: 240, height: 240, opacity: 0 }}
+          transition={{ duration: 0.65, ease: "easeOut" }}
+        />
+      ))}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-[70px] h-[70px] rounded-full" style={{ background: "radial-gradient(circle, rgba(251,191,36,0.18) 0%, transparent 70%)" }} />
+      </div>
+      <motion.p
+        key={count}
+        initial={{ scale: 1.35, opacity: 0.5 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+        className="relative font-bold leading-none tabular-nums"
+        style={{ fontSize: 32, color: "#fbbf24" }}
+      >
+        {count}
+      </motion.p>
+      <p className="relative text-[10px] font-semibold" style={{ color: "rgba(251,191,36,0.65)" }}>
+        استغفر — اضغط هنا
+      </p>
+    </button>
+  );
+}
+
+function VerseCellBento() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setIdx(i => (i + 1) % BENTO_VERSES.length), 7000);
+    return () => clearInterval(t);
+  }, []);
+  const v = BENTO_VERSES[idx]!;
+  return (
+    <div
+      className="flex flex-col justify-between w-full h-full rounded-[18px] p-3"
+      style={{
+        background: "linear-gradient(145deg, rgba(16,185,129,0.18) 0%, rgba(5,150,105,0.06) 100%)",
+        border: "1px solid rgba(16,185,129,0.24)",
+        minHeight: 112,
+      }}
+    >
+      <div className="w-[22px] h-[22px] rounded-full flex items-center justify-center" style={{ background: "rgba(16,185,129,0.22)" }}>
+        <BookMarked size={11} style={{ color: "#10b981" }} />
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={idx}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          transition={{ duration: 0.35 }}
+          className="text-[10px] font-bold leading-relaxed text-center"
+          style={{ color: "rgba(255,255,255,0.9)", fontFamily: "'Amiri Quran', serif", fontSize: 11 }}
+        >
+          ﴿{v.text}﴾
+        </motion.p>
+      </AnimatePresence>
+      <p className="text-[9px] text-center" style={{ color: "rgba(16,185,129,0.75)" }}>{v.ref}</p>
+    </div>
+  );
+}
+
+function LiveCounterCellBento() {
+  const [count, setCount] = useState(() => 12450 + Math.floor(Math.random() * 300));
+  useEffect(() => {
+    const t = setInterval(() => setCount(c => c + Math.floor(Math.random() * 4 + 1)), 2600);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div
+      className="flex flex-col items-center justify-center gap-1 w-full h-full rounded-[18px]"
+      style={{
+        background: "linear-gradient(145deg, rgba(99,102,241,0.18) 0%, rgba(79,70,229,0.07) 100%)",
+        border: "1px solid rgba(99,102,241,0.22)",
+        minHeight: 66,
+      }}
+    >
+      <div className="flex items-center gap-1.5">
+        <motion.div
+          className="w-1.5 h-1.5 rounded-full"
+          style={{ background: "#818cf8" }}
+          animate={{ opacity: [1, 0.3, 1] }}
+          transition={{ duration: 1.6, repeat: Infinity }}
+        />
+        <p className="font-bold tabular-nums" style={{ fontSize: 14, color: "#818cf8" }}>
+          {count.toLocaleString("ar-EG")}
+        </p>
+      </div>
+      <p className="text-[9px]" style={{ color: "rgba(129,140,248,0.65)" }}>مستغفر معك الآن</p>
+    </div>
+  );
+}
+
+function SecretOfTheDayCellBento() {
+  const hour = new Date().getHours();
+  const isUnlocked = hour >= 5;
+  const [open, setOpen] = useState(false);
+  const secret = DAILY_SECRETS[new Date().getDate() % DAILY_SECRETS.length]!;
+  return (
+    <div
+      onClick={() => isUnlocked && setOpen(v => !v)}
+      className="flex flex-col items-center justify-center gap-1.5 w-full h-full rounded-[18px] overflow-hidden relative"
+      style={{
+        background: isUnlocked
+          ? "linear-gradient(145deg, rgba(245,158,11,0.18) 0%, rgba(217,119,6,0.07) 100%)"
+          : "linear-gradient(145deg, rgba(40,40,60,0.7) 0%, rgba(25,25,40,0.85) 100%)",
+        border: isUnlocked ? "1px solid rgba(245,158,11,0.28)" : "1px solid rgba(100,100,140,0.2)",
+        minHeight: 66,
+        cursor: isUnlocked ? "pointer" : "default",
+      }}
+    >
+      <AnimatePresence mode="wait">
+        {!isUnlocked ? (
+          <motion.div key="locked" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-1">
+            <span className="text-[20px]">🔒</span>
+            <p className="text-[8.5px] text-center leading-tight" style={{ color: "rgba(160,160,200,0.75)" }}>يفتح بعد<br />الفجر</p>
+          </motion.div>
+        ) : open ? (
+          <motion.div key="open" initial={{ opacity: 0, scale: 0.88 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-1 px-2">
+            <span className="text-[14px]">✨</span>
+            <p className="text-[9px] font-bold text-center leading-snug" style={{ color: "#fbbf24" }}>{secret}</p>
+          </motion.div>
+        ) : (
+          <motion.div key="hint" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center gap-1">
+            <motion.span animate={{ rotate: [-8, 8, -8] }} transition={{ duration: 2.5, repeat: Infinity }}>🔑</motion.span>
+            <p className="text-[9px]" style={{ color: "rgba(245,158,11,0.75)" }}>خبيئة اليوم</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function BentoCompassWidget() {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="text-right">
+        <p className="text-[9.5px] font-bold" style={{ color: "rgba(255,255,255,0.5)" }}>القبلة</p>
+        <p className="text-[8.5px]" style={{ color: "rgba(255,255,255,0.3)" }}>الفجر ٤:٣٢</p>
+      </div>
+      <motion.div
+        animate={{ rotate: [0, 6, -4, 0] }}
+        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ background: "rgba(255,255,255,0.09)", border: "1px solid rgba(255,255,255,0.14)" }}
+      >
+        <span className="text-[16px]">🧭</span>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─── Background star dots for bento card ─────────────────────────────────────
+function StarDots() {
+  const dots = [
+    [18, 12], [85, 8], [42, 22], [70, 5], [95, 18], [30, 6], [60, 24], [10, 20],
+    [50, 10], [78, 20], [22, 28], [92, 28],
+  ] as [number, number][];
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[24px]">
+      {dots.map(([x, y], i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{ left: `${x}%`, top: `${y}%`, width: i % 3 === 0 ? 2 : 1.5, height: i % 3 === 0 ? 2 : 1.5, background: "#fbbf24" }}
+          animate={{ opacity: [0.15, 0.55, 0.15] }}
+          transition={{ duration: 3 + (i % 4), repeat: Infinity, delay: (i * 0.4) % 3, ease: "easeInOut" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── The full bento journey card ──────────────────────────────────────────────
 function SectionJourneyCard() {
   const { data: progress } = useAppUserProgress();
-  const { theme } = useSettings();
-  const isDark = theme === "dark";
   const hasCovenant = progress?.covenantSigned;
   const dayOneDone = progress?.firstDayTasksCompleted;
+
+  if (hasCovenant && dayOneDone) return <Journey30HeroCard />;
+
+  const ctaHref = !hasCovenant ? "/covenant" : "/day-one";
+  const ctaLabel = !hasCovenant ? "ابدأ رحلة التوبة الآن" : "أكمل مهام اللحظة الأولى";
+  const subtitle = !hasCovenant
+    ? "التوبة باب مفتوح في كل لحظة"
+    : "واصل — بقيت خطوات قليلة لبدء رحلتك";
+
   return (
-    <div className="rainbow-border shadow-xl shadow-black/8 mb-[23px] mt-[-28px]">
-      <div className="rainbow-border-inner p-5 text-left pt-[0px] pb-[0px] pl-[0px] pr-[0px]">
-      {!hasCovenant ? (
-        <div className="relative overflow-hidden rounded-2xl shadow-xl" style={{ minHeight: 230 }}>
-          <img
-            src="/images/journey-card-bg.jpg"
-            alt=""
-            aria-hidden
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{
-              objectFit: "cover",
-              objectPosition: "center",
-              filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.82) saturate(0.82) sepia(0.07)",
-            }}
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: isDark
-                ? "linear-gradient(to bottom, rgba(0,18,12,0.52) 0%, rgba(0,18,12,0.72) 100%)"
-                : "linear-gradient(to bottom, rgba(0,30,20,0.38) 0%, rgba(0,30,20,0.62) 100%)",
-            }}
-          />
-          <div className="relative z-10 flex flex-col justify-between p-5" style={{ minHeight: 230 }}>
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(255,255,255,0.15)" }}>
-                <Heart size={28} style={{ color: "#fff" }} />
-              </div>
-              <h2 className="text-[20px] font-bold leading-tight" style={{ color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
-                رحلة العودة إلى الله
-              </h2>
-              <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "rgba(255,255,255,0.78)" }}>
-                التوبة هي بداية جديدة، صفحة بيضاء بينك وبين ربك.
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <Link
-                href="/covenant"
-                className="py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                style={{
-                  width: "60%",
-                  background: "linear-gradient(to left, #fbbf24, #d97706)",
-                  color: "#1c0f00",
-                  boxShadow: "0 4px 18px rgba(251,191,36,0.45), 0 2px 8px rgba(0,0,0,0.3)",
-                }}
-              >
-                <span>ابدأ رحلة التوبة الآن</span><ArrowLeft size={15} />
-              </Link>
-            </div>
+    <div
+      className="relative overflow-hidden rounded-[24px]"
+      style={{
+        background: "linear-gradient(160deg, #0d1a12 0%, #162512 45%, #0a1510 100%)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        boxShadow: "0 12px 40px rgba(0,0,0,0.45), 0 3px 10px rgba(0,0,0,0.25)",
+      }}
+    >
+      <StarDots />
+      {/* Gold glow orb */}
+      <div className="absolute top-[-30px] left-[30%] right-[30%] h-[100px] pointer-events-none"
+        style={{ background: "radial-gradient(ellipse, rgba(251,191,36,0.14) 0%, transparent 70%)", filter: "blur(18px)" }} />
+
+      <div className="relative z-10 p-4 flex flex-col gap-3">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h2
+              className="font-bold leading-tight"
+              style={{
+                fontSize: 20,
+                background: "linear-gradient(90deg, #ffffff 0%, #fde68a 55%, #f59e0b 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              رحلة العودة إلى الله
+            </h2>
+            <p className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>
+              {subtitle}
+            </p>
+          </div>
+          <BentoCompassWidget />
+        </div>
+
+        {/* Bento row 1: Counter (60%) + Verse (40%) */}
+        <div className="flex gap-2">
+          <div className="flex-[3]">
+            <DhikrCounterCell />
+          </div>
+          <div className="flex-[2]">
+            <VerseCellBento />
           </div>
         </div>
-      ) : !dayOneDone ? (
-        <div className="relative overflow-hidden rounded-2xl shadow-xl" style={{ minHeight: 230 }}>
-          <img
-            src="/images/journey-card-bg.jpg"
-            alt=""
-            aria-hidden
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{
-              objectFit: "cover",
-              objectPosition: "center",
-              filter: isDark ? "brightness(0.75) saturate(1.1)" : "brightness(0.82) saturate(0.82) sepia(0.07)",
-            }}
-          />
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              background: isDark
-                ? "linear-gradient(to bottom, rgba(0,18,12,0.52) 0%, rgba(0,18,12,0.72) 100%)"
-                : "linear-gradient(to bottom, rgba(0,30,20,0.38) 0%, rgba(0,30,20,0.62) 100%)",
-            }}
-          />
-          <div className="relative z-10 flex flex-col justify-between p-5" style={{ minHeight: 230 }}>
-            <div className="text-center">
-              <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3" style={{ background: "rgba(255,255,255,0.15)" }}>
-                <Activity size={28} style={{ color: "#fff" }} />
-              </div>
-              <h2 className="text-[20px] font-bold leading-tight" style={{ color: "#fff", textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
-                لقد عاهدت الله
-              </h2>
-              <p className="text-[12px] mt-1 leading-relaxed" style={{ color: "rgba(255,255,255,0.78)" }}>
-                بقيت خطوات بسيطة لتأكيد صدق نيتك وبدء صفحة جديدة.
-              </p>
-            </div>
-            <div className="flex justify-center">
-              <Link
-                href="/day-one"
-                className="py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                style={{
-                  width: "60%",
-                  background: "linear-gradient(to left, #fbbf24, #d97706)",
-                  color: "#1c0f00",
-                  boxShadow: "0 4px 18px rgba(251,191,36,0.45), 0 2px 8px rgba(0,0,0,0.3)",
-                }}
-              >
-                <span>أكمل مهام اللحظة الأولى</span><CheckCircle2 size={15} />
-              </Link>
-            </div>
+
+        {/* Bento row 2: Live (50%) + Secret (50%) */}
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <LiveCounterCellBento />
+          </div>
+          <div className="flex-1">
+            <SecretOfTheDayCellBento />
           </div>
         </div>
-      ) : (
-        <Journey30HeroCard />
-      )}
+
+        {/* CTA */}
+        <Link
+          href={ctaHref}
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-[16px] font-bold text-sm active:scale-[0.97] transition-all"
+          style={{
+            background: "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
+            color: "#1c0f00",
+            boxShadow: "0 4px 20px rgba(251,191,36,0.38), 0 2px 8px rgba(0,0,0,0.3)",
+          }}
+        >
+          <span>{ctaLabel}</span>
+          <ArrowLeft size={15} />
+        </Link>
       </div>
     </div>
   );
