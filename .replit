@@ -27,10 +27,6 @@ task = "shell.exec"
 args = "PORT=8080 BASE_PATH=/api pnpm --filter @workspace/api-server run dev"
 waitForPort = 8080
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "rm -f .git/index.lock"
-
 [workflows.workflow.metadata]
 outputType = "console"
 
@@ -124,19 +120,6 @@ router = "expo-domain"
 [workflows.workflow.tasks.env]
 PORT = "24800"
 BASE_PATH = "/mobile/"
-
-[[workflows.workflow]]
-name = "powershell"
-mode = "parallel"
-author = 56515677
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "rm -f .git/index.lock"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "rm -f .git/index.lock"
 
 [agent]
 stack = "PNPM_WORKSPACE"
