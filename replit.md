@@ -5,9 +5,11 @@
 **دليل التوبة النصوح** - A comprehensive Arabic Islamic app guiding users through sincere repentance (Tawbah). Available as both a web app and mobile app.
 
 ### Key Features
+- **القرآن الكريم** (`/quran`): Comprehensive Quran library — hero with rotating ayahs, daily ayah+tafsir, reading tracker (streak), surah browser (114 surahs with search+filter), sciences grid, miracles section (expandable cards), virtues hadiths. Home card with embedded reading tracker before SoulMeter. Hadith-of-the-day card below SoulMeter.
 - **البوت الزكي** (`/zakiy`): AI-powered Arabic spiritual chatbot for venting and repentance guidance. Supports text and voice input, TTS responses (onyx voice), full chat history.
 - **مكتبة الرجاء** (`/rajaa`): Hadiths and stories with AI-generated Arabic TTS audio (onyx/echo voices).
 - All AI features use OpenAI via Replit proxy (no API key needed).
+- **Roadmap**: Full Quran library roadmap in `QURAN_ROADMAP.md` (4 phases: foundation ✅, deep reading, social khatma, AI).
 
 ## Stack
 
