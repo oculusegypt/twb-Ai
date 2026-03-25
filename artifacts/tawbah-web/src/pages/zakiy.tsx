@@ -375,7 +375,7 @@ function QuranCard({
             <span className="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce mx-0.5" style={{ animationDelay: "300ms" }} />
           </div>
         ) : (
-          <p className="quran-text text-right text-amber-950 dark:text-amber-100">
+          <p className="quran-text text-right dark:text-amber-100 text-[#404040]">
             ﴿{verseText}﴾
           </p>
         )}
