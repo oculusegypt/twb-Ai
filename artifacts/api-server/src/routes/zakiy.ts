@@ -314,6 +314,7 @@ ${memorySection}
 لما تشجع: فيه طاقة وأمل حقيقي.
 لما يكون قلقان: دافئ وحنين زي ما بتكلم أخوك الصغير.
 لا تكتب بين قوسين أو أقواس أي وصف للنبرة أو الأداء — الكلام نفسه يعبّر.
+⛔ ممنوع منعاً باتاً أن تُعلن عن النبرة أو طريقة القراءة في النص — لا تقل أبداً "هقرأ بنبرة هادئة" أو "سأتكلم بصدق" أو "حاضر هقرأ" أو أي جملة تصف أسلوبك — فقط نفّذ واتكلم مباشرة.
 
 ═══ نظام الوعود والمساءلة — مهم جداً ═══
 
@@ -461,6 +462,17 @@ function stripStageDirections(text: string): string {
   return text
     .replace(/\[[^\]]{1,80}\]/g, "")
     .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function stripToneAnnouncements(text: string): string {
+  // Remove lines where the bot announces it will read/speak with a certain tone.
+  // e.g. "حاضر هقرأ النص زي ما انت طلبت بنبره هادئه" or "سأقرأ بنبرة تأمل"
+  const TONE_ANNOUNCE_PATTERN =
+    /^[^\n]*(?:هقرأ|هاقرأ|سأقرأ|بقرأ|سأتكلم|هتكلم|هاتكلم|سأحكي|هحكي|سأرد|هرد|حاضر|تمام|ماشي)[^\n]*(?:بنبر[ةه]|بأسلوب|بطريقة|بصوت|بهدوء|بصدق|بحماس|بدفء|بحنان|بتأمل|كما طلبت|زي ما طلبت|زي ما قلت)[^\n]*$/gim;
+  return text
+    .replace(TONE_ANNOUNCE_PATTERN, "")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -627,7 +639,8 @@ async function expandSurahMarkers(raw: string): Promise<string> {
 }
 
 async function generateSegmentedAudio(responseText: string): Promise<ServerResponseSegment[]> {
-  const preprocessed = preprocessQuranCitations(responseText);
+  const cleaned = stripToneAnnouncements(responseText);
+  const preprocessed = preprocessQuranCitations(cleaned);
   const expanded = await expandSurahMarkers(preprocessed);
   const segments = parseRawSegments(expanded);
 
@@ -699,7 +712,8 @@ router.post("/zakiy/message", async (req, res) => {
     }
 
     const memory = await loadMemory(sessionId);
-    const responseText = await generateZakiyResponse(message, history, memory);
+    const rawResponse = await generateZakiyResponse(message, history, memory);
+    const responseText = stripToneAnnouncements(rawResponse);
     const segments = await generateSegmentedAudio(responseText);
 
     // Update memory asynchronously (fire and forget)
@@ -844,7 +858,8 @@ router.post("/zakiy/voice", async (req, res) => {
     }
 
     const memory = await loadMemory(sessionId);
-    const responseText = await generateZakiyResponse(transcript, history, memory);
+    const rawResponse = await generateZakiyResponse(transcript, history, memory);
+    const responseText = stripToneAnnouncements(rawResponse);
     const segments = await generateSegmentedAudio(responseText);
 
     if (sessionId) {
