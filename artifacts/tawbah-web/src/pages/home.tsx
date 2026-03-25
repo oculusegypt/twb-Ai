@@ -95,7 +95,7 @@ const GRID_DEFAULT: GridId[] = [
 ];
 
 const LIST_DEFAULT: ListId[] = [
-  "soul-meter", "journey-card", "live-stats", "ameen", "invite", "islamic-programs", "signs", "journey30", "tawbah-card", "map",
+  "soul-meter", "journey-card", "garden", "live-stats", "munajat", "ameen", "invite", "islamic-programs", "signs", "journey30", "tawbah-card", "map",
 ];
 
 const ALL_SECTIONS: SectionId[] = [
@@ -106,9 +106,10 @@ const ALL_SECTIONS: SectionId[] = [
   "ameen", "invite", "islamic-programs", "signs",
   "danger-times", "secret-dua",
   "journey30", "tawbah-card", "map",
+  "garden", "munajat",
 ];
 
-const COMBINED_STORAGE_KEY = "home_combined_order_v6";
+const COMBINED_STORAGE_KEY = "home_combined_order_v7";
 
 function loadCombinedOrder(): SectionId[] {
   try {

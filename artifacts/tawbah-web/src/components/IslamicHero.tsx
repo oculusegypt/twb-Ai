@@ -1010,7 +1010,7 @@ export function IslamicHero() {
                   ? "drop-shadow(3px 8px 22px rgba(0,0,0,0.88)) drop-shadow(1px 3px 7px rgba(0,0,0,0.60))"
                   : `saturate(0.7) brightness(0.88) ${LIGHT_LOGO_SHADOW[accentColor] ?? LIGHT_LOGO_SHADOW["forest"]!}`,
               }}
-            />
+              className="mr-[-9px]" />
           </motion.button>
         </div>
         {/* /logo wrapper */}
