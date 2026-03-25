@@ -84,8 +84,8 @@ function CreateKhatmaModal({ onClose, onCreate }: { onClose: () => void; onCreat
       <motion.div
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm rounded-t-3xl p-5 pt-[16px] pb-[107px]"
-        style={{ background: "var(--background)", border: "1px solid rgba(139,92,246,0.2)" }}
+        className="w-full max-w-sm rounded-t-3xl p-5 pt-[16px] pb-[107px] bg-background"
+        style={{ border: "1px solid rgba(139,92,246,0.2)" }}
         onClick={e => e.stopPropagation()}
         dir="rtl"
       >
@@ -123,8 +123,7 @@ function CreateKhatmaModal({ onClose, onCreate }: { onClose: () => void; onCreat
                 onChange={e => setNewMember(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addMember()}
                 placeholder="اسم عضو جديد..."
-                className="flex-1 px-3 py-2 rounded-xl text-sm bg-transparent outline-none text-right"
-                style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}
+                className="flex-1 px-3 py-2 rounded-xl text-sm outline-none text-right bg-card border border-border/60 focus:border-purple-400/50"
                 dir="rtl"
               />
               <button onClick={addMember}
@@ -170,10 +169,10 @@ function KhatmaCard({ khatma, onUpdate, onDelete }: { khatma: Khatma; onUpdate: 
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl overflow-hidden"
+      className="rounded-2xl overflow-hidden bg-card"
       style={{
-        background: isComplete ? "linear-gradient(145deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.03) 100%)" : "rgba(255,255,255,0.03)",
-        border: isComplete ? "1px solid rgba(34,197,94,0.3)" : "1px solid rgba(255,255,255,0.07)",
+        background: isComplete ? "linear-gradient(145deg, rgba(34,197,94,0.1) 0%, rgba(34,197,94,0.03) 100%)" : undefined,
+        border: isComplete ? "1px solid rgba(34,197,94,0.3)" : "1px solid var(--border)",
       }}
     >
       {/* Header */}
@@ -189,8 +188,7 @@ function KhatmaCard({ khatma, onUpdate, onDelete }: { khatma: Khatma; onUpdate: 
           </div>
           <div className="flex gap-1">
             <button onClick={() => setExpanded(!expanded)}
-              className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ background: "rgba(255,255,255,0.05)" }}>
+              className="w-8 h-8 rounded-xl flex items-center justify-center bg-muted/60">
               {expanded ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
             </button>
             <button onClick={onDelete}
@@ -252,10 +250,10 @@ function KhatmaCard({ khatma, onUpdate, onDelete }: { khatma: Khatma; onUpdate: 
                       const isDone = !!khatma.completedJuz[juz];
                       return (
                         <button key={juz} onClick={() => toggleJuz(juz, member.name)}
-                          className="h-9 rounded-xl flex items-center justify-center text-[11px] font-bold transition-all active:scale-95"
+                          className={`h-9 rounded-xl flex items-center justify-center text-[11px] font-bold transition-all active:scale-95 ${!isDone ? "bg-muted/50" : ""}`}
                           style={{
-                            background: isDone ? "rgba(34,197,94,0.2)" : "rgba(255,255,255,0.04)",
-                            border: isDone ? "1px solid rgba(34,197,94,0.4)" : "1px solid rgba(255,255,255,0.06)",
+                            background: isDone ? "rgba(34,197,94,0.2)" : undefined,
+                            border: isDone ? "1px solid rgba(34,197,94,0.4)" : "1px solid var(--border)",
                             color: isDone ? "#22c55e" : "var(--foreground)",
                           }}>
                           {isDone ? <Check size={12} /> : juz}
@@ -325,8 +323,7 @@ export default function QuranKhatmaPage() {
             { label: "مكتملة", value: khatmas.filter(k => Object.keys(k.completedJuz).length === 30).length, color: "#22c55e" },
             { label: "جارية", value: khatmas.filter(k => Object.keys(k.completedJuz).length < 30).length, color: "#f59e0b" },
           ].map(s => (
-            <div key={s.label} className="rounded-2xl p-3 text-center"
-              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div key={s.label} className="rounded-2xl p-3 text-center bg-card border border-border/60">
               <p className="text-xl font-bold" style={{ color: s.color }}>{s.value}</p>
               <p className="text-[10px] text-muted-foreground">{s.label}</p>
             </div>

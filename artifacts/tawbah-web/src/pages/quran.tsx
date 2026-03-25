@@ -918,12 +918,12 @@ function DailyAyahCard() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setSaved(s => !s)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
-            style={{ background: saved ? "rgba(16,185,129,0.2)" : "rgba(255,255,255,0.05)" }}
+            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${!saved ? "bg-muted/60" : ""}`}
+            style={{ background: saved ? "rgba(16,185,129,0.2)" : undefined }}
           >
             <Bookmark size={13} className={saved ? "text-emerald-500" : "text-muted-foreground"} />
           </button>
-          <button className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center">
+          <button className="w-7 h-7 rounded-lg bg-muted/60 flex items-center justify-center">
             <Share2 size={13} className="text-muted-foreground" />
           </button>
         </div>
@@ -931,11 +931,10 @@ function DailyAyahCard() {
       <div className="px-4 py-4">
         {/* Arabic */}
         <p
-          className="text-center leading-[2.2] mb-3 text-[#0fd11feb]"
+          className="text-center leading-[2.2] mb-3 text-foreground"
           style={{
             fontFamily: "'Amiri Quran', serif",
             fontSize: 18,
-            color: "rgba(255,255,255,0.92)",
           }}
         >
           ﴿{ayah.arabic}﴾
