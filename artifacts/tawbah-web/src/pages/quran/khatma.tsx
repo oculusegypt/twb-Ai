@@ -84,8 +84,8 @@ function CreateKhatmaModal({ onClose, onCreate }: { onClose: () => void; onCreat
       <motion.div
         initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="w-full max-w-sm rounded-t-3xl p-5 pt-[16px] pb-[107px]"
-        style={{ background: "var(--background)", border: "1px solid rgba(139,92,246,0.2)" }}
+        className="w-full max-w-sm rounded-t-3xl p-5 pt-[16px] pb-[107px] bg-card"
+        style={{ border: "1px solid rgba(139,92,246,0.2)" }}
         onClick={e => e.stopPropagation()}
         dir="rtl"
       >
@@ -123,8 +123,7 @@ function CreateKhatmaModal({ onClose, onCreate }: { onClose: () => void; onCreat
                 onChange={e => setNewMember(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && addMember()}
                 placeholder="اسم عضو جديد..."
-                className="flex-1 px-3 py-2 rounded-xl text-sm bg-transparent outline-none text-right"
-                style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}
+                className="flex-1 px-3 py-2 rounded-xl text-sm bg-transparent outline-none text-right border border-border"
                 dir="rtl"
               />
               <button onClick={addMember}
