@@ -1,8 +1,15 @@
 import { Router, type IRouter } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
-import { speechToText, ensureCompatibleFormat } from "@workspace/integrations-openai-ai-server/audio";
+import {
+  speechToText,
+  ensureCompatibleFormat,
+} from "@workspace/integrations-openai-ai-server/audio";
 import { db } from "@workspace/db";
-import { zakiyMemoryTable, journalEntriesTable, userProgressTable } from "@workspace/db/schema";
+import {
+  zakiyMemoryTable,
+  journalEntriesTable,
+  userProgressTable,
+} from "@workspace/db/schema";
 import { eq, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -11,25 +18,53 @@ const router: IRouter = Router();
 // ISLAMIC DATE CONTEXT
 // ══════════════════════════════════════════
 
-function getHijriDate(date: Date): { dayNum: number; monthNum: number; monthName: string; year: number } {
+function getHijriDate(date: Date): {
+  dayNum: number;
+  monthNum: number;
+  monthName: string;
+  year: number;
+} {
   const HIJRI_MONTHS_AR = [
-    "محرم", "صفر", "ربيع الأول", "ربيع الثاني",
-    "جمادى الأولى", "جمادى الآخرة", "رجب", "شعبان",
-    "رمضان", "شوال", "ذو القعدة", "ذو الحجة",
+    "محرم",
+    "صفر",
+    "ربيع الأول",
+    "ربيع الثاني",
+    "جمادى الأولى",
+    "جمادى الآخرة",
+    "رجب",
+    "شعبان",
+    "رمضان",
+    "شوال",
+    "ذو القعدة",
+    "ذو الحجة",
   ];
   const parts = new Intl.DateTimeFormat("en-u-ca-islamic-umalqura", {
-    day: "numeric", month: "numeric", year: "numeric", timeZone: "Africa/Cairo",
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
+    timeZone: "Africa/Cairo",
   }).formatToParts(date);
-  let day = 1, month = 9, year = 1447;
+  let day = 1,
+    month = 9,
+    year = 1447;
   for (const p of parts) {
     if (p.type === "day") day = parseInt(p.value);
     if (p.type === "month") month = parseInt(p.value);
     if (p.type === "year") year = parseInt(p.value);
   }
-  return { dayNum: day, monthNum: month, monthName: HIJRI_MONTHS_AR[month - 1] ?? "رمضان", year };
+  return {
+    dayNum: day,
+    monthNum: month,
+    monthName: HIJRI_MONTHS_AR[month - 1] ?? "رمضان",
+    year,
+  };
 }
 
-function buildOccasionContext(month: number, day: number, year: number): string {
+function buildOccasionContext(
+  month: number,
+  day: number,
+  year: number,
+): string {
   const lines: string[] = [];
   if (month === 9) {
     lines.push(`🌙 ═══ رمضان المبارك ${year}هـ — اليوم ${day} ═══`);
@@ -40,7 +75,9 @@ function buildOccasionContext(month: number, day: number, year: number): string 
       lines.push("📍 العشر الأوسط — أيام المغفرة");
       lines.push("• الوقت الأكثر ثقلاً للتوبة الصادقة وطلب المغفرة");
       if (day >= 18) {
-        lines.push(`⚡ تنبيه: تبقّى ${21 - day} أيام على العشر الأخيرة — الاستعداد واجب الآن!`);
+        lines.push(
+          `⚡ تنبيه: تبقّى ${21 - day} أيام على العشر الأخيرة — الاستعداد واجب الآن!`,
+        );
       }
     } else {
       const remaining = 30 - day;
@@ -48,37 +85,67 @@ function buildOccasionContext(month: number, day: number, year: number): string 
       lines.push(`⭐ تبقّى ${remaining} يوم — ده وقت الذهب الحقيقي`);
       const oddNights = [21, 23, 25, 27, 29];
       if (oddNights.includes(day)) {
-        lines.push(`🌟 هذه الليلة (ليلة ${day + 1}) من أرجح ليالي القدر — لا تفوّتها!`);
+        lines.push(
+          `🌟 هذه الليلة (ليلة ${day + 1}) من أرجح ليالي القدر — لا تفوّتها!`,
+        );
         lines.push(`• دعاء القدر: "اللهم إنك عفوٌّ تحب العفو فاعفُ عنّي"`);
       }
-      if (day === 27) lines.push("💎 ليلة السابع والعشرين — العلماء يرجّحونها لليلة القدر");
-      lines.push("• «مَن قام ليلة القدر إيماناً واحتساباً غُفر له ما تقدم من ذنبه» (متفق عليه)");
+      if (day === 27)
+        lines.push("💎 ليلة السابع والعشرين — العلماء يرجّحونها لليلة القدر");
+      lines.push(
+        "• «مَن قام ليلة القدر إيماناً واحتساباً غُفر له ما تقدم من ذنبه» (متفق عليه)",
+      );
     }
-    lines.push("• استغل الدعاء قبل الإفطار — «للصائم دعوة لا تُرد عند فطره» (رواه ابن ماجه وحسّنه الألباني)");
+    lines.push(
+      "• استغل الدعاء قبل الإفطار — «للصائم دعوة لا تُرد عند فطره» (رواه ابن ماجه وحسّنه الألباني)",
+    );
   } else if (month === 10) {
     if (day === 1) lines.push("🎉 عيد الفطر المبارك! تقبّل الله منا ومنكم");
     else if (day <= 6) {
       lines.push("📿 أيام شوال — وقت صيام الست");
-      lines.push("• «مَن صام رمضان ثم أتبعه ستًّا من شوال كان كصيام الدهر» (رواه مسلم)");
+      lines.push(
+        "• «مَن صام رمضان ثم أتبعه ستًّا من شوال كان كصيام الدهر» (رواه مسلم)",
+      );
     }
   } else if (month === 12) {
     if (day <= 9) {
       lines.push(`🕋 العشر الأوائل من ذو الحجة — اليوم ${day}`);
-      lines.push("• «ما من أيام العمل الصالح فيها أحب إلى الله من هذه الأيام العشر» (رواه البخاري)");
+      lines.push(
+        "• «ما من أيام العمل الصالح فيها أحب إلى الله من هذه الأيام العشر» (رواه البخاري)",
+      );
     }
-    if (day === 9) lines.push("🌄 يوم عرفة — أعظم أيام السنة — «صيامه يكفّر سنتين» (رواه مسلم)");
+    if (day === 9)
+      lines.push(
+        "🌄 يوم عرفة — أعظم أيام السنة — «صيامه يكفّر سنتين» (رواه مسلم)",
+      );
     if (day === 10) lines.push("🎊 عيد الأضحى المبارك!");
   } else if (month === 1 && day === 10) {
     lines.push("📅 يوم عاشوراء — «صيامه يكفّر السنة الماضية» (رواه مسلم)");
   } else {
-    const monthNames = ["محرم","صفر","ربيع الأول","ربيع الثاني","جمادى الأولى","جمادى الآخرة","رجب","شعبان","رمضان","شوال","ذو القعدة","ذو الحجة"];
+    const monthNames = [
+      "محرم",
+      "صفر",
+      "ربيع الأول",
+      "ربيع الثاني",
+      "جمادى الأولى",
+      "جمادى الآخرة",
+      "رجب",
+      "شعبان",
+      "رمضان",
+      "شوال",
+      "ذو القعدة",
+      "ذو الحجة",
+    ];
     lines.push(`📅 ${day} ${monthNames[month - 1]} ${year}هـ`);
   }
   return lines.join("\n");
 }
 
 function getDayOfWeekFadhail(date: Date): string {
-  const dayEn = date.toLocaleDateString("en-US", { weekday: "long", timeZone: "Africa/Cairo" });
+  const dayEn = date.toLocaleDateString("en-US", {
+    weekday: "long",
+    timeZone: "Africa/Cairo",
+  });
   if (dayEn === "Friday") {
     return "⭐ اليوم جمعة — «خير يوم طلعت عليه الشمس يوم الجمعة» (رواه مسلم)\n• الإكثار من الصلاة على النبي ﷺ وقراءة الكهف والدعاء قبل المغرب";
   }
@@ -91,13 +158,58 @@ function getDayOfWeekFadhail(date: Date): string {
 
 function getIslamicDateContext(): string {
   const now = new Date();
-  const gregorianDate = now.toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "Africa/Cairo" });
-  const gregorianEn = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "Africa/Cairo" });
-  const timeStr = now.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit", timeZone: "Africa/Cairo" });
-  const hour = parseInt(now.toLocaleTimeString("en-US", { hour: "2-digit", hour12: false, timeZone: "Africa/Cairo" }));
-  const timeOfDay = hour < 5 ? "ما قبل الفجر — وقت القيام" : hour < 7 ? "وقت الفجر" : hour < 12 ? "الصباح" : hour < 13 ? "وقت الظهر" : hour < 15 ? "بعد الظهر" : hour < 17 ? "وقت العصر" : hour < 19 ? "قبيل المغرب" : hour < 20 ? "وقت المغرب والإفطار" : hour < 22 ? "العشاء" : "الليل";
+  const gregorianDate = now.toLocaleDateString("ar-EG", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "Africa/Cairo",
+  });
+  const gregorianEn = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "Africa/Cairo",
+  });
+  const timeStr = now.toLocaleTimeString("ar-EG", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Africa/Cairo",
+  });
+  const hour = parseInt(
+    now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      hour12: false,
+      timeZone: "Africa/Cairo",
+    }),
+  );
+  const timeOfDay =
+    hour < 5
+      ? "ما قبل الفجر — وقت القيام"
+      : hour < 7
+        ? "وقت الفجر"
+        : hour < 12
+          ? "الصباح"
+          : hour < 13
+            ? "وقت الظهر"
+            : hour < 15
+              ? "بعد الظهر"
+              : hour < 17
+                ? "وقت العصر"
+                : hour < 19
+                  ? "قبيل المغرب"
+                  : hour < 20
+                    ? "وقت المغرب والإفطار"
+                    : hour < 22
+                      ? "العشاء"
+                      : "الليل";
   const hijri = getHijriDate(now);
-  const occasion = buildOccasionContext(hijri.monthNum, hijri.dayNum, hijri.year);
+  const occasion = buildOccasionContext(
+    hijri.monthNum,
+    hijri.dayNum,
+    hijri.year,
+  );
   const dayFadhail = getDayOfWeekFadhail(now);
 
   return `
@@ -141,21 +253,32 @@ interface ZakiyMemoryData {
 }
 
 async function loadMemory(sessionId: string): Promise<ZakiyMemoryData> {
-  const defaultMemory: ZakiyMemoryData = { traits: [], challenges: [], recentTopics: [], personalNote: "", promises: [], slips: [] };
+  const defaultMemory: ZakiyMemoryData = {
+    traits: [],
+    challenges: [],
+    recentTopics: [],
+    personalNote: "",
+    promises: [],
+    slips: [],
+  };
   if (!sessionId) return defaultMemory;
   try {
-    const row = await db.query.zakiyMemoryTable.findFirst({ where: eq(zakiyMemoryTable.sessionId, sessionId) });
+    const row = await db.query.zakiyMemoryTable.findFirst({
+      where: eq(zakiyMemoryTable.sessionId, sessionId),
+    });
     if (!row) return defaultMemory;
     const parsed = JSON.parse(row.memoryJson) as Partial<ZakiyMemoryData>;
     return { ...defaultMemory, ...parsed };
-  } catch { return defaultMemory; }
+  } catch {
+    return defaultMemory;
+  }
 }
 
 async function updateMemory(
   sessionId: string,
   userMessage: string,
   botResponse: string,
-  currentMemory: ZakiyMemoryData
+  currentMemory: ZakiyMemoryData,
 ): Promise<void> {
   if (!sessionId) return;
   try {
@@ -180,7 +303,7 @@ async function updateMemory(
 ${JSON.stringify(currentMemory, null, 2)}
 
 تعليمات خاصة للوعود والزللات:
-- لو المستخدم اعترف بذنب أو معصية: أضف إلى slips بالشكل: {"sin": "اسم الذنب", "date": "${new Date().toISOString().slice(0,10)}", "afterPromise": true/false}
+- لو المستخدم اعترف بذنب أو معصية: أضف إلى slips بالشكل: {"sin": "اسم الذنب", "date": "${new Date().toISOString().slice(0, 10)}", "afterPromise": true/false}
   - afterPromise: true لو عنده وعد مكسور يتعلق بهذا الذنب
 - لو الرد فيه مارك وعد {{promise:...}}: لا تضيفه للذاكرة هنا — هيتضاف لما يضغط الزر
 - promises و slips: احتفظ بكل القديم، فقط أضف الجديد
@@ -202,15 +325,24 @@ ${JSON.stringify(currentMemory, null, 2)}
 
     await db
       .insert(zakiyMemoryTable)
-      .values({ sessionId, memoryJson: JSON.stringify(newMemory), updatedAt: new Date() })
+      .values({
+        sessionId,
+        memoryJson: JSON.stringify(newMemory),
+        updatedAt: new Date(),
+      })
       .onConflictDoUpdate({
         target: zakiyMemoryTable.sessionId,
         set: { memoryJson: JSON.stringify(newMemory), updatedAt: new Date() },
       });
-  } catch { /* fire-and-forget — don't fail the main response */ }
+  } catch {
+    /* fire-and-forget — don't fail the main response */
+  }
 }
 
-async function savePromiseToMemory(sessionId: string, promiseText: string): Promise<void> {
+async function savePromiseToMemory(
+  sessionId: string,
+  promiseText: string,
+): Promise<void> {
   if (!sessionId) return;
   const memory = await loadMemory(sessionId);
   const newPromise: ZakiyPromise = {
@@ -229,14 +361,21 @@ async function savePromiseToMemory(sessionId: string, promiseText: string): Prom
   }
   await db
     .insert(zakiyMemoryTable)
-    .values({ sessionId, memoryJson: JSON.stringify(memory), updatedAt: new Date() })
+    .values({
+      sessionId,
+      memoryJson: JSON.stringify(memory),
+      updatedAt: new Date(),
+    })
     .onConflictDoUpdate({
       target: zakiyMemoryTable.sessionId,
       set: { memoryJson: JSON.stringify(memory), updatedAt: new Date() },
     });
 }
 
-async function markPromiseBroken(sessionId: string, sin: string): Promise<void> {
+async function markPromiseBroken(
+  sessionId: string,
+  sin: string,
+): Promise<void> {
   if (!sessionId) return;
   try {
     const memory = await loadMemory(sessionId);
@@ -251,20 +390,28 @@ async function markPromiseBroken(sessionId: string, sin: string): Promise<void> 
     if (changed) {
       await db
         .insert(zakiyMemoryTable)
-        .values({ sessionId, memoryJson: JSON.stringify(memory), updatedAt: new Date() })
+        .values({
+          sessionId,
+          memoryJson: JSON.stringify(memory),
+          updatedAt: new Date(),
+        })
         .onConflictDoUpdate({
           target: zakiyMemoryTable.sessionId,
           set: { memoryJson: JSON.stringify(memory), updatedAt: new Date() },
         });
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
 }
 
 function buildMemorySection(memory: ZakiyMemoryData): string {
   const parts: string[] = [];
   if (memory.traits.length) parts.push(`🧠 صفاته: ${memory.traits.join("، ")}`);
-  if (memory.challenges.length) parts.push(`⚡ تحدياته: ${memory.challenges.join("، ")}`);
-  if (memory.recentTopics.length) parts.push(`📌 آخر مواضيعه: ${memory.recentTopics.join("، ")}`);
+  if (memory.challenges.length)
+    parts.push(`⚡ تحدياته: ${memory.challenges.join("، ")}`);
+  if (memory.recentTopics.length)
+    parts.push(`📌 آخر مواضيعه: ${memory.recentTopics.join("، ")}`);
   if (memory.personalNote) parts.push(`📝 ملاحظة: ${memory.personalNote}`);
 
   const activePromises = memory.promises?.filter((p) => !p.broken) ?? [];
@@ -272,13 +419,19 @@ function buildMemorySection(memory: ZakiyMemoryData): string {
   const recentSlips = memory.slips?.slice(-5) ?? [];
 
   if (activePromises.length) {
-    parts.push(`🤝 وعوده القائمة:\n${activePromises.map((p) => `  - "${p.text}" (${p.date})`).join("\n")}`);
+    parts.push(
+      `🤝 وعوده القائمة:\n${activePromises.map((p) => `  - "${p.text}" (${p.date})`).join("\n")}`,
+    );
   }
   if (brokenPromises.length) {
-    parts.push(`💔 وعود كسرها:\n${brokenPromises.map((p) => `  - "${p.text}" (كُسر ${p.brokenCount} مرة)`).join("\n")}`);
+    parts.push(
+      `💔 وعود كسرها:\n${brokenPromises.map((p) => `  - "${p.text}" (كُسر ${p.brokenCount} مرة)`).join("\n")}`,
+    );
   }
   if (recentSlips.length) {
-    parts.push(`⚠️ زللاته الأخيرة:\n${recentSlips.map((s) => `  - ${s.sin} (${s.date})${s.afterPromise ? " [بعد وعد!]" : ""}`).join("\n")}`);
+    parts.push(
+      `⚠️ زللاته الأخيرة:\n${recentSlips.map((s) => `  - ${s.sin} (${s.date})${s.afterPromise ? " [بعد وعد!]" : ""}`).join("\n")}`,
+    );
   }
 
   if (!parts.length) return "";
@@ -418,13 +571,15 @@ const ZAKIY_TTS_SYSTEM = `اقرأ النص التالي كما هو بالضب�
 function stripQuranMarkers(text: string): string {
   // Remove single ayah markers {{quran:S:A|text}}
   // Remove range ayah markers {{quran:S:A-B|text}} (bot should never read Quran aloud)
-  return text
-    .replace(/\{\{quran:\d+:\d+(?:-\d+)?\|[^}]*\}\}/g, "")
-    .replace(/﴿[^﴾]*﴾/g, "")
-    // Strip "سورة X — آية N" labels that appear when AI doesn't use proper markers
-    .replace(/سورة\s+\S+\s*[—–\-]\s*آية\s+[\d٠-٩]+/g, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  return (
+    text
+      .replace(/\{\{quran:\d+:\d+(?:-\d+)?\|[^}]*\}\}/g, "")
+      .replace(/﴿[^﴾]*﴾/g, "")
+      // Strip "سورة X — آية N" labels that appear when AI doesn't use proper markers
+      .replace(/سورة\s+\S+\s*[—–\-]\s*آية\s+[\d٠-٩]+/g, "")
+      .replace(/\s{2,}/g, " ")
+      .trim()
+  );
 }
 
 /**
@@ -449,12 +604,15 @@ function preprocessQuranCitations(text: string): string {
       const ayahNum = parseInt(arabicToWestern(ayahRaw.trim()));
       if (!surahNum || isNaN(ayahNum)) return `﴿${ayahText}﴾`;
       return `{{quran:${surahNum}:${ayahNum}|${ayahText.trim()}}}`;
-    }
+    },
   );
 }
 
 function stripFatwaMarkers(text: string): string {
-  return text.replace(/\{\{fatwa:[^|]*\|[^|]*\|([^}]*)\}\}/g, "").replace(/\s{2,}/g, " ").trim();
+  return text
+    .replace(/\{\{fatwa:[^|]*\|[^|]*\|([^}]*)\}\}/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 function stripStageDirections(text: string): string {
@@ -486,17 +644,19 @@ function stripForTTS(text: string): string {
 }
 
 function stripEmojisAndSymbols(text: string): string {
-  return text
-    // Remove emoji ranges
-    .replace(/[\u{1F300}-\u{1FFFF}]/gu, "")
-    .replace(/[\u{2600}-\u{27BF}]/gu, "")
-    // Remove decorative Arabic/box-drawing characters used as separators
-    .replace(/[═─━╔╗╚╝║〔〕]/g, "")
-    // Remove Arabic markers / Quran decorators
-    .replace(/[۝﴿﴾]/g, "")
-    // Normalize multiple spaces/newlines
-    .replace(/\s{2,}/g, " ")
-    .trim();
+  return (
+    text
+      // Remove emoji ranges
+      .replace(/[\u{1F300}-\u{1FFFF}]/gu, "")
+      .replace(/[\u{2600}-\u{27BF}]/gu, "")
+      // Remove decorative Arabic/box-drawing characters used as separators
+      .replace(/[═─━╔╗╚╝║〔〕]/g, "")
+      // Remove Arabic markers / Quran decorators
+      .replace(/[۝﴿﴾]/g, "")
+      // Normalize multiple spaces/newlines
+      .replace(/\s{2,}/g, " ")
+      .trim()
+  );
 }
 
 async function generateZakiyAudio(text: string): Promise<string> {
@@ -532,11 +692,11 @@ export interface ServerResponseSegment {
 function parseRawSegments(raw: string): ServerResponseSegment[] {
   const segments: ServerResponseSegment[] = [];
   // Matches: single ayah, range ayah, fatwa, promise, surah-link
-  const re = /\{\{quran:(\d+):(\d+)(?:-(\d+))?\|([^}]*)\}\}|\{\{fatwa:([^|]*)\|([^|]*)\|([^}]*)\}\}|\{\{promise:([^}]+)\}\}|\{\{surah-link:(\d+):(\d+)\|([^}]*)\}\}/g;
+  const re =
+    /\{\{quran:(\d+):(\d+)(?:-(\d+))?\|([^}]*)\}\}|\{\{fatwa:([^|]*)\|([^|]*)\|([^}]*)\}\}|\{\{promise:([^}]+)\}\}|\{\{surah-link:(\d+):(\d+)\|([^}]*)\}\}/g;
   let last = 0;
   let m: RegExpExecArray | null;
-  const isBareLabel = (t: string) =>
-    /^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)‌]?\s*$/.test(t);
+  const isBareLabel = (t: string) => /^[١٢٣٤٥٦٧٨٩٠\d]+[.\-\)‌]?\s*$/.test(t);
 
   while ((m = re.exec(raw)) !== null) {
     if (m.index > last) {
@@ -557,7 +717,12 @@ function parseRawSegments(raw: string): ServerResponseSegment[] {
           segments.push({ type: "quran", surah, ayah: a, text: ayahText });
         }
       } else {
-        segments.push({ type: "quran", surah, ayah: startAyah, text: fullText });
+        segments.push({
+          type: "quran",
+          surah,
+          ayah: startAyah,
+          text: fullText,
+        });
       }
     } else if (m[5] !== undefined) {
       segments.push({ type: "fatwa", source: m[5]!, url: m[6]!, text: m[7]! });
@@ -589,25 +754,120 @@ function parseRawSegments(raw: string): ServerResponseSegment[] {
 // ══════════════════════════════════════════
 
 const SURAH_NAMES_AR: Record<number, string> = {
-  1:"الفاتحة",2:"البقرة",3:"آل عمران",4:"النساء",5:"المائدة",6:"الأنعام",
-  7:"الأعراف",8:"الأنفال",9:"التوبة",10:"يونس",11:"هود",12:"يوسف",
-  13:"الرعد",14:"إبراهيم",15:"الحجر",16:"النحل",17:"الإسراء",18:"الكهف",
-  19:"مريم",20:"طه",21:"الأنبياء",22:"الحج",23:"المؤمنون",24:"النور",
-  25:"الفرقان",26:"الشعراء",27:"النمل",28:"القصص",29:"العنكبوت",30:"الروم",
-  31:"لقمان",32:"السجدة",33:"الأحزاب",34:"سبأ",35:"فاطر",36:"يس",
-  37:"الصافات",38:"ص",39:"الزمر",40:"غافر",41:"فصلت",42:"الشورى",
-  43:"الزخرف",44:"الدخان",45:"الجاثية",46:"الأحقاف",47:"محمد",48:"الفتح",
-  49:"الحجرات",50:"ق",51:"الذاريات",52:"الطور",53:"النجم",54:"القمر",
-  55:"الرحمن",56:"الواقعة",57:"الحديد",58:"المجادلة",59:"الحشر",60:"الممتحنة",
-  61:"الصف",62:"الجمعة",63:"المنافقون",64:"التغابن",65:"الطلاق",66:"التحريم",
-  67:"الملك",68:"القلم",69:"الحاقة",70:"المعارج",71:"نوح",72:"الجن",
-  73:"المزمل",74:"المدثر",75:"القيامة",76:"الإنسان",77:"المرسلات",78:"النبأ",
-  79:"النازعات",80:"عبس",81:"التكوير",82:"الانفطار",83:"المطففين",84:"الانشقاق",
-  85:"البروج",86:"الطارق",87:"الأعلى",88:"الغاشية",89:"الفجر",90:"البلد",
-  91:"الشمس",92:"الليل",93:"الضحى",94:"الشرح",95:"التين",96:"العلق",
-  97:"القدر",98:"البينة",99:"الزلزلة",100:"العاديات",101:"القارعة",102:"التكاثر",
-  103:"العصر",104:"الهمزة",105:"الفيل",106:"قريش",107:"الماعون",108:"الكوثر",
-  109:"الكافرون",110:"النصر",111:"المسد",112:"الإخلاص",113:"الفلق",114:"الناس",
+  1: "الفاتحة",
+  2: "البقرة",
+  3: "آل عمران",
+  4: "النساء",
+  5: "المائدة",
+  6: "الأنعام",
+  7: "الأعراف",
+  8: "الأنفال",
+  9: "التوبة",
+  10: "يونس",
+  11: "هود",
+  12: "يوسف",
+  13: "الرعد",
+  14: "إبراهيم",
+  15: "الحجر",
+  16: "النحل",
+  17: "الإسراء",
+  18: "الكهف",
+  19: "مريم",
+  20: "طه",
+  21: "الأنبياء",
+  22: "الحج",
+  23: "المؤمنون",
+  24: "النور",
+  25: "الفرقان",
+  26: "الشعراء",
+  27: "النمل",
+  28: "القصص",
+  29: "العنكبوت",
+  30: "الروم",
+  31: "لقمان",
+  32: "السجدة",
+  33: "الأحزاب",
+  34: "سبأ",
+  35: "فاطر",
+  36: "يس",
+  37: "الصافات",
+  38: "ص",
+  39: "الزمر",
+  40: "غافر",
+  41: "فصلت",
+  42: "الشورى",
+  43: "الزخرف",
+  44: "الدخان",
+  45: "الجاثية",
+  46: "الأحقاف",
+  47: "محمد",
+  48: "الفتح",
+  49: "الحجرات",
+  50: "ق",
+  51: "الذاريات",
+  52: "الطور",
+  53: "النجم",
+  54: "القمر",
+  55: "الرحمن",
+  56: "الواقعة",
+  57: "الحديد",
+  58: "المجادلة",
+  59: "الحشر",
+  60: "الممتحنة",
+  61: "الصف",
+  62: "الجمعة",
+  63: "المنافقون",
+  64: "التغابن",
+  65: "الطلاق",
+  66: "التحريم",
+  67: "الملك",
+  68: "القلم",
+  69: "الحاقة",
+  70: "المعارج",
+  71: "نوح",
+  72: "الجن",
+  73: "المزمل",
+  74: "المدثر",
+  75: "القيامة",
+  76: "الإنسان",
+  77: "المرسلات",
+  78: "النبأ",
+  79: "النازعات",
+  80: "عبس",
+  81: "التكوير",
+  82: "الانفطار",
+  83: "المطففين",
+  84: "الانشقاق",
+  85: "البروج",
+  86: "الطارق",
+  87: "الأعلى",
+  88: "الغاشية",
+  89: "الفجر",
+  90: "البلد",
+  91: "الشمس",
+  92: "الليل",
+  93: "الضحى",
+  94: "الشرح",
+  95: "التين",
+  96: "العلق",
+  97: "القدر",
+  98: "البينة",
+  99: "الزلزلة",
+  100: "العاديات",
+  101: "القارعة",
+  102: "التكاثر",
+  103: "العصر",
+  104: "الهمزة",
+  105: "الفيل",
+  106: "قريش",
+  107: "الماعون",
+  108: "الكوثر",
+  109: "الكافرون",
+  110: "النصر",
+  111: "المسد",
+  112: "الإخلاص",
+  113: "الفلق",
+  114: "الناس",
 };
 
 async function expandSurahMarkers(raw: string): Promise<string> {
@@ -619,26 +879,39 @@ async function expandSurahMarkers(raw: string): Promise<string> {
   for (const match of matches) {
     const surahNum = Number(match[1]);
     try {
-      const apiRes = await fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/quran-uthmani`);
+      const apiRes = await fetch(
+        `https://api.alquran.cloud/v1/surah/${surahNum}/quran-uthmani`,
+      );
       if (!apiRes.ok) continue;
-      const data = await apiRes.json() as { data?: { numberOfAyahs: number; ayahs: { numberInSurah: number; text: string }[] } };
+      const data = (await apiRes.json()) as {
+        data?: {
+          numberOfAyahs: number;
+          ayahs: { numberInSurah: number; text: string }[];
+        };
+      };
       const ayahs = data.data?.ayahs ?? [];
       const total = data.data?.numberOfAyahs ?? ayahs.length;
       const limit = 20;
       const display = ayahs.slice(0, limit);
       const surahName = SURAH_NAMES_AR[surahNum] ?? `سورة ${surahNum}`;
 
-      let expanded = display.map((a) => `{{quran:${surahNum}:${a.numberInSurah}|${a.text}}}`).join("\n");
+      let expanded = display
+        .map((a) => `{{quran:${surahNum}:${a.numberInSurah}|${a.text}}}`)
+        .join("\n");
       if (total > limit) {
         expanded += `\n{{surah-link:${surahNum}:${limit}|${surahName}}}`;
       }
       result = result.replace(match[0], expanded);
-    } catch { /* skip if API fails */ }
+    } catch {
+      /* skip if API fails */
+    }
   }
   return result;
 }
 
-async function generateSegmentedAudio(responseText: string): Promise<ServerResponseSegment[]> {
+async function generateSegmentedAudio(
+  responseText: string,
+): Promise<ServerResponseSegment[]> {
   const cleaned = stripToneAnnouncements(responseText);
   const preprocessed = preprocessQuranCitations(cleaned);
   const expanded = await expandSurahMarkers(preprocessed);
@@ -663,7 +936,7 @@ async function generateSegmentedAudio(responseText: string): Promise<ServerRespo
         console.error(`TTS failed for segment ${segIdx}:`, err);
         return { segIdx, audio: "" };
       }
-    })
+    }),
   );
 
   audioResults.forEach(({ segIdx, audio }) => {
@@ -676,14 +949,15 @@ async function generateSegmentedAudio(responseText: string): Promise<ServerRespo
 async function generateZakiyResponse(
   userMessage: string,
   history: { role: "user" | "assistant"; content: string }[],
-  memory: ZakiyMemoryData
+  memory: ZakiyMemoryData,
 ): Promise<string> {
   const systemPrompt = buildZakiySystemPrompt(memory);
-  const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
-    { role: "system", content: systemPrompt },
-    ...history.slice(-8),
-    { role: "user", content: userMessage },
-  ];
+  const messages: { role: "system" | "user" | "assistant"; content: string }[] =
+    [
+      { role: "system", content: systemPrompt },
+      ...history.slice(-8),
+      { role: "user", content: userMessage },
+    ];
 
   const chatResponse = await openai.chat.completions.create({
     model: "gpt-4o",
@@ -700,7 +974,11 @@ async function generateZakiyResponse(
 
 router.post("/zakiy/message", async (req, res) => {
   try {
-    const { message, history = [], sessionId = "" } = req.body as {
+    const {
+      message,
+      history = [],
+      sessionId = "",
+    } = req.body as {
       message: string;
       history: { role: "user" | "assistant"; content: string }[];
       sessionId?: string;
@@ -753,7 +1031,10 @@ router.post("/zakiy/suggestions", async (req, res) => {
     const memory = await loadMemory(sessionId);
     const memorySection = buildMemorySection(memory);
 
-    const lastExchange = history.slice(-4).map((m) => `${m.role === "user" ? "المستخدم" : "الزكي"}: ${m.content}`).join("\n");
+    const lastExchange = history
+      .slice(-4)
+      .map((m) => `${m.role === "user" ? "المستخدم" : "الزكي"}: ${m.content}`)
+      .join("\n");
 
     const result = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -797,7 +1078,10 @@ router.post("/zakiy/impression", async (req, res) => {
 
     const convSummary = history
       .slice(-10)
-      .map((m) => `${m.role === "user" ? "المستخدم" : "الزكي"}: ${m.content.slice(0, 100)}`)
+      .map(
+        (m) =>
+          `${m.role === "user" ? "المستخدم" : "الزكي"}: ${m.content.slice(0, 100)}`,
+      )
       .join("\n");
 
     const result = await openai.chat.completions.create({
@@ -827,7 +1111,9 @@ ${JSON.stringify(memory, null, 2)}
       ],
     });
 
-    const impression = result.choices[0]?.message?.content ?? "لسه بتعرف بعضنا — كمّل الحديث وهشوفك أكتر!";
+    const impression =
+      result.choices[0]?.message?.content ??
+      "لسه بتعرف بعضنا — كمّل الحديث وهشوفك أكتر!";
     res.json({ impression });
   } catch (err) {
     console.error("Impression error:", err);
@@ -837,7 +1123,11 @@ ${JSON.stringify(memory, null, 2)}
 
 router.post("/zakiy/voice", async (req, res) => {
   try {
-    const { audioBase64, history = [], sessionId = "" } = req.body as {
+    const {
+      audioBase64,
+      history = [],
+      sessionId = "",
+    } = req.body as {
       audioBase64: string;
       history: { role: "user" | "assistant"; content: string }[];
       sessionId?: string;
@@ -858,7 +1148,11 @@ router.post("/zakiy/voice", async (req, res) => {
     }
 
     const memory = await loadMemory(sessionId);
-    const rawResponse = await generateZakiyResponse(transcript, history, memory);
+    const rawResponse = await generateZakiyResponse(
+      transcript,
+      history,
+      memory,
+    );
     const responseText = stripToneAnnouncements(rawResponse);
     const segments = await generateSegmentedAudio(responseText);
 
@@ -875,7 +1169,10 @@ router.post("/zakiy/voice", async (req, res) => {
 
 router.post("/zakiy/promise", async (req, res) => {
   try {
-    const { sessionId, promiseText } = req.body as { sessionId: string; promiseText: string };
+    const { sessionId, promiseText } = req.body as {
+      sessionId: string;
+      promiseText: string;
+    };
     if (!sessionId || !promiseText?.trim()) {
       res.status(400).json({ error: "sessionId and promiseText required" });
       return;
@@ -894,7 +1191,10 @@ router.post("/zakiy/promise", async (req, res) => {
 
 router.get("/zakiy/risk-check", async (req, res) => {
   const sessionId = req.query.sessionId as string;
-  if (!sessionId) { res.status(400).json({ error: "sessionId مطلوب" }); return; }
+  if (!sessionId) {
+    res.status(400).json({ error: "sessionId مطلوب" });
+    return;
+  }
 
   try {
     const [memory, recentJournals, progress] = await Promise.all([
@@ -915,7 +1215,9 @@ router.get("/zakiy/risk-check", async (req, res) => {
     const brokenPromises = memory.promises?.filter((p) => p.broken) ?? [];
 
     const daysSinceActive = progress?.lastActiveDate
-      ? Math.floor((Date.now() - new Date(progress.lastActiveDate).getTime()) / 86400000)
+      ? Math.floor(
+          (Date.now() - new Date(progress.lastActiveDate).getTime()) / 86400000,
+        )
       : 0;
 
     const analysisPrompt = `أنت محلل نفسي متخصص في الصحة الروحية الإسلامية.
@@ -952,7 +1254,9 @@ ${recentJournals.map((j) => `- المزاج: ${j.mood ?? "غير محدد"} | ا
 
     const raw = analysis.choices[0]?.message?.content ?? "{}";
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    const result = jsonMatch ? JSON.parse(jsonMatch[0]) : { riskLevel: "low", message: "", warningSign: null };
+    const result = jsonMatch
+      ? JSON.parse(jsonMatch[0])
+      : { riskLevel: "low", message: "", warningSign: null };
 
     res.json(result);
   } catch (err) {
@@ -967,7 +1271,10 @@ ${recentJournals.map((j) => `- المزاج: ${j.mood ?? "غير محدد"} | ا
 
 router.get("/zakiy/anniversary", async (req, res) => {
   const sessionId = req.query.sessionId as string;
-  if (!sessionId) { res.status(400).json({ error: "sessionId مطلوب" }); return; }
+  if (!sessionId) {
+    res.status(400).json({ error: "sessionId مطلوب" });
+    return;
+  }
 
   try {
     const progress = await db.query.userProgressTable.findFirst({
@@ -975,12 +1282,17 @@ router.get("/zakiy/anniversary", async (req, res) => {
       columns: { covenantDate: true, streakDays: true },
     });
 
-    if (!progress?.covenantDate) { res.json({ anniversary: null }); return; }
+    if (!progress?.covenantDate) {
+      res.json({ anniversary: null });
+      return;
+    }
 
     const memory = await loadMemory(sessionId);
     const covenant = new Date(progress.covenantDate);
     const now = new Date();
-    const diffDays = Math.floor((now.getTime() - covenant.getTime()) / 86400000);
+    const diffDays = Math.floor(
+      (now.getTime() - covenant.getTime()) / 86400000,
+    );
 
     const MILESTONES: Record<number, string> = {
       7: "أسبوع",
@@ -993,7 +1305,10 @@ router.get("/zakiy/anniversary", async (req, res) => {
     };
 
     const milestone = MILESTONES[diffDays];
-    if (!milestone) { res.json({ anniversary: null }); return; }
+    if (!milestone) {
+      res.json({ anniversary: null });
+      return;
+    }
 
     const personalNote = memory.personalNote || "";
     const traits = memory.traits.join("، ");
@@ -1009,9 +1324,7 @@ router.get("/zakiy/anniversary", async (req, res) => {
     const msgResp = await openai.chat.completions.create({
       model: "gpt-4o",
       max_completion_tokens: 200,
-      messages: [
-        { role: "user", content: msgPrompt },
-      ],
+      messages: [{ role: "user", content: msgPrompt }],
     });
 
     const message = msgResp.choices[0]?.message?.content?.trim() ?? "";
