@@ -660,7 +660,7 @@ function SurahReaderSheet({
               reciterId={quranReciterId}
             />
           )}
-          <div className="h-8" />
+          <div className="h-8 mt-[45px] mb-[45px]" />
         </div>
       </motion.div>
     </motion.div>
