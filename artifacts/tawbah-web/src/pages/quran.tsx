@@ -870,11 +870,10 @@ function DailyAyahCard() {
           </button>
         </div>
       </div>
-
       <div className="px-4 py-4">
         {/* Arabic */}
         <p
-          className="text-center leading-[2.2] mb-3"
+          className="text-center leading-[2.2] mb-3 text-[#0fd11feb]"
           style={{
             fontFamily: "'Amiri Quran', serif",
             fontSize: 18,
