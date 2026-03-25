@@ -225,70 +225,56 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
           </AnimatePresence>
 
-          {/* Floating Bottom Navigation Bar — SVG Notch Pill */}
-          <nav className="fixed bottom-3 inset-x-0 z-40 max-w-md mx-auto px-3">
-            <div className="relative" style={{ height: 72 }}>
-
-              {/* SVG pill with notch cutout at top-center for the Zaki orb */}
-              <svg
-                className="absolute inset-0 w-full pointer-events-none"
-                viewBox="0 0 400 72"
-                preserveAspectRatio="none"
-                style={{ height: 72 }}
+          {/* Floating Bottom Navigation Bar */}
+          <nav className="fixed bottom-3 inset-x-0 z-40 max-w-md mx-auto px-4">
+            <div className="relative">
+              {/* Floating glass pill */}
+              <div
+                className="relative rounded-[28px] overflow-hidden bg-card/88 backdrop-blur-2xl"
+                style={{
+                  boxShadow: "0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.12)",
+                  border: "1px solid hsl(var(--border)/0.6)",
+                }}
               >
-                <defs>
-                  <filter id="nav-shadow" x="-10%" y="-30%" width="120%" height="160%">
-                    <feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="rgba(0,0,0,0.18)" />
-                    <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="rgba(0,0,0,0.10)" />
-                  </filter>
-                </defs>
-                {/* Glass fill */}
-                <path
-                  d="M28,0 L152,0 Q164,0 164,14 C164,27 180,36 200,36 C220,36 236,27 236,14 Q236,0 248,0 L372,0 Q400,0 400,28 L400,64 Q400,72 372,72 L28,72 Q0,72 0,64 L0,28 Q0,0 28,0 Z"
-                  className="fill-card/92"
-                  filter="url(#nav-shadow)"
+                {/* Subtle top shine */}
+                <div
+                  className="absolute top-0 inset-x-0 h-[45%] pointer-events-none rounded-t-[28px]"
+                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%)" }}
                 />
-                {/* Shine gradient — encoded inline */}
-                <path
-                  d="M28,0 L152,0 Q164,0 164,14 C164,27 180,36 200,36 C220,36 236,27 236,14 Q236,0 248,0 L372,0 Q400,0 400,28 L400,34 L0,34 L0,28 Q0,0 28,0 Z"
-                  fill="rgba(255,255,255,0.09)"
-                />
-                {/* Border */}
-                <path
-                  d="M28,0.5 L152,0.5 Q163.5,0.5 163.5,14 C163.5,27 179.5,36.5 200,36.5 C220.5,36.5 236.5,27 236.5,14 Q236.5,0.5 248,0.5 L372,0.5 Q399.5,0.5 399.5,28 L399.5,64 Q399.5,71.5 372,71.5 L28,71.5 Q0.5,71.5 0.5,64 L0.5,28 Q0.5,0.5 28,0.5"
-                  fill="none"
-                  className="stroke-border/50"
-                  strokeWidth="0.8"
-                />
-              </svg>
 
-              {/* Nav items row */}
-              <div className="absolute inset-0 flex items-center" style={{ bottom: 0 }}>
-                {leftItems.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
-                {/* Center gap reserved for orb */}
-                <div className="flex-none" style={{ width: "24%" }} />
-                {rightItems.map((item) => (
-                  <NavItem key={item.href} {...item} />
-                ))}
+                {/* Nav content */}
+                <div className="relative flex items-center h-[62px]" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+                  {leftItems.map((item) => (
+                    <NavItem key={item.href} {...item} />
+                  ))}
+
+                  {/* Center spacer for orb */}
+                  <div className="flex-none" style={{ width: "22%" }} />
+
+                  {rightItems.map((item) => (
+                    <NavItem key={item.href} {...item} />
+                  ))}
+                </div>
               </div>
 
-              {/* Zaki orb — sits inside the notch */}
+              {/* Zaki orb — floats above pill center */}
               <div
-                className="absolute left-1/2 -translate-x-1/2 z-50"
-                style={{ top: -28, filter: "drop-shadow(0 6px 16px rgba(0,0,0,0.22)) drop-shadow(0 2px 6px rgba(0,0,0,0.14))" }}
+                className="absolute left-1/2 -translate-x-1/2 -top-[26px] z-50"
+                style={{ filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.2)) drop-shadow(0 2px 5px rgba(0,0,0,0.12))" }}
               >
                 <button
                   onClick={() => setVoiceOpen(true)}
                   className="block tap-highlight-transparent focus:outline-none"
                 >
-                  <motion.div whileTap={{ scale: 0.91 }} whileHover={{ scale: 1.06 }} className="relative">
+                  <motion.div
+                    whileTap={{ scale: 0.92 }}
+                    whileHover={{ scale: 1.06 }}
+                    className="relative"
+                  >
                     <ZakiyNavOrb isActive={isZakiActive} />
                   </motion.div>
                 </button>
               </div>
-
             </div>
           </nav>
         </>
