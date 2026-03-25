@@ -315,12 +315,14 @@ function QuranCard({
 
   useEffect(() => {
     const audio = new Audio();
-    audio.preload = "none";
+    audio.preload = "auto";
     audio.src = reciterAudioUrl(seg.surah!, seg.ayah!, reciterId);
     audioRef.current = audio;
     setAudioError(false);
     audio.onended = () => onEndedRef.current();
     audio.onerror = () => { setAudioError(true); onEndedRef.current(); };
+    // Start buffering immediately so audio is ready when this card becomes active
+    audio.load();
     return () => { audio.pause(); audio.src = ""; audio.onended = null; audio.onerror = null; audioRef.current = null; };
   }, [seg.surah, seg.ayah, reciterId]);
 
