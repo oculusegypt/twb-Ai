@@ -392,6 +392,15 @@
   unicode-bidi: bidi-override;
 }
 
+/* ── Quran card waveform ── */
+@keyframes quranWave {
+  from { transform: scaleY(0.25); opacity: 0.4; }
+  to   { transform: scaleY(1);    opacity: 1; }
+}
+.quran-wave-bar {
+  transform-origin: bottom;
+}
+
 /* ── Zaki button animations ── */
 @keyframes zaki-spin {
   from { transform: rotate(0deg); }
