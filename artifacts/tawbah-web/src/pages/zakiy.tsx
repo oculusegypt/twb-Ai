@@ -219,7 +219,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
           <ol key={`list-${i}`} className="space-y-1.5 my-2 pr-1">
             {listItems.map((item, idx) => (
               <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-950/50 text-teal-700 dark:text-teal-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-600 dark:bg-teal-950/50 text-white dark:text-teal-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
                   {startNum + idx}
                 </span>
                 <span className="flex-1">{renderInline(item)}</span>
@@ -272,7 +272,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
   return (
     <div className={cn(
       "space-y-0.5 rounded-xl transition-colors duration-300",
-      isActivePlaying && "bg-teal-100 dark:bg-teal-950/30 px-2 py-1 -mx-2"
+      isActivePlaying && "bg-teal-200/80 dark:bg-teal-950/30 px-2 py-1 -mx-2 rounded-lg"
     )}>
       {elements}
     </div>
@@ -357,8 +357,8 @@ function QuranCard({
           className={cn(
             "flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-full transition-all font-medium",
             isActive && isPlaying
-              ? "bg-white/30 text-amber-900 dark:bg-amber-400 dark:text-amber-900"
-              : "bg-white/20 text-amber-900 hover:bg-white/30 dark:bg-amber-900/60 dark:text-amber-300 dark:hover:bg-amber-800/60"
+              ? "bg-white/30 text-white dark:bg-amber-400 dark:text-amber-900"
+              : "bg-white/20 text-white hover:bg-white/30 dark:bg-amber-900/60 dark:text-amber-300 dark:hover:bg-amber-800/60"
           )}
         >
           {isActive && isPlaying
@@ -864,7 +864,7 @@ function BotMessageBody({
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all",
               isCurrentlyPlaying
                 ? "bg-teal-600 text-white"
-                : "bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-400 hover:bg-teal-100"
+                : "bg-teal-100 dark:bg-teal-950/40 text-teal-800 dark:text-teal-400 border border-teal-400/60 hover:bg-teal-200"
             )}
           >
             {isCurrentlyPlaying ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
@@ -879,7 +879,7 @@ function BotMessageBody({
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
               impressionOpen
                 ? "bg-rose-500 text-white border-rose-500"
-                : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-300/60 hover:bg-rose-100"
+                : "bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-400/60 hover:bg-rose-200"
             )}
           >
             {impressionLoading
@@ -897,7 +897,7 @@ function BotMessageBody({
               "flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border",
               hadiDone
                 ? "bg-emerald-500 text-white border-emerald-500"
-                : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-300/60 hover:bg-emerald-100"
+                : "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-400 border-emerald-400/60 hover:bg-emerald-200"
             )}
           >
             {hadiLoading
