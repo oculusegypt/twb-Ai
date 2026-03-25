@@ -1002,7 +1002,7 @@ function SectionQuranCard() {
               </div>
               <div>
                 <h2
-                  className="font-bold leading-tight"
+                  className="font-bold leading-tight pt-[5px] pb-[5px]"
                   style={{
                     fontSize: 17,
                     background: "linear-gradient(90deg, #ffffff 0%, #c8a84b 60%, #a07c2a 100%)",
