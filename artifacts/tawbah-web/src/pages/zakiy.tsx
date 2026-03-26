@@ -894,7 +894,7 @@ function BotMessageBody({
           <button
             onClick={handleImpressionClick}
             disabled={impressionLoading}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border dark:bg-rose-950/30 dark:text-rose-400 border-rose-400/60 hover:bg-rose-200 bg-[#ff637e] text-[#ffccd3]"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border dark:bg-rose-950/30 dark:text-rose-400 border-rose-400/60 hover:bg-rose-200 bg-[#ff637e] text-[#ffebee]"
           >
             {impressionLoading
               ? <><Loader2 size={12} className="animate-spin" /> لحظة...</>
