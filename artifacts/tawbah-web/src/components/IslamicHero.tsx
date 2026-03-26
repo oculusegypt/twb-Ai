@@ -994,7 +994,7 @@ export function IslamicHero() {
 
           {/* ── Logo button (always in place, z-index above orbits) ── */}
           <motion.button
-            className="w-full h-full focus:outline-none relative flex items-center justify-center"
+            className="w-full h-full focus:outline-none relative flex items-center justify-center mt-[-55px] mb-[-55px]"
             style={{ zIndex: 10, background: "none", border: "none" }}
             onClick={() => setOrbiting((v) => !v)}
             whileHover={{ scale: 1.04 }}
