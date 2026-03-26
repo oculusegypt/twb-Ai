@@ -1221,6 +1221,9 @@ export default function Journey30() {
   const queryClient = useQueryClient();
   const [showRestoreCode, setShowRestoreCode] = useState(false);
   const [localAllDone, setLocalAllDone] = useState(false);
+  const [justCompleted, setJustCompleted] = useState<{ day: number; title: string } | null>(null);
+  const completingDayRef = useRef<{ day: number; title: string } | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const { data, isLoading } = useQuery<JourneyData>({
     queryKey: ["journey30", sessionId],
@@ -1242,8 +1245,16 @@ export default function Journey30() {
       return res.json();
     },
     onSuccess: () => {
+      if (completingDayRef.current) {
+        setJustCompleted(completingDayRef.current);
+        completingDayRef.current = null;
+        setTimeout(() => setJustCompleted(null), 7000);
+      }
       setLocalAllDone(false);
       queryClient.invalidateQueries({ queryKey: ["journey30", sessionId] });
+      setTimeout(() => {
+        scrollContainerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }, 80);
     },
   });
 
@@ -1339,7 +1350,95 @@ export default function Journey30() {
       </div>
 
       {/* ── Scrollable content ──────────────────────────────────────────────── */}
-      <div className="flex-1 px-4 pt-5 pb-36 overflow-y-auto flex flex-col gap-5">
+      <div ref={scrollContainerRef} className="flex-1 px-4 pt-5 pb-36 overflow-y-auto flex flex-col gap-5">
+
+        {/* ── Day completion celebration banner ─────────────────────────────── */}
+        <AnimatePresence>
+          {justCompleted && (
+            <motion.div
+              initial={{ opacity: 0, y: -24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -16, scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 280, damping: 22 }}
+              className="rounded-3xl overflow-hidden relative"
+              style={{
+                background: "linear-gradient(135deg, rgba(5,150,105,0.18) 0%, rgba(4,120,87,0.1) 50%, rgba(251,191,36,0.12) 100%)",
+                border: "1px solid rgba(5,150,105,0.35)",
+                boxShadow: "0 8px 32px rgba(5,150,105,0.25), 0 0 0 1px rgba(255,255,255,0.04)",
+              }}
+            >
+              {/* Gold shimmer line at top */}
+              <div className="absolute inset-x-0 top-0 h-[2px]" style={{
+                background: "linear-gradient(90deg, transparent, #fbbf24, #10b981, #fbbf24, transparent)",
+              }} />
+
+              <div className="relative p-5 text-center">
+                {/* Stars row */}
+                <div className="flex justify-center gap-1.5 mb-3">
+                  {[0, 1, 2, 3, 4].map((i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ scale: 0, rotate: -20 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.1 + i * 0.08, type: "spring", stiffness: 400, damping: 14 }}
+                    >
+                      <Star size={18} className="text-amber-400 fill-amber-400" />
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Title */}
+                <motion.p
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-[11px] font-bold tracking-widest mb-1"
+                  style={{ color: "rgba(16,185,129,0.85)" }}
+                >
+                  أحسنت! اكتمل اليوم {justCompleted.day}
+                </motion.p>
+
+                <motion.h2
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.38 }}
+                  className="text-[22px] font-black mb-2 leading-tight"
+                  style={{
+                    background: "linear-gradient(135deg, #ffffff 0%, #fde68a 50%, #10b981 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  {justCompleted.title}
+                </motion.h2>
+
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-[12px] leading-relaxed"
+                  style={{ color: "rgba(255,255,255,0.55)", fontFamily: "'Amiri Quran', serif" }}
+                >
+                  ﴿إِنَّ اللَّهَ مَعَ الصَّابِرِينَ﴾
+                </motion.p>
+
+                {/* Trophy icon */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.55, type: "spring", stiffness: 300 }}
+                  className="flex justify-center mt-3"
+                >
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)" }}>
+                    <Trophy size={22} className="text-amber-400" />
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Restore code panel */}
         <AnimatePresence>
@@ -1577,7 +1676,11 @@ export default function Journey30() {
               >
                 {nextDayNum <= 30 ? (
                   <motion.button
-                    onClick={() => currentDay && completeMutation.mutate(currentDay.day)}
+                    onClick={() => {
+                      if (!currentDay) return;
+                      completingDayRef.current = { day: currentDay.day, title: currentDay.title };
+                      completeMutation.mutate(currentDay.day);
+                    }}
                     disabled={completeMutation.isPending}
                     whileTap={{ scale: 0.97 }}
                     animate={{
@@ -1605,7 +1708,11 @@ export default function Journey30() {
                   </motion.button>
                 ) : (
                   <motion.button
-                    onClick={() => currentDay && completeMutation.mutate(currentDay.day)}
+                    onClick={() => {
+                      if (!currentDay) return;
+                      completingDayRef.current = { day: currentDay.day, title: currentDay.title };
+                      completeMutation.mutate(currentDay.day);
+                    }}
                     disabled={completeMutation.isPending}
                     whileTap={{ scale: 0.97 }}
                     className="w-full h-[50px] rounded-xl font-bold text-[15px] flex items-center justify-center gap-2.5 disabled:opacity-60"

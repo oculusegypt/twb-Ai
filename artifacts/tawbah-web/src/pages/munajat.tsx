@@ -806,7 +806,15 @@ export default function Munajat() {
   const [activeSound, setActiveSound] = useState<SoundId>("none");
   const [volume, setVolume] = useState(0.5);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
-  const [sceneIdx, setSceneIdx] = useState(0);
+  const [sceneIdx, setSceneIdx] = useState(() => {
+    // اختيار المشهد تلقائياً حسب الوقت
+    const h = new Date().getHours();
+    if (h >= 20 || h < 4) return 0;   // ليلاً → سماء الليل
+    if (h >= 4  && h < 11) return 1;  // صباحاً → غابة الفجر
+    if (h >= 11 && h < 17) return 2;  // نهاراً → شاطئ هادئ
+    if (h >= 17 && h < 20) return 3;  // مساءً → صحراء الليل
+    return 0;
+  });
 
   const dhikr = DHIKR_OPTIONS[activeDhikr]!;
   const verse = MUNAJAT_VERSES[verseIdx]!;
