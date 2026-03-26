@@ -648,7 +648,7 @@ function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="px-2 py-3 mt-[216px]"
+      className="px-2 py-3 mt-[0px] mb-[0px]"
     >
       <div className="flex items-center gap-1.5 mb-3">
         <span className="text-xs font-semibold text-muted-foreground">✨ أسئلة شائعة — اضغط لتبدأ</span>
