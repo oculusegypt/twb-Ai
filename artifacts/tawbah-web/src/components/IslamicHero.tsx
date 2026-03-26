@@ -760,7 +760,7 @@ export function IslamicHero() {
     <div
       className="relative w-full select-none overflow-hidden"
       style={{
-        minHeight: orbiting ? 500 : 278,
+        minHeight: orbiting ? 300 : 278,
         transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
         maskImage:
           "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
@@ -816,7 +816,7 @@ export function IslamicHero() {
       />
       {/* Content */}
       <div
-        className="relative z-10 flex flex-col items-center px-5 pl-[15px] pt-[0px] pb-[30px]"
+        className="relative z-10 flex flex-col items-center px-5 pl-[15px] pt-[0px] pb-[100px]"
         style={{
           maskImage:
             "linear-gradient(to bottom, transparent 0%, black 18%, black 100%)",
@@ -1009,8 +1009,8 @@ export function IslamicHero() {
               src="/images/logo.png"
               alt="دليل التوبة"
               style={{
-                width: 120,
-                height: 120,
+                width: 140,
+                height: 140,
                 objectFit: "contain",
                 zIndex: 2,
                 marginTop: orbiting ? 0 : 10,
@@ -1056,7 +1056,7 @@ export function IslamicHero() {
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.4 }}
-          className="text-[10px] tracking-wide text-[#dcf24b80]"
+          className="text-[10px] tracking-wide text-[#f2b233]"
           style={{
             color: isDark ? "rgba(147,197,253,0.55)" : lightCfg.subColor,
           }}
