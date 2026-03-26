@@ -1032,7 +1032,7 @@ export function IslamicHero() {
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
-          className="text-[17px] font-bold tracking-widest mb-1 mt-[6px] text-[#facd70]"
+          className="text-[17px] font-bold tracking-widest mb-1 text-[#facd70] mt-[-27px]"
           style={
             isDark
               ? {
