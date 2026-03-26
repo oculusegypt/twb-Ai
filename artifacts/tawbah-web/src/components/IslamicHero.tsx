@@ -213,25 +213,31 @@ const LIGHT_THEME_CONFIG: Record<
 };
 
 const LIGHT_HERO_FILTER: Record<string, string> = {
-  forest:   "brightness(1.0) saturate(1.4) hue-rotate(0deg)",
-  mint:     "brightness(1.0) saturate(1.5) hue-rotate(15deg)",
-  ocean:    "brightness(0.98) saturate(1.3) hue-rotate(-90deg) sepia(0.08)",
+  forest: "brightness(1.0) saturate(1.4) hue-rotate(0deg)",
+  mint: "brightness(1.0) saturate(1.5) hue-rotate(15deg)",
+  ocean: "brightness(0.98) saturate(1.3) hue-rotate(-90deg) sepia(0.08)",
   midnight: "brightness(0.97) saturate(1.2) hue-rotate(-80deg) sepia(0.06)",
-  aurora:   "brightness(0.98) saturate(1.2) hue-rotate(-120deg) sepia(0.1)",
-  rose:     "brightness(1.0) saturate(1.2) hue-rotate(130deg) sepia(0.12)",
-  sunset:   "brightness(1.02) saturate(1.4) hue-rotate(75deg) sepia(0.15)",
-  slate:    "brightness(0.97) saturate(1.0) hue-rotate(-60deg) sepia(0.05)",
+  aurora: "brightness(0.98) saturate(1.2) hue-rotate(-120deg) sepia(0.1)",
+  rose: "brightness(1.0) saturate(1.2) hue-rotate(130deg) sepia(0.12)",
+  sunset: "brightness(1.02) saturate(1.4) hue-rotate(75deg) sepia(0.15)",
+  slate: "brightness(0.97) saturate(1.0) hue-rotate(-60deg) sepia(0.05)",
 };
 
 const LIGHT_LOGO_SHADOW: Record<string, string> = {
-  forest:   "drop-shadow(3px 8px 18px rgba(23,77,43,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
-  mint:     "drop-shadow(3px 8px 18px rgba(6,95,70,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
-  ocean:    "drop-shadow(3px 8px 18px rgba(15,76,129,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
-  midnight: "drop-shadow(3px 8px 18px rgba(30,58,138,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
-  aurora:   "drop-shadow(3px 8px 18px rgba(107,33,168,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
-  rose:     "drop-shadow(3px 8px 18px rgba(159,18,57,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
-  sunset:   "drop-shadow(3px 8px 18px rgba(146,64,14,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
-  slate:    "drop-shadow(3px 8px 18px rgba(30,58,95,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
+  forest:
+    "drop-shadow(3px 8px 18px rgba(23,77,43,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  mint: "drop-shadow(3px 8px 18px rgba(6,95,70,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  ocean:
+    "drop-shadow(3px 8px 18px rgba(15,76,129,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  midnight:
+    "drop-shadow(3px 8px 18px rgba(30,58,138,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  aurora:
+    "drop-shadow(3px 8px 18px rgba(107,33,168,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
+  rose: "drop-shadow(3px 8px 18px rgba(159,18,57,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
+  sunset:
+    "drop-shadow(3px 8px 18px rgba(146,64,14,0.35)) drop-shadow(1px 3px 6px rgba(0,0,0,0.22))",
+  slate:
+    "drop-shadow(3px 8px 18px rgba(30,58,95,0.32)) drop-shadow(1px 3px 6px rgba(0,0,0,0.20))",
 };
 
 // ── Typing effect hook ──────────────────────────────────────────────────────
@@ -720,8 +726,12 @@ export function IslamicHero() {
 
   const lightCfg = LIGHT_THEME_CONFIG[accentColor] ?? LIGHT_THEME_CONFIG.mint!;
 
-  const [customBg, setCustomBg] = useState<string | null>(() => localStorage.getItem("hero_custom_bg"));
-  const [customBgLight, setCustomBgLight] = useState<string | null>(() => localStorage.getItem("hero_custom_bg_light"));
+  const [customBg, setCustomBg] = useState<string | null>(() =>
+    localStorage.getItem("hero_custom_bg"),
+  );
+  const [customBgLight, setCustomBgLight] = useState<string | null>(() =>
+    localStorage.getItem("hero_custom_bg_light"),
+  );
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -778,7 +788,8 @@ export function IslamicHero() {
               : "brightness(0.92) saturate(1.1)"
             : customBgLight
               ? "brightness(0.92) saturate(1.05)"
-              : (LIGHT_HERO_FILTER[accentColor] ?? LIGHT_HERO_FILTER["forest"]!),
+              : (LIGHT_HERO_FILTER[accentColor] ??
+                LIGHT_HERO_FILTER["forest"]!),
         }}
       />
       {/* Overlay — tinted to match theme */}
@@ -805,7 +816,7 @@ export function IslamicHero() {
       />
       {/* Content */}
       <div
-        className="relative z-10 flex flex-col items-center px-5 pl-[15px] pt-[7px] pb-[78px]"
+        className="relative z-10 flex flex-col items-center px-5 pl-[15px] pb-[106px] pt-[0px]"
         style={{
           maskImage:
             "linear-gradient(to bottom, transparent 0%, black 18%, black 100%)",
@@ -1002,7 +1013,7 @@ export function IslamicHero() {
                 height: 120,
                 objectFit: "contain",
                 zIndex: 2,
-                marginTop: orbiting ? 0 : 85,
+                marginTop: orbiting ? 0 : 10,
                 marginLeft: 4,
                 marginRight: -4,
                 transition: "margin-top 0.48s cubic-bezier(0.34,1.26,0.64,1)",
@@ -1010,7 +1021,8 @@ export function IslamicHero() {
                   ? "drop-shadow(3px 8px 22px rgba(0,0,0,0.88)) drop-shadow(1px 3px 7px rgba(0,0,0,0.60))"
                   : `saturate(0.7) brightness(0.88) ${LIGHT_LOGO_SHADOW[accentColor] ?? LIGHT_LOGO_SHADOW["forest"]!}`,
               }}
-              className="mt-[0px] mr-[0px] ml-[0px]" />
+              className="mt-[0px] mr-[0px] ml-[0px]"
+            />
           </motion.button>
         </div>
         {/* /logo wrapper */}
@@ -1021,14 +1033,23 @@ export function IslamicHero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
           className="text-[17px] font-bold tracking-widest mb-1 mt-[6px] text-[#facd70]"
-          style={isDark
-            ? { color: "#f5c842", textShadow: "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)", letterSpacing: "0.06em" }
-            : { color: lightCfg.textColor, textShadow: `0 1px 8px ${lightCfg.glowColor}`, letterSpacing: "0.06em" }
+          style={
+            isDark
+              ? {
+                  color: "#f5c842",
+                  textShadow:
+                    "0 0 24px rgba(251,191,36,0.45), 0 0 60px rgba(251,191,36,0.18)",
+                  letterSpacing: "0.06em",
+                }
+              : {
+                  color: lightCfg.textColor,
+                  textShadow: `0 1px 8px ${lightCfg.glowColor}`,
+                  letterSpacing: "0.06em",
+                }
           }
         >
           دليل التوبة النصوح
         </motion.h1>
-
 
         {/* Tap hint */}
         <motion.p
@@ -1036,7 +1057,9 @@ export function IslamicHero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.4 }}
           className="text-[10px] tracking-wide text-[#dcf24b80]"
-          style={{ color: isDark ? "rgba(147,197,253,0.55)" : lightCfg.subColor }}
+          style={{
+            color: isDark ? "rgba(147,197,253,0.55)" : lightCfg.subColor,
+          }}
         >
           {orbiting
             ? "اضغط على قسم للانتقال إليه ✦"
