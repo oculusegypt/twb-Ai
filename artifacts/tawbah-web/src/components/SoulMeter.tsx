@@ -152,7 +152,7 @@ export function SoulMeter() {
               </span>
             )}
             {habitsTotal > 0 && (
-              <span className="text-[10px] dark:bg-violet-950/40 dark:text-violet-400 px-2 py-0.5 rounded-full font-bold border border-violet-200 dark:border-violet-800/40 bg-[#4241bfd9] text-[#ccc1e8]">
+              <span className="text-[10px] dark:bg-violet-950/40 dark:text-violet-400 px-2 py-0.5 rounded-full font-bold border border-violet-200 dark:border-violet-800/40 text-[#dfdaed] bg-[#4c55bfcf]">
                 عادات {habitsDone}/{habitsTotal}
               </span>
             )}
