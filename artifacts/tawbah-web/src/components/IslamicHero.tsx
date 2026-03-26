@@ -1150,8 +1150,12 @@ export function IslamicHero() {
         {/* App name */}
         <motion.h1
           initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.5 }}
+          animate={{
+            opacity: orbiting ? 0.35 : 1,
+            y: 0,
+            filter: orbiting ? "blur(4px)" : "blur(0px)",
+          }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
           className="text-[17px] font-bold tracking-widest mb-1 text-[#facd70] mt-[-27px]"
           style={
             isDark
@@ -1174,8 +1178,12 @@ export function IslamicHero() {
         {/* Tap hint */}
         <motion.p
           initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.4 }}
+          animate={{
+            opacity: orbiting ? 0.4 : 1,
+            y: 0,
+            filter: orbiting ? "blur(3px)" : "blur(0px)",
+          }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
           className="text-[10px] tracking-wide text-[#f2b233]"
           style={{
             color: isDark ? "rgba(147,197,253,0.55)" : lightCfg.subColor,
