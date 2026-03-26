@@ -661,12 +661,12 @@ function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
             transition={{ delay: 0.1 + i * 0.05 }}
             onClick={() => onSelect(q)}
             className={cn(
-              "text-right text-[12px] font-medium px-3 py-2.5 rounded-xl border transition-all active:scale-95 leading-snug",
-              "bg-white dark:bg-card text-foreground",
-              "border-slate-200/80 dark:border-border/60",
-              "shadow-sm shadow-slate-200/60 dark:shadow-none",
-              "hover:bg-teal-50 hover:border-teal-300 dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50",
-              "hover:text-teal-800 dark:hover:text-teal-300"
+              "text-right text-[12px] font-semibold px-3 py-3 rounded-2xl border-2 transition-all active:scale-95 leading-snug",
+              "bg-white dark:bg-card text-slate-700 dark:text-foreground",
+              "border-slate-200 dark:border-border/60",
+              "shadow-md shadow-slate-200/70 dark:shadow-none",
+              "hover:bg-emerald-50 hover:border-emerald-400 dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50",
+              "hover:text-emerald-800 dark:hover:text-teal-300"
             )}
           >
             {q}
@@ -1268,7 +1268,7 @@ export default function ZakiyPage() {
         )}
       </AnimatePresence>
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 bg-stone-50/70 dark:bg-transparent">
         <AnimatePresence initial={false}>
           {messages.map((msg, msgIdx) => (
             <motion.div
@@ -1284,13 +1284,13 @@ export default function ZakiyPage() {
                   </div>
                 )}
                 <div className={cn(
-                  "max-w-[88%] rounded-2xl px-4 py-3",
+                  "max-w-[88%] rounded-3xl px-4 py-3",
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-tl-sm shadow-md shadow-primary/20"
+                    ? "bg-primary text-primary-foreground rounded-tl-none shadow-lg shadow-primary/25"
                     : [
-                        "bg-white dark:bg-card rounded-tr-sm text-foreground",
-                        "border border-slate-100 dark:border-border/60",
-                        "shadow-sm shadow-slate-200/80 dark:shadow-none",
+                        "bg-white dark:bg-card rounded-tr-none text-foreground",
+                        "border border-slate-200 dark:border-border/60",
+                        "shadow-md shadow-slate-300/40 dark:shadow-none",
                       ].join(" ")
                 )}>
                   {msg.role === "bot" ? (
