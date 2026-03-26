@@ -1379,15 +1379,15 @@ export default function ZakiyPage() {
           </motion.div>
         )}
 
-        {/* Extra padding so last message clears the fixed input bar */}
-        <div style={{ height: "96px" }} />
+        {/* Extra padding so last message clears the fixed input bar above the orb */}
+        <div style={{ height: "160px" }} />
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Fixed input bar — sits above the bottom navbar ── */}
+      {/* ── Fixed input bar — sits above the Zakiy orb ── */}
       <div
         className="fixed inset-x-0 max-w-md mx-auto z-30"
-        style={{ bottom: "78px" }}
+        style={{ bottom: "106px" }}
       >
         <div
           className="mx-2 rounded-2xl overflow-hidden"
