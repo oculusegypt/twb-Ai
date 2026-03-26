@@ -1321,7 +1321,7 @@ export default function ZakiyPage() {
         <div ref={messagesEndRef} />
       </div>
       {/* Input */}
-      <div className="px-3 py-3 border-t border-border/50 bg-card/60 backdrop-blur-sm">
+      <div className="px-3 py-3 border-t border-border/50 bg-card/60 backdrop-blur-sm mt-[213px]">
         {recording && (
           <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-primary/10 rounded-xl border border-primary/20">
             <span className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
