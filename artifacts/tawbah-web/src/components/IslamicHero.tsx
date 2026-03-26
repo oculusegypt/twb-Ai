@@ -677,6 +677,14 @@ const ORBITAL_SECTIONS: OrbitalSection[] = [
 const ORBIT_RADIUS = 118; // px from logo center to bubble center
 const BUBBLE_SIZE = 50; // px diameter of each bubble
 
+function getShortLabel(label: string): string {
+  const words = label.trim().split(/\s+/);
+  if (words.length === 1) return label;
+  const last = words[words.length - 1]!;
+  if (last.length <= 8) return last;
+  return label.slice(0, 7);
+}
+
 // ── Main export ─────────────────────────────────────────────────────────────
 export function IslamicHero() {
   const [items, setItems] = useState<HeroItem[]>([]);
@@ -760,12 +768,12 @@ export function IslamicHero() {
     <div
       className="relative w-full select-none overflow-hidden"
       style={{
-        minHeight: orbiting ? 300 : 278,
+        minHeight: orbiting ? 340 : 278,
         transition: "min-height 0.48s cubic-bezier(0.34,1.26,0.64,1)",
         maskImage:
           "linear-gradient(to bottom, black 0%, black 72%, transparent 100%)",
         WebkitMaskImage:
-          "linear-gradient(to bottom, black 0%, black 50%, transparent 100%)",
+          "linear-gradient(to bottom, black 0%, black 62%, transparent 100%)",
       }}
     >
       {/* Hero background image */}
@@ -906,6 +914,15 @@ export function IslamicHero() {
                     const y = -ORBIT_RADIUS * Math.cos(angle);
                     const half = BUBBLE_SIZE / 2;
 
+                    // outward direction in upright (counter-rotated) frame
+                    const outX = Math.sin(angle);
+                    const outY = -Math.cos(angle);
+                    // label position: center is at (half + outX*dist, half + outY*dist)
+                    const labelDist = half + 10;
+                    const labelCX = half + outX * labelDist;
+                    const labelCY = half + outY * labelDist;
+                    const shortLabel = getShortLabel(section.label);
+
                     return (
                       <motion.div
                         key={section.id}
@@ -960,30 +977,66 @@ export function IslamicHero() {
                             }}
                           />
                           <section.Icon
-                            size={17}
+                            size={18}
                             style={{
                               color: section.color,
                               filter: `drop-shadow(0 0 4px ${section.color}60)`,
                             }}
                           />
-                          <span
-                            style={{
-                              fontSize: 8,
-                              color: isDark
-                                ? "rgba(255,255,255,0.88)"
-                                : "rgba(20,20,30,0.82)",
-                              textAlign: "center",
-                              lineHeight: 1.25,
-                              padding: "0 3px",
-                              fontFamily: "inherit",
-                            }}
-                            dir="rtl"
-                          >
-                            {section.label.length > 7
-                              ? section.label.slice(0, 7)
-                              : section.label}
-                          </span>
                         </button>
+
+                        {/* ── Section label floating outside bubble ── */}
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.7 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.7 }}
+                          transition={{ delay: i * 0.038 + 0.15, duration: 0.25 }}
+                          style={{
+                            position: "absolute",
+                            left: labelCX,
+                            top: labelCY,
+                            transform: "translate(-50%, -50%)",
+                            pointerEvents: "none",
+                            zIndex: 5,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <span
+                            dir="rtl"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 3,
+                              fontSize: 9,
+                              fontWeight: 600,
+                              letterSpacing: "0.02em",
+                              color: isDark ? "rgba(255,255,255,0.92)" : "rgba(15,15,25,0.85)",
+                              background: isDark
+                                ? `linear-gradient(135deg, rgba(6,12,30,0.82) 0%, rgba(20,30,60,0.78) 100%)`
+                                : `linear-gradient(135deg, rgba(255,255,255,0.88) 0%, rgba(240,248,255,0.82) 100%)`,
+                              border: `1px solid ${section.color}44`,
+                              borderRadius: 20,
+                              padding: "2px 7px 2px 5px",
+                              backdropFilter: "blur(6px)",
+                              WebkitBackdropFilter: "blur(6px)",
+                              boxShadow: isDark
+                                ? `0 2px 8px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)`
+                                : `0 2px 8px rgba(80,120,200,0.14), inset 0 1px 0 rgba(255,255,255,0.95)`,
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 5,
+                                height: 5,
+                                borderRadius: "50%",
+                                background: section.color,
+                                boxShadow: `0 0 4px ${section.color}88`,
+                                flexShrink: 0,
+                              }}
+                            />
+                            {shortLabel}
+                          </span>
+                        </motion.div>
                       </motion.div>
                     );
                   })}
@@ -1004,25 +1057,92 @@ export function IslamicHero() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.55, ease: "backOut", delay: 0.1 }}
           >
-            {/* ── Logo image — no circle, golden arch-style shadow ── */}
-            <img
-              src="/images/logo.png"
-              alt="دليل التوبة"
+            {/* ── Logo image — crystal glass effect when orbiting ── */}
+            <motion.div
+              animate={orbiting ? {
+                scale: [1, 1.04, 1],
+              } : { scale: 1 }}
+              transition={{ duration: 2.4, repeat: orbiting ? Infinity : 0, ease: "easeInOut" }}
               style={{
+                position: "relative",
                 width: 140,
                 height: 140,
-                objectFit: "contain",
-                zIndex: 2,
                 marginTop: orbiting ? 0 : 10,
                 marginLeft: 4,
                 marginRight: -4,
                 transition: "margin-top 0.48s cubic-bezier(0.34,1.26,0.64,1)",
-                filter: isDark
-                  ? "drop-shadow(3px 8px 22px rgba(0,0,0,0.88)) drop-shadow(1px 3px 7px rgba(0,0,0,0.60))"
-                  : `saturate(0.7) brightness(0.88) ${LIGHT_LOGO_SHADOW[accentColor] ?? LIGHT_LOGO_SHADOW["forest"]!}`,
+                borderRadius: orbiting ? "50%" : "30%",
+                overflow: "hidden",
+                backdropFilter: orbiting ? "blur(10px) saturate(1.6)" : "none",
+                WebkitBackdropFilter: orbiting ? "blur(10px) saturate(1.6)" : "none",
+                background: orbiting
+                  ? isDark
+                    ? "radial-gradient(circle at 35% 28%, rgba(255,255,255,0.22) 0%, rgba(180,220,255,0.10) 45%, rgba(100,160,230,0.08) 100%)"
+                    : "radial-gradient(circle at 35% 28%, rgba(255,255,255,0.55) 0%, rgba(200,230,255,0.28) 45%, rgba(160,200,240,0.15) 100%)"
+                  : "transparent",
+                boxShadow: orbiting
+                  ? isDark
+                    ? "0 0 0 1.5px rgba(255,255,255,0.18), 0 0 0 3px rgba(147,197,253,0.12), 0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -1px 0 rgba(147,197,253,0.12)"
+                    : "0 0 0 1.5px rgba(255,255,255,0.75), 0 0 0 3px rgba(160,200,255,0.25), 0 8px 28px rgba(80,130,200,0.22), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(160,200,255,0.3)"
+                  : "none",
               }}
-              className="mt-[0px] mr-[0px] ml-[0px]"
-            />
+            >
+              <img
+                src="/images/logo.png"
+                alt="دليل التوبة"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  zIndex: 2,
+                  transition: "filter 0.4s ease",
+                  filter: orbiting
+                    ? isDark
+                      ? "drop-shadow(0 0 14px rgba(147,197,253,0.5)) brightness(1.08) saturate(0.85)"
+                      : "drop-shadow(0 0 12px rgba(100,160,240,0.4)) brightness(1.05) saturate(0.75)"
+                    : isDark
+                      ? "drop-shadow(3px 8px 22px rgba(0,0,0,0.88)) drop-shadow(1px 3px 7px rgba(0,0,0,0.60))"
+                      : `saturate(0.7) brightness(0.88) ${LIGHT_LOGO_SHADOW[accentColor] ?? LIGHT_LOGO_SHADOW["forest"]!}`,
+                }}
+              />
+              {/* Crystal shimmer overlay — only when orbiting */}
+              {orbiting && (
+                <>
+                  <motion.div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: "50%",
+                      background: isDark
+                        ? "linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 40%, rgba(147,197,253,0.08) 80%, transparent 100%)"
+                        : "linear-gradient(135deg, rgba(255,255,255,0.7) 0%, transparent 40%, rgba(200,230,255,0.2) 80%, transparent 100%)",
+                      pointerEvents: "none",
+                      zIndex: 3,
+                    }}
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                  <motion.div
+                    style={{
+                      position: "absolute",
+                      top: "8%",
+                      left: "12%",
+                      width: "32%",
+                      height: "18%",
+                      borderRadius: "50%",
+                      background: isDark
+                        ? "rgba(255,255,255,0.18)"
+                        : "rgba(255,255,255,0.65)",
+                      filter: "blur(4px)",
+                      pointerEvents: "none",
+                      zIndex: 4,
+                    }}
+                    animate={{ opacity: [0.5, 0.9, 0.5] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                  />
+                </>
+              )}
+            </motion.div>
           </motion.button>
         </div>
         {/* /logo wrapper */}
