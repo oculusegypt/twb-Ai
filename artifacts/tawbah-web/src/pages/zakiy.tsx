@@ -270,7 +270,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
   }
 
   return (
-    <div className="space-y-0.5 transition-colors duration-300 dark:bg-teal-950/30 px-2 py-1 -mx-2 rounded-lg bg-[#ffffff4d]">
+    <div className="space-y-0.5 transition-colors duration-300 dark:bg-teal-950/20 px-2 py-1 -mx-2 rounded-lg">
       {elements}
     </div>
   );
@@ -571,7 +571,7 @@ function ImpressionPanel({ impression, onClose }: { impression: string; onClose:
         </button>
       </div>
       <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 px-4 py-3">
-        <p className="text-sm leading-relaxed dark:text-rose-200 text-right whitespace-pre-wrap text-[#ede4e4]">
+        <p className="text-sm leading-relaxed text-rose-900 dark:text-rose-200 text-right whitespace-pre-wrap">
           {impression}
         </p>
       </div>
@@ -614,10 +614,16 @@ function SuggestionCards({ suggestions, loading, onSelect }: {
                 transition={{ delay: i * 0.05 }}
                 onClick={() => onSelect(q)}
                 className={cn(
-                  "text-right text-xs px-3 py-2 rounded-xl border transition-all active:scale-95 shadow-sm leading-snug font-medium",
+                  "text-right text-[11px] px-3 py-2 rounded-xl border transition-all active:scale-95 leading-snug font-medium",
                   isContinueBtn
-                    ? "col-span-2 bg-teal-600 hover:bg-teal-700 text-white border-teal-500 shadow-teal-300/30 dark:shadow-teal-900/30 flex items-center justify-center gap-1.5"
-                    : "border-border/60 bg-card hover:bg-teal-50 dark:hover:bg-teal-950/20 hover:border-teal-400/50 text-foreground"
+                    ? "col-span-2 bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-600 text-white border-transparent flex items-center justify-center gap-1.5 shadow-sm shadow-teal-500/20"
+                    : cn(
+                        "bg-white dark:bg-card text-foreground",
+                        "border-slate-200/80 dark:border-border/60",
+                        "shadow-sm shadow-slate-100 dark:shadow-none",
+                        "hover:bg-teal-50 hover:border-teal-300 hover:text-teal-800",
+                        "dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50 dark:hover:text-teal-300"
+                      )
                 )}
               >
                 {isContinueBtn && <span className="text-sm">▶</span>}
@@ -654,7 +660,14 @@ function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 + i * 0.05 }}
             onClick={() => onSelect(q)}
-            className="text-right text-xs px-3 py-2.5 rounded-xl border border-border/60 bg-card hover:bg-teal-50 dark:hover:bg-teal-950/20 hover:border-teal-400/50 text-foreground transition-all active:scale-95 shadow-sm leading-snug"
+            className={cn(
+              "text-right text-[12px] font-medium px-3 py-2.5 rounded-xl border transition-all active:scale-95 leading-snug",
+              "bg-white dark:bg-card text-foreground",
+              "border-slate-200/80 dark:border-border/60",
+              "shadow-sm shadow-slate-200/60 dark:shadow-none",
+              "hover:bg-teal-50 hover:border-teal-300 dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50",
+              "hover:text-teal-800 dark:hover:text-teal-300"
+            )}
           >
             {q}
           </motion.button>
@@ -880,13 +893,17 @@ function BotMessageBody({
         );
       })}
       {/* Audio & impression controls */}
-      <div className="flex items-center gap-2 mt-2 flex-wrap">
+      <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
         {hasAudio && (
           <button
             onClick={handlePlayToggle}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all dark:bg-teal-950/40 dark:text-teal-400 border border-teal-400/60 hover:bg-teal-200 bg-[#00d5be] text-[#d1fffa]"
+            className={cn(
+              "flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-all border",
+              "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100",
+              "dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/60 dark:hover:bg-teal-900/40"
+            )}
           >
-            {isCurrentlyPlaying ? <><Pause size={12} /> إيقاف</> : <><Volume2 size={12} /> استمع</>}
+            {isCurrentlyPlaying ? <><Pause size={11} /> إيقاف</> : <><Volume2 size={11} /> استمع</>}
           </button>
         )}
 
@@ -894,11 +911,15 @@ function BotMessageBody({
           <button
             onClick={handleImpressionClick}
             disabled={impressionLoading}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border dark:bg-rose-950/30 dark:text-rose-400 border-rose-400/60 hover:bg-rose-200 bg-[#ff637e] text-[#ffebee]"
+            className={cn(
+              "flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-all border",
+              "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100",
+              "dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/60 dark:hover:bg-rose-900/30"
+            )}
           >
             {impressionLoading
-              ? <><Loader2 size={12} className="animate-spin" /> لحظة...</>
-              : <><Heart size={12} className={impressionOpen ? "fill-white" : ""} /> انطباعي عنك</>
+              ? <><Loader2 size={11} className="animate-spin" /> لحظة...</>
+              : <><Heart size={11} className={impressionOpen ? "fill-rose-500 dark:fill-rose-400" : ""} /> انطباعي عنك</>
             }
           </button>
         )}
@@ -907,13 +928,17 @@ function BotMessageBody({
           <button
             onClick={handleHadiTasks}
             disabled={hadiLoading || hadiDone}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-400/60 hover:bg-emerald-200 bg-[#00d492] text-[#cbf7e3]"
+            className={cn(
+              "flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-all border",
+              "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+              "dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/60 dark:hover:bg-emerald-900/30"
+            )}
           >
             {hadiLoading
-              ? <><Loader2 size={12} className="animate-spin" /> جاري الاستخراج...</>
+              ? <><Loader2 size={11} className="animate-spin" /> جاري الاستخراج...</>
               : hadiDone
-                ? <><CheckSquare size={12} /> تمت الإضافة!</>
-                : <><CheckSquare size={12} /> مهام هادي</>
+                ? <><CheckSquare size={11} /> تمت الإضافة!</>
+                : <><CheckSquare size={11} /> مهام هادي</>
             }
           </button>
         )}
@@ -1224,15 +1249,15 @@ export default function ZakiyPage() {
                 : "bg-amber-50 dark:bg-amber-950/30 border-amber-200/50 dark:border-amber-800/30"
             )}
           >
-            <div className="flex items-start gap-3 px-4 py-3 bg-[#c478ff3b]">
+            <div className="flex items-start gap-3 px-4 py-3">
               <AlertTriangle size={16} className={cn("mt-0.5 flex-shrink-0", riskAlert.level === "high" ? "text-red-500" : "text-amber-500")} />
               <div className="flex-1 min-w-0">
                 <p className={cn("text-xs font-bold mb-0.5", riskAlert.level === "high" ? "text-red-700 dark:text-red-400" : "text-amber-700 dark:text-amber-400")}>
                   {riskAlert.level === "high" ? "⚠️ الزكي قلقان عليك" : "💛 الزكي يلاحظ"}
                 </p>
-                <p className="text-xs leading-relaxed text-[#ffffff]">{riskAlert.message}</p>
+                <p className={cn("text-xs leading-relaxed", riskAlert.level === "high" ? "text-red-800 dark:text-red-300" : "text-amber-800 dark:text-amber-300")}>{riskAlert.message}</p>
                 {riskAlert.sign && (
-                  <p className="text-[10px] mt-1 text-[#fa1e91b3]">العلامة: {riskAlert.sign}</p>
+                  <p className={cn("text-[10px] mt-1", riskAlert.level === "high" ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400")}>العلامة: {riskAlert.sign}</p>
                 )}
               </div>
               <button onClick={() => setRiskDismissed(true)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
@@ -1259,10 +1284,14 @@ export default function ZakiyPage() {
                   </div>
                 )}
                 <div className={cn(
-                  "max-w-[88%] rounded-2xl px-4 py-3 shadow-sm",
+                  "max-w-[88%] rounded-2xl px-4 py-3",
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-tl-sm"
-                    : "bg-card border border-border/60 text-foreground rounded-tr-sm"
+                    ? "bg-primary text-primary-foreground rounded-tl-sm shadow-md shadow-primary/20"
+                    : [
+                        "bg-white dark:bg-card rounded-tr-sm text-foreground",
+                        "border border-slate-100 dark:border-border/60",
+                        "shadow-sm shadow-slate-200/80 dark:shadow-none",
+                      ].join(" ")
                 )}>
                   {msg.role === "bot" ? (
                     <BotMessageBody
@@ -1305,7 +1334,7 @@ export default function ZakiyPage() {
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
               <Bot size={14} className="text-white" />
             </div>
-            <div className="bg-card border border-border/60 rounded-2xl rounded-tr-sm px-4 py-3">
+            <div className="bg-white dark:bg-card border border-slate-100 dark:border-border/60 shadow-sm shadow-slate-200/80 dark:shadow-none rounded-2xl rounded-tr-sm px-4 py-3">
               <div className="flex gap-1 items-center">
                 {[0, 150, 300].map((d) => (
                   <span key={d} className="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
@@ -1318,9 +1347,16 @@ export default function ZakiyPage() {
         <div ref={messagesEndRef} />
       </div>
       {/* Input */}
-      <div className="px-3 py-3 border-border/50 bg-card/60 backdrop-blur-sm mt-[0px] border-t-[0px]">
+      <div className={cn(
+        "px-3 py-3 backdrop-blur-sm",
+        "border-t border-slate-100 dark:border-border/50",
+        "bg-white/80 dark:bg-card/60"
+      )}>
         {recording && (
-          <div className="flex items-center gap-2 mb-2 px-3 py-1.5 bg-primary/10 rounded-xl border border-primary/20">
+          <div className={cn(
+            "flex items-center gap-2 mb-2 px-3 py-1.5 rounded-xl border",
+            "bg-primary/8 dark:bg-primary/10 border-primary/20"
+          )}>
             <span className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
             <span className="text-xs text-primary font-medium flex-1 truncate">
               {interimText || "استمع... تكلّم الآن"}
@@ -1333,8 +1369,10 @@ export default function ZakiyPage() {
             onClick={recording ? stopVoiceInput : startVoiceInput}
             disabled={loading}
             className={cn(
-              "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm",
-              recording ? "bg-primary text-primary-foreground scale-110 ring-2 ring-primary/30" : "bg-muted text-muted-foreground hover:text-foreground",
+              "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all",
+              recording
+                ? "bg-primary text-primary-foreground scale-110 ring-2 ring-primary/30 shadow-md shadow-primary/20"
+                : "bg-slate-100 dark:bg-muted text-slate-500 dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-muted/80 hover:text-slate-700 shadow-sm",
               loading && "opacity-50 cursor-not-allowed"
             )}
           >
@@ -1366,9 +1404,14 @@ export default function ZakiyPage() {
               disabled={loading || recording}
               rows={1}
               className={cn(
-                "w-full resize-none rounded-2xl border border-border/60 bg-background px-4 py-2.5 text-[13px] text-foreground",
-                "placeholder:text-muted-foreground placeholder:text-[11px] focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50",
-                "max-h-32 overflow-y-auto leading-relaxed transition-all",
+                "w-full resize-none rounded-2xl px-4 py-2.5 text-[13px] text-foreground",
+                "border border-slate-200 dark:border-border/60",
+                "bg-slate-50 dark:bg-background",
+                "placeholder:text-muted-foreground placeholder:text-[11px]",
+                "focus:outline-none focus:ring-2 focus:ring-teal-400/25 dark:focus:ring-teal-500/30",
+                "focus:border-teal-400 dark:focus:border-teal-500/50",
+                "focus:bg-white dark:focus:bg-background",
+                "max-h-32 overflow-y-auto leading-relaxed transition-all shadow-sm",
                 (loading || recording) && "opacity-60"
               )}
               style={{ minHeight: "42px" }}
@@ -1384,10 +1427,10 @@ export default function ZakiyPage() {
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || loading || recording}
             className={cn(
-              "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm",
+              "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all",
               input.trim() && !loading && !recording
-                ? "bg-gradient-to-br from-teal-500 to-emerald-600 text-white hover:opacity-90 active:scale-95"
-                : "bg-muted text-muted-foreground opacity-50 cursor-not-allowed"
+                ? "bg-gradient-to-br from-teal-500 to-emerald-600 text-white hover:opacity-90 active:scale-95 shadow-md shadow-teal-500/25"
+                : "bg-slate-100 dark:bg-muted text-slate-400 dark:text-muted-foreground opacity-60 cursor-not-allowed"
             )}
           >
             {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="scale-x-[-1]" />}
