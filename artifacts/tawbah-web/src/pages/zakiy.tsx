@@ -1224,7 +1224,7 @@ export default function ZakiyPage() {
                 : "bg-amber-50 dark:bg-amber-950/30 border-amber-200/50 dark:border-amber-800/30"
             )}
           >
-            <div className="flex items-start gap-3 px-4 py-3 bg-[#c9e8763b]">
+            <div className="flex items-start gap-3 px-4 py-3 bg-[#c478ff3b]">
               <AlertTriangle size={16} className={cn("mt-0.5 flex-shrink-0", riskAlert.level === "high" ? "text-red-500" : "text-amber-500")} />
               <div className="flex-1 min-w-0">
                 <p className={cn("text-xs font-bold mb-0.5", riskAlert.level === "high" ? "text-red-700 dark:text-red-400" : "text-amber-700 dark:text-amber-400")}>
