@@ -1293,6 +1293,10 @@ export default function ZakiyPage() {
     const history = buildHistory();
     addUserMessage(trimmed);
     setInput("");
+    if (inputRef.current) {
+      inputRef.current.style.height = "auto";
+      inputRef.current.style.height = "42px";
+    }
     setLoading(true);
 
     try {
@@ -1538,15 +1542,15 @@ export default function ZakiyPage() {
           </motion.div>
         )}
 
-        {/* Extra padding so last message clears the fixed input bar above the orb */}
-        <div style={{ height: "160px" }} />
+        {/* Extra padding so last message clears the fixed input bar */}
+        <div style={{ height: "100px" }} />
         <div ref={messagesEndRef} />
       </div>
 
-      {/* ── Fixed input bar — sits above the Zakiy orb ── */}
+      {/* ── Fixed input bar — sits at bottom ── */}
       <div
         className="fixed inset-x-0 max-w-md mx-auto z-30"
-        style={{ bottom: "106px" }}
+        style={{ bottom: "8px" }}
       >
         <div
           className="mx-2 rounded-2xl overflow-hidden"

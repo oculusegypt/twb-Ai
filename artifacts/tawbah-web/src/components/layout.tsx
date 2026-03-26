@@ -89,6 +89,7 @@ export function Layout({ children }: { children: ReactNode }) {
   const zakiHref = "/zakiy";
   const isZakiActive = location === zakiHref;
   const isSos = location === "/sos";
+  const isZakiy = location === "/zakiy";
 
   const NavItem = ({ href, label, icon: Icon }: { href: string; label: string; icon: typeof Home }) => {
     const isActive = location === href;
@@ -120,7 +121,7 @@ export function Layout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-[100dvh] flex flex-col bg-background relative pb-[80px] max-w-md mx-auto shadow-2xl shadow-black/5 overflow-hidden ring-1 ring-border/50">
+    <div className={cn("min-h-[100dvh] flex flex-col bg-background relative max-w-md mx-auto shadow-2xl shadow-black/5 overflow-hidden ring-1 ring-border/50", !isSos && !isZakiy && "pb-[80px]")}>
       <div className="absolute top-0 inset-x-0 h-48 bg-gradient-to-b from-primary/10 to-transparent pointer-events-none -z-10" />
 
       <main className="flex-1 flex flex-col relative z-0">
@@ -138,7 +139,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </AnimatePresence>
       </main>
 
-      {!isSos && (
+      {!isSos && !isZakiy && (
         <>
           {/* Help button — moved to LEFT side, raised higher to clear chat controls */}
           <div className="fixed bottom-[110px] left-4 z-50 flex flex-col items-center gap-2">
