@@ -2,7 +2,31 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress, useAppDhikrCount, useAppHabits } from "@/hooks/use-app-data";
-import { CircleDot, PenLine, TrendingUp, Heart, Sparkles, Flame, Star, ChevronDown } from "lucide-react";
+import { CircleDot, PenLine, TrendingUp, Heart, Sparkles, Flame, Star, ChevronDown, Bell, CheckCircle2, Route } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { getSessionId } from "@/lib/session";
+
+// ─── General Daily Faith Tasks (shown when journey is NOT active) ─────────────
+
+const DAILY_FAITH_TASKS = [
+  { id: "fajr",        label: "صلاة الفجر في وقتها",      emoji: "🌅" },
+  { id: "morning-dhikr", label: "أذكار الصباح",           emoji: "📿" },
+  { id: "quran",       label: "ورد القرآن اليومي",         emoji: "📖" },
+  { id: "istigfar",    label: "١٠٠ استغفار",              emoji: "🤲" },
+  { id: "duha",        label: "صلاة الضحى",               emoji: "☀️" },
+  { id: "evening-dhikr", label: "أذكار المساء",           emoji: "🌙" },
+  { id: "journal",     label: "تأمل في يومياتك",           emoji: "✍️" },
+];
+
+// ─── Journey30 Summary ────────────────────────────────────────────────────────
+
+interface Journey30Summary {
+  completedCount: number;
+  currentDay: number;
+  streakDays: number;
+}
+
+// ─── Soul Score ───────────────────────────────────────────────────────────────
 
 function useSoulScore() {
   const { data: progress } = useAppUserProgress();
@@ -52,7 +76,7 @@ function useSoulScore() {
     tipIcon = "dhikr"; level = 1;
   }
 
-  return { score: total, label, color, gradient, tip, tipIcon, streak, dhikrTotal, habitsDone, habitsTotal, level };
+  return { score: total, label, color, gradient, tip, tipIcon, streak, dhikrTotal, habitsDone, habitsTotal, level, progress };
 }
 
 const TIP_LINKS: Record<string, { href: string; label: string; icon: React.ReactNode }> = {
@@ -70,6 +94,8 @@ const LEVEL_BG = [
   "linear-gradient(160deg, #1a1205 0%, #2c2005 100%)",
   "linear-gradient(160deg, #05180a 0%, #0a2c14 100%)",
 ];
+
+// ─── Radial Gauge ─────────────────────────────────────────────────────────────
 
 function RadialGauge({ score, color }: { score: number; color: string }) {
   const r = 50, circ = 2 * Math.PI * r;
@@ -92,10 +118,7 @@ function RadialGauge({ score, color }: { score: number; color: string }) {
         <circle cx={58} cy={58} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={10} />
         <motion.circle
           cx={58} cy={58} r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth={10}
-          strokeLinecap="round"
+          fill="none" stroke={color} strokeWidth={10} strokeLinecap="round"
           strokeDasharray={circ}
           initial={{ strokeDashoffset: circ }}
           animate={{ strokeDashoffset: circ - dash }}
@@ -140,10 +163,165 @@ function BreakdownBar({ label, value, max, color }: { label: string; value: numb
   );
 }
 
+// ─── Daily Faith Tasks (general) ──────────────────────────────────────────────
+
+function DailyFaithTasksList({ color }: { color: string }) {
+  const [done, setDone] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem("daily_faith_tasks_" + new Date().toDateString());
+      return new Set(saved ? JSON.parse(saved) : []);
+    } catch { return new Set(); }
+  });
+
+  const toggle = (id: string) => {
+    setDone(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      try {
+        localStorage.setItem("daily_faith_tasks_" + new Date().toDateString(), JSON.stringify([...next]));
+      } catch {}
+      return next;
+    });
+  };
+
+  const completedCount = done.size;
+  const total = DAILY_FAITH_TASKS.length;
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>المهام الإيمانية اليومية</p>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+          style={{ background: `${color}20`, color }}>{completedCount}/{total}</span>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {DAILY_FAITH_TASKS.map(task => {
+          const isDone = done.has(task.id);
+          return (
+            <button
+              key={task.id}
+              onClick={() => toggle(task.id)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-right transition-all active:scale-[0.98]"
+              style={{
+                background: isDone ? `${color}12` : "rgba(255,255,255,0.04)",
+                border: `1px solid ${isDone ? color + "30" : "rgba(255,255,255,0.07)"}`,
+              }}
+            >
+              <CheckCircle2
+                size={14}
+                style={{ color: isDone ? color : "rgba(255,255,255,0.2)", flexShrink: 0 }}
+                fill={isDone ? color : "none"}
+              />
+              <span className="text-[10px] font-semibold flex-1" style={{ color: isDone ? color : "rgba(255,255,255,0.6)" }}>
+                {task.emoji} {task.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Journey Tasks Panel (when journey30 is active) ───────────────────────────
+
+function JourneyTasksPanel({ j30, color }: { j30: Journey30Summary; color: string }) {
+  const pct = Math.round((j30.completedCount / 30) * 100);
+  const hour = new Date().getHours();
+  // إشعار تذكيري قبل نهاية اليوم (بعد 8 مساءً)
+  const isLateReminder = hour >= 20;
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>رحلة ٣٠ يوماً</p>
+        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+          style={{ background: `${color}20`, color }}>
+          اليوم {j30.currentDay} / ٣٠
+        </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="mb-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>{j30.completedCount} يوم مكتمل</span>
+          <span className="text-[9px] font-bold" style={{ color }}>{pct}%</span>
+        </div>
+        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: `linear-gradient(90deg, ${color}, ${color}88)` }}
+            initial={{ width: 0 }}
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+          />
+        </div>
+      </div>
+
+      {/* Streak badge */}
+      {j30.streakDays > 0 && (
+        <div className="flex items-center gap-1.5 mb-2 p-2 rounded-xl"
+          style={{ background: "rgba(251,191,36,0.1)", border: "1px solid rgba(251,191,36,0.2)" }}>
+          <Flame size={12} style={{ color: "#fbbf24" }} />
+          <span className="text-[10px] font-bold" style={{ color: "#fbbf24" }}>
+            {j30.streakDays} يوم متتالٍ بدون انقطاع
+          </span>
+        </div>
+      )}
+
+      {/* Late day reminder */}
+      {isLateReminder && j30.completedCount < j30.currentDay && (
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center gap-2 p-2.5 rounded-xl mb-2"
+          style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)" }}
+        >
+          <Bell size={12} style={{ color: "#f87171" }} />
+          <p className="text-[10px] font-bold flex-1" style={{ color: "#f87171" }}>
+            تذكير — أكمل مهام اليوم {j30.currentDay} قبل منتصف الليل
+          </p>
+        </motion.div>
+      )}
+
+      {/* CTA */}
+      <Link
+        href="/journey"
+        className="flex items-center justify-center gap-2 w-full py-2 rounded-xl font-bold text-[11px] active:scale-[0.97] transition-all"
+        style={{ background: `linear-gradient(135deg, ${color}, ${color}99)`, color: "#fff" }}
+      >
+        <Route size={12} />
+        متابعة اليوم {j30.currentDay}
+      </Link>
+    </div>
+  );
+}
+
+// ─── Soul Meter ───────────────────────────────────────────────────────────────
+
 export function SoulMeter() {
-  const { score, label, color, gradient, tip, tipIcon, streak, dhikrTotal, habitsDone, habitsTotal, level } = useSoulScore();
+  const { score, label, color, gradient, tip, tipIcon, streak, dhikrTotal, habitsDone, habitsTotal, level, progress } = useSoulScore();
   const tipLink = TIP_LINKS[tipIcon]!;
   const [expanded, setExpanded] = useState(false);
+  const sessionId = getSessionId();
+
+  // Check journey30 status
+  const isJourneyActive = !!(progress?.covenantSigned && progress?.firstDayTasksCompleted);
+
+  const { data: j30 } = useQuery<Journey30Summary>({
+    queryKey: ["journey30-soul-meter", sessionId],
+    queryFn: async () => {
+      const res = await fetch(`/api/journey30?sessionId=${encodeURIComponent(sessionId)}`);
+      const data = await res.json();
+      return {
+        completedCount: data.completedCount,
+        currentDay: data.currentDay,
+        streakDays: data.streakDays,
+      };
+    },
+    enabled: !!sessionId && isJourneyActive,
+    staleTime: 60 * 1000,
+  });
 
   return (
     <motion.div
@@ -161,6 +339,18 @@ export function SoulMeter() {
       <div className="absolute inset-x-0 top-0 h-24 pointer-events-none" style={{
         background: `radial-gradient(ellipse 80% 100% at 50% 0%, ${color}18 0%, transparent 100%)`,
       }} />
+
+      {/* Journey active badge */}
+      {isJourneyActive && (
+        <div className="absolute top-3 left-3 z-20">
+          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full"
+            style={{ background: "rgba(251,191,36,0.18)", border: "1px solid rgba(251,191,36,0.35)" }}>
+            <motion.div className="w-1 h-1 rounded-full bg-amber-400"
+              animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.4, repeat: Infinity }} />
+            <span className="text-[9px] font-bold" style={{ color: "#fbbf24" }}>رحلة نشطة</span>
+          </div>
+        </div>
+      )}
 
       {/* Main row */}
       <button
@@ -208,7 +398,13 @@ export function SoulMeter() {
                 ذكر ×{dhikrTotal}
               </span>
             )}
-            {habitsTotal > 0 && (
+            {isJourneyActive && j30 && (
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                style={{ background: "rgba(167,139,250,0.15)", color: "#a78bfa", border: "1px solid rgba(167,139,250,0.28)" }}>
+                🗓️ يوم {j30.currentDay}
+              </span>
+            )}
+            {!isJourneyActive && habitsTotal > 0 && (
               <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
                 style={{ background: "rgba(167,139,250,0.15)", color: "#a78bfa", border: "1px solid rgba(167,139,250,0.28)" }}>
                 عادات {habitsDone}/{habitsTotal}
@@ -240,24 +436,39 @@ export function SoulMeter() {
               <div className="flex flex-col gap-2.5 mb-4">
                 <BreakdownBar label="الاستمرارية 🔥" value={streak} max={8} color="#fbbf24" />
                 <BreakdownBar label="الذكر 📿" value={dhikrTotal} max={99} color={color} />
-                {habitsTotal > 0 && <BreakdownBar label="العادات ✅" value={habitsDone} max={habitsTotal} color="#a78bfa" />}
+                {!isJourneyActive && habitsTotal > 0 && (
+                  <BreakdownBar label="العادات ✅" value={habitsDone} max={habitsTotal} color="#a78bfa" />
+                )}
+                {isJourneyActive && j30 && (
+                  <BreakdownBar label="الرحلة 🗓️" value={j30.completedCount} max={30} color="#a78bfa" />
+                )}
               </div>
+
+              {/* Journey tasks panel OR general faith tasks */}
+              {isJourneyActive && j30 ? (
+                <JourneyTasksPanel j30={j30} color={color} />
+              ) : (
+                <DailyFaithTasksList color={color} />
+              )}
 
               {/* Tip card */}
-              <div className="flex items-start gap-2.5 p-3 rounded-xl mb-3"
-                style={{ background: `${color}10`, border: `1px solid ${color}22` }}>
-                <Star size={12} style={{ color, marginTop: 1, flexShrink: 0 }} />
-                <p className="text-xs leading-relaxed flex-1" style={{ color: "rgba(255,255,255,0.72)" }}>{tip}</p>
-              </div>
-
-              <Link
-                href={tipLink.href}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-bold text-xs transition-all active:scale-[0.97]"
-                style={{ background: gradient, color: "#fff", boxShadow: `0 4px 16px ${color}38` }}
-              >
-                {tipLink.icon}
-                {tipLink.label}
-              </Link>
+              {!isJourneyActive && (
+                <>
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl mt-3 mb-3"
+                    style={{ background: `${color}10`, border: `1px solid ${color}22` }}>
+                    <Star size={12} style={{ color, marginTop: 1, flexShrink: 0 }} />
+                    <p className="text-xs leading-relaxed flex-1" style={{ color: "rgba(255,255,255,0.72)" }}>{tip}</p>
+                  </div>
+                  <Link
+                    href={tipLink.href}
+                    className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-bold text-xs transition-all active:scale-[0.97]"
+                    style={{ background: gradient, color: "#fff", boxShadow: `0 4px 16px ${color}38` }}
+                  >
+                    {tipLink.icon}
+                    {tipLink.label}
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}

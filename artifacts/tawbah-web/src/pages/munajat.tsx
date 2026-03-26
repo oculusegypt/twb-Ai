@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Volume2, VolumeX, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowRight, Volume2, VolumeX, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 
 // ─── Verses ──────────────────────────────────────────────────────────────────
@@ -21,7 +21,82 @@ const DHIKR_OPTIONS = [
   { text: "أَسْتَغْفِرُ اللَّه",sub: "Astaghfirullah", color: "#f472b6", glow: "rgba(244,114,182,0.3)" },
 ];
 
-const STARS = Array.from({ length: 50 }).map((_, i) => ({
+// ─── 5 Nature Scenes ──────────────────────────────────────────────────────────
+
+interface NatureScene {
+  id: string;
+  name: string;
+  emoji: string;
+  bg: string;
+  accent: string;
+  particles: "stars" | "rain" | "leaves" | "sand" | "fireflies";
+  glows: { color: string; x: number; y: number; w: number; h: number }[];
+}
+
+const NATURE_SCENES: NatureScene[] = [
+  {
+    id: "night-sky",
+    name: "سماء الليل",
+    emoji: "🌌",
+    bg: "linear-gradient(160deg, #04020f 0%, #0c0a1e 40%, #0d0520 100%)",
+    accent: "#a78bfa",
+    particles: "stars",
+    glows: [
+      { color: "rgba(139,92,246,0.08)", x: 20, y: 30, w: 50, h: 40 },
+      { color: "rgba(59,130,246,0.06)", x: 80, y: 70, w: 40, h: 30 },
+    ],
+  },
+  {
+    id: "forest-dawn",
+    name: "غابة الفجر",
+    emoji: "🌿",
+    bg: "linear-gradient(160deg, #020d04 0%, #031a07 40%, #062b0e 100%)",
+    accent: "#34d399",
+    particles: "fireflies",
+    glows: [
+      { color: "rgba(52,211,153,0.08)", x: 50, y: 60, w: 80, h: 60 },
+      { color: "rgba(251,191,36,0.06)", x: 50, y: 0, w: 60, h: 30 },
+    ],
+  },
+  {
+    id: "peaceful-shore",
+    name: "شاطئ هادئ",
+    emoji: "🌊",
+    bg: "linear-gradient(160deg, #020810 0%, #031424 40%, #041c34 100%)",
+    accent: "#38bdf8",
+    particles: "stars",
+    glows: [
+      { color: "rgba(56,189,248,0.09)", x: 50, y: 80, w: 100, h: 40 },
+      { color: "rgba(14,165,233,0.06)", x: 20, y: 20, w: 50, h: 40 },
+    ],
+  },
+  {
+    id: "desert-night",
+    name: "صحراء الليل",
+    emoji: "🏜️",
+    bg: "linear-gradient(160deg, #0d0800 0%, #1a1000 40%, #261800 100%)",
+    accent: "#fbbf24",
+    particles: "sand",
+    glows: [
+      { color: "rgba(251,191,36,0.07)", x: 50, y: 20, w: 60, h: 40 },
+      { color: "rgba(245,158,11,0.05)", x: 80, y: 70, w: 50, h: 40 },
+    ],
+  },
+  {
+    id: "rainy-mountains",
+    name: "جبال المطر",
+    emoji: "⛰️",
+    bg: "linear-gradient(160deg, #040810 0%, #060f1c 40%, #071525 100%)",
+    accent: "#93c5fd",
+    particles: "rain",
+    glows: [
+      { color: "rgba(147,197,253,0.07)", x: 50, y: 30, w: 70, h: 50 },
+      { color: "rgba(100,116,139,0.06)", x: 20, y: 70, w: 50, h: 40 },
+    ],
+  },
+];
+
+const STARS_DATA = Array.from({ length: 50 }).map((_, i) => ({
   x: (i * 29 + 7) % 100,
   y: (i * 19 + 5) % 100,
   size: i % 4 === 0 ? 2.5 : i % 3 === 0 ? 1.8 : 1.1,
@@ -30,71 +105,127 @@ const STARS = Array.from({ length: 50 }).map((_, i) => ({
   color: i % 5 === 0 ? "#c4b5fd" : i % 7 === 0 ? "#93c5fd" : "#ffffff",
 }));
 
+const FIREFLIES_DATA = Array.from({ length: 18 }).map((_, i) => ({
+  x: (i * 37 + 11) % 100,
+  y: 30 + ((i * 23 + 7) % 60),
+  size: 1.5 + (i % 3) * 0.8,
+  dur: 3 + (i % 5),
+  delay: (i * 0.4) % 4,
+  color: i % 3 === 0 ? "#34d399" : i % 3 === 1 ? "#fbbf24" : "#a3e635",
+}));
+
 // ─── Shooting Stars ───────────────────────────────────────────────────────────
 
 interface ShootingStar {
-  id: number;
-  x: number;
-  y: number;
-  length: number;
-  angle: number;
-  speed: number;
-  brightness: number;
+  id: number; x: number; y: number; length: number; angle: number; speed: number; brightness: number;
 }
 
 function useShootingStars() {
   const [stars, setStars] = useState<ShootingStar[]>([]);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   useEffect(() => {
     const spawn = () => {
       const id = Date.now() + Math.random();
       const star: ShootingStar = {
-        id,
-        x: 15 + Math.random() * 70,
-        y: 2 + Math.random() * 40,
-        length: 60 + Math.random() * 120,
-        angle: 25 + Math.random() * 20,
-        speed: 0.9 + Math.random() * 0.8,
-        brightness: 0.6 + Math.random() * 0.4,
+        id, x: 15 + Math.random() * 70, y: 2 + Math.random() * 40,
+        length: 60 + Math.random() * 120, angle: 25 + Math.random() * 20,
+        speed: 0.9 + Math.random() * 0.8, brightness: 0.6 + Math.random() * 0.4,
       };
       setStars(prev => [...prev, star]);
       setTimeout(() => setStars(prev => prev.filter(s => s.id !== id)), (star.speed + 0.5) * 1000);
       timeoutRef.current = setTimeout(spawn, 2500 + Math.random() * 4500);
     };
-
     timeoutRef.current = setTimeout(spawn, 800 + Math.random() * 2000);
     return () => { if (timeoutRef.current) clearTimeout(timeoutRef.current); };
   }, []);
-
   return stars;
 }
 
 function ShootingStarEl({ star }: { star: ShootingStar }) {
   const rad = (star.angle * Math.PI) / 180;
   const dist = Math.max(window.innerWidth, 800) * 1.2;
-  const tx = Math.cos(rad) * dist;
-  const ty = Math.sin(rad) * dist;
-
   return (
     <motion.div
       className="absolute pointer-events-none"
       style={{
-        left: `${star.x}%`,
-        top: `${star.y}%`,
-        width: star.length,
-        height: 1.5,
+        left: `${star.x}%`, top: `${star.y}%`, width: star.length, height: 1.5,
         borderRadius: 4,
         background: `linear-gradient(to left, rgba(255,255,255,${star.brightness}), rgba(200,200,255,0.4), transparent)`,
-        rotate: star.angle,
-        transformOrigin: "right center",
-        filter: "blur(0.6px)",
-        zIndex: 5,
+        rotate: star.angle, transformOrigin: "right center", filter: "blur(0.6px)", zIndex: 5,
       }}
       initial={{ x: -star.length, y: 0, opacity: 0, scaleX: 0.3 }}
-      animate={{ x: tx, y: ty, opacity: [0, star.brightness, star.brightness * 0.8, 0], scaleX: [0.3, 1, 1, 1] }}
+      animate={{ x: Math.cos(rad) * dist, y: Math.sin(rad) * dist, opacity: [0, star.brightness, star.brightness * 0.8, 0], scaleX: [0.3, 1, 1, 1] }}
       transition={{ duration: star.speed, ease: "easeIn", times: [0, 0.06, 0.85, 1] }}
     />
+  );
+}
+
+// ─── Rain Particles ───────────────────────────────────────────────────────────
+
+function RainParticles() {
+  const drops = Array.from({ length: 28 }).map((_, i) => ({
+    x: (i * 37) % 100, delay: (i * 0.18) % 2, dur: 0.7 + (i % 5) * 0.12,
+  }));
+  return (
+    <>
+      {drops.map((d, i) => (
+        <motion.div
+          key={i}
+          className="absolute w-[1px] rounded-full pointer-events-none"
+          style={{
+            left: `${d.x}%`, top: 0,
+            background: "linear-gradient(180deg, transparent, rgba(147,197,253,0.45), transparent)",
+            height: 18,
+          }}
+          animate={{ y: ["0vh", "105vh"] }}
+          transition={{ duration: d.dur, repeat: Infinity, delay: d.delay, ease: "linear" }}
+        />
+      ))}
+    </>
+  );
+}
+
+// ─── Firefly Particles ────────────────────────────────────────────────────────
+
+function FireflyParticles() {
+  return (
+    <>
+      {FIREFLIES_DATA.map((f, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full pointer-events-none"
+          style={{ left: `${f.x}%`, top: `${f.y}%`, width: f.size, height: f.size, background: f.color }}
+          animate={{
+            opacity: [0.05, 0.8, 0.05],
+            x: [0, (i % 2 === 0 ? 10 : -10), 0],
+            y: [0, (i % 3 === 0 ? -8 : 6), 0],
+          }}
+          transition={{ duration: f.dur, repeat: Infinity, delay: f.delay }}
+        />
+      ))}
+    </>
+  );
+}
+
+// ─── Sand Particles ───────────────────────────────────────────────────────────
+
+function SandParticles() {
+  const grains = Array.from({ length: 20 }).map((_, i) => ({
+    x: (i * 41) % 100, y: 50 + ((i * 17) % 45),
+    size: 1 + (i % 3), delay: (i * 0.3) % 3,
+  }));
+  return (
+    <>
+      {grains.map((g, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full pointer-events-none"
+          style={{ left: `${g.x}%`, top: `${g.y}%`, width: g.size, height: g.size, background: "rgba(251,191,36,0.25)" }}
+          animate={{ x: [0, 15, 0], opacity: [0.1, 0.4, 0.1] }}
+          transition={{ duration: 4 + g.delay, repeat: Infinity, delay: g.delay, ease: "easeInOut" }}
+        />
+      ))}
+    </>
   );
 }
 
@@ -103,23 +234,28 @@ function ShootingStarEl({ star }: { star: ShootingStar }) {
 type SoundId =
   | "none" | "rain" | "wind" | "river" | "ocean"
   | "birds" | "nightingale" | "night"
-  | "crystal" | "flute" | "binaural" | "space";
+  | "karawan" | "forest-dawn" | "seashore" | "pine-forest"
+  | "thunder-rain" | "mountain-stream" | "desert-night" | "rainforest";
 
-interface SoundDef { id: SoundId; label: string; emoji: string; group: "nature" | "birds" | "relax"; }
+interface SoundDef { id: SoundId; label: string; emoji: string; group: "nature" | "birds" | "forest" | "earth"; }
 
 const SOUND_LIST: SoundDef[] = [
-  { id: "none",        label: "صامت",       emoji: "🔇", group: "nature" },
-  { id: "rain",        label: "مطر",        emoji: "🌧️", group: "nature" },
-  { id: "wind",        label: "نسيم",       emoji: "🍃", group: "nature" },
-  { id: "river",       label: "نهر",        emoji: "💧", group: "nature" },
-  { id: "ocean",       label: "أمواج",      emoji: "🌊", group: "nature" },
-  { id: "birds",       label: "طيور",       emoji: "🐦", group: "birds"  },
-  { id: "nightingale", label: "بلبل",       emoji: "🎵", group: "birds"  },
-  { id: "night",       label: "ليل ساكن",  emoji: "🌙", group: "birds"  },
-  { id: "crystal",     label: "كريستال",    emoji: "🔮", group: "relax"  },
-  { id: "flute",       label: "ناي",        emoji: "🎶", group: "relax"  },
-  { id: "binaural",    label: "تأمل",       emoji: "🧘", group: "relax"  },
-  { id: "space",       label: "فضاء",       emoji: "✨", group: "relax"  },
+  { id: "none",            label: "صامت",          emoji: "🔇", group: "nature"  },
+  { id: "rain",            label: "مطر",           emoji: "🌧️", group: "nature"  },
+  { id: "wind",            label: "نسيم",          emoji: "🍃", group: "nature"  },
+  { id: "river",           label: "نهر",           emoji: "💧", group: "nature"  },
+  { id: "ocean",           label: "أمواج",         emoji: "🌊", group: "nature"  },
+  { id: "birds",           label: "طيور",          emoji: "🐦", group: "birds"   },
+  { id: "nightingale",     label: "بلبل",          emoji: "🎵", group: "birds"   },
+  { id: "night",           label: "ليل ساكن",     emoji: "🌙", group: "birds"   },
+  { id: "karawan",         label: "كروان",         emoji: "🦅", group: "forest"  },
+  { id: "forest-dawn",     label: "غابة الفجر",   emoji: "🌿", group: "forest"  },
+  { id: "seashore",        label: "شاطئ",          emoji: "🏖️", group: "forest"  },
+  { id: "pine-forest",     label: "صنوبر",         emoji: "🌲", group: "forest"  },
+  { id: "thunder-rain",    label: "رعد ومطر",      emoji: "⛈️", group: "earth"   },
+  { id: "mountain-stream", label: "نهر جبلي",      emoji: "⛰️", group: "earth"   },
+  { id: "desert-night",    label: "صحراء الليل",  emoji: "🏜️", group: "earth"   },
+  { id: "rainforest",      label: "غابة استوائية", emoji: "🌴", group: "earth"   },
 ];
 
 function mkNoise(ctx: AudioContext): AudioBuffer {
@@ -188,8 +324,7 @@ class ProceduralEngine {
       o.type = "sine"; o.frequency.setValueAtTime(freq, t);
       o.frequency.exponentialRampToValueAtTime(freq * 1.6, t + dur * 0.4);
       o.frequency.exponentialRampToValueAtTime(freq * 0.85, t + dur);
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(vol, t + 0.015);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.015);
       g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
       o.connect(g); g.connect(mg); o.start(t); o.stop(t + dur + 0.02);
     };
@@ -221,20 +356,18 @@ class ProceduralEngine {
       const now = ctx.currentTime;
       const seq = SEQS[Math.floor(Math.random() * SEQS.length)]!;
       let t = now + Math.random() * 0.5;
-      seq.forEach((freq, i) => {
+      seq.forEach((freq) => {
         const o = ctx.createOscillator(); const g = ctx.createGain();
         const vib = ctx.createOscillator(); const vg = ctx.createGain();
         vib.frequency.value = 5 + Math.random() * 3; vg.gain.value = freq * 0.025;
         vib.connect(vg); vg.connect(o.frequency);
         o.type = "sine"; o.frequency.value = freq;
         const dur = 0.09 + Math.random() * 0.06;
-        g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(0.065, t + 0.018);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.065, t + 0.018);
         g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
         o.connect(g); g.connect(mg); o.start(t); vib.start(t);
         o.stop(t + dur + 0.02); vib.stop(t + dur + 0.02);
         t += dur + 0.04 + Math.random() * 0.04;
-        void i;
       });
       setTimeout(sing, 2000 + Math.random() * 4000);
     };
@@ -250,8 +383,7 @@ class ProceduralEngine {
         const o = ctx.createOscillator(); const g = ctx.createGain();
         o.type = "square"; o.frequency.value = baseFreq + Math.random() * 200;
         const on = t + i * 0.04;
-        g.gain.setValueAtTime(0, on);
-        g.gain.linearRampToValueAtTime(0.018, on + 0.005);
+        g.gain.setValueAtTime(0, on); g.gain.linearRampToValueAtTime(0.018, on + 0.005);
         g.gain.linearRampToValueAtTime(0, on + 0.035);
         o.connect(g); g.connect(mg); o.start(on); o.stop(on + 0.04);
       }
@@ -267,132 +399,228 @@ class ProceduralEngine {
     return () => { alive = false; };
   }
 
-  private crystal(ctx: AudioContext, mg: GainNode): () => void {
+  // ── صوت الكروان ─ طائر الكروان المصري ذو الصوت الحزين المميز ──────────────
+  private karawan(ctx: AudioContext, mg: GainNode): () => void {
     let alive = true;
-    const FREQS = [256, 288, 341, 384, 512, 640];
-    const ring = (freq: number, vol: number) => {
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.type = "sine"; o.frequency.value = freq;
-      const now = ctx.currentTime;
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(vol, now + 0.04);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 4);
-      o.connect(g); g.connect(mg); o.start(now); o.stop(now + 4.5);
-    };
-    const schedule = () => {
+    // الكروان يغني بمقاطع نزولية حزينة ومميزة
+    const PHRASES = [
+      [900, 820, 780, 720, 680, 640, 600],
+      [1000, 900, 850, 780, 720, 660],
+      [850, 800, 750, 700, 650, 600, 560],
+    ];
+    const sing = () => {
       if (!alive) return;
-      const f = FREQS[Math.floor(Math.random() * FREQS.length)]!;
-      ring(f, 0.07); ring(f * 2, 0.025); ring(f * 3, 0.012);
-      setTimeout(schedule, 2500 + Math.random() * 3000);
+      const now = ctx.currentTime;
+      const phrase = PHRASES[Math.floor(Math.random() * PHRASES.length)]!;
+      let t = now + 0.5 + Math.random() * 1;
+      phrase.forEach((freq, i) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        // الكروان يستخدم صوتاً مزيجاً بين sine و triangle
+        o.type = i % 2 === 0 ? "sine" : "triangle";
+        o.frequency.setValueAtTime(freq, t);
+        // تذبذب طفيف يعطي الطابع الحيواني
+        const vib = ctx.createOscillator(); const vg = ctx.createGain();
+        vib.frequency.value = 4 + Math.random() * 2; vg.gain.value = freq * 0.018;
+        vib.connect(vg); vg.connect(o.frequency);
+        const dur = 0.18 + Math.random() * 0.12;
+        const vol = i === 0 ? 0.07 : 0.055 - i * 0.004;
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(mg); o.start(t); vib.start(t);
+        o.stop(t + dur + 0.05); vib.stop(t + dur + 0.05);
+        t += dur + 0.08 + Math.random() * 0.06;
+      });
+      // الكروان يكرر صوته بعد توقف
+      setTimeout(sing, 5000 + Math.random() * 6000);
     };
-    schedule();
+    sing();
     return () => { alive = false; };
   }
 
-  private flute(ctx: AudioContext, mg: GainNode): () => void {
+  // ── غابة الفجر ─ طيور مبكرة مع هواء الفجر الهادئ ───────────────────────
+  private forestDawn(ctx: AudioContext, mg: GainNode): () => void {
+    // نسيم خفيف في الغابة
+    const breeze = this.noise(ctx, mg, { filterType: "bandpass", freq: 280, Q: 0.6, gain: 0.10, lfoFreq: 0.08, lfoDepth: 80 });
     let alive = true;
-    const NOTES = [349, 392, 440, 493, 523, 587];
-    const play = (freq: number, dur: number, vol: number, t: number) => {
-      const o = ctx.createOscillator(); const o2 = ctx.createOscillator();
-      const g = ctx.createGain();
-      const trem = ctx.createOscillator(); const tg = ctx.createGain();
-      trem.frequency.value = 5.5; tg.gain.value = 0.012;
-      trem.connect(tg); tg.connect(g.gain);
-      o.type = "sine"; o.frequency.value = freq;
-      o2.type = "sine"; o2.frequency.value = freq * 2; // 2nd harmonic
-      const g2 = ctx.createGain(); g2.gain.value = 0.08;
-      o2.connect(g2); g2.connect(g);
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(vol, t + 0.06);
-      g.gain.setValueAtTime(vol, t + dur - 0.15);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      o.connect(g); g.connect(mg);
-      o.start(t); o2.start(t); trem.start(t);
-      o.stop(t + dur + 0.05); o2.stop(t + dur + 0.05); trem.stop(t + dur + 0.05);
+    // طيور الفجر المتعددة في نفس الوقت
+    const dawnBird = (baseFreq: number, vol: number) => {
+      const chirp = (t: number) => {
+        if (!alive) return;
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.type = "sine"; o.frequency.setValueAtTime(baseFreq + Math.random() * 200, t);
+        o.frequency.exponentialRampToValueAtTime(baseFreq * 1.4, t + 0.08);
+        g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        o.connect(g); g.connect(mg); o.start(t); o.stop(t + 0.22);
+        const reps = 2 + Math.floor(Math.random() * 4);
+        for (let j = 1; j <= reps; j++) {
+          const t2 = t + j * (0.1 + Math.random() * 0.08);
+          const o2 = ctx.createOscillator(); const g2 = ctx.createGain();
+          o2.type = "sine"; o2.frequency.value = baseFreq + Math.random() * 150;
+          g2.gain.setValueAtTime(0, t2); g2.gain.linearRampToValueAtTime(vol * 0.8, t2 + 0.01);
+          g2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.14);
+          o2.connect(g2); g2.connect(mg); o2.start(t2); o2.stop(t2 + 0.18);
+        }
+        setTimeout(() => chirp(ctx.currentTime), 3000 + Math.random() * 5000);
+      };
+      setTimeout(() => chirp(ctx.currentTime), Math.random() * 2000);
     };
-    const phrase = () => {
+    dawnBird(800, 0.05); dawnBird(1100, 0.04); dawnBird(1400, 0.035);
+    return () => { alive = false; breeze(); };
+  }
+
+  // ── شاطئ هادئ ─ أمواج مع نوارس بعيدة ────────────────────────────────────
+  private seashore(ctx: AudioContext, mg: GainNode): () => void {
+    // أمواج البحر
+    const waves = this.noise(ctx, mg, { filterType: "lowpass", freq: 450, Q: 0.4, gain: 0.25, lfoFreq: 0.12, lfoDepth: 200 });
+    let alive = true;
+    // صوت النوارس البعيدة
+    const seagull = () => {
       if (!alive) return;
-      const now = ctx.currentTime;
-      const len = 2 + Math.floor(Math.random() * 4);
-      let t = now;
-      for (let i = 0; i < len; i++) {
-        const f = NOTES[Math.floor(Math.random() * NOTES.length)]!;
-        const dur = 0.5 + Math.random() * 1.5;
-        play(f, dur, 0.055, t);
-        t += dur + 0.05 + Math.random() * 0.3;
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(600 + Math.random() * 200, t);
+      o.frequency.exponentialRampToValueAtTime(900 + Math.random() * 200, t + 0.15);
+      o.frequency.exponentialRampToValueAtTime(500, t + 0.5);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.04, t + 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(g); g.connect(mg); o.start(t); o.stop(t + 0.55);
+      setTimeout(seagull, 6000 + Math.random() * 10000);
+    };
+    setTimeout(seagull, 2000);
+    return () => { alive = false; waves(); };
+  }
+
+  // ── صنوبر ─ نسيم عبر أشجار الصنوبر ──────────────────────────────────────
+  private pineForest(ctx: AudioContext, mg: GainNode): () => void {
+    const wind1 = this.noise(ctx, mg, { filterType: "bandpass", freq: 350, Q: 0.8, gain: 0.15, lfoFreq: 0.06, lfoDepth: 120 });
+    const wind2 = this.noise(ctx, mg, { filterType: "highpass", freq: 2000, Q: 0.3, gain: 0.04, lfoFreq: 0.11, lfoDepth: 500 });
+    return () => { wind1(); wind2(); };
+  }
+
+  // ── رعد ومطر ─ عاصفة ماطرة مع رعد بعيد ──────────────────────────────────
+  private thunderRain(ctx: AudioContext, mg: GainNode): () => void {
+    const rain = this.noise(ctx, mg, { filterType: "lowpass", freq: 500, Q: 0.3, gain: 0.28 });
+    let alive = true;
+    const thunder = () => {
+      if (!alive) return;
+      const t = ctx.currentTime;
+      // هدير الرعد البعيد عبر نبضات noise
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = "sawtooth"; o.frequency.value = 40 + Math.random() * 20;
+      const f = ctx.createBiquadFilter(); f.type = "lowpass"; f.frequency.value = 80;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.12, t + 0.1);
+      g.gain.linearRampToValueAtTime(0.06, t + 0.5);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+      o.connect(f); f.connect(g); g.connect(mg); o.start(t); o.stop(t + 2);
+      setTimeout(thunder, 8000 + Math.random() * 15000);
+    };
+    setTimeout(thunder, 3000);
+    return () => { alive = false; rain(); };
+  }
+
+  // ── نهر جبلي ─ مياه جارية بسرعة مع ضفادع ────────────────────────────────
+  private mountainStream(ctx: AudioContext, mg: GainNode): () => void {
+    const fast = this.noise(ctx, mg, { filterType: "bandpass", freq: 800, Q: 1.5, gain: 0.22 });
+    const deep = this.noise(ctx, mg, { filterType: "lowpass", freq: 300, gain: 0.12 });
+    let alive = true;
+    // صوت الضفادع
+    const frog = () => {
+      if (!alive) return;
+      const t = ctx.currentTime;
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = "sine"; o.frequency.value = 200 + Math.random() * 100;
+      const reps = 2 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < reps; i++) {
+        const ti = t + i * 0.12;
+        g.gain.setValueAtTime(0, ti); g.gain.linearRampToValueAtTime(0.03, ti + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ti + 0.1);
       }
-      setTimeout(phrase, (t - ctx.currentTime) * 1000 + 800 + Math.random() * 2000);
+      o.connect(g); g.connect(mg); o.start(t); o.stop(t + reps * 0.12 + 0.15);
+      setTimeout(frog, 4000 + Math.random() * 7000);
     };
-    phrase();
-    return () => { alive = false; };
+    setTimeout(frog, 2000);
+    return () => { alive = false; fast(); deep(); };
   }
 
-  private binaural(ctx: AudioContext, mg: GainNode): () => void {
-    const base = 136; // earth frequency
-    const beat = 10;  // alpha wave
-    const o1 = ctx.createOscillator(); const o2 = ctx.createOscillator();
-    const g1 = ctx.createGain(); const g2 = ctx.createGain();
-    o1.frequency.value = base; o2.frequency.value = base + beat;
-    o1.type = "sine"; o2.type = "sine";
-    g1.gain.value = 0.08; g2.gain.value = 0.08;
-    o1.connect(g1); o2.connect(g2);
-    g1.connect(mg); g2.connect(mg);
-
-    // Low hum base
-    const hum = ctx.createOscillator(); const hg = ctx.createGain();
-    hum.frequency.value = base * 0.5; hg.gain.value = 0.04;
-    hum.type = "sine"; hum.connect(hg); hg.connect(mg);
-
-    o1.start(); o2.start(); hum.start();
-    return () => {
-      try { o1.stop(); o2.stop(); hum.stop(); } catch {}
-      g1.disconnect(); g2.disconnect(); hg.disconnect();
-    };
-  }
-
-  private space(ctx: AudioContext, mg: GainNode): () => void {
-    // Deep drone + shimmer
-    const noise1 = this.noise(ctx, mg, { filterType: "lowpass", freq: 120, Q: 0.3, gain: 0.18 });
+  // ── صحراء الليل ─ سكون مع هواء خفيف ────────────────────────────────────
+  private desertNight(ctx: AudioContext, mg: GainNode): () => void {
+    // هواء الليل الخفيف جداً
+    const wind = this.noise(ctx, mg, { filterType: "bandpass", freq: 200, Q: 0.4, gain: 0.06, lfoFreq: 0.04, lfoDepth: 60 });
     let alive = true;
-
-    const shimmer = () => {
+    // نداء بومة صحراوية نادر
+    const owl = () => {
       if (!alive) return;
-      const freq = 2000 + Math.random() * 5000;
+      const t = ctx.currentTime;
       const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.type = "sine"; o.frequency.value = freq;
-      const now = ctx.currentTime;
-      g.gain.setValueAtTime(0, now);
-      g.gain.linearRampToValueAtTime(0.018, now + 0.08);
-      g.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
-      o.connect(g); g.connect(mg); o.start(now); o.stop(now + 1.6);
-      setTimeout(shimmer, 600 + Math.random() * 2000);
+      o.type = "sine"; o.frequency.value = 180;
+      o.frequency.linearRampToValueAtTime(160, t + 0.4);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.045, t + 0.08);
+      g.gain.setValueAtTime(0.045, t + 0.3);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+      o.connect(g); g.connect(mg); o.start(t); o.stop(t + 0.55);
+      setTimeout(owl, 12000 + Math.random() * 18000);
     };
-    shimmer();
-    return () => { alive = false; noise1(); };
+    setTimeout(owl, 4000);
+    return () => { alive = false; wind(); };
+  }
+
+  // ── غابة استوائية ─ حياة متنوعة وأصوات كثيفة ────────────────────────────
+  private rainforest(ctx: AudioContext, mg: GainNode): () => void {
+    // مطر خفيف بين الأشجار
+    const rain = this.noise(ctx, mg, { filterType: "lowpass", freq: 600, Q: 0.5, gain: 0.12 });
+    // أصوات الحشرات المستمرة
+    const insects = this.noise(ctx, mg, { filterType: "bandpass", freq: 4000, Q: 2, gain: 0.06 });
+    let alive = true;
+    // طيور استوائية متنوعة
+    const tropicalBird = (baseFreq: number) => {
+      const sing = () => {
+        if (!alive) return;
+        const t = ctx.currentTime;
+        const freqs = [baseFreq, baseFreq * 1.2, baseFreq * 0.9, baseFreq * 1.4];
+        let ts = t;
+        freqs.forEach(f => {
+          const o = ctx.createOscillator(); const g = ctx.createGain();
+          o.type = "sine"; o.frequency.value = f;
+          const dur = 0.08 + Math.random() * 0.05;
+          g.gain.setValueAtTime(0, ts); g.gain.linearRampToValueAtTime(0.04, ts + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, ts + dur);
+          o.connect(g); g.connect(mg); o.start(ts); o.stop(ts + dur + 0.02);
+          ts += dur + 0.03 + Math.random() * 0.03;
+        });
+        setTimeout(sing, 2500 + Math.random() * 4000);
+      };
+      setTimeout(sing, Math.random() * 1500);
+    };
+    tropicalBird(900); tropicalBird(1300); tropicalBird(1700);
+    return () => { alive = false; rain(); insects(); };
   }
 
   play(id: SoundId) {
     this.stop();
     if (id === "none") return;
     const { ctx, mg } = this.boot();
-
     let cleanup: (() => void) | null = null;
     switch (id) {
-      case "rain":        cleanup = this.noise(ctx, mg, { filterType: "lowpass",  freq: 420, Q: 0.4, gain: 0.32 }); break;
-      case "wind":        cleanup = this.noise(ctx, mg, { filterType: "bandpass", freq: 310, Q: 0.9, gain: 0.26, lfoFreq: 0.09, lfoDepth: 130 }); break;
+      case "rain":            cleanup = this.noise(ctx, mg, { filterType: "lowpass",  freq: 420, Q: 0.4, gain: 0.32 }); break;
+      case "wind":            cleanup = this.noise(ctx, mg, { filterType: "bandpass", freq: 310, Q: 0.9, gain: 0.26, lfoFreq: 0.09, lfoDepth: 130 }); break;
       case "river": {
         const a = this.noise(ctx, mg, { filterType: "bandpass", freq: 600, Q: 1.2, gain: 0.18 });
         const b = this.noise(ctx, mg, { filterType: "lowpass",  freq: 900, gain: 0.12 });
         cleanup = () => { a(); b(); }; break;
       }
-      case "ocean":       cleanup = this.noise(ctx, mg, { filterType: "lowpass",  freq: 500, Q: 0.5, gain: 0.28, lfoFreq: 0.11, lfoDepth: 250 }); break;
-      case "birds":       cleanup = this.birds(ctx, mg); break;
-      case "nightingale": cleanup = this.nightingale(ctx, mg); break;
-      case "night":       cleanup = this.night(ctx, mg); break;
-      case "crystal":     cleanup = this.crystal(ctx, mg); break;
-      case "flute":       cleanup = this.flute(ctx, mg); break;
-      case "binaural":    cleanup = this.binaural(ctx, mg); break;
-      case "space":       cleanup = this.space(ctx, mg); break;
+      case "ocean":           cleanup = this.noise(ctx, mg, { filterType: "lowpass",  freq: 500, Q: 0.5, gain: 0.28, lfoFreq: 0.11, lfoDepth: 250 }); break;
+      case "birds":           cleanup = this.birds(ctx, mg); break;
+      case "nightingale":     cleanup = this.nightingale(ctx, mg); break;
+      case "night":           cleanup = this.night(ctx, mg); break;
+      case "karawan":         cleanup = this.karawan(ctx, mg); break;
+      case "forest-dawn":     cleanup = this.forestDawn(ctx, mg); break;
+      case "seashore":        cleanup = this.seashore(ctx, mg); break;
+      case "pine-forest":     cleanup = this.pineForest(ctx, mg); break;
+      case "thunder-rain":    cleanup = this.thunderRain(ctx, mg); break;
+      case "mountain-stream": cleanup = this.mountainStream(ctx, mg); break;
+      case "desert-night":    cleanup = this.desertNight(ctx, mg); break;
+      case "rainforest":      cleanup = this.rainforest(ctx, mg); break;
     }
     if (cleanup) this.cleanups = [cleanup];
   }
@@ -409,24 +637,20 @@ const engine = new ProceduralEngine();
 
 const GROUP_LABELS: Record<string, string> = {
   nature: "🌿 طبيعة",
-  birds:  "🐦 أصوات",
-  relax:  "🧘 تأمل",
+  birds:  "🐦 طيور",
+  forest: "🌲 غابة",
+  earth:  "🌍 أرض",
 };
 
 function SoundPicker({ active, onSelect, vol, onVol }: {
-  active: SoundId;
-  onSelect: (id: SoundId) => void;
-  vol: number;
-  onVol: (v: number) => void;
+  active: SoundId; onSelect: (id: SoundId) => void; vol: number; onVol: (v: number) => void;
 }) {
   const [open, setOpen] = useState(false);
   const activeDef = SOUND_LIST.find(s => s.id === active)!;
-
-  const groups = ["nature", "birds", "relax"] as const;
+  const groups = ["nature", "birds", "forest", "earth"] as const;
 
   return (
     <div className="mx-4 mb-2">
-      {/* Collapsed bar */}
       <button
         onClick={() => setOpen(v => !v)}
         className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl transition-all"
@@ -440,7 +664,7 @@ function SoundPicker({ active, onSelect, vol, onVol }: {
             ? <VolumeX size={14} style={{ color: "rgba(255,255,255,0.45)" }} />
             : <Volume2 size={14} style={{ color: "#a78bfa" }} />}
           <span className="text-[11px] font-bold" style={{ color: active !== "none" ? "#c4b5fd" : "rgba(255,255,255,0.5)" }}>
-            {active !== "none" ? `${activeDef.emoji} ${activeDef.label} — جارٍ التشغيل` : "الأصوات المحيطة — اختر صوتاً"}
+            {active !== "none" ? `${activeDef.emoji} ${activeDef.label} — جارٍ التشغيل` : "الأصوات الطبيعية — اختر صوتاً"}
           </span>
           {active !== "none" && (
             <motion.div className="w-1.5 h-1.5 rounded-full" style={{ background: "#a78bfa" }}
@@ -452,7 +676,6 @@ function SoundPicker({ active, onSelect, vol, onVol }: {
                : <ChevronDown size={14} style={{ color: "rgba(255,255,255,0.4)" }} />}
       </button>
 
-      {/* Expanded panel */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -478,9 +701,8 @@ function SoundPicker({ active, onSelect, vol, onVol }: {
                 <span className="text-[11px] font-bold" style={{ color: active === "none" ? "#c4b5fd" : "rgba(255,255,255,0.45)" }}>صامت</span>
               </button>
 
-              {/* Grouped rows */}
               {groups.map(group => {
-                const items = SOUND_LIST.filter(s => s.group === group);
+                const items = SOUND_LIST.filter(s => s.group === group && s.id !== "none");
                 return (
                   <div key={group} className="mb-2">
                     <p className="text-[9px] font-bold mb-1.5 px-1" style={{ color: "rgba(255,255,255,0.3)" }}>
@@ -512,7 +734,6 @@ function SoundPicker({ active, onSelect, vol, onVol }: {
                 );
               })}
 
-              {/* Volume */}
               {active !== "none" && (
                 <div className="flex items-center gap-2 mt-2 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
                   <VolumeX size={11} style={{ color: "rgba(255,255,255,0.3)" }} />
@@ -532,6 +753,50 @@ function SoundPicker({ active, onSelect, vol, onVol }: {
   );
 }
 
+// ─── Scene Switcher ───────────────────────────────────────────────────────────
+
+function SceneSwitcher({ sceneIdx, onPrev, onNext }: { sceneIdx: number; onPrev: () => void; onNext: () => void }) {
+  const scene = NATURE_SCENES[sceneIdx]!;
+  return (
+    <div className="flex items-center justify-between px-4 mb-2 relative z-10">
+      <button
+        onClick={onPrev}
+        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-90"
+        style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+      >
+        <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.5)" }} />
+      </button>
+
+      <div className="flex flex-col items-center gap-1">
+        <div className="flex gap-1.5">
+          {NATURE_SCENES.map((_, i) => (
+            <div
+              key={i}
+              className="rounded-full transition-all duration-300"
+              style={{
+                width: i === sceneIdx ? 16 : 5,
+                height: 5,
+                background: i === sceneIdx ? scene.accent : "rgba(255,255,255,0.2)",
+              }}
+            />
+          ))}
+        </div>
+        <p className="text-[9px] font-bold" style={{ color: "rgba(255,255,255,0.4)" }}>
+          {scene.emoji} {scene.name}
+        </p>
+      </div>
+
+      <button
+        onClick={onNext}
+        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all active:scale-90"
+        style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}
+      >
+        <ChevronLeft size={14} style={{ color: "rgba(255,255,255,0.5)" }} />
+      </button>
+    </div>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function Munajat() {
@@ -541,15 +806,25 @@ export default function Munajat() {
   const [activeSound, setActiveSound] = useState<SoundId>("none");
   const [volume, setVolume] = useState(0.5);
   const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
+  const [sceneIdx, setSceneIdx] = useState(0);
 
   const dhikr = DHIKR_OPTIONS[activeDhikr]!;
   const verse = MUNAJAT_VERSES[verseIdx]!;
+  const scene = NATURE_SCENES[sceneIdx]!;
   const shootingStars = useShootingStars();
 
+  // Auto-rotate verses
   useEffect(() => {
     const t = setInterval(() => setVerseIdx(i => (i + 1) % MUNAJAT_VERSES.length), 8000);
     return () => clearInterval(t);
   }, []);
+
+  // Auto-rotate scenes every 30 seconds when sound is playing
+  useEffect(() => {
+    if (activeSound === "none") return;
+    const t = setInterval(() => setSceneIdx(i => (i + 1) % NATURE_SCENES.length), 30000);
+    return () => clearInterval(t);
+  }, [activeSound]);
 
   useEffect(() => { return () => { engine.stop(); }; }, []);
 
@@ -574,35 +849,57 @@ export default function Munajat() {
   return (
     <div
       className="min-h-screen flex flex-col select-none overflow-hidden"
-      style={{ background: "linear-gradient(160deg, #04020f 0%, #0c0a1e 40%, #0d0520 100%)" }}
+      style={{ background: scene.bg }}
     >
-      {/* Fixed stars BG */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {STARS.map((s, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full"
-            style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size, background: s.color }}
-            animate={{ opacity: [0.06, 0.5, 0.06] }}
-            transition={{ duration: s.dur, repeat: Infinity, delay: s.delay }}
-          />
-        ))}
+      {/* Scene background layer */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={sceneIdx}
+          className="fixed inset-0 pointer-events-none overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1.5 }}
+        >
+          {/* Scene-specific particles */}
+          {scene.particles === "stars" && (
+            <>
+              {STARS_DATA.map((s, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute rounded-full"
+                  style={{ left: `${s.x}%`, top: `${s.y}%`, width: s.size, height: s.size, background: s.color }}
+                  animate={{ opacity: [0.06, 0.5, 0.06] }}
+                  transition={{ duration: s.dur, repeat: Infinity, delay: s.delay }}
+                />
+              ))}
+              {/* Shooting stars only for night sky */}
+              {sceneIdx === 0 && (
+                <AnimatePresence>
+                  {shootingStars.map(star => <ShootingStarEl key={star.id} star={star} />)}
+                </AnimatePresence>
+              )}
+            </>
+          )}
+          {scene.particles === "fireflies" && <FireflyParticles />}
+          {scene.particles === "rain" && <RainParticles />}
+          {scene.particles === "sand" && <SandParticles />}
 
-        {/* Shooting stars */}
-        <AnimatePresence>
-          {shootingStars.map(star => (
-            <ShootingStarEl key={star.id} star={star} />
+          {/* Scene glow orbs */}
+          {scene.glows.map((gl, i) => (
+            <div
+              key={i}
+              className="absolute pointer-events-none"
+              style={{
+                left: `${gl.x - gl.w / 2}%`, top: `${gl.y - gl.h / 2}%`,
+                width: `${gl.w}%`, height: `${gl.h}%`,
+                background: `radial-gradient(ellipse, ${gl.color} 0%, transparent 70%)`,
+                filter: "blur(20px)",
+              }}
+            />
           ))}
-        </AnimatePresence>
-
-        {/* Nebula glows */}
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 50% 40% at 20% 30%, rgba(139,92,246,0.06) 0%, transparent 70%)",
-        }} />
-        <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 40% 30% at 80% 70%, rgba(59,130,246,0.05) 0%, transparent 70%)",
-        }} />
-      </div>
+        </motion.div>
+      </AnimatePresence>
 
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-4 pt-4 pb-2">
@@ -619,6 +916,13 @@ export default function Munajat() {
         </div>
         <div className="w-9 h-9" />
       </div>
+
+      {/* Scene Switcher */}
+      <SceneSwitcher
+        sceneIdx={sceneIdx}
+        onPrev={() => setSceneIdx(i => (i - 1 + NATURE_SCENES.length) % NATURE_SCENES.length)}
+        onNext={() => setSceneIdx(i => (i + 1) % NATURE_SCENES.length)}
+      />
 
       {/* Sound picker */}
       <div className="relative z-10">

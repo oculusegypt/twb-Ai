@@ -2634,86 +2634,123 @@ function SectionJourneyCard() {
   if (hasCovenant && dayOneDone) return <Journey30HeroCard />;
 
   const ctaHref = !hasCovenant ? "/covenant" : "/day-one";
-  const ctaLabel = !hasCovenant
-    ? "ابدأ رحلة التوبة الآن"
-    : "أكمل مهام اللحظة الأولى";
-  const subtitle = !hasCovenant
-    ? "التوبة باب مفتوح في كل لحظة"
-    : "واصل — بقيت خطوات قليلة لبدء رحلتك";
+  const ctaLabel = !hasCovenant ? "ابدأ رحلتك الآن" : "أكمل اللحظة الأولى";
+
+  // Live counter simulation
+  const [joinCount, setJoinCount] = useState(() => 8400 + Math.floor(Math.random() * 300));
+  useEffect(() => {
+    const t = setInterval(() => setJoinCount(c => c + Math.floor(Math.random() * 2 + 1)), 4000);
+    return () => clearInterval(t);
+  }, []);
+
+  const PILLARS = [
+    { emoji: "🤲", label: "توبة صادقة",    color: "#34d399" },
+    { emoji: "📖", label: "ورد يومي",       color: "#fbbf24" },
+    { emoji: "🌱", label: "نمو روحي",       color: "#818cf8" },
+  ];
 
   return (
     <div
-      className="relative overflow-hidden rounded-[24px]"
+      className="relative overflow-hidden rounded-[28px]"
       style={{
-        background:
-          "linear-gradient(160deg, #0d1a12 0%, #162512 45%, #0a1510 100%)",
-        border: "1px solid rgba(255,255,255,0.07)",
-        boxShadow: "0 12px 40px rgba(0,0,0,0.45), 0 3px 10px rgba(0,0,0,0.25)",
+        background: "linear-gradient(145deg, #050f0a 0%, #0a1f12 40%, #0c2518 100%)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        boxShadow: "0 16px 48px rgba(0,0,0,0.55), 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
       }}
     >
       <StarDots />
-      {/* Gold glow orb */}
-      <div
-        className="absolute top-[-30px] left-[30%] right-[30%] h-[100px] pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse, rgba(251,191,36,0.14) 0%, transparent 70%)",
-          filter: "blur(18px)",
-        }}
-      />
-      <div className="relative z-10 p-4 flex flex-col gap-3 pt-[20px] pb-[20px] mt-[0px] mb-[0px]">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h2
-              className="font-bold leading-tight"
-              style={{
-                fontSize: 20,
-                background:
-                  "linear-gradient(90deg, #ffffff 0%, #fde68a 55%, #f59e0b 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                backgroundClip: "text",
-              }}
-            >
-              رحلة العودة إلى الله
-            </h2>
-            <p
-              className="text-[11px] mt-0.5"
-              style={{ color: "rgba(255,255,255,0.4)" }}
-            >
-              {subtitle}
-            </p>
+
+      {/* Top radiant light */}
+      <div className="absolute inset-x-0 top-0 h-[120px] pointer-events-none" style={{
+        background: "radial-gradient(ellipse 80% 100% at 50% 0%, rgba(251,191,36,0.18) 0%, transparent 70%)",
+      }} />
+
+      {/* Side accent lines */}
+      <div className="absolute right-0 top-0 bottom-0 w-[3px] pointer-events-none" style={{
+        background: "linear-gradient(180deg, transparent 0%, rgba(251,191,36,0.5) 30%, rgba(251,191,36,0.5) 70%, transparent 100%)",
+      }} />
+
+      <div className="relative z-10 p-5 flex flex-col gap-4">
+
+        {/* Live badge */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+            style={{ background: "rgba(251,191,36,0.12)", border: "1px solid rgba(251,191,36,0.28)" }}>
+            <motion.div className="w-1.5 h-1.5 rounded-full bg-amber-400"
+              animate={{ opacity: [1, 0.3, 1] }} transition={{ duration: 1.4, repeat: Infinity }} />
+            <span className="text-[10px] font-bold" style={{ color: "#fbbf24" }}>
+              {joinCount.toLocaleString("ar-EG")} مسافر
+            </span>
           </div>
           <BentoCompassWidget />
         </div>
 
-        {/* Verse — full width at top */}
-        <VerseCellBento />
+        {/* Main title */}
+        <div className="text-center">
+          <p className="text-[10px] font-bold mb-1 tracking-widest" style={{ color: "rgba(251,191,36,0.5)", letterSpacing: "0.12em" }}>
+            ✦ ٣٠ يوماً من النور ✦
+          </p>
+          <h2
+            className="font-black leading-tight mb-2"
+            style={{
+              fontSize: 26,
+              background: "linear-gradient(135deg, #ffffff 0%, #fde68a 40%, #f59e0b 70%, #fbbf24 100%)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+              textShadow: "none",
+              fontFamily: "'Amiri Quran', serif",
+            }}
+          >
+            رحلة العودة إلى الله
+          </h2>
+          <p className="text-[11px] leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
+            {!hasCovenant ? "التوبة ليست لحظة واحدة — هي رحلة تتغيّر فيها يوماً بيوم" : "واصل — بقيت خطوات قليلة لبدء رحلتك"}
+          </p>
+        </div>
 
-        {/* Bento row: Counter (60%) + Secret (40%) */}
+        {/* Verse */}
+        <div className="rounded-2xl px-4 py-3 text-center" style={{
+          background: "rgba(255,255,255,0.04)", border: "1px solid rgba(251,191,36,0.15)",
+        }}>
+          <p className="leading-loose" style={{
+            fontFamily: "'Amiri Quran', serif", fontSize: 14.5, color: "rgba(255,255,255,0.88)"
+          }}>
+            ﴿إِنَّ اللَّهَ يُحِبُّ التَّوَّابِينَ وَيُحِبُّ الْمُتَطَهِّرِينَ﴾
+          </p>
+          <p className="text-[9px] mt-1" style={{ color: "rgba(251,191,36,0.5)" }}>— البقرة: ٢٢٢</p>
+        </div>
+
+        {/* 3 Pillars */}
+        <div className="grid grid-cols-3 gap-2">
+          {PILLARS.map((p) => (
+            <div key={p.label} className="flex flex-col items-center gap-1.5 py-3 rounded-2xl"
+              style={{ background: `${p.color}10`, border: `1px solid ${p.color}25` }}>
+              <span style={{ fontSize: 22 }}>{p.emoji}</span>
+              <span className="text-[9px] font-bold text-center" style={{ color: p.color }}>{p.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Bento row */}
         <div className="flex gap-2">
-          <div className="flex-[3]">
-            <DhikrCounterCell />
-          </div>
-          <div className="flex-[2]">
-            <SecretOfTheDayCellBento />
-          </div>
+          <div className="flex-[3]"><DhikrCounterCell /></div>
+          <div className="flex-[2]"><SecretOfTheDayCellBento /></div>
         </div>
 
         {/* CTA */}
         <Link
           href={ctaHref}
-          className="flex items-center justify-center gap-2 w-full py-3 rounded-[16px] font-bold text-sm active:scale-[0.97] transition-all"
+          className="flex items-center justify-center gap-2.5 w-full py-3.5 rounded-[18px] font-black text-sm active:scale-[0.97] transition-all"
           style={{
-            background: "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
-            color: "#1c0f00",
-            boxShadow:
-              "0 4px 20px rgba(251,191,36,0.38), 0 2px 8px rgba(0,0,0,0.3)",
+            background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)",
+            color: "#0d0700",
+            boxShadow: "0 6px 24px rgba(251,191,36,0.5), 0 2px 8px rgba(0,0,0,0.4)",
+            fontSize: 15,
           }}
         >
-          <span>{ctaLabel}</span>
-          <ArrowLeft size={15} />
+          <span>⚡ {ctaLabel}</span>
+          <ArrowLeft size={16} />
         </Link>
       </div>
     </div>
@@ -2780,58 +2817,116 @@ function SectionIslamicPrograms() {
   );
 }
 
+const GARDEN_STAGES = [
+  { min: 0,   max: 49,  emoji: "🌱", name: "بذرة",   color: "#a7f3d0", desc: "البداية — كل رحلة تبدأ بخطوة" },
+  { min: 50,  max: 199, emoji: "🌿", name: "شتلة",   color: "#6ee7b7", desc: "جذورك تتعمق — واصل الذكر" },
+  { min: 200, max: 499, emoji: "🌳", name: "شجرة",   color: "#34d399", desc: "شجرة راسخة — ثمارها نور" },
+  { min: 500, max: 999, emoji: "🌲", name: "غابة",   color: "#10b981", desc: "غابة بركة — روح مزهرة" },
+  { min: 1000, max: Infinity, emoji: "🏡", name: "جنة", color: "#059669", desc: "جنة الدنيا — تُظلّ من حولك" },
+];
+
 function SectionGarden() {
   const count = (() => {
-    try {
-      return parseInt(localStorage.getItem("home_dhikr_count") ?? "0") || 0;
-    } catch {
-      return 0;
-    }
+    try { return parseInt(localStorage.getItem("home_dhikr_count") ?? "0") || 0; }
+    catch { return 0; }
   })();
-  const stage =
-    count >= 500
-      ? { emoji: "🌲", name: "غابة", color: "#10b981" }
-      : count >= 200
-        ? { emoji: "🌳", name: "شجرة", color: "#34d399" }
-        : count >= 50
-          ? { emoji: "🌿", name: "شتلة", color: "#6ee7b7" }
-          : { emoji: "🌱", name: "بذرة", color: "#a7f3d0" };
+
+  const stageIdx = GARDEN_STAGES.findIndex(s => count >= s.min && count <= s.max);
+  const stage = GARDEN_STAGES[Math.max(0, stageIdx)]!;
+  const nextStage = GARDEN_STAGES[stageIdx + 1];
+  const pct = nextStage
+    ? Math.min(((count - stage.min) / (nextStage.min - stage.min)) * 100, 100)
+    : 100;
+
   return (
     <Link
       href="/garden"
-      className="flex items-center gap-4 rounded-2xl p-4 hover:shadow-md active:scale-[0.98] transition-all overflow-hidden relative"
+      className="block rounded-[24px] overflow-hidden relative active:scale-[0.98] transition-all"
       style={{
-        background:
-          "linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)",
-        border: "1px solid rgba(16,185,129,0.3)",
+        background: "linear-gradient(145deg, #031a0d 0%, #052e14 40%, #064220 100%)",
+        border: "1px solid rgba(16,185,129,0.28)",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
       }}
     >
-      <div className="absolute top-[-15px] right-[-15px] w-[80px] h-[80px] rounded-full opacity-10 bg-white pointer-events-none" />
-      <div
-        className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-2xl"
-        style={{
-          background: "rgba(255,255,255,0.12)",
-          backdropFilter: "blur(6px)",
-        }}
-      >
-        {stage.emoji}
+      {/* Radiant glow */}
+      <div className="absolute inset-x-0 top-0 h-[80px] pointer-events-none" style={{
+        background: "radial-gradient(ellipse 70% 80% at 50% 0%, rgba(16,185,129,0.2) 0%, transparent 70%)",
+      }} />
+
+      <div className="relative z-10 p-4">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+              style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+              {stage.emoji}
+            </div>
+            <div>
+              <h3 className="font-bold text-[15px]" style={{ color: "#fff" }}>شجرة التوبة</h3>
+              <p className="text-[10px]" style={{ color: "rgba(52,211,153,0.7)" }}>{stage.name} • {count.toLocaleString("ar-EG")} ذكر</p>
+            </div>
+          </div>
+          <ArrowLeft size={15} style={{ color: "rgba(255,255,255,0.4)" }} />
+        </div>
+
+        {/* Stage desc */}
+        <p className="text-[10px] mb-3 text-right" style={{ color: "rgba(255,255,255,0.5)" }}>{stage.desc}</p>
+
+        {/* Journey lifecycle stages */}
+        <div className="flex items-center gap-1 mb-3">
+          {GARDEN_STAGES.map((s, i) => {
+            const isCurrent = i === stageIdx;
+            const isPast = i < stageIdx;
+            return (
+              <div key={i} className="flex items-center gap-1 flex-1">
+                <div
+                  className="flex flex-col items-center gap-0.5 flex-1"
+                  style={{ opacity: isPast ? 0.7 : isCurrent ? 1 : 0.3 }}
+                >
+                  <span style={{ fontSize: isCurrent ? 18 : 13 }}>{s.emoji}</span>
+                  <span className="text-[7px] font-bold" style={{ color: isCurrent ? s.color : "rgba(255,255,255,0.4)" }}>
+                    {s.name}
+                  </span>
+                </div>
+                {i < GARDEN_STAGES.length - 1 && (
+                  <div className="h-[1px] flex-[0.3]" style={{
+                    background: i < stageIdx ? "#10b981" : "rgba(255,255,255,0.12)",
+                  }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Progress to next stage */}
+        {nextStage && (
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                {nextStage.min - count} ذكر للمرحلة التالية {nextStage.emoji}
+              </span>
+              <span className="text-[9px] font-bold" style={{ color: stage.color }}>{Math.round(pct)}%</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: `linear-gradient(90deg, ${stage.color}, ${nextStage.color})` }}
+                initial={{ width: 0 }}
+                animate={{ width: `${pct}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+              />
+            </div>
+          </div>
+        )}
+
+        {!nextStage && (
+          <div className="flex items-center gap-2 p-2 rounded-xl"
+            style={{ background: "rgba(5,150,105,0.15)", border: "1px solid rgba(5,150,105,0.3)" }}>
+            <span>🏆</span>
+            <p className="text-[10px] font-bold" style={{ color: "#059669" }}>بلغت أعلى المراحل — تاج التوبة</p>
+          </div>
+        )}
       </div>
-      <div className="flex-1">
-        <h3 className="font-bold text-[15px]" style={{ color: "#fff" }}>
-          شجرة التوبة
-        </h3>
-        <p
-          className="text-[11px] mt-0.5"
-          style={{ color: "rgba(255,255,255,0.65)" }}
-        >
-          حديقتك الروحية — {stage.name} • {count.toLocaleString("ar-EG")} ذكر
-        </p>
-      </div>
-      <ArrowLeft
-        size={16}
-        style={{ color: "rgba(255,255,255,0.5)" }}
-        className="shrink-0"
-      />
     </Link>
   );
 }
