@@ -303,19 +303,37 @@ export function VoiceOrbOverlay({ onClose }: { onClose: () => void }) {
             </motion.div>
           </div>
 
-          {/* Ripple rings when listening — clean, like Apple Siri */}
-          {isListening && [0, 1, 2].map((i) => (
+          {/* Sound wave rings — water-ripple style, emanate from mic edge */}
+          {isListening && [0, 1, 2, 3, 4].map((i) => (
             <motion.div
-              key={`rpl-${i}`}
+              key={`wave-${i}`}
               className="absolute rounded-full pointer-events-none"
               style={{
                 inset: 0,
-                border: "1px solid rgba(108,87,255,0.4)",
+                border: `${1.8 - i * 0.2}px solid rgba(108,87,255,${0.55 - i * 0.08})`,
               }}
-              animate={{ scale: [1, 1.55, 1.9], opacity: [0.5, 0.15, 0] }}
-              transition={{ duration: 2.4, repeat: Infinity, delay: i * 0.75, ease: "easeOut" }}
+              animate={{
+                scale: [1, 2.6],
+                opacity: [0.6 - i * 0.06, 0],
+              }}
+              transition={{
+                duration: 2.2,
+                repeat: Infinity,
+                delay: i * 0.42,
+                ease: [0.2, 0.6, 0.4, 1],
+              }}
             />
           ))}
+
+          {/* Extra fast inner ring for immediate audio feel */}
+          {isListening && (
+            <motion.div
+              className="absolute rounded-full pointer-events-none"
+              style={{ inset: 0, border: "2px solid rgba(130,110,255,0.5)" }}
+              animate={{ scale: [1, 1.22, 1], opacity: [0.5, 0.15, 0.5] }}
+              transition={{ duration: 0.85, repeat: Infinity, ease: "easeInOut" }}
+            />
+          )}
         </motion.div>
 
         {/* ══ STATUS ══ */}

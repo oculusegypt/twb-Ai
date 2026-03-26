@@ -264,7 +264,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
     }
 
     elements.push(
-      <p key={i} className="text-sm leading-relaxed">{renderInline(line)}</p>
+      <p key={i} className="text-[13px] leading-relaxed">{renderInline(line)}</p>
     );
     i++;
   }
@@ -1279,7 +1279,7 @@ export default function ZakiyPage() {
                       onAudioComplete={handleAutoPlayComplete}
                     />
                   ) : (
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                    <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                   )}
                   <p className="text-[10px] opacity-50 mt-1 text-end">
                     {msg.timestamp.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
@@ -1341,7 +1341,20 @@ export default function ZakiyPage() {
               loading && "opacity-50 cursor-not-allowed"
             )}
           >
-            {recording ? <StopCircle size={18} /> : <Mic size={18} />}
+            {recording ? <StopCircle size={18} /> : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="2" width="6" height="11" rx="3" />
+                <path d="M5 10a7 7 0 0 0 14 0" />
+                <line x1="12" y1="17" x2="12" y2="21" />
+                <line x1="9" y1="21" x2="15" y2="21" />
+                <line x1="2" y1="8" x2="4.5" y2="8" strokeWidth="1.4" opacity="0.7" />
+                <line x1="2" y1="10.5" x2="5" y2="10.5" strokeWidth="1.4" opacity="0.85" />
+                <line x1="2" y1="13" x2="4.5" y2="13" strokeWidth="1.4" opacity="0.7" />
+                <line x1="19.5" y1="8" x2="22" y2="8" strokeWidth="1.4" opacity="0.7" />
+                <line x1="19" y1="10.5" x2="22" y2="10.5" strokeWidth="1.4" opacity="0.85" />
+                <line x1="19.5" y1="13" x2="22" y2="13" strokeWidth="1.4" opacity="0.7" />
+              </svg>
+            )}
           </button>
 
           <div className="flex-1">
@@ -1356,8 +1369,8 @@ export default function ZakiyPage() {
               disabled={loading || recording}
               rows={1}
               className={cn(
-                "w-full resize-none rounded-2xl border border-border/60 bg-background px-4 py-2.5 text-sm text-foreground",
-                "placeholder:text-muted-foreground placeholder:text-xs focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50",
+                "w-full resize-none rounded-2xl border border-border/60 bg-background px-4 py-2.5 text-[13px] text-foreground",
+                "placeholder:text-muted-foreground placeholder:text-[11px] focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-500/50",
                 "max-h-32 overflow-y-auto leading-relaxed transition-all",
                 (loading || recording) && "opacity-60"
               )}
