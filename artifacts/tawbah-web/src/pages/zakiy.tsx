@@ -343,9 +343,9 @@ function QuranCard({
   const reciterName = QURAN_RECITERS.find(r => r.id === reciterId)?.nameAr ?? "القرآن الكريم";
 
   return (
-    <div className="my-3 rounded-2xl overflow-hidden shadow-lg border border-emerald-200/70 dark:border-emerald-700/30">
+    <div className="my-3 rounded-2xl overflow-hidden shadow-lg border border-emerald-200 dark:border-emerald-700/30">
       {/* ── Header ── */}
-      <div className="bg-gradient-to-l from-emerald-700 to-teal-800 dark:from-emerald-800 dark:to-teal-900 px-4 py-3 flex items-center justify-between gap-3">
+      <div className="bg-gradient-to-l from-emerald-600 to-teal-700 dark:from-emerald-800 dark:to-teal-900 px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="w-7 h-7 shrink-0 rounded-full bg-white/15 flex items-center justify-center">
             <BookOpen size={12} className="text-white" />
@@ -429,25 +429,25 @@ function FatwaCard({ seg }: { seg: MessageSegment }) {
   const preview = (seg.text?.length ?? 0) > 120 ? seg.text!.slice(0, 120) + "..." : seg.text;
 
   return (
-    <div className="my-2 rounded-2xl border border-emerald-300 dark:border-emerald-400/50 overflow-hidden shadow-sm">
-      <div className="bg-emerald-100 dark:bg-gradient-to-l dark:from-emerald-800 dark:to-teal-900 border-b border-emerald-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
-        <Scale size={13} className="text-emerald-700 dark:text-emerald-300" />
-        <span className="text-[11px] font-bold text-emerald-900 dark:text-emerald-200 tracking-wide">حكم شرعي</span>
-        <span className="mr-auto text-[10px] text-emerald-700/80 dark:text-emerald-400/80">📚 {seg.source}</span>
+    <div className="my-2 rounded-2xl border border-emerald-200 dark:border-emerald-400/50 overflow-hidden shadow-sm">
+      <div className="bg-gradient-to-l from-emerald-600 to-teal-700 dark:from-emerald-800 dark:to-teal-900 px-4 py-2.5 flex items-center gap-2">
+        <Scale size={13} className="text-white/90" />
+        <span className="text-[11px] font-bold text-white tracking-wide">حكم شرعي</span>
+        <span className="mr-auto text-[10px] text-white/70">📚 {seg.source}</span>
       </div>
-      <div className="bg-emerald-50 dark:bg-gradient-to-br dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
-        <p className="text-sm leading-relaxed text-emerald-900 dark:text-emerald-200 text-right">
+      <div className="bg-white dark:bg-gradient-to-br dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
+        <p className="text-sm leading-relaxed text-stone-800 dark:text-emerald-200 text-right">
           {expanded ? seg.text : preview}
         </p>
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-emerald-200 dark:border-emerald-800/30">
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-stone-100 dark:border-emerald-800/30">
           {(seg.text?.length ?? 0) > 120 && (
-            <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-medium">
+            <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-teal-700 dark:text-emerald-400 hover:underline font-medium">
               {expanded ? "إخفاء" : "عرض الكامل"}
             </button>
           )}
           {seg.url && (
             <a href={seg.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[10px] text-emerald-700 dark:text-emerald-400 hover:underline font-medium mr-auto">
+              className="flex items-center gap-1 text-[10px] text-teal-700 dark:text-emerald-400 hover:underline font-medium mr-auto">
               <ExternalLink size={10} /> المصدر
             </a>
           )}
@@ -484,12 +484,12 @@ function PromiseCard({ seg, sessionId }: { seg: MessageSegment; sessionId: strin
       animate={{ opacity: 1, y: 0 }}
       className="my-3 rounded-2xl border border-amber-300 dark:border-amber-400/60 overflow-hidden shadow-md"
     >
-      <div className="bg-amber-100 dark:bg-gradient-to-l dark:from-amber-700 dark:to-yellow-800 border-b border-amber-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
-        <Handshake size={13} className="text-amber-700 dark:text-amber-200" />
-        <span className="text-[11px] font-bold text-amber-900 dark:text-amber-100 tracking-wide">وعد أمام الله</span>
+      <div className="bg-gradient-to-l from-amber-500 to-yellow-500 dark:from-amber-700 dark:to-yellow-800 px-4 py-2.5 flex items-center gap-2">
+        <Handshake size={13} className="text-white/90" />
+        <span className="text-[11px] font-bold text-white tracking-wide">وعد أمام الله</span>
       </div>
-      <div className="bg-amber-50 dark:bg-gradient-to-br dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
-        <p className="text-sm leading-relaxed text-amber-900 dark:text-amber-200 text-right font-medium mb-4">
+      <div className="bg-white dark:bg-gradient-to-br dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
+        <p className="text-sm leading-relaxed text-stone-800 dark:text-amber-200 text-right font-medium mb-4">
           "{seg.text}"
         </p>
         {state === "done" ? (
@@ -525,11 +525,11 @@ function SurahLinkCard({ seg }: { seg: MessageSegment }) {
       animate={{ opacity: 1, y: 0 }}
       className="my-2 rounded-2xl border border-teal-300 dark:border-teal-400/50 overflow-hidden shadow-sm"
     >
-      <div className="bg-teal-100 dark:bg-gradient-to-l dark:from-teal-950 dark:to-emerald-950 border-b border-teal-300 dark:border-transparent px-4 py-2 flex items-center gap-2">
-        <BookMarked size={13} className="text-teal-700 dark:text-teal-200" />
-        <span className="text-[11px] font-bold text-teal-900 dark:text-teal-100 tracking-wide">السورة كاملة</span>
+      <div className="bg-gradient-to-l from-teal-600 to-emerald-600 dark:from-teal-950 dark:to-emerald-950 px-4 py-2.5 flex items-center gap-2">
+        <BookMarked size={13} className="text-white/90" />
+        <span className="text-[11px] font-bold text-white tracking-wide">السورة كاملة</span>
       </div>
-      <div className="bg-teal-50 dark:bg-gradient-to-br dark:from-teal-950/30 dark:to-emerald-950/20 px-4 py-3 flex items-center justify-between">
+      <div className="bg-white dark:bg-gradient-to-br dark:from-teal-950/30 dark:to-emerald-950/20 px-4 py-3 flex items-center justify-between">
         <div>
           <p className="text-sm font-bold text-teal-900 dark:text-teal-200">سورة {seg.text}</p>
           <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-0.5">تابع قراءة باقي السورة من الآية {seg.ayah}</p>
@@ -616,15 +616,16 @@ function SuggestionCards({ suggestions, loading, onSelect }: {
                 className={cn(
                   "text-right text-[11px] px-3 py-2 rounded-xl border transition-all active:scale-95 leading-snug font-medium",
                   isContinueBtn
-                    ? "col-span-2 bg-teal-600 hover:bg-teal-700 dark:bg-teal-700 dark:hover:bg-teal-600 text-white border-transparent flex items-center justify-center gap-1.5 shadow-sm shadow-teal-500/20"
+                    ? "col-span-2 text-white border-transparent flex items-center justify-center gap-1.5 shadow-sm"
                     : cn(
-                        "bg-white dark:bg-card text-foreground",
-                        "border-slate-200/80 dark:border-border/60",
-                        "shadow-sm shadow-slate-100 dark:shadow-none",
+                        "bg-white dark:bg-card text-stone-700 dark:text-foreground",
+                        "border-stone-200 dark:border-border/60",
+                        "shadow-sm",
                         "hover:bg-teal-50 hover:border-teal-300 hover:text-teal-800",
                         "dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50 dark:hover:text-teal-300"
                       )
                 )}
+                style={isContinueBtn ? { background: "linear-gradient(135deg,#2dd4bf,#059669)" } : undefined}
               >
                 {isContinueBtn && <span className="text-sm">▶</span>}
                 {q}
@@ -661,12 +662,11 @@ function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
             transition={{ delay: 0.1 + i * 0.05 }}
             onClick={() => onSelect(q)}
             className={cn(
-              "text-right text-[12px] font-semibold px-3 py-3 rounded-2xl border-2 transition-all active:scale-95 leading-snug",
-              "bg-white dark:bg-card text-slate-700 dark:text-foreground",
-              "border-slate-200 dark:border-border/60",
-              "shadow-md shadow-slate-200/70 dark:shadow-none",
-              "hover:bg-emerald-50 hover:border-emerald-400 dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50",
-              "hover:text-emerald-800 dark:hover:text-teal-300"
+              "text-right text-[12px] font-semibold px-3.5 py-3.5 rounded-2xl border transition-all active:scale-95 leading-snug",
+              "bg-white dark:bg-card text-stone-700 dark:text-foreground",
+              "border-stone-100 dark:border-border/60",
+              "shadow-[0_2px_10px_rgba(0,0,0,0.07),0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none",
+              "hover:bg-teal-50 hover:border-teal-200 hover:text-teal-800 dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50 dark:hover:text-teal-300"
             )}
           >
             {q}
@@ -893,13 +893,13 @@ function BotMessageBody({
         );
       })}
       {/* Audio & impression controls */}
-      <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+      <div className="flex items-center gap-1.5 mt-3 flex-wrap">
         {hasAudio && (
           <button
             onClick={handlePlayToggle}
             className={cn(
-              "flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-all border",
-              "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100",
+              "flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all border active:scale-95",
+              "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100 shadow-sm",
               "dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/60 dark:hover:bg-teal-900/40"
             )}
           >
@@ -912,8 +912,8 @@ function BotMessageBody({
             onClick={handleImpressionClick}
             disabled={impressionLoading}
             className={cn(
-              "flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-all border",
-              "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100",
+              "flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all border active:scale-95",
+              "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 shadow-sm",
               "dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/60 dark:hover:bg-rose-900/30"
             )}
           >
@@ -929,8 +929,8 @@ function BotMessageBody({
             onClick={handleHadiTasks}
             disabled={hadiLoading || hadiDone}
             className={cn(
-              "flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full transition-all border",
-              "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100",
+              "flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all border active:scale-95",
+              "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-sm",
               "dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/60 dark:hover:bg-emerald-900/30"
             )}
           >
@@ -1230,11 +1230,14 @@ export default function ZakiyPage() {
                 <Sparkles size={11} /> {anniversaryMilestone}
               </span>
             )}
-            <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <span className="text-xs text-emerald-600 font-medium">متصل</span>
+            <span className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/40">
+              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-semibold">متصل</span>
+            </span>
           </div>
         }
       />
+
       {/* Risk Alert Banner */}
       <AnimatePresence>
         {riskAlert && !riskDismissed && (
@@ -1267,32 +1270,53 @@ export default function ZakiyPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2 bg-stone-50/70 dark:bg-transparent">
+
+      {/* Messages — pb-[120px] leaves space for the fixed input bar above navbar */}
+      <div
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-3 dark:bg-transparent"
+        style={{ background: "linear-gradient(180deg,#f6f5f1 0%,#fafaf8 60%,#f6f5f1 100%)" }}
+      >
         <AnimatePresence initial={false}>
-          {messages.map((msg, msgIdx) => (
+          {messages.map((msg) => (
             <motion.div
               key={msg.id}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
             >
-              <div className={cn("flex items-end gap-2", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+              <div className={cn("flex items-end gap-2.5", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
+                {/* Bot avatar */}
                 {msg.role === "bot" && (
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center flex-shrink-0 mb-1">
-                    <Bot size={14} className="text-white" />
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5"
+                    style={{
+                      background: "linear-gradient(135deg,#2dd4bf,#059669)",
+                      boxShadow: "0 2px 8px rgba(5,150,105,0.28)",
+                    }}
+                  >
+                    <Bot size={15} className="text-white" />
                   </div>
                 )}
+
+                {/* Bubble */}
                 <div className={cn(
-                  "max-w-[88%] rounded-3xl px-4 py-3",
+                  "max-w-[86%] rounded-2xl px-4 py-3",
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground rounded-tl-none shadow-lg shadow-primary/25"
-                    : [
-                        "bg-white dark:bg-card rounded-tr-none text-foreground",
-                        "border border-slate-200 dark:border-border/60",
-                        "shadow-md shadow-slate-300/40 dark:shadow-none",
+                    ? [
+                        "text-white rounded-tl-[6px]",
+                        "shadow-[0_4px_16px_rgba(0,0,0,0.18),0_1px_4px_rgba(0,0,0,0.12)]",
                       ].join(" ")
-                )}>
+                    : [
+                        "rounded-tr-[6px] text-foreground",
+                        "bg-white dark:bg-card",
+                        "border border-stone-100 dark:border-border/50",
+                        "shadow-[0_2px_12px_rgba(0,0,0,0.07),0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none",
+                      ].join(" ")
+                )}
+                style={msg.role === "user" ? {
+                  background: "linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary)/0.82))",
+                } : undefined}
+                >
                   {msg.role === "bot" ? (
                     <BotMessageBody
                       msg={msg}
@@ -1305,15 +1329,18 @@ export default function ZakiyPage() {
                       onAudioComplete={handleAutoPlayComplete}
                     />
                   ) : (
-                    <p className="text-[13px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                    <p className="text-[13.5px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                   )}
-                  <p className="text-[10px] opacity-50 mt-1 text-end">
+                  <p className={cn(
+                    "text-[10px] opacity-50 mt-1.5 text-end",
+                    msg.role === "user" ? "text-white/80" : "text-muted-foreground"
+                  )}>
                     {msg.timestamp.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
                   </p>
                 </div>
               </div>
 
-              {/* Suggestions OUTSIDE the bubble */}
+              {/* Suggestions */}
               {msg.role === "bot" && msg.id !== "greeting" && (
                 <SuggestionCards
                   suggestions={msg.suggestions}
@@ -1330,116 +1357,152 @@ export default function ZakiyPage() {
         )}
 
         {loading && (
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-end gap-2">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center">
-              <Bot size={14} className="text-white" />
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-end gap-2.5">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(135deg,#2dd4bf,#059669)", boxShadow: "0 2px 8px rgba(5,150,105,0.28)" }}
+            >
+              <Bot size={15} className="text-white" />
             </div>
-            <div className="bg-white dark:bg-card border border-slate-100 dark:border-border/60 shadow-sm shadow-slate-200/80 dark:shadow-none rounded-2xl rounded-tr-sm px-4 py-3">
-              <div className="flex gap-1 items-center">
-                {[0, 150, 300].map((d) => (
-                  <span key={d} className="w-2 h-2 bg-teal-500 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+            <div className="bg-white dark:bg-card border border-stone-100 dark:border-border/50 shadow-[0_2px_12px_rgba(0,0,0,0.07)] dark:shadow-none rounded-2xl rounded-tr-[6px] px-5 py-3.5">
+              <div className="flex gap-1.5 items-end">
+                {[0, 160, 320].map((d) => (
+                  <motion.span
+                    key={d}
+                    className="w-2 h-2 bg-teal-400 rounded-full block"
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ duration: 0.7, repeat: Infinity, delay: d / 1000, ease: "easeInOut" }}
+                  />
                 ))}
               </div>
             </div>
           </motion.div>
         )}
 
+        {/* Extra padding so last message clears the fixed input bar */}
+        <div style={{ height: "96px" }} />
         <div ref={messagesEndRef} />
       </div>
-      {/* Input */}
-      <div className={cn(
-        "px-3 py-3 backdrop-blur-sm",
-        "border-t border-slate-100 dark:border-border/50",
-        "bg-white/80 dark:bg-card/60"
-      )}>
-        {recording && (
-          <div className={cn(
-            "flex items-center gap-2 mb-2 px-3 py-1.5 rounded-xl border",
-            "bg-primary/8 dark:bg-primary/10 border-primary/20"
-          )}>
-            <span className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
-            <span className="text-xs text-primary font-medium flex-1 truncate">
-              {interimText || "استمع... تكلّم الآن"}
-            </span>
-            <span className="text-[10px] text-muted-foreground">اضغط للإيقاف</span>
-          </div>
-        )}
-        <div className="flex items-end gap-2">
-          <button
-            onClick={recording ? stopVoiceInput : startVoiceInput}
-            disabled={loading}
-            className={cn(
-              "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all",
-              recording
-                ? "bg-primary text-primary-foreground scale-110 ring-2 ring-primary/30 shadow-md shadow-primary/20"
-                : "bg-slate-100 dark:bg-muted text-slate-500 dark:text-muted-foreground hover:bg-slate-200 dark:hover:bg-muted/80 hover:text-slate-700 shadow-sm",
-              loading && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {recording ? <StopCircle size={18} /> : (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="2" width="6" height="11" rx="3" />
-                <path d="M5 10a7 7 0 0 0 14 0" />
-                <line x1="12" y1="17" x2="12" y2="21" />
-                <line x1="9" y1="21" x2="15" y2="21" />
-                <line x1="2" y1="8" x2="4.5" y2="8" strokeWidth="1.4" opacity="0.7" />
-                <line x1="2" y1="10.5" x2="5" y2="10.5" strokeWidth="1.4" opacity="0.85" />
-                <line x1="2" y1="13" x2="4.5" y2="13" strokeWidth="1.4" opacity="0.7" />
-                <line x1="19.5" y1="8" x2="22" y2="8" strokeWidth="1.4" opacity="0.7" />
-                <line x1="19" y1="10.5" x2="22" y2="10.5" strokeWidth="1.4" opacity="0.85" />
-                <line x1="19.5" y1="13" x2="22" y2="13" strokeWidth="1.4" opacity="0.7" />
-              </svg>
-            )}
-          </button>
 
-          <div className="flex-1">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
-              }}
-              placeholder="اكتب ما في قلبك... أو اضغط على الميك 🎤"
-              disabled={loading || recording}
-              rows={1}
+      {/* ── Fixed input bar — sits above the bottom navbar ── */}
+      <div
+        className="fixed inset-x-0 max-w-md mx-auto z-30"
+        style={{ bottom: "78px" }}
+      >
+        <div
+          className="mx-2 rounded-2xl overflow-hidden"
+          style={{
+            background: "rgba(255,255,255,0.97)",
+            backdropFilter: "blur(20px)",
+            boxShadow: "0 -2px 0 rgba(0,0,0,0.04),0 -8px 24px rgba(0,0,0,0.08),0 4px 8px rgba(0,0,0,0.04)",
+            border: "1px solid rgba(0,0,0,0.07)",
+          }}
+        >
+          {/* Recording indicator */}
+          <AnimatePresence>
+            {recording && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center gap-2 px-4 pt-3 pb-1">
+                  <span className="w-2 h-2 bg-primary rounded-full animate-pulse flex-shrink-0" />
+                  <span className="text-xs text-primary font-medium flex-1 truncate">
+                    {interimText || "استمع... تكلّم الآن"}
+                  </span>
+                  <span className="text-[10px] text-stone-400">اضغط للإيقاف</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Input row */}
+          <div className="flex items-end gap-2 px-3 py-2.5">
+            {/* Mic button */}
+            <button
+              onClick={recording ? stopVoiceInput : startVoiceInput}
+              disabled={loading}
               className={cn(
-                "w-full resize-none rounded-2xl px-4 py-2.5 text-[13px] text-foreground",
-                "border border-slate-200 dark:border-border/60",
-                "bg-slate-50 dark:bg-background",
-                "placeholder:text-muted-foreground placeholder:text-[11px]",
-                "focus:outline-none focus:ring-2 focus:ring-teal-400/25 dark:focus:ring-teal-500/30",
-                "focus:border-teal-400 dark:focus:border-teal-500/50",
-                "focus:bg-white dark:focus:bg-background",
-                "max-h-32 overflow-y-auto leading-relaxed transition-all shadow-sm",
-                (loading || recording) && "opacity-60"
+                "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90",
+                recording
+                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+                  : "bg-stone-100 text-stone-500 hover:bg-stone-200 hover:text-stone-700",
+                loading && "opacity-40 cursor-not-allowed"
               )}
-              style={{ minHeight: "42px" }}
-              onInput={(e) => {
-                const t = e.currentTarget;
-                t.style.height = "auto";
-                t.style.height = Math.min(t.scrollHeight, 128) + "px";
-              }}
-            />
+            >
+              {recording ? <StopCircle size={18} /> : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="9" y="2" width="6" height="11" rx="3" />
+                  <path d="M5 10a7 7 0 0 0 14 0" />
+                  <line x1="12" y1="17" x2="12" y2="21" />
+                  <line x1="9" y1="21" x2="15" y2="21" />
+                  <line x1="2" y1="8" x2="4.5" y2="8" strokeWidth="1.4" opacity="0.7" />
+                  <line x1="2" y1="10.5" x2="5" y2="10.5" strokeWidth="1.4" opacity="0.85" />
+                  <line x1="2" y1="13" x2="4.5" y2="13" strokeWidth="1.4" opacity="0.7" />
+                  <line x1="19.5" y1="8" x2="22" y2="8" strokeWidth="1.4" opacity="0.7" />
+                  <line x1="19" y1="10.5" x2="22" y2="10.5" strokeWidth="1.4" opacity="0.85" />
+                  <line x1="19.5" y1="13" x2="22" y2="13" strokeWidth="1.4" opacity="0.7" />
+                </svg>
+              )}
+            </button>
+
+            {/* Textarea */}
+            <div className="flex-1">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
+                }}
+                placeholder="اكتب ما في قلبك..."
+                disabled={loading || recording}
+                rows={1}
+                className={cn(
+                  "w-full resize-none rounded-xl px-3.5 py-2.5 text-[13.5px] text-stone-800",
+                  "border border-stone-200",
+                  "bg-stone-50",
+                  "placeholder:text-stone-400 placeholder:text-[12px]",
+                  "focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:border-teal-400",
+                  "focus:bg-white",
+                  "max-h-32 overflow-y-auto leading-relaxed transition-all",
+                  "dark:bg-background dark:border-border/60 dark:text-foreground dark:focus:border-teal-500/50",
+                  (loading || recording) && "opacity-50"
+                )}
+                style={{ minHeight: "42px" }}
+                onInput={(e) => {
+                  const t = e.currentTarget;
+                  t.style.height = "auto";
+                  t.style.height = Math.min(t.scrollHeight, 128) + "px";
+                }}
+              />
+            </div>
+
+            {/* Send button */}
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={!input.trim() || loading || recording}
+              className={cn(
+                "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-90",
+                input.trim() && !loading && !recording
+                  ? "text-white shadow-md shadow-teal-500/30"
+                  : "bg-stone-100 text-stone-400 opacity-60 cursor-not-allowed"
+              )}
+              style={input.trim() && !loading && !recording ? {
+                background: "linear-gradient(135deg,#2dd4bf,#059669)",
+              } : undefined}
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={17} className="scale-x-[-1]" />}
+            </button>
           </div>
 
-          <button
-            onClick={() => sendMessage(input)}
-            disabled={!input.trim() || loading || recording}
-            className={cn(
-              "flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all",
-              input.trim() && !loading && !recording
-                ? "bg-gradient-to-br from-teal-500 to-emerald-600 text-white hover:opacity-90 active:scale-95 shadow-md shadow-teal-500/25"
-                : "bg-slate-100 dark:bg-muted text-slate-400 dark:text-muted-foreground opacity-60 cursor-not-allowed"
-            )}
-          >
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} className="scale-x-[-1]" />}
-          </button>
+          {/* Footer */}
+          <p className="text-center text-[10px] text-stone-400 pb-2">
+            ما تقوله هنا آمن ومحفوظ بيننا فقط
+          </p>
         </div>
-
-        <p className="text-center text-[10px] text-muted-foreground/60 mt-2">
-          ما تقوله هنا آمن ومحفوظ بيننا فقط
-        </p>
       </div>
     </div>
   );

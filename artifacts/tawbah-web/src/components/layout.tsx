@@ -1,63 +1,49 @@
 import { ReactNode, useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Home, Calendar, CircleDot, ShieldAlert, BarChart2, HelpCircle, User2, X } from "lucide-react";
+import { Home, Calendar, BarChart2, User2, X, HelpCircle, CircleDot, ShieldAlert } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/context/SettingsContext";
-import { VoiceOrbOverlay } from "./VoiceOrbOverlay";
 
-const WAVE_BARS = [0.35, 0.65, 1, 0.8, 0.5, 0.9, 0.6, 0.4, 0.75, 0.95, 0.55, 0.7, 0.45, 0.85, 0.6];
+const WAVE_BARS = [0.4, 0.7, 1, 0.75, 0.5, 0.85, 0.55, 0.45, 0.8];
 
-function ZakiyNavOrb({ isActive }: { isActive: boolean }) {
+function ZakiyNavCenter({ isActive }: { isActive: boolean }) {
   return (
-    <div className="relative w-[60px] h-[60px]">
-      {/* Soft primary glow */}
-      <div
-        className="absolute rounded-full pointer-events-none"
-        style={{
-          inset: "-6px",
-          background: "radial-gradient(circle, hsl(var(--primary)/0.14) 0%, transparent 70%)",
-          filter: "blur(8px)",
-        }}
-      />
-
-      {/* Pulse rings */}
-      {[0, 1].map((i) => (
+    <div className="relative w-[46px] h-[46px]">
+      {isActive && [0, 1].map((i) => (
         <motion.div
           key={i}
-          className="absolute inset-0 rounded-full"
-          style={{ border: "1px solid hsl(var(--primary)/0.22)" }}
-          animate={{ scale: [1, 1.18, 1], opacity: [0.22, 0, 0.22] }}
-          transition={{ duration: 5, repeat: Infinity, delay: i * 2.2, ease: "easeInOut" }}
+          className="absolute inset-[-3px] rounded-full pointer-events-none"
+          style={{ border: "1.5px solid hsl(var(--primary)/0.28)" }}
+          animate={{ scale: [1, 1.22, 1], opacity: [0.28, 0, 0.28] }}
+          transition={{ duration: 3.5, repeat: Infinity, delay: i * 1.6, ease: "easeInOut" }}
         />
       ))}
 
-      {/* Main orb */}
       <div
-        className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center"
+        className="absolute inset-0 rounded-full flex items-center justify-center overflow-hidden"
         style={{
-          background: "linear-gradient(145deg, hsl(var(--primary)/0.82), hsl(var(--primary)/0.62))",
+          background: isActive
+            ? "linear-gradient(145deg, hsl(var(--primary)), hsl(var(--primary)/0.82))"
+            : "linear-gradient(145deg, hsl(var(--primary)/0.88), hsl(var(--primary)/0.68))",
           boxShadow: isActive
-            ? "0 0 0 2px hsl(var(--primary)/0.3), 0 0 14px hsl(var(--primary)/0.2), 0 4px 14px rgba(0,0,0,0.18)"
-            : "0 0 0 1.5px hsl(var(--primary)/0.18), 0 0 8px hsl(var(--primary)/0.12), 0 3px 10px rgba(0,0,0,0.14)",
+            ? "0 0 0 2.5px hsl(var(--primary)/0.18), 0 4px 16px hsl(var(--primary)/0.32), inset 0 1px 0 rgba(255,255,255,0.18)"
+            : "0 2px 10px hsl(var(--primary)/0.24), inset 0 1px 0 rgba(255,255,255,0.14)",
         }}
       >
-        {/* Gloss */}
         <div
           className="absolute inset-0 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(ellipse at 38% 28%, rgba(255,255,255,0.15) 0%, transparent 60%)" }}
+          style={{ background: "radial-gradient(ellipse at 35% 28%, rgba(255,255,255,0.18) 0%, transparent 60%)" }}
         />
-
-        {/* Sound wave bars */}
-        <div className="relative z-10 flex items-center gap-[2px]">
+        <div className="relative z-10 flex items-center gap-[2.5px]">
           {WAVE_BARS.map((h, i) => (
             <motion.div
               key={i}
               className="rounded-full"
               style={{ width: 2, background: "hsl(var(--primary-foreground)/0.92)", originY: "50%" }}
-              animate={{ scaleY: [h * 0.25, h, h * 0.45, h * 0.7, h * 0.25] }}
-              transition={{ duration: 2.4 + (i % 5) * 0.25, repeat: Infinity, delay: i * 0.11, ease: "easeInOut" }}
-              initial={{ height: Math.round(h * 24) }}
+              animate={{ scaleY: [h * 0.28, h, h * 0.48, h * 0.28] }}
+              transition={{ duration: 2.2 + (i % 4) * 0.28, repeat: Infinity, delay: i * 0.13, ease: "easeInOut" }}
+              initial={{ height: Math.round(h * 20) }}
             />
           ))}
         </div>
@@ -85,7 +71,6 @@ export function Layout({ children }: { children: ReactNode }) {
     { href: "/account", label: "حسابي", icon: User2 },
   ];
 
-  const [voiceOpen, setVoiceOpen] = useState(false);
   const zakiHref = "/zakiy";
   const isZakiActive = location === zakiHref;
   const isSos = location === "/sos";
@@ -140,7 +125,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {!isSos && (
         <>
-          {/* Help button — moved to LEFT side, raised higher to clear chat controls */}
+          {/* Help button */}
           <div className="fixed bottom-[110px] left-4 z-50 flex flex-col items-center gap-2">
             <AnimatePresence>
               {helpOpen && (
@@ -218,62 +203,58 @@ export function Layout({ children }: { children: ReactNode }) {
             )}
           </AnimatePresence>
 
-          {/* Voice Orb Overlay */}
-          <AnimatePresence>
-            {voiceOpen && (
-              <VoiceOrbOverlay onClose={() => setVoiceOpen(false)} />
-            )}
-          </AnimatePresence>
-
           {/* Floating Bottom Navigation Bar */}
           <nav className="fixed bottom-3 inset-x-0 z-40 max-w-md mx-auto px-4">
-            <div className="relative">
-              {/* Floating glass pill */}
+            <div
+              className="relative rounded-[28px] overflow-hidden bg-card/90 backdrop-blur-2xl"
+              style={{
+                boxShadow: "0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.09), inset 0 1px 0 rgba(255,255,255,0.14)",
+                border: "1px solid hsl(var(--border)/0.55)",
+              }}
+            >
+              {/* Top shine */}
               <div
-                className="relative rounded-[28px] overflow-hidden bg-card/88 backdrop-blur-2xl"
-                style={{
-                  boxShadow: "0 8px 32px rgba(0,0,0,0.16), 0 2px 8px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.12)",
-                  border: "1px solid hsl(var(--border)/0.6)",
-                }}
-              >
-                {/* Subtle top shine */}
-                <div
-                  className="absolute top-0 inset-x-0 h-[45%] pointer-events-none rounded-t-[28px]"
-                  style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, transparent 100%)" }}
-                />
+                className="absolute top-0 inset-x-0 h-[45%] pointer-events-none rounded-t-[28px]"
+                style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.16) 0%, transparent 100%)" }}
+              />
 
-                {/* Nav content */}
-                <div className="relative flex items-center h-[62px]" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
-                  {leftItems.map((item) => (
-                    <NavItem key={item.href} {...item} />
-                  ))}
+              {/* Nav content */}
+              <div className="relative flex items-center h-[62px]" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+                {leftItems.map((item) => (
+                  <NavItem key={item.href} {...item} />
+                ))}
 
-                  {/* Center spacer for orb */}
-                  <div className="flex-none" style={{ width: "22%" }} />
-
-                  {rightItems.map((item) => (
-                    <NavItem key={item.href} {...item} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Zaki orb — floats above pill center */}
-              <div
-                className="absolute left-1/2 -translate-x-1/2 -top-[26px] z-50"
-                style={{ filter: "drop-shadow(0 6px 14px rgba(0,0,0,0.2)) drop-shadow(0 2px 5px rgba(0,0,0,0.12))" }}
-              >
-                <button
-                  onClick={() => setVoiceOpen(true)}
-                  className="block tap-highlight-transparent focus:outline-none"
+                {/* Center Zakiy button — full height and width in navbar */}
+                <Link
+                  href="/zakiy"
+                  className="relative flex flex-col items-center justify-center flex-none h-full tap-highlight-transparent group"
+                  style={{ width: "22%" }}
                 >
+                  {isZakiActive && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute top-0 inset-x-2 h-[3px] bg-primary rounded-b-full"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
                   <motion.div
                     whileTap={{ scale: 0.92 }}
-                    whileHover={{ scale: 1.06 }}
-                    className="relative"
+                    whileHover={{ scale: 1.05 }}
+                    className="flex flex-col items-center gap-0.5"
                   >
-                    <ZakiyNavOrb isActive={isZakiActive} />
+                    <ZakiyNavCenter isActive={isZakiActive} />
+                    <span className={cn(
+                      "text-[9px] font-semibold leading-none transition-colors",
+                      isZakiActive ? "text-primary" : "text-muted-foreground"
+                    )}>
+                      الزكي
+                    </span>
                   </motion.div>
-                </button>
+                </Link>
+
+                {rightItems.map((item) => (
+                  <NavItem key={item.href} {...item} />
+                ))}
               </div>
             </div>
           </nav>
