@@ -270,7 +270,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
   }
 
   return (
-    <div className="space-y-0.5 transition-colors duration-300 dark:bg-teal-950/30 px-2 py-1 -mx-2 rounded-lg bg-[#c0edc44d]">
+    <div className="space-y-0.5 transition-colors duration-300 dark:bg-teal-950/30 px-2 py-1 -mx-2 rounded-lg bg-[#ffffff4d]">
       {elements}
     </div>
   );
