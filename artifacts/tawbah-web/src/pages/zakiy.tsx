@@ -907,7 +907,7 @@ function BotMessageBody({
           <button
             onClick={handleHadiTasks}
             disabled={hadiLoading || hadiDone}
-            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-400/60 hover:bg-emerald-200 bg-[#12e081] text-[#ffffff]"
+            className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-full transition-all border dark:bg-emerald-950/30 dark:text-emerald-400 border-emerald-400/60 hover:bg-emerald-200 bg-[#00d492] text-[#cbf7e3]"
           >
             {hadiLoading
               ? <><Loader2 size={12} className="animate-spin" /> جاري الاستخراج...</>
