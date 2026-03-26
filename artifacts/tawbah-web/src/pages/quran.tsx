@@ -2432,129 +2432,312 @@ function VirtuesSection() {
 
 // ─── Reading Tracker ──────────────────────────────────────────────────────────
 
+// Surah start pages in the standard 604-page Uthmani Mushaf
+const SURAH_PAGE_MAP: [number, string][] = [
+  [1,"الفاتحة"],[2,"البقرة"],[50,"آل عمران"],[77,"النساء"],[106,"المائدة"],
+  [128,"الأنعام"],[151,"الأعراف"],[177,"الأنفال"],[187,"التوبة"],[208,"يونس"],
+  [221,"هود"],[235,"يوسف"],[249,"الرعد"],[255,"إبراهيم"],[262,"الحجر"],
+  [267,"النحل"],[282,"الإسراء"],[293,"الكهف"],[305,"مريم"],[312,"طه"],
+  [322,"الأنبياء"],[333,"الحج"],[342,"المؤمنون"],[350,"النور"],[359,"الفرقان"],
+  [367,"الشعراء"],[377,"النمل"],[385,"القصص"],[396,"العنكبوت"],[404,"الروم"],
+  [411,"لقمان"],[415,"السجدة"],[418,"الأحزاب"],[428,"سبأ"],[434,"فاطر"],
+  [440,"يس"],[446,"الصافات"],[453,"ص"],[458,"الزمر"],[467,"غافر"],
+  [477,"فصلت"],[483,"الشورى"],[489,"الزخرف"],[496,"الدخان"],[499,"الجاثية"],
+  [502,"الأحقاف"],[507,"محمد"],[511,"الفتح"],[515,"الحجرات"],[518,"ق"],
+  [520,"الذاريات"],[523,"الطور"],[526,"النجم"],[528,"القمر"],[531,"الرحمن"],
+  [534,"الواقعة"],[537,"الحديد"],[542,"المجادلة"],[545,"الحشر"],[549,"الممتحنة"],
+  [551,"الصف"],[553,"الجمعة"],[554,"المنافقون"],[556,"التغابن"],[558,"الطلاق"],
+  [560,"التحريم"],[562,"الملك"],[564,"القلم"],[566,"الحاقة"],[568,"المعارج"],
+  [570,"نوح"],[572,"الجن"],[574,"المزمل"],[575,"المدثر"],[577,"القيامة"],
+  [578,"الإنسان"],[580,"المرسلات"],[582,"النبأ"],[583,"النازعات"],[585,"عبس"],
+  [586,"التكوير"],[587,"الانفطار"],[587,"المطففين"],[589,"الانشقاق"],[590,"البروج"],
+  [591,"الطارق"],[591,"الأعلى"],[592,"الغاشية"],[593,"الفجر"],[594,"البلد"],
+  [595,"الشمس"],[595,"الليل"],[596,"الضحى"],[596,"الشرح"],[597,"التين"],
+  [597,"العلق"],[598,"القدر"],[598,"البينة"],[599,"الزلزلة"],[599,"العاديات"],
+  [600,"القارعة"],[600,"التكاثر"],[601,"العصر"],[601,"الهمزة"],[601,"الفيل"],
+  [602,"قريش"],[602,"الماعون"],[602,"الكوثر"],[603,"الكافرون"],[603,"النصر"],
+  [603,"المسد"],[604,"الإخلاص"],[604,"الفلق"],[604,"الناس"],
+];
+
+function getSurahForPage(page: number): string {
+  let result = "الفاتحة";
+  for (const [startPage, name] of SURAH_PAGE_MAP) {
+    if (page >= startPage) result = name;
+    else break;
+  }
+  return result;
+}
+
+function todayDateStr(): string {
+  return new Date().toISOString().split("T")[0]!;
+}
+
+const WIRD_TARGET = 5;
+const MUSHAF_PAGES = 604;
+
 function ReadingTracker() {
-  const [pages, setPages] = useState<number>(() => {
-    try {
-      return parseInt(localStorage.getItem("quran_pages_today") ?? "0") || 0;
-    } catch {
-      return 0;
-    }
+  // Total pages ever completed (determines where today's wird starts)
+  const [totalDone, setTotalDone] = useState<number>(() => {
+    try { return parseInt(localStorage.getItem("wird_total") ?? "0") || 0; } catch { return 0; }
   });
+
+  // Streak: consecutive days
   const [streak, setStreak] = useState<number>(() => {
-    try {
-      return parseInt(localStorage.getItem("quran_streak") ?? "0") || 0;
-    } catch {
-      return 0;
-    }
+    try { return parseInt(localStorage.getItem("wird_streak") ?? "0") || 0; } catch { return 0; }
   });
 
-  const addPage = () => {
-    const next = pages + 1;
-    setPages(next);
+  // Which of the 5 pages are checked today
+  const [checked, setChecked] = useState<boolean[]>(() => {
     try {
-      localStorage.setItem("quran_pages_today", String(next));
-    } catch {}
-  };
+      const savedDate = localStorage.getItem("wird_date");
+      if (savedDate !== todayDateStr()) return Array(WIRD_TARGET).fill(false);
+      const raw = localStorage.getItem("wird_checked");
+      if (!raw) return Array(WIRD_TARGET).fill(false);
+      const parsed = JSON.parse(raw) as boolean[];
+      return Array.isArray(parsed) && parsed.length === WIRD_TARGET ? parsed : Array(WIRD_TARGET).fill(false);
+    } catch { return Array(WIRD_TARGET).fill(false); }
+  });
 
-  const resetDay = () => {
-    if (pages > 0) {
-      const newStreak = streak + 1;
-      setStreak(newStreak);
-      setPages(0);
+  // Whether today's completion was already counted
+  const [completedToday, setCompletedToday] = useState<boolean>(() => {
+    try { return localStorage.getItem("wird_completed_date") === todayDateStr(); } catch { return false; }
+  });
+
+  const [showCelebration, setShowCelebration] = useState(false);
+
+  // Auto-reset on new day + streak update
+  useEffect(() => {
+    try {
+      const savedDate = localStorage.getItem("wird_date");
+      const today = todayDateStr();
+      if (savedDate && savedDate !== today) {
+        // It's a new day — check if previous day was completed
+        const wasCompleted = localStorage.getItem("wird_completed_date") === savedDate;
+        if (wasCompleted) {
+          // Check consecutive: yesterday should be exactly 1 day before today
+          const prevDate = new Date(savedDate);
+          const todayDate = new Date(today);
+          const diffDays = Math.round((todayDate.getTime() - prevDate.getTime()) / 86400000);
+          const newStreak = diffDays === 1 ? streak + 1 : 1;
+          setStreak(newStreak);
+          localStorage.setItem("wird_streak", String(newStreak));
+        } else {
+          // Missed a day — reset streak
+          setStreak(0);
+          localStorage.setItem("wird_streak", "0");
+        }
+        // Reset today
+        setChecked(Array(WIRD_TARGET).fill(false));
+        setCompletedToday(false);
+        localStorage.setItem("wird_date", today);
+        localStorage.setItem("wird_checked", JSON.stringify(Array(WIRD_TARGET).fill(false)));
+      } else if (!savedDate) {
+        localStorage.setItem("wird_date", today);
+      }
+    } catch {}
+  }, []);
+
+  // Calculate which pages to read today
+  // Start page cycles through the Mushaf
+  const startPageIdx = totalDone % MUSHAF_PAGES; // 0-based
+  const todayPages = Array.from({ length: WIRD_TARGET }, (_, i) =>
+    ((startPageIdx + i) % MUSHAF_PAGES) + 1
+  );
+
+  const doneCount = checked.filter(Boolean).length;
+  const allDone = doneCount >= WIRD_TARGET;
+  const progress = (doneCount / WIRD_TARGET) * 100;
+
+  // Khatma progress
+  const khatmasDone = Math.floor(totalDone / MUSHAF_PAGES);
+  const khatmaProgress = ((totalDone % MUSHAF_PAGES) / MUSHAF_PAGES) * 100;
+
+  const togglePage = (idx: number) => {
+    const next = [...checked];
+    next[idx] = !next[idx];
+    setChecked(next);
+    try {
+      localStorage.setItem("wird_checked", JSON.stringify(next));
+      localStorage.setItem("wird_date", todayDateStr());
+    } catch {}
+
+    const newDoneCount = next.filter(Boolean).length;
+
+    // If all 5 just completed and not yet counted today
+    if (newDoneCount >= WIRD_TARGET && !completedToday) {
+      const newTotal = totalDone + WIRD_TARGET;
+      setTotalDone(newTotal);
+      setCompletedToday(true);
+      setShowCelebration(true);
       try {
-        localStorage.setItem("quran_pages_today", "0");
-        localStorage.setItem("quran_streak", String(newStreak));
+        localStorage.setItem("wird_total", String(newTotal));
+        localStorage.setItem("wird_completed_date", todayDateStr());
       } catch {}
+      setTimeout(() => setShowCelebration(false), 4000);
     }
   };
 
-  const target = 5;
-  const progress = Math.min((pages / target) * 100, 100);
-  const done = pages >= target;
+  const nextStartPage = ((totalDone + WIRD_TARGET) % MUSHAF_PAGES) + 1;
 
   return (
     <div
-      className="rounded-[22px] p-4"
+      className="rounded-[22px] overflow-hidden"
       style={{
-        background:
-          "linear-gradient(145deg, rgba(200,168,75,0.1) 0%, rgba(200,168,75,0.03) 100%)",
+        background: "linear-gradient(145deg, rgba(200,168,75,0.1) 0%, rgba(200,168,75,0.03) 100%)",
         border: "1px solid rgba(200,168,75,0.25)",
       }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="font-bold text-sm">ورد القرآن اليومي</h3>
-          <p className="text-[11px] text-muted-foreground">
-            هدفك: {target} صفحات يومياً
-          </p>
+      {/* ── Header ── */}
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <h3 className="font-bold text-sm">ورد القرآن اليومي</h3>
+            <p className="text-[11px] text-muted-foreground">
+              {WIRD_TARGET} صفحات يومياً — من صفحة {todayPages[0]} إلى {todayPages[WIRD_TARGET - 1]}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {khatmasDone > 0 && (
+              <div
+                className="flex items-center gap-1 px-2 py-1 rounded-full"
+                style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.25)" }}
+              >
+                <span className="text-[10px] font-bold text-emerald-500">×{khatmasDone} ختمة</span>
+              </div>
+            )}
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+              style={{ background: "rgba(200,168,75,0.12)", border: "1px solid rgba(200,168,75,0.25)" }}
+            >
+              <Flame size={12} style={{ color: "#c8a84b" }} />
+              <span className="font-bold text-[13px]" style={{ color: "#c8a84b" }}>{streak}</span>
+              <span className="text-[10px] text-muted-foreground">يوم</span>
+            </div>
+          </div>
         </div>
-        <div
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+
+        {/* Surah context */}
+        <p className="text-[11px] mb-3" style={{ color: "rgba(200,168,75,0.75)" }}>
+          📖 سورة {getSurahForPage(todayPages[0]!)}
+          {getSurahForPage(todayPages[WIRD_TARGET - 1]!) !== getSurahForPage(todayPages[0]!) &&
+            ` — ${getSurahForPage(todayPages[WIRD_TARGET - 1]!)}`}
+        </p>
+
+        {/* Overall progress bar (khatma) */}
+        <div className="mb-1">
+          <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+            <span>تقدم الختمة</span>
+            <span>{totalDone} / {MUSHAF_PAGES} ص</span>
+          </div>
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: "linear-gradient(90deg, #c8a84b88, #c8a84b)" }}
+              animate={{ width: `${khatmaProgress}%` }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Today's 5 pages ── */}
+      <div className="px-4 pb-2">
+        <div className="flex justify-between text-[10px] text-muted-foreground mb-2">
+          <span>ورد اليوم</span>
+          <span>{doneCount} / {WIRD_TARGET} صفحات</span>
+        </div>
+
+        {/* Daily progress bar */}
+        <div className="h-2 rounded-full mb-3 overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+          <motion.div
+            className="h-full rounded-full"
+            style={{ background: "linear-gradient(90deg, #c8a84b, #f0d070)" }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+          />
+        </div>
+
+        {/* 5 page tiles */}
+        <div className="grid grid-cols-5 gap-2 mb-3">
+          {todayPages.map((pg, idx) => {
+            const isDone = checked[idx] ?? false;
+            return (
+              <button
+                key={idx}
+                onClick={() => togglePage(idx)}
+                className="flex flex-col items-center gap-1.5 py-3 rounded-2xl transition-all active:scale-[0.93]"
+                style={{
+                  background: isDone
+                    ? "linear-gradient(145deg, rgba(200,168,75,0.4), rgba(200,168,75,0.18))"
+                    : "rgba(255,255,255,0.04)",
+                  border: `1.5px solid ${isDone ? "rgba(200,168,75,0.6)" : "rgba(255,255,255,0.08)"}`,
+                  boxShadow: isDone ? "0 2px 10px rgba(200,168,75,0.15)" : "none",
+                }}
+              >
+                {isDone ? (
+                  <Check size={14} style={{ color: "#c8a84b" }} />
+                ) : (
+                  <span className="text-[11px] font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>
+                    {pg}
+                  </span>
+                )}
+                <span
+                  className="text-[9px] font-medium leading-none"
+                  style={{ color: isDone ? "#c8a84b" : "rgba(255,255,255,0.25)" }}
+                >
+                  {isDone ? "✓ قرأت" : `ص ${pg}`}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Open quran.com at current page */}
+        <a
+          href={`https://quran.com/${getSurahForPage(todayPages[0]!).replace(/\s/g, "-")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-[12px] font-bold transition-all active:scale-[0.97] mb-3"
           style={{
-            background: "rgba(200,168,75,0.12)",
-            border: "1px solid rgba(200,168,75,0.25)",
+            background: allDone
+              ? "rgba(16,185,129,0.12)"
+              : "linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.1))",
+            border: `1px solid ${allDone ? "rgba(16,185,129,0.35)" : "rgba(200,168,75,0.35)"}`,
+            color: allDone ? "#10b981" : "#c8a84b",
           }}
         >
-          <Flame size={13} style={{ color: "#c8a84b" }} />
-          <span className="font-bold text-[13px]" style={{ color: "#c8a84b" }}>
-            {streak}
-          </span>
-          <span className="text-[10px] text-muted-foreground">يوم</span>
-        </div>
+          {allDone ? (
+            <><Check size={13} /> أتممت وردك! — ورد الغد: ص {nextStartPage}</>
+          ) : (
+            <><BookOpen size={13} /> افتح المصحف — ابدأ من صفحة {todayPages[0]}</>
+          )}
+        </a>
       </div>
 
-      {/* Progress bar */}
-      <div
-        className="h-2.5 rounded-full mb-3 overflow-hidden"
-        style={{ background: "rgba(255,255,255,0.07)" }}
-      >
-        <motion.div
-          className="h-full rounded-full"
-          style={{ background: "linear-gradient(90deg, #c8a84b, #f0d070)" }}
-          initial={{ width: 0 }}
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-        />
-      </div>
-
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-[12px] text-muted-foreground">
-          {pages} / {target} صفحة
-        </span>
-        {done && (
-          <span className="text-[11px] font-bold text-emerald-500 flex items-center gap-1">
-            <Check size={12} />
-            أتممت وردك!
-          </span>
-        )}
-      </div>
-
-      <div className="flex gap-2">
-        <button
-          onClick={addPage}
-          className="flex-1 py-2.5 rounded-xl font-bold text-sm transition-all active:scale-[0.97]"
-          style={{
-            background: "linear-gradient(135deg, #c8a84b, #a07c2a)",
-            color: "#1a0e00",
-            boxShadow: "0 4px 16px rgba(200,168,75,0.3)",
-          }}
-        >
-          + صفحة قرأتها
-        </button>
-        {pages > 0 && (
-          <button
-            onClick={resetDay}
-            className="py-2.5 px-3 rounded-xl font-bold text-sm border transition-all active:scale-[0.97]"
-            style={{
-              background: "rgba(16,185,129,0.1)",
-              border: "1px solid rgba(16,185,129,0.25)",
-              color: "#10b981",
-            }}
+      {/* ── Celebration ── */}
+      <AnimatePresence>
+        {showCelebration && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
           >
-            <Check size={16} />
-          </button>
+            <div
+              className="mx-4 mb-4 py-3 px-4 rounded-2xl text-center"
+              style={{ background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)" }}
+            >
+              <p className="text-sm font-bold text-emerald-400 mb-0.5">🎉 أتممت وردك اليوم!</p>
+              <p className="text-[11px] text-muted-foreground">
+                ورد الغد: صفحات {nextStartPage} — {((totalDone + WIRD_TARGET - 1) % MUSHAF_PAGES) + 1}
+              </p>
+              {khatmasDone > 0 && Math.floor((totalDone) / MUSHAF_PAGES) > Math.floor((totalDone - WIRD_TARGET) / MUSHAF_PAGES) && (
+                <p className="text-[11px] font-bold text-amber-400 mt-1">✨ ألف مبروك — أتممت ختمة كاملة!</p>
+              )}
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 }
