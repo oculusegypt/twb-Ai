@@ -1232,7 +1232,7 @@ export default function ZakiyPage() {
                 </p>
                 <p className="text-xs leading-relaxed text-[#ffffff]">{riskAlert.message}</p>
                 {riskAlert.sign && (
-                  <p className="text-[10px] mt-1 text-[#e63c94b3]">العلامة: {riskAlert.sign}</p>
+                  <p className="text-[10px] mt-1 text-[#fa1e91b3]">العلامة: {riskAlert.sign}</p>
                 )}
               </div>
               <button onClick={() => setRiskDismissed(true)} className="text-muted-foreground hover:text-foreground flex-shrink-0">
