@@ -9,6 +9,7 @@ export interface AppNotification {
   color: string;
   isRead: boolean;
   createdAt: string;
+  link?: string;       // optional navigation link when tapped
 }
 
 const STORAGE_KEY = "tawbah_web_inbox";
@@ -219,6 +220,7 @@ const REMINDER_POOL: Omit<AppNotification, "id" | "isRead" | "createdAt">[] = [
     body: "لا تنسَ ذكر الصباح — سيد الاستغفار يُحصّنك ليومك كله 🌅",
     icon: "sunrise",
     color: "#d97706",
+    link: "/adhkar",
   },
   {
     type: "reminder",
@@ -226,6 +228,7 @@ const REMINDER_POOL: Omit<AppNotification, "id" | "isRead" | "createdAt">[] = [
     body: "اختم يومك بذكر المساء وسيد الاستغفار قبل النوم 🌙",
     icon: "moon",
     color: "#4A90B8",
+    link: "/adhkar",
   },
   {
     type: "reminder",
@@ -233,6 +236,7 @@ const REMINDER_POOL: Omit<AppNotification, "id" | "isRead" | "createdAt">[] = [
     body: "حان وقت ورد الاستغفار اليومي ١٠٠ مرة — افتح عداد الذكر",
     icon: "refresh-cw",
     color: "#16a34a",
+    link: "/dhikr",
   },
   {
     type: "reminder",
@@ -240,6 +244,7 @@ const REMINDER_POOL: Omit<AppNotification, "id" | "isRead" | "createdAt">[] = [
     body: "لا تنسَ صفحتين من القرآن اليوم — هدفك اليومي ينتظرك ✨",
     icon: "book",
     color: "#16a34a",
+    link: "/quran",
   },
   {
     type: "reminder",
@@ -247,6 +252,7 @@ const REMINDER_POOL: Omit<AppNotification, "id" | "isRead" | "createdAt">[] = [
     body: "كيف كان يومك الروحي؟ سجّله في مذكرتك الآن",
     icon: "pen-tool",
     color: "#8E5CA8",
+    link: "/journal",
   },
 ];
 
@@ -275,6 +281,7 @@ export function seedDailyNotifications(
       body: `أكملت ${streakDays} يوماً متواصلاً من الاستقامة — ثبّتك الله وزادك من فضله`,
       icon: "award", color: "#d97706", isRead: false,
       createdAt: new Date(Date.now() - 120000).toISOString(),
+      link: "/journey",
     });
   }
   if (covenantSigned && day40Progress === 10) {
@@ -284,6 +291,7 @@ export function seedDailyNotifications(
       body: "أتممت ١٠ أيام من رحلتك — الله يرى صدقك وثباتك",
       icon: "award", color: "#16a34a", isRead: false,
       createdAt: new Date(Date.now() - 180000).toISOString(),
+      link: "/journey",
     });
   }
   if (covenantSigned && day40Progress === 20) {
@@ -293,6 +301,7 @@ export function seedDailyNotifications(
       body: "٢٠ يوماً من الثبات — أنت أقرب إلى الله مما تتخيل",
       icon: "star", color: "#d97706", isRead: false,
       createdAt: new Date(Date.now() - 180000).toISOString(),
+      link: "/journey",
     });
   }
   if (covenantSigned && day40Progress === 40) {
@@ -302,6 +311,7 @@ export function seedDailyNotifications(
       body: "ماشاء الله! أتممت الأربعين يوماً — سأل الله أن تكون من التوابين",
       icon: "star", color: "#d97706", isRead: false,
       createdAt: new Date(Date.now() - 180000).toISOString(),
+      link: "/journey",
     });
   }
   if (!covenantSigned) {
@@ -311,6 +321,7 @@ export function seedDailyNotifications(
       body: "لم توقّع ميثاقك بعد — كل لحظة تأخير هي فرصة ضائعة للتوبة",
       icon: "alert-circle", color: "#dc2626", isRead: false,
       createdAt: new Date(Date.now() - 240000).toISOString(),
+      link: "/covenant",
     });
   }
 

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAppUserProgress, useAppDhikrCount, useAppHabits } from "@/hooks/use-app-data";
-import { CircleDot, PenLine, TrendingUp, Heart, ChevronLeft, Sparkles } from "lucide-react";
+import { CircleDot, PenLine, TrendingUp, Heart, Sparkles, Flame, Star, ChevronDown } from "lucide-react";
 
 function useSoulScore() {
   const { data: progress } = useAppUserProgress();
@@ -14,175 +14,246 @@ function useSoulScore() {
   const dhikrTarget = 99;
   const habitsTotal = habits?.length ?? 0;
   const habitsDone = habits?.filter(h => h.completed).length ?? 0;
-  const journalDone = false;
 
   const streakScore = Math.min(streak * 5, 40);
   const dhikrScore = Math.min((dhikrTotal / dhikrTarget) * 35, 35);
   const habitsScore = habitsTotal > 0 ? Math.min((habitsDone / habitsTotal) * 25, 25) : 0;
-
   const total = Math.round(streakScore + dhikrScore + habitsScore);
 
-  let label = "";
-  let color = "";
-  let tip = "";
+  let label = "", color = "", gradient = "", tip = "";
   let tipIcon: "dhikr" | "journal" | "habit" | "journey" = "dhikr";
+  let level = 0;
 
   if (total >= 80) {
-    label = "روح مشرقة ✨";
-    color = "#16a34a";
+    label = "روح مشرقة";
+    color = "#16a34a"; gradient = "linear-gradient(135deg, #16a34a 0%, #10b981 50%, #34d399 100%)";
     tip = "ما شاء الله — روحك في أعلى حالاتها اليوم. واظب وثبّت حالك!";
-    tipIcon = "journey";
+    tipIcon = "journey"; level = 4;
   } else if (total >= 55) {
     label = "على الطريق";
-    color = "#d97706";
+    color = "#d97706"; gradient = "linear-gradient(135deg, #d97706 0%, #f59e0b 50%, #fbbf24 100%)";
     tip = dhikrTotal < 33
       ? "أضف جرعة ذكر صغيرة — 33 استغفار تحرّك المقياس كثيراً"
       : habitsTotal > 0 && habitsDone < habitsTotal
         ? "أكمل بقية عاداتك اليومية لتضيء المقياس أكثر"
         : "عظيم — واصل على هذا الطريق";
-    tipIcon = dhikrTotal < 33 ? "dhikr" : "habit";
+    tipIcon = dhikrTotal < 33 ? "dhikr" : "habit"; level = 3;
   } else if (total >= 25) {
     label = "تحتاج دفعة";
-    color = "#ea580c";
+    color = "#ea580c"; gradient = "linear-gradient(135deg, #ea580c 0%, #f97316 50%, #fb923c 100%)";
     tip = streak === 0
       ? "ابدأ رحلتك الآن — أول خطوة هي أصعبها ثم تتيسر"
       : "سبّح الآن 33 مرة — هذا وحده يحرّك مقياسك للأمام";
-    tipIcon = streak === 0 ? "journey" : "dhikr";
+    tipIcon = streak === 0 ? "journey" : "dhikr"; level = 2;
   } else {
     label = "روح تطلب النجدة";
-    color = "#dc2626";
+    color = "#dc2626"; gradient = "linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #f87171 100%)";
     tip = "لا تيأس — حتى التوبة الصغيرة تضيء القلب. ابدأ بالذكر الآن";
-    tipIcon = "dhikr";
+    tipIcon = "dhikr"; level = 1;
   }
 
-  return { score: total, label, color, tip, tipIcon, streak, dhikrTotal, habitsDone, habitsTotal };
+  return { score: total, label, color, gradient, tip, tipIcon, streak, dhikrTotal, habitsDone, habitsTotal, level };
 }
 
 const TIP_LINKS: Record<string, { href: string; label: string; icon: React.ReactNode }> = {
-  dhikr: { href: "/dhikr", label: "افتح المسبحة", icon: <CircleDot size={13} /> },
-  journal: { href: "/journal", label: "يومياتي", icon: <PenLine size={13} /> },
-  habit: { href: "/progress", label: "عاداتي", icon: <TrendingUp size={13} /> },
-  journey: { href: "/journey", label: "رحلتي", icon: <Heart size={13} /> },
+  dhikr:   { href: "/dhikr",    label: "افتح المسبحة", icon: <CircleDot size={13} /> },
+  journal: { href: "/journal",  label: "يومياتي",       icon: <PenLine size={13} /> },
+  habit:   { href: "/progress", label: "عاداتي",        icon: <TrendingUp size={13} /> },
+  journey: { href: "/journey",  label: "رحلتي",         icon: <Heart size={13} /> },
 };
 
-function AnimatedGauge({ score, color }: { score: number; color: string }) {
-  const radius = 46;
-  const circumference = 2 * Math.PI * radius;
+const LEVEL_ICONS = ["", "😔", "😐", "🙂", "✨"];
+const LEVEL_BG = [
+  "",
+  "linear-gradient(160deg, #1a0505 0%, #2c0a0a 100%)",
+  "linear-gradient(160deg, #1a0c05 0%, #2c1a05 100%)",
+  "linear-gradient(160deg, #1a1205 0%, #2c2005 100%)",
+  "linear-gradient(160deg, #05180a 0%, #0a2c14 100%)",
+];
+
+function RadialGauge({ score, color }: { score: number; color: string }) {
+  const r = 50, circ = 2 * Math.PI * r;
   const [displayed, setDisplayed] = useState(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDisplayed(score), 150);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setDisplayed(score), 200);
+    return () => clearTimeout(t);
   }, [score]);
 
-  const displayedDash = (displayed / 100) * circumference;
+  const dash = (displayed / 100) * circ;
 
   return (
-    <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
-      <svg className="absolute inset-0 -rotate-90" viewBox="0 0 112 112" width={112} height={112}>
-        <circle
-          cx={56} cy={56} r={radius}
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={9}
-          className="text-muted/25"
-        />
-        <circle
-          cx={56} cy={56} r={radius}
+    <div className="relative flex items-center justify-center" style={{ width: 116, height: 116 }}>
+      <div className="absolute inset-0 rounded-full" style={{
+        background: `radial-gradient(circle, ${color}18 0%, transparent 70%)`,
+        filter: "blur(10px)",
+      }} />
+      <svg className="absolute inset-0 -rotate-90" viewBox="0 0 116 116" width={116} height={116}>
+        <circle cx={58} cy={58} r={r} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={10} />
+        <motion.circle
+          cx={58} cy={58} r={r}
           fill="none"
           stroke={color}
-          strokeWidth={9}
+          strokeWidth={10}
           strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={circumference - displayedDash}
-          style={{ transition: "stroke-dashoffset 1.5s cubic-bezier(0.4,0,0.2,1)" }}
+          strokeDasharray={circ}
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: circ - dash }}
+          transition={{ duration: 1.8, ease: [0.4, 0, 0.2, 1], delay: 0.3 }}
         />
       </svg>
-      <div className="flex flex-col items-center z-10">
-        <span className="text-3xl font-black leading-none" style={{ color }}>{displayed}</span>
-        <span className="text-[10px] text-muted-foreground font-medium mt-0.5">/١٠٠</span>
+      <div className="relative z-10 flex flex-col items-center">
+        <motion.span
+          key={displayed}
+          initial={{ scale: 1.2, opacity: 0.5 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="text-[34px] font-black leading-none"
+          style={{ color }}
+        >
+          {displayed}
+        </motion.span>
+        <span className="text-[9px] font-semibold mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>/١٠٠</span>
       </div>
     </div>
   );
 }
 
+function BreakdownBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0;
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] w-20 text-right shrink-0" style={{ color: "rgba(255,255,255,0.4)" }}>{label}</span>
+      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.07)" }}>
+        <motion.div
+          className="h-full rounded-full"
+          style={{ background: color }}
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          transition={{ duration: 1.2, ease: "easeOut", delay: 0.4 }}
+        />
+      </div>
+      <span className="text-[10px] w-7 text-left shrink-0 font-bold tabular-nums" style={{ color }}>
+        {Math.round(pct)}%
+      </span>
+    </div>
+  );
+}
+
 export function SoulMeter() {
-  const { score, label, color, tip, tipIcon, streak, dhikrTotal, habitsDone, habitsTotal } = useSoulScore();
-  const tipLink = TIP_LINKS[tipIcon];
+  const { score, label, color, gradient, tip, tipIcon, streak, dhikrTotal, habitsDone, habitsTotal, level } = useSoulScore();
+  const tipLink = TIP_LINKS[tipIcon]!;
   const [expanded, setExpanded] = useState(false);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15 }}
-      className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden"
+      transition={{ duration: 0.5, delay: 0.1 }}
+      className="relative overflow-hidden rounded-[24px]"
+      style={{
+        background: LEVEL_BG[level] || "linear-gradient(160deg, #0d0d0d 0%, #1a1a1a 100%)",
+        border: `1px solid ${color}28`,
+        boxShadow: `0 8px 32px rgba(0,0,0,0.4)`,
+      }}
     >
+      {/* Top glow */}
+      <div className="absolute inset-x-0 top-0 h-24 pointer-events-none" style={{
+        background: `radial-gradient(ellipse 80% 100% at 50% 0%, ${color}18 0%, transparent 100%)`,
+      }} />
+
+      {/* Main row */}
       <button
-        className="w-full flex items-center gap-4 p-4 text-right"
+        className="relative z-10 w-full flex items-center gap-4 p-4 text-right"
         onClick={() => setExpanded(e => !e)}
         aria-expanded={expanded}
       >
-        <AnimatedGauge score={score} color={color} />
+        <RadialGauge score={score} color={color} />
 
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Sparkles size={12} style={{ color }} />
-            <span className="text-[11px] font-semibold text-muted-foreground">مقياس الروح</span>
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Sparkles size={11} style={{ color }} />
+            <span className="text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.4)" }}>
+              مقياس الروح اليومي
+            </span>
           </div>
-          <h3 className="text-base font-bold leading-tight mb-2" style={{ color }}>{label}</h3>
-          <div className="w-full bg-muted/40 rounded-full h-1.5 mb-2.5">
+
+          <div className="flex items-center gap-2 mb-2.5">
+            {LEVEL_ICONS[level] && <span style={{ fontSize: 15 }}>{LEVEL_ICONS[level]}</span>}
+            <h3 className="text-base font-black leading-tight" style={{ color }}>{label}</h3>
+          </div>
+
+          {/* Gradient bar */}
+          <div className="w-full h-2 rounded-full overflow-hidden mb-3" style={{ background: "rgba(255,255,255,0.07)" }}>
             <motion.div
-              className="h-1.5 rounded-full"
-              style={{ backgroundColor: color }}
+              className="h-full rounded-full"
+              style={{ background: gradient }}
               initial={{ width: 0 }}
               animate={{ width: `${score}%` }}
-              transition={{ duration: 1.5, ease: [0.4, 0, 0.2, 1], delay: 0.2 }}
+              transition={{ duration: 1.6, ease: [0.4, 0, 0.2, 1], delay: 0.2 }}
             />
           </div>
+
+          {/* Badges */}
           <div className="flex flex-wrap gap-1.5">
             {streak > 0 && (
-              <span className="text-[10px] bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-full font-bold border border-amber-200 dark:border-amber-800/40">
-                🔥 {streak} يوم
+              <span className="flex items-center gap-0.5 text-[10px] px-2 py-0.5 rounded-full font-bold"
+                style={{ background: "rgba(251,191,36,0.15)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.28)" }}>
+                <Flame size={9} />{streak} يوم
               </span>
             )}
             {dhikrTotal > 0 && (
-              <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold border border-primary/20">
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                style={{ background: `${color}18`, color, border: `1px solid ${color}30` }}>
                 ذكر ×{dhikrTotal}
               </span>
             )}
             {habitsTotal > 0 && (
-              <span className="text-[10px] dark:bg-violet-950/40 dark:text-violet-400 px-2 py-0.5 rounded-full font-bold border border-violet-200 dark:border-violet-800/40 text-[#dfdaed] bg-[#4c55bfcf]">
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                style={{ background: "rgba(167,139,250,0.15)", color: "#a78bfa", border: "1px solid rgba(167,139,250,0.28)" }}>
                 عادات {habitsDone}/{habitsTotal}
               </span>
             )}
           </div>
         </div>
-        <ChevronLeft
-          size={15}
-          className="text-muted-foreground shrink-0 transition-transform duration-200"
-          style={{ transform: expanded ? "rotate(-90deg)" : "rotate(0deg)" }}
+
+        <ChevronDown
+          size={16}
+          className="shrink-0 text-muted-foreground transition-transform duration-200"
+          style={{ transform: expanded ? "rotate(180deg)" : "rotate(0deg)" }}
         />
       </button>
+
+      {/* Expanded breakdown */}
       <AnimatePresence>
         {expanded && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22 }}
-            className="overflow-hidden"
+            transition={{ duration: 0.25 }}
+            className="relative z-10 overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-0.5 border-t border-border/50 flex items-center justify-between gap-3">
-              <p className="text-xs text-muted-foreground leading-relaxed flex-1">{tip}</p>
+            <div className="px-4 pb-4 pt-3" style={{ borderTop: `1px solid ${color}18` }}>
+              <p className="text-[10px] font-bold mb-2.5" style={{ color: "rgba(255,255,255,0.3)" }}>تفاصيل المقياس</p>
+
+              <div className="flex flex-col gap-2.5 mb-4">
+                <BreakdownBar label="الاستمرارية 🔥" value={streak} max={8} color="#fbbf24" />
+                <BreakdownBar label="الذكر 📿" value={dhikrTotal} max={99} color={color} />
+                {habitsTotal > 0 && <BreakdownBar label="العادات ✅" value={habitsDone} max={habitsTotal} color="#a78bfa" />}
+              </div>
+
+              {/* Tip card */}
+              <div className="flex items-start gap-2.5 p-3 rounded-xl mb-3"
+                style={{ background: `${color}10`, border: `1px solid ${color}22` }}>
+                <Star size={12} style={{ color, marginTop: 1, flexShrink: 0 }} />
+                <p className="text-xs leading-relaxed flex-1" style={{ color: "rgba(255,255,255,0.72)" }}>{tip}</p>
+              </div>
+
               <Link
                 href={tipLink.href}
-                className="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl whitespace-nowrap shrink-0 transition-colors"
-                style={{
-                  backgroundColor: color + "15",
-                  color,
-                  border: `1px solid ${color}40`,
-                }}
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-bold text-xs transition-all active:scale-[0.97]"
+                style={{ background: gradient, color: "#fff", boxShadow: `0 4px 16px ${color}38` }}
               >
                 {tipLink.icon}
                 {tipLink.label}

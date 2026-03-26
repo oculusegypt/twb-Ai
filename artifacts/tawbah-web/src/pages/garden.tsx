@@ -2,12 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Share2 } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+function getSessionId(): string {
+  return localStorage.getItem("tawbah_session") ?? "guest";
+}
 
 const STAGES = [
-  { min: 0,   max: 49,   emoji: "🌱", name: "بذرة",   nameEn: "Seed",     color: "#a7f3d0", bg: "#022c22", desc: "رحلتك بدأت — كل ذكر يُحيي قلبك", size: 80  },
-  { min: 50,  max: 199,  emoji: "🌿", name: "شتلة",   nameEn: "Seedling", color: "#6ee7b7", bg: "#064e3b", desc: "شتلتك تنمو — واصل الذكر والاستغفار", size: 130 },
-  { min: 200, max: 499,  emoji: "🌳", name: "شجرة",   nameEn: "Tree",     color: "#34d399", bg: "#065f46", desc: "شجرتك باسقة — ثمارها تطول السماء", size: 190 },
-  { min: 500, max: Infinity, emoji: "🌲", name: "غابة", nameEn: "Forest", color: "#10b981", bg: "#047857", desc: "غابتك أينعت — قلبٌ عامرٌ بذكر الله", size: 240 },
+  { min: 0,    max: 49,   emoji: "🌱", name: "بذرة",    nameEn: "Seed",     color: "#a7f3d0", bg: "#022c22", desc: "رحلتك بدأت — كل ذكر يُحيي قلبك",         size: 80  },
+  { min: 50,   max: 199,  emoji: "🌿", name: "شتلة",    nameEn: "Seedling", color: "#6ee7b7", bg: "#064e3b", desc: "شتلتك تنمو — واصل الذكر والاستغفار",       size: 130 },
+  { min: 200,  max: 499,  emoji: "🌳", name: "شجرة",    nameEn: "Tree",     color: "#34d399", bg: "#065f46", desc: "شجرتك باسقة — ثمارها تطول السماء",         size: 190 },
+  { min: 500,  max: 999,  emoji: "🌲", name: "غابة",    nameEn: "Forest",   color: "#10b981", bg: "#047857", desc: "غابتك أينعت — قلبٌ عامرٌ بذكر الله",       size: 240 },
+  { min: 1000, max: Infinity, emoji: "🏡", name: "جنّة", nameEn: "Garden",  color: "#34d399", bg: "#022c22", desc: "حديقتك من جنان الله — واصل رحلتك العظيمة", size: 240 },
 ];
 
 const MOTIVATIONS = [
@@ -21,12 +27,10 @@ const MOTIVATIONS = [
 function TreeVisual({ emoji, size, color }: { emoji: string; size: number; color: string }) {
   return (
     <div className="flex flex-col items-center justify-end" style={{ height: 260 }}>
-      {/* Ground glow */}
       <div
         className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none"
         style={{
-          width: size * 1.6,
-          height: 40,
+          width: size * 1.6, height: 40,
           background: `radial-gradient(ellipse, ${color}40 0%, transparent 75%)`,
           filter: "blur(10px)",
         }}
@@ -40,16 +44,18 @@ function TreeVisual({ emoji, size, color }: { emoji: string; size: number; color
       >
         {emoji}
       </motion.div>
-      {/* Trunk */}
       <div className="w-3 rounded-full mt-1" style={{ height: 20, background: "rgba(160,100,40,0.6)" }} />
-      {/* Ground line */}
       <div className="w-[70%] rounded-full mt-1" style={{ height: 3, background: `${color}50` }} />
     </div>
   );
 }
 
+interface Journey30Summary { completedCount: number; streakDays: number; }
+
 export default function Garden() {
-  const [count, setCount] = useState(() => {
+  const sessionId = getSessionId();
+
+  const [dhikrCount, setDhikrCount] = useState(() => {
     try { return parseInt(localStorage.getItem("home_dhikr_count") ?? "0") || 0; } catch { return 0; }
   });
   const [tapCount, setTapCount] = useState(0);
@@ -57,6 +63,23 @@ export default function Garden() {
   const [motivIdx, setMotivIdx] = useState(0);
   const [shared, setShared] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
+
+  const { data: j30 } = useQuery<Journey30Summary>({
+    queryKey: ["journey30-garden", sessionId],
+    queryFn: async () => {
+      const res = await fetch(`/api/journey30?sessionId=${encodeURIComponent(sessionId)}`);
+      const data = await res.json();
+      return { completedCount: data.completedCount ?? 0, streakDays: data.streakDays ?? 0 };
+    },
+    enabled: !!sessionId,
+    staleTime: 60 * 1000,
+  });
+
+  const journeyDays = j30?.completedCount ?? 0;
+  const journeyStreak = j30?.streakDays ?? 0;
+
+  // Combined score: dhikr + journey bonus (each journey day = 10 dhikr)
+  const count = dhikrCount + journeyDays * 10;
 
   const stage = STAGES.find(s => count >= s.min && count <= s.max) ?? STAGES[STAGES.length - 1]!;
   const nextStage = STAGES.find(s => s.min > count);
@@ -74,8 +97,8 @@ export default function Garden() {
     const rect = e.currentTarget.getBoundingClientRect();
     const id = Date.now();
     setParticles(prev => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
-    const next = count + 1;
-    setCount(next);
+    const next = dhikrCount + 1;
+    setDhikrCount(next);
     setTapCount(t => t + 1);
     try { localStorage.setItem("home_dhikr_count", String(next)); } catch {}
     if (navigator.vibrate) navigator.vibrate(12);
@@ -86,7 +109,7 @@ export default function Garden() {
     try {
       await navigator.share({
         title: "شجرة التوبة 🌱",
-        text: `حديقتي وصلت مرحلة "${stage.name}" بعد ${count.toLocaleString("ar-EG")} ذكر! انضم إلى تطبيق توبة 🌿`,
+        text: `حديقتي وصلت مرحلة "${stage.name}" بعد ${dhikrCount.toLocaleString("ar-EG")} ذكر و${journeyDays} يوماً من الرحلة! انضم إلى تطبيق توبة 🌿`,
       });
     } catch {
       setShared(true);
@@ -100,7 +123,7 @@ export default function Garden() {
       style={{ background: `linear-gradient(160deg, ${stage.bg} 0%, #000 100%)` }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-safe-top pt-4 pb-2">
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <Link href="/">
           <button className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "rgba(255,255,255,0.1)" }}>
             <ArrowRight size={18} style={{ color: "rgba(255,255,255,0.8)" }} />
@@ -116,10 +139,16 @@ export default function Garden() {
       </div>
 
       {/* Stage badge */}
-      <div className="flex justify-center mt-2">
+      <div className="flex justify-center mt-1 gap-2">
         <div className="px-4 py-1 rounded-full text-[11px] font-bold" style={{ background: `${stage.color}25`, border: `1px solid ${stage.color}50`, color: stage.color }}>
           مرحلة: {stage.name}
         </div>
+        {journeyDays > 0 && (
+          <div className="px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1"
+            style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24" }}>
+            🗓️ رحلة {journeyDays}/٣٠
+          </div>
+        )}
       </div>
 
       {/* Tree visual area */}
@@ -143,8 +172,20 @@ export default function Garden() {
 
         <TreeVisual emoji={stage.emoji} size={stage.size} color={stage.color} />
 
+        {/* Journey glow badge */}
+        {journeyDays >= 7 && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="mt-2 px-3 py-1.5 rounded-full text-[11px] font-bold text-center"
+            style={{ background: "rgba(251,191,36,0.15)", border: "1px solid rgba(251,191,36,0.3)", color: "#fbbf24" }}
+          >
+            ✨ {journeyDays >= 30 ? "أتممت الرحلة — شجرتك اكتملت!" : `${journeyDays} أيام في رحلة التوبة`}
+          </motion.div>
+        )}
+
         {/* Motivation */}
-        <div className="mt-4 px-6 text-center" style={{ minHeight: 44 }}>
+        <div className="mt-3 px-6 text-center" style={{ minHeight: 40 }}>
           <AnimatePresence mode="wait">
             <motion.p
               key={motivIdx}
@@ -163,11 +204,11 @@ export default function Garden() {
 
       {/* Stats row */}
       <div className="px-4 pb-2">
-        <div className="flex gap-3 justify-center mb-3">
+        <div className="flex gap-2 justify-center mb-3">
           {[
-            { label: "إجمالي الذكر", value: count.toLocaleString("ar-EG") },
-            { label: "هذه الجلسة", value: tapCount.toLocaleString("ar-EG") },
-            { label: nextStage ? `للمرحلة التالية` : "اكتملت الغابة", value: nextStage ? toNext.toLocaleString("ar-EG") : "🎉" },
+            { label: "إجمالي الذكر", value: dhikrCount.toLocaleString("ar-EG") },
+            { label: "أيام الرحلة",  value: journeyDays > 0 ? `${journeyDays}/٣٠` : "—" },
+            { label: "هذه الجلسة",   value: tapCount.toLocaleString("ar-EG") },
           ].map(({ label, value }) => (
             <div key={label} className="flex-1 rounded-2xl p-3 text-center" style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)" }}>
               <p className="font-bold text-[16px]" style={{ color: stage.color }}>{value}</p>
@@ -181,7 +222,7 @@ export default function Garden() {
           <div className="mb-3">
             <div className="flex justify-between mb-1">
               <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>{stage.name}</span>
-              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>{nextStage.name} ← {toNext} ذكر</span>
+              <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>{nextStage.name} ← {toNext} نقطة</span>
             </div>
             <div className="w-full rounded-full overflow-hidden" style={{ height: 5, background: "rgba(255,255,255,0.1)" }}>
               <motion.div
@@ -198,7 +239,7 @@ export default function Garden() {
         <motion.button
           ref={btnRef}
           onClick={handleDhikr}
-          className="relative overflow-hidden w-full py-5 rounded-[22px] font-bold text-lg active:scale-[0.97] transition-transform select-none mb-safe-bottom mb-4"
+          className="relative overflow-hidden w-full py-5 rounded-[22px] font-bold text-lg active:scale-[0.97] transition-transform select-none mb-4"
           style={{
             background: `linear-gradient(135deg, ${stage.color}33 0%, ${stage.color}18 100%)`,
             border: `2px solid ${stage.color}55`,
@@ -218,6 +259,21 @@ export default function Garden() {
           ))}
           <span className="relative z-10">اسقِ شجرتك — اضغط للذكر 🌿</span>
         </motion.button>
+
+        {journeyDays < 30 && (
+          <Link href="/journey">
+            <button
+              className="w-full py-2.5 rounded-[18px] text-sm font-bold mb-4 transition-all active:scale-[0.97]"
+              style={{
+                background: "rgba(251,191,36,0.12)",
+                border: "1px solid rgba(251,191,36,0.25)",
+                color: "#fbbf24",
+              }}
+            >
+              🗓️ تابع رحلة التوبة ٣٠ يوماً ← اضغط هنا
+            </button>
+          </Link>
+        )}
       </div>
     </div>
   );

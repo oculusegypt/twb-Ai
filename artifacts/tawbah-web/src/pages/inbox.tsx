@@ -42,7 +42,13 @@ function NotifCard({ notif, onRead, onDelete }: {
   onRead: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
+  const [, setLocation] = useLocation();
   const icon = ICON_MAP[notif.icon] ?? <Bell size={16} />;
+
+  const handleClick = () => {
+    if (!notif.isRead) onRead(notif.id);
+    if (notif.link) setLocation(notif.link);
+  };
 
   return (
     <motion.div
@@ -51,7 +57,7 @@ function NotifCard({ notif, onRead, onDelete }: {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: 30, height: 0, marginBottom: 0 }}
       transition={{ duration: 0.25 }}
-      onClick={() => !notif.isRead && onRead(notif.id)}
+      onClick={handleClick}
       className={cn(
         "relative flex items-start gap-3 p-4 rounded-2xl border cursor-pointer transition-all",
         notif.isRead
@@ -83,6 +89,11 @@ function NotifCard({ notif, onRead, onDelete }: {
         <p className={cn("text-xs leading-relaxed", notif.isRead ? "text-muted-foreground" : "text-foreground/75")}>
           {notif.body}
         </p>
+        {notif.link && (
+          <p className="text-[10px] mt-1 font-semibold" style={{ color: notif.color }}>
+            اضغط للانتقال ←
+          </p>
+        )}
       </div>
 
       {/* Delete */}
