@@ -216,13 +216,16 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
       }
       if (listItems.length > 0) {
         elements.push(
-          <ol key={`list-${i}`} className="space-y-1.5 my-2 pr-1">
+          <ol key={`list-${i}`} className="space-y-2 my-2.5 pr-1">
             {listItems.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2.5 text-sm leading-relaxed">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-600 dark:bg-teal-950/50 text-white dark:text-teal-300 text-[10px] font-bold flex items-center justify-center mt-0.5">
+              <li key={idx} className="flex items-start gap-3 text-[13px] leading-relaxed">
+                <span
+                  className="flex-shrink-0 w-[22px] h-[22px] rounded-full text-white text-[10px] font-bold flex items-center justify-center mt-0.5 shadow-sm"
+                  style={{ background: "linear-gradient(135deg,#059669,#0d9488)" }}
+                >
                   {startNum + idx}
                 </span>
-                <span className="flex-1">{renderInline(item)}</span>
+                <span className="flex-1 pt-0.5">{renderInline(item)}</span>
               </li>
             ))}
           </ol>
@@ -270,7 +273,7 @@ function FormattedText({ text, isActivePlaying }: { text: string; isActivePlayin
   }
 
   return (
-    <div className="space-y-0.5 transition-colors duration-300 dark:bg-teal-950/20 px-2 py-1 -mx-2 rounded-lg bg-[#ffffff33]">
+    <div className="space-y-0.5">
       {elements}
     </div>
   );
@@ -343,18 +346,30 @@ function QuranCard({
   const reciterName = QURAN_RECITERS.find(r => r.id === reciterId)?.nameAr ?? "القرآن الكريم";
 
   return (
-    <div className="my-3 rounded-2xl overflow-hidden shadow-lg border border-emerald-200 dark:border-emerald-700/30">
+    <div
+      className="my-3 rounded-2xl overflow-hidden"
+      style={{
+        boxShadow: "0 4px 24px rgba(5,150,105,0.15), 0 1px 4px rgba(0,0,0,0.08)",
+        border: "1px solid rgba(16,185,129,0.25)",
+      }}
+    >
       {/* ── Header ── */}
-      <div className="bg-gradient-to-l from-emerald-600 to-teal-700 dark:from-emerald-800 dark:to-teal-900 px-4 py-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-7 h-7 shrink-0 rounded-full bg-white/15 flex items-center justify-center">
-            <BookOpen size={12} className="text-white" />
+      <div
+        className="px-4 py-3 flex items-center justify-between gap-3"
+        style={{ background: "linear-gradient(135deg,#065f46,#0d9488)" }}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="w-8 h-8 shrink-0 rounded-xl flex items-center justify-center"
+            style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)" }}
+          >
+            <BookOpen size={14} className="text-white" />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] text-emerald-200 leading-none mb-[3px] truncate">
+            <div className="text-[10px] text-emerald-200 leading-none mb-1 truncate font-medium">
               {reciterName}
             </div>
-            <div className="text-[12px] font-bold text-white leading-none">
+            <div className="text-[13px] font-bold text-white leading-none">
               سورة {getSurahName(seg.surah!)} — آية {seg.ayah}
             </div>
           </div>
@@ -362,35 +377,46 @@ function QuranCard({
 
         <button
           onClick={onManualToggle}
-          className={cn(
-            "shrink-0 flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-full transition-all font-semibold",
+          className="shrink-0 flex items-center gap-1.5 text-[11px] px-3.5 py-2 rounded-full transition-all font-bold active:scale-95"
+          style={
             isActive && isPlaying
-              ? "bg-white text-emerald-800 shadow-sm"
-              : "bg-white/15 text-white border border-white/30 hover:bg-white/25 active:scale-95"
-          )}
+              ? { background: "rgba(255,255,255,0.95)", color: "#065f46" }
+              : { background: "rgba(255,255,255,0.15)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)" }
+          }
         >
           {isActive && isPlaying
-            ? <><Pause size={10} strokeWidth={2.5} />إيقاف</>
-            : <><Play  size={10} strokeWidth={2.5} />استمع</>
+            ? <><Pause size={11} strokeWidth={2.5} />إيقاف</>
+            : <><Play  size={11} strokeWidth={2.5} />استمع</>
           }
         </button>
       </div>
 
       {/* ── Body ── */}
-      <div className="relative bg-gradient-to-br from-amber-50 via-stone-50 to-amber-50/60 dark:from-emerald-950/25 dark:via-stone-950 dark:to-teal-950/20 px-5 pb-4 pt-5 overflow-hidden">
+      <div
+        className="relative px-5 pb-5 pt-6 overflow-hidden"
+        style={{ background: "linear-gradient(160deg,#fffbf0,#fef9f0,#fffdf5)" }}
+      >
+        {/* Decorative Arabic brackets */}
+        <span className="pointer-events-none select-none absolute -top-2 left-3 text-[80px] leading-none font-serif" style={{ color: "rgba(217,119,6,0.15)" }}>﴿</span>
+        <span className="pointer-events-none select-none absolute -bottom-5 right-3 text-[80px] leading-none font-serif" style={{ color: "rgba(217,119,6,0.15)" }}>﴾</span>
 
-        {/* Decorative brackets */}
-        <span className="pointer-events-none select-none absolute -top-1 left-2 text-[64px] leading-none text-amber-200/50 dark:text-emerald-900/50 font-serif">﴿</span>
-        <span className="pointer-events-none select-none absolute -bottom-3 right-2 text-[64px] leading-none text-amber-200/50 dark:text-emerald-900/50 font-serif">﴾</span>
+        {/* Golden top accent line */}
+        <div className="absolute top-0 inset-x-0 h-[2px]" style={{ background: "linear-gradient(90deg,transparent,rgba(217,119,6,0.4),transparent)" }} />
 
         {verseLoading ? (
-          <div className="flex justify-center items-center gap-1 py-6">
+          <div className="flex justify-center items-center gap-2 py-7">
             {[0, 150, 300].map((d) => (
-              <span key={d} className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: `${d}ms` }} />
+              <motion.span key={d} className="w-2 h-2 bg-emerald-400 rounded-full block"
+                animate={{ scale: [1, 1.4, 1], opacity: [0.5, 1, 0.5] }}
+                transition={{ duration: 0.9, repeat: Infinity, delay: d / 1000 }}
+              />
             ))}
           </div>
         ) : (
-          <p className="quran-text text-right text-stone-800 dark:text-amber-100 leading-loose relative z-10 px-2">
+          <p
+            className="quran-text text-right leading-[2.2] relative z-10 px-2"
+            style={{ color: "#1c1917", fontSize: "1.05rem" }}
+          >
             ﴿{verseText}﴾
           </p>
         )}
@@ -401,9 +427,10 @@ function QuranCard({
             {[4,7,11,8,5,10,7,4,9,6,11,7,5].map((h, k) => (
               <span
                 key={k}
-                className="quran-wave-bar w-[3px] rounded-full bg-emerald-500 dark:bg-emerald-400"
+                className="quran-wave-bar w-[3px] rounded-full"
                 style={{
                   height: `${h}px`,
+                  background: "#059669",
                   animation: "quranWave 0.8s ease-in-out infinite alternate",
                   animationDelay: `${k * 65}ms`,
                 }}
@@ -429,26 +456,40 @@ function FatwaCard({ seg }: { seg: MessageSegment }) {
   const preview = (seg.text?.length ?? 0) > 120 ? seg.text!.slice(0, 120) + "..." : seg.text;
 
   return (
-    <div className="my-2 rounded-2xl border border-emerald-200 dark:border-emerald-400/50 overflow-hidden shadow-sm">
-      <div className="bg-gradient-to-l from-emerald-600 to-teal-700 dark:from-emerald-800 dark:to-teal-900 px-4 py-2.5 flex items-center gap-2">
-        <Scale size={13} className="text-white/90" />
-        <span className="text-[11px] font-bold text-white tracking-wide">حكم شرعي</span>
-        <span className="mr-auto text-[10px] text-white/70">📚 {seg.source}</span>
+    <div
+      className="my-2.5 rounded-2xl overflow-hidden"
+      style={{ boxShadow: "0 2px 16px rgba(5,150,105,0.1), 0 1px 3px rgba(0,0,0,0.06)", border: "1px solid rgba(16,185,129,0.2)" }}
+    >
+      <div
+        className="px-4 py-2.5 flex items-center gap-2"
+        style={{ background: "linear-gradient(135deg,#047857,#0f766e)" }}
+      >
+        <div className="w-6 h-6 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+          <Scale size={12} className="text-white" />
+        </div>
+        <span className="text-[12px] font-bold text-white tracking-wide">حكم شرعي</span>
+        {seg.source && <span className="mr-auto text-[10px] text-white/65 truncate">📚 {seg.source}</span>}
       </div>
-      <div className="bg-white dark:bg-gradient-to-br dark:from-emerald-950/30 dark:to-teal-950/20 px-4 py-3">
-        <p className="text-sm leading-relaxed text-stone-800 dark:text-emerald-200 text-right">
+      <div className="bg-white px-4 py-3.5">
+        <p className="text-[13px] leading-relaxed text-stone-700 text-right">
           {expanded ? seg.text : preview}
         </p>
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-stone-100 dark:border-emerald-800/30">
+        <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-stone-100">
           {(seg.text?.length ?? 0) > 120 && (
-            <button onClick={() => setExpanded(!expanded)} className="text-[10px] text-teal-700 dark:text-emerald-400 hover:underline font-medium">
-              {expanded ? "إخفاء" : "عرض الكامل"}
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="text-[11px] font-semibold px-3 py-1 rounded-full transition-all active:scale-95"
+              style={{ background: "rgba(5,150,105,0.08)", color: "#047857" }}
+            >
+              {expanded ? "إخفاء ↑" : "عرض الكامل ↓"}
             </button>
           )}
           {seg.url && (
             <a href={seg.url} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[10px] text-teal-700 dark:text-emerald-400 hover:underline font-medium mr-auto">
-              <ExternalLink size={10} /> المصدر
+              className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1 rounded-full mr-auto transition-all"
+              style={{ background: "rgba(5,150,105,0.08)", color: "#047857" }}
+            >
+              <ExternalLink size={11} /> المصدر
             </a>
           )}
         </div>
@@ -482,26 +523,43 @@ function PromiseCard({ seg, sessionId }: { seg: MessageSegment; sessionId: strin
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="my-3 rounded-2xl border border-amber-300 dark:border-amber-400/60 overflow-hidden shadow-md"
+      className="my-3 rounded-2xl overflow-hidden"
+      style={{ boxShadow: "0 4px 20px rgba(217,119,6,0.18), 0 1px 3px rgba(0,0,0,0.06)", border: "1px solid rgba(245,158,11,0.3)" }}
     >
-      <div className="bg-gradient-to-l from-amber-500 to-yellow-500 dark:from-amber-700 dark:to-yellow-800 px-4 py-2.5 flex items-center gap-2">
-        <Handshake size={13} className="text-white/90" />
-        <span className="text-[11px] font-bold text-white tracking-wide">وعد أمام الله</span>
+      <div
+        className="px-4 py-3 flex items-center gap-2"
+        style={{ background: "linear-gradient(135deg,#b45309,#d97706)" }}
+      >
+        <div className="w-7 h-7 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
+          <Handshake size={14} className="text-white" />
+        </div>
+        <span className="text-[13px] font-bold text-white tracking-wide">وعد أمام الله</span>
+        <span className="mr-auto text-lg">🤝</span>
       </div>
-      <div className="bg-white dark:bg-gradient-to-br dark:from-amber-950/30 dark:to-yellow-950/20 px-4 py-4">
-        <p className="text-sm leading-relaxed text-stone-800 dark:text-amber-200 text-right font-medium mb-4">
-          "{seg.text}"
-        </p>
+      <div className="bg-white px-4 py-5">
+        <div
+          className="relative px-4 py-3 rounded-xl mb-4 text-right"
+          style={{ background: "linear-gradient(135deg,#fffbeb,#fef3c7)", border: "1px solid rgba(245,158,11,0.2)" }}
+        >
+          <span className="absolute top-1 right-2 text-amber-200/60 text-3xl font-serif leading-none">"</span>
+          <p className="text-[13px] leading-relaxed text-stone-700 font-medium relative z-10 pt-2">
+            {seg.text}
+          </p>
+        </div>
         {state === "done" ? (
-          <div className="flex items-center justify-center gap-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl py-2.5">
-            <CheckSquare size={16} className="text-emerald-600" />
-            <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">وعدتَ الله — والله شاهد على وعدك</span>
+          <div
+            className="flex items-center justify-center gap-2 rounded-xl py-3"
+            style={{ background: "linear-gradient(135deg,#d1fae5,#a7f3d0)" }}
+          >
+            <CheckSquare size={17} className="text-emerald-600" strokeWidth={2.5} />
+            <span className="text-[13px] font-bold text-emerald-800">وعدتَ الله — والله شاهد على وعدك</span>
           </div>
         ) : (
           <button
             onClick={handlePromise}
             disabled={state === "loading"}
-            className="w-full flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl py-2.5 font-bold text-sm transition-all active:scale-95"
+            className="w-full flex items-center justify-center gap-2 text-white rounded-xl py-3 font-bold text-[13px] transition-all active:scale-95"
+            style={{ background: "linear-gradient(135deg,#b45309,#d97706)", boxShadow: "0 2px 10px rgba(180,83,9,0.3)" }}
           >
             {state === "loading"
               ? <><Loader2 size={14} className="animate-spin" /> لحظة...</>
@@ -523,25 +581,32 @@ function SurahLinkCard({ seg }: { seg: MessageSegment }) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="my-2 rounded-2xl border border-teal-300 dark:border-teal-400/50 overflow-hidden shadow-sm"
+      className="my-2.5 rounded-2xl overflow-hidden"
+      style={{ boxShadow: "0 2px 14px rgba(13,148,136,0.12), 0 1px 3px rgba(0,0,0,0.06)", border: "1px solid rgba(13,148,136,0.22)" }}
     >
-      <div className="bg-gradient-to-l from-teal-600 to-emerald-600 dark:from-teal-950 dark:to-emerald-950 px-4 py-2.5 flex items-center gap-2">
-        <BookMarked size={13} className="text-white/90" />
-        <span className="text-[11px] font-bold text-white tracking-wide">السورة كاملة</span>
+      <div
+        className="px-4 py-2.5 flex items-center gap-2"
+        style={{ background: "linear-gradient(135deg,#0f766e,#0891b2)" }}
+      >
+        <div className="w-6 h-6 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+          <BookMarked size={12} className="text-white" />
+        </div>
+        <span className="text-[12px] font-bold text-white tracking-wide">السورة كاملة</span>
       </div>
-      <div className="bg-white dark:bg-gradient-to-br dark:from-teal-950/30 dark:to-emerald-950/20 px-4 py-3 flex items-center justify-between">
+      <div className="bg-white px-4 py-3.5 flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-bold text-teal-900 dark:text-teal-200">سورة {seg.text}</p>
-          <p className="text-[11px] text-teal-700 dark:text-teal-400 mt-0.5">تابع قراءة باقي السورة من الآية {seg.ayah}</p>
+          <p className="text-[13px] font-bold text-stone-800">سورة {seg.text}</p>
+          <p className="text-[11px] text-stone-500 mt-0.5">تابع من الآية {seg.ayah}</p>
         </div>
         <a
           href={seg.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 bg-teal-600 text-white text-xs px-3 py-2 rounded-xl font-medium hover:bg-teal-700 transition-colors"
+          className="flex items-center gap-1.5 text-white text-[12px] px-4 py-2 rounded-xl font-bold shrink-0 transition-all active:scale-95"
+          style={{ background: "linear-gradient(135deg,#0f766e,#0891b2)", boxShadow: "0 2px 8px rgba(13,148,136,0.3)" }}
         >
           <ExternalLink size={12} />
-          افتح السورة
+          افتح
         </a>
       </div>
     </motion.div>
@@ -559,19 +624,23 @@ function ImpressionPanel({ impression, onClose }: { impression: string; onClose:
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 8, scale: 0.97 }}
       transition={{ duration: 0.25 }}
-      className="mt-2 rounded-2xl border border-rose-300/50 overflow-hidden shadow-md border-t-[#1f1e1e80] border-r-[#1f1e1e80] border-b-[#1f1e1e80] border-l-[#1f1e1e80] bg-[#e8317b52]"
+      className="mt-3 rounded-2xl overflow-hidden"
+      style={{ boxShadow: "0 4px 20px rgba(225,29,72,0.15), 0 1px 3px rgba(0,0,0,0.06)", border: "1px solid rgba(251,113,133,0.3)" }}
     >
-      <div className="bg-gradient-to-l from-rose-700 to-pink-800 px-4 py-2 flex items-center justify-between">
-        <div className="flex items-center gap-1.5">
-          <Heart size={13} className="text-rose-200 fill-rose-300" />
-          <span className="text-[11px] font-bold text-rose-100 tracking-wide">انطباعي عنك</span>
+      <div
+        className="px-4 py-2.5 flex items-center justify-between"
+        style={{ background: "linear-gradient(135deg,#be123c,#e11d48)" }}
+      >
+        <div className="flex items-center gap-2">
+          <Heart size={14} className="text-white fill-white/70" />
+          <span className="text-[12px] font-bold text-white tracking-wide">انطباعي عنك</span>
         </div>
-        <button onClick={onClose} className="text-rose-300 hover:text-rose-100 transition-colors">
+        <button onClick={onClose} className="text-white/70 hover:text-white transition-colors w-6 h-6 flex items-center justify-center rounded-full hover:bg-white/10">
           <X size={14} />
         </button>
       </div>
-      <div className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 px-4 py-3">
-        <p className="text-sm leading-relaxed text-rose-900 dark:text-rose-200 text-right whitespace-pre-wrap">
+      <div className="bg-white px-4 py-4">
+        <p className="text-[13px] leading-relaxed text-stone-700 text-right whitespace-pre-wrap">
           {impression}
         </p>
       </div>
@@ -603,31 +672,23 @@ function SuggestionCards({ suggestions, loading, onSelect }: {
           <span>يفكر في أسئلة...</span>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {suggestions!.map((q, i) => {
             const isContinueBtn = q === "أكمل →";
             return (
               <motion.button
                 key={i}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.05 }}
+                initial={{ opacity: 0, scale: 0.92, y: 4 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }}
                 onClick={() => onSelect(q)}
-                className={cn(
-                  "text-right text-[11px] px-3 py-2 rounded-xl border transition-all active:scale-95 leading-snug font-medium",
-                  isContinueBtn
-                    ? "col-span-2 text-white border-transparent flex items-center justify-center gap-1.5 shadow-sm"
-                    : cn(
-                        "bg-white dark:bg-card text-stone-700 dark:text-foreground",
-                        "border-stone-200 dark:border-border/60",
-                        "shadow-sm",
-                        "hover:bg-teal-50 hover:border-teal-300 hover:text-teal-800",
-                        "dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50 dark:hover:text-teal-300"
-                      )
-                )}
-                style={isContinueBtn ? { background: "linear-gradient(135deg,#2dd4bf,#059669)" } : undefined}
+                className="text-right text-[11.5px] px-3.5 py-2 rounded-full transition-all active:scale-95 leading-snug font-semibold"
+                style={isContinueBtn
+                  ? { background: "linear-gradient(135deg,#059669,#0d9488)", color: "#fff", boxShadow: "0 2px 8px rgba(5,150,105,0.3)" }
+                  : { background: "#fff", color: "#374151", border: "1.5px solid rgba(5,150,105,0.2)", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" }
+                }
               >
-                {isContinueBtn && <span className="text-sm">▶</span>}
+                {isContinueBtn && <span className="ml-1">▶</span>}
                 {q}
               </motion.button>
             );
@@ -642,34 +703,44 @@ function SuggestionCards({ suggestions, loading, onSelect }: {
 // STARTER CARDS
 // ══════════════════════════════════════════
 
+const STARTER_ICONS = ["🌿", "🕌", "💚", "⚡", "🌙", "🤲"];
+
 function StarterCards({ onSelect }: { onSelect: (q: string) => void }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.2 }}
-      className="px-2 py-3 mt-[0px] mb-[0px]"
+      className="px-1 py-3"
     >
-      <div className="flex items-center gap-1.5 mb-3">
-        <span className="text-xs font-semibold text-muted-foreground">✨ أسئلة شائعة — اضغط لتبدأ</span>
+      <div className="flex items-center gap-2 mb-3.5 px-1">
+        <div className="h-px flex-1" style={{ background: "linear-gradient(90deg,transparent,rgba(5,150,105,0.25))" }} />
+        <span className="text-[11px] font-bold text-stone-400 tracking-wider">ابدأ بسؤال</span>
+        <div className="h-px flex-1" style={{ background: "linear-gradient(90deg,rgba(5,150,105,0.25),transparent)" }} />
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2.5">
         {STARTER_QUESTIONS.map((q, i) => (
           <motion.button
             key={i}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 + i * 0.05 }}
+            initial={{ opacity: 0, y: 8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.12 + i * 0.055 }}
             onClick={() => onSelect(q)}
-            className={cn(
-              "text-right text-[12px] font-semibold px-3.5 py-3.5 rounded-2xl border transition-all active:scale-95 leading-snug",
-              "bg-white dark:bg-card text-stone-700 dark:text-foreground",
-              "border-stone-100 dark:border-border/60",
-              "shadow-[0_2px_10px_rgba(0,0,0,0.07),0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none",
-              "hover:bg-teal-50 hover:border-teal-200 hover:text-teal-800 dark:hover:bg-teal-950/20 dark:hover:border-teal-700/50 dark:hover:text-teal-300"
-            )}
+            className="text-right transition-all active:scale-95 leading-snug overflow-hidden rounded-2xl"
+            style={{
+              background: "#fff",
+              border: "1.5px solid rgba(5,150,105,0.12)",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)",
+            }}
           >
-            {q}
+            <div
+              className="h-[3px] w-full"
+              style={{ background: `linear-gradient(90deg,${["#059669","#0d9488","#10b981","#065f46","#0891b2","#047857"][i % 6]},transparent)` }}
+            />
+            <div className="px-3.5 pt-2.5 pb-3">
+              <span className="text-lg block mb-1">{STARTER_ICONS[i % STARTER_ICONS.length]}</span>
+              <span className="text-[12px] font-semibold text-stone-700 leading-snug block">{q}</span>
+            </div>
           </motion.button>
         ))}
       </div>
@@ -893,17 +964,17 @@ function BotMessageBody({
         );
       })}
       {/* Audio & impression controls */}
-      <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+      <div className="flex items-center gap-2 mt-3.5 flex-wrap">
         {hasAudio && (
           <button
             onClick={handlePlayToggle}
-            className={cn(
-              "flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all border active:scale-95",
-              "bg-teal-50 text-teal-700 border-teal-200 hover:bg-teal-100 shadow-sm",
-              "dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/60 dark:hover:bg-teal-900/40"
-            )}
+            className="flex items-center gap-1.5 text-[11.5px] font-bold px-3.5 py-1.5 rounded-full transition-all active:scale-95"
+            style={isCurrentlyPlaying
+              ? { background: "linear-gradient(135deg,#0d9488,#059669)", color: "#fff", boxShadow: "0 2px 8px rgba(5,150,105,0.3)" }
+              : { background: "rgba(5,150,105,0.08)", color: "#047857", border: "1.5px solid rgba(5,150,105,0.2)" }
+            }
           >
-            {isCurrentlyPlaying ? <><Pause size={11} /> إيقاف</> : <><Volume2 size={11} /> استمع</>}
+            {isCurrentlyPlaying ? <><Pause size={11} strokeWidth={2.5} /> إيقاف</> : <><Volume2 size={11} strokeWidth={2} /> استمع</>}
           </button>
         )}
 
@@ -911,15 +982,15 @@ function BotMessageBody({
           <button
             onClick={handleImpressionClick}
             disabled={impressionLoading}
-            className={cn(
-              "flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all border active:scale-95",
-              "bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 shadow-sm",
-              "dark:bg-rose-950/30 dark:text-rose-400 dark:border-rose-800/60 dark:hover:bg-rose-900/30"
-            )}
+            className="flex items-center gap-1.5 text-[11.5px] font-bold px-3.5 py-1.5 rounded-full transition-all active:scale-95"
+            style={impressionOpen
+              ? { background: "linear-gradient(135deg,#be123c,#e11d48)", color: "#fff", boxShadow: "0 2px 8px rgba(225,29,72,0.3)" }
+              : { background: "rgba(225,29,72,0.07)", color: "#be123c", border: "1.5px solid rgba(225,29,72,0.2)" }
+            }
           >
             {impressionLoading
               ? <><Loader2 size={11} className="animate-spin" /> لحظة...</>
-              : <><Heart size={11} className={impressionOpen ? "fill-rose-500 dark:fill-rose-400" : ""} /> انطباعي عنك</>
+              : <><Heart size={11} strokeWidth={2} className={impressionOpen ? "fill-white" : ""} /> انطباعي</>
             }
           </button>
         )}
@@ -928,17 +999,17 @@ function BotMessageBody({
           <button
             onClick={handleHadiTasks}
             disabled={hadiLoading || hadiDone}
-            className={cn(
-              "flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-full transition-all border active:scale-95",
-              "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-sm",
-              "dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/60 dark:hover:bg-emerald-900/30"
-            )}
+            className="flex items-center gap-1.5 text-[11.5px] font-bold px-3.5 py-1.5 rounded-full transition-all active:scale-95"
+            style={hadiDone
+              ? { background: "linear-gradient(135deg,#059669,#0d9488)", color: "#fff" }
+              : { background: "rgba(5,150,105,0.07)", color: "#065f46", border: "1.5px solid rgba(5,150,105,0.18)" }
+            }
           >
             {hadiLoading
-              ? <><Loader2 size={11} className="animate-spin" /> جاري الاستخراج...</>
+              ? <><Loader2 size={11} className="animate-spin" /> جاري...</>
               : hadiDone
-                ? <><CheckSquare size={11} /> تمت الإضافة!</>
-                : <><CheckSquare size={11} /> مهام هادي</>
+                ? <><CheckSquare size={11} strokeWidth={2.5} /> تمت الإضافة!</>
+                : <><CheckSquare size={11} strokeWidth={2} /> مهام هادي</>
             }
           </button>
         )}
@@ -1271,10 +1342,10 @@ export default function ZakiyPage() {
         )}
       </AnimatePresence>
 
-      {/* Messages — pb-[120px] leaves space for the fixed input bar above navbar */}
+      {/* Messages */}
       <div
-        className="flex-1 overflow-y-auto px-4 py-4 space-y-3 dark:bg-transparent"
-        style={{ background: "linear-gradient(180deg,#f6f5f1 0%,#fafaf8 60%,#f6f5f1 100%)" }}
+        className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
+        style={{ background: "linear-gradient(180deg,#f2f0ea 0%,#f8f6f0 50%,#f2f0ea 100%)" }}
       >
         <AnimatePresence initial={false}>
           {messages.map((msg) => (
@@ -1288,34 +1359,35 @@ export default function ZakiyPage() {
                 {/* Bot avatar */}
                 {msg.role === "bot" && (
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5"
+                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5"
                     style={{
-                      background: "linear-gradient(135deg,#2dd4bf,#059669)",
-                      boxShadow: "0 2px 8px rgba(5,150,105,0.28)",
+                      background: "linear-gradient(135deg,#065f46,#0d9488)",
+                      boxShadow: "0 3px 10px rgba(5,150,105,0.35)",
+                      border: "2px solid rgba(255,255,255,0.8)",
                     }}
                   >
-                    <Bot size={15} className="text-white" />
+                    <Bot size={16} className="text-white" />
                   </div>
                 )}
 
                 {/* Bubble */}
-                <div className={cn(
-                  "max-w-[86%] rounded-2xl px-4 py-3",
-                  msg.role === "user"
-                    ? [
-                        "text-white rounded-tl-[6px]",
-                        "shadow-[0_4px_16px_rgba(0,0,0,0.18),0_1px_4px_rgba(0,0,0,0.12)]",
-                      ].join(" ")
-                    : [
-                        "rounded-tr-[6px] text-foreground",
-                        "bg-white dark:bg-card",
-                        "border border-stone-100 dark:border-border/50",
-                        "shadow-[0_2px_12px_rgba(0,0,0,0.07),0_1px_3px_rgba(0,0,0,0.05)] dark:shadow-none",
-                      ].join(" ")
-                )}
-                style={msg.role === "user" ? {
-                  background: "linear-gradient(135deg,hsl(var(--primary)),hsl(var(--primary)/0.82))",
-                } : undefined}
+                <div
+                  className={cn(
+                    "max-w-[86%] rounded-2xl px-4 py-3.5",
+                    msg.role === "user" ? "text-white rounded-tl-[6px]" : "rounded-tr-[6px] text-stone-800"
+                  )}
+                  style={msg.role === "user"
+                    ? {
+                        background: "linear-gradient(140deg,#059669,#0d9488)",
+                        boxShadow: "0 4px 18px rgba(5,150,105,0.28), 0 1px 4px rgba(0,0,0,0.1)",
+                      }
+                    : {
+                        background: "#ffffff",
+                        border: "1px solid rgba(0,0,0,0.06)",
+                        boxShadow: "0 2px 16px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04)",
+                        borderRight: "3px solid rgba(5,150,105,0.25)",
+                      }
+                  }
                 >
                   {msg.role === "bot" ? (
                     <BotMessageBody
@@ -1359,19 +1431,23 @@ export default function ZakiyPage() {
         {loading && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-end gap-2.5">
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg,#2dd4bf,#059669)", boxShadow: "0 2px 8px rgba(5,150,105,0.28)" }}
+              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "linear-gradient(135deg,#065f46,#0d9488)", boxShadow: "0 3px 10px rgba(5,150,105,0.35)", border: "2px solid rgba(255,255,255,0.8)" }}
             >
-              <Bot size={15} className="text-white" />
+              <Bot size={16} className="text-white" />
             </div>
-            <div className="bg-white dark:bg-card border border-stone-100 dark:border-border/50 shadow-[0_2px_12px_rgba(0,0,0,0.07)] dark:shadow-none rounded-2xl rounded-tr-[6px] px-5 py-3.5">
-              <div className="flex gap-1.5 items-end">
-                {[0, 160, 320].map((d) => (
+            <div
+              className="rounded-2xl rounded-tr-[6px] px-5 py-3.5"
+              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", borderRight: "3px solid rgba(5,150,105,0.25)" }}
+            >
+              <div className="flex gap-2 items-center">
+                {[0, 140, 280].map((d, idx) => (
                   <motion.span
                     key={d}
-                    className="w-2 h-2 bg-teal-400 rounded-full block"
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ duration: 0.7, repeat: Infinity, delay: d / 1000, ease: "easeInOut" }}
+                    className="block rounded-full"
+                    style={{ width: idx === 1 ? 10 : 8, height: idx === 1 ? 10 : 8, background: idx === 1 ? "#059669" : "#6ee7b7" }}
+                    animate={{ y: [0, -6, 0], opacity: [0.6, 1, 0.6] }}
+                    transition={{ duration: 0.75, repeat: Infinity, delay: d / 1000, ease: "easeInOut" }}
                   />
                 ))}
               </div>
