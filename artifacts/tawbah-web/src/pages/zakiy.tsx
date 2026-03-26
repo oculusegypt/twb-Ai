@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { Send, Mic, Play, Pause, Volume2, Loader2, Bot, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare, Handshake, BookMarked, AlertTriangle, Sparkles } from "lucide-react";
+import { Send, Mic, Play, Pause, Volume2, Loader2, StopCircle, BookOpen, Scale, ExternalLink, Heart, X, CheckSquare, Handshake, BookMarked, AlertTriangle, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { cn } from "@/lib/utils";
 import { getSessionId } from "@/lib/session";
@@ -77,6 +77,77 @@ function getSurahName(num: number): string {
     111:"المسد",112:"الإخلاص",113:"الفلق",114:"الناس",
   };
   return names[num] ?? `السورة ${num}`;
+}
+
+// ══════════════════════════════════════════
+// ZAKIY AVATAR — الأفاتار الموحَّد للزكي
+// ══════════════════════════════════════════
+
+function ZakiyAvatar({ pulse = false }: { pulse?: boolean }) {
+  return (
+    <div className="relative flex-shrink-0 mb-0.5">
+      {/* Outer glow ring */}
+      <motion.div
+        className="absolute inset-0 rounded-full"
+        style={{
+          background: "radial-gradient(circle, rgba(5,150,105,0.25) 0%, transparent 70%)",
+          transform: "scale(1.5)",
+        }}
+        animate={pulse ? { opacity: [0.4, 0.9, 0.4], scale: [1.4, 1.7, 1.4] } : { opacity: 0.6 }}
+        transition={pulse ? { duration: 1.4, repeat: Infinity, ease: "easeInOut" } : {}}
+      />
+
+      {/* Main avatar circle */}
+      <div
+        className="relative w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
+        style={{
+          background: "linear-gradient(145deg, #065f46 0%, #047857 40%, #0d9488 100%)",
+          boxShadow: pulse
+            ? "0 0 0 2px rgba(255,255,255,0.9), 0 4px 16px rgba(5,150,105,0.5)"
+            : "0 0 0 2px rgba(255,255,255,0.9), 0 3px 12px rgba(5,150,105,0.35)",
+        }}
+      >
+        {/* Subtle geometric pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-[0.12]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='13' cy='13' r='1'/%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
+
+        {/* Arabic letter ز */}
+        <span
+          className="relative z-10 text-white font-bold select-none leading-none"
+          style={{
+            fontFamily: "'Amiri Quran', 'Scheherazade New', serif",
+            fontSize: "20px",
+            textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            marginTop: "1px",
+          }}
+        >
+          ز
+        </span>
+      </div>
+
+      {/* Online indicator dot */}
+      {!pulse && (
+        <div
+          className="absolute -bottom-0.5 -left-0.5 w-3 h-3 rounded-full border-[2px] border-white"
+          style={{ background: "#22c55e" }}
+        />
+      )}
+
+      {/* Recording/thinking pulse ring */}
+      {pulse && (
+        <motion.div
+          className="absolute inset-0 rounded-full border-2"
+          style={{ borderColor: "rgba(5,150,105,0.6)" }}
+          animate={{ scale: [1, 1.35, 1], opacity: [0.8, 0, 0.8] }}
+          transition={{ duration: 1.2, repeat: Infinity, ease: "easeOut" }}
+        />
+      )}
+    </div>
+  );
 }
 
 // ══════════════════════════════════════════
@@ -1293,7 +1364,14 @@ export default function ZakiyPage() {
       <PageHeader
         title="الزكي"
         subtitle="صاحبك الروحاني دايماً معاك"
-        icon={<Bot size={16} />}
+        icon={
+          <span
+            className="text-white font-bold leading-none"
+            style={{ fontFamily: "'Amiri Quran', serif", fontSize: "17px" }}
+          >
+            ز
+          </span>
+        }
         right={
           <div className="flex items-center gap-1.5">
             {anniversaryMilestone && (
@@ -1345,7 +1423,12 @@ export default function ZakiyPage() {
       {/* Messages */}
       <div
         className="flex-1 overflow-y-auto px-4 py-4 space-y-3"
-        style={{ background: "linear-gradient(180deg,#f2f0ea 0%,#f8f6f0 50%,#f2f0ea 100%)" }}
+        style={{
+          backgroundImage: `
+            linear-gradient(180deg,#f0ede5 0%,#f7f5ef 50%,#f0ede5 100%),
+            url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23059669' fill-opacity='0.025'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")
+          `,
+        }}
       >
         <AnimatePresence initial={false}>
           {messages.map((msg) => (
@@ -1357,18 +1440,7 @@ export default function ZakiyPage() {
             >
               <div className={cn("flex items-end gap-2.5", msg.role === "user" ? "flex-row-reverse" : "flex-row")}>
                 {/* Bot avatar */}
-                {msg.role === "bot" && (
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5"
-                    style={{
-                      background: "linear-gradient(135deg,#065f46,#0d9488)",
-                      boxShadow: "0 3px 10px rgba(5,150,105,0.35)",
-                      border: "2px solid rgba(255,255,255,0.8)",
-                    }}
-                  >
-                    <Bot size={16} className="text-white" />
-                  </div>
-                )}
+                {msg.role === "bot" && <ZakiyAvatar />}
 
                 {/* Bubble */}
                 <div
@@ -1430,24 +1502,35 @@ export default function ZakiyPage() {
 
         {loading && (
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-end gap-2.5">
+            <ZakiyAvatar pulse />
             <div
-              className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "linear-gradient(135deg,#065f46,#0d9488)", boxShadow: "0 3px 10px rgba(5,150,105,0.35)", border: "2px solid rgba(255,255,255,0.8)" }}
+              className="rounded-2xl rounded-tr-[6px] px-5 py-4"
+              style={{
+                background: "rgba(255,255,255,0.97)",
+                border: "1px solid rgba(5,150,105,0.1)",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04)",
+                borderRight: "3px solid rgba(5,150,105,0.3)",
+              }}
             >
-              <Bot size={16} className="text-white" />
-            </div>
-            <div
-              className="rounded-2xl rounded-tr-[6px] px-5 py-3.5"
-              style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 2px 16px rgba(0,0,0,0.07)", borderRight: "3px solid rgba(5,150,105,0.25)" }}
-            >
-              <div className="flex gap-2 items-center">
-                {[0, 140, 280].map((d, idx) => (
+              <div className="flex gap-[6px] items-end">
+                {[0, 1, 2].map((idx) => (
                   <motion.span
-                    key={d}
+                    key={idx}
                     className="block rounded-full"
-                    style={{ width: idx === 1 ? 10 : 8, height: idx === 1 ? 10 : 8, background: idx === 1 ? "#059669" : "#6ee7b7" }}
-                    animate={{ y: [0, -6, 0], opacity: [0.6, 1, 0.6] }}
-                    transition={{ duration: 0.75, repeat: Infinity, delay: d / 1000, ease: "easeInOut" }}
+                    style={{
+                      width: 7,
+                      height: 7,
+                      background: idx === 1
+                        ? "linear-gradient(135deg,#059669,#0d9488)"
+                        : "rgba(5,150,105,0.35)",
+                    }}
+                    animate={{ y: [0, -7, 0], opacity: [0.4, 1, 0.4] }}
+                    transition={{
+                      duration: 0.9,
+                      repeat: Infinity,
+                      delay: idx * 0.18,
+                      ease: [0.4, 0, 0.6, 1],
+                    }}
                   />
                 ))}
               </div>
