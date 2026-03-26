@@ -152,7 +152,7 @@ export function SoulMeter() {
               </span>
             )}
             {habitsTotal > 0 && (
-              <span className="text-[10px] bg-violet-100 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 px-2 py-0.5 rounded-full font-bold border border-violet-200 dark:border-violet-800/40">
+              <span className="text-[10px] dark:bg-violet-950/40 dark:text-violet-400 px-2 py-0.5 rounded-full font-bold border border-violet-200 dark:border-violet-800/40 bg-[#4241bfd9] text-[#ccc1e8]">
                 عادات {habitsDone}/{habitsTotal}
               </span>
             )}
@@ -164,7 +164,6 @@ export function SoulMeter() {
           style={{ transform: expanded ? "rotate(-90deg)" : "rotate(0deg)" }}
         />
       </button>
-
       <AnimatePresence>
         {expanded && (
           <motion.div
