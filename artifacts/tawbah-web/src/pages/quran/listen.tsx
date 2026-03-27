@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
 import { useSettings, QURAN_RECITERS } from "@/context/SettingsContext";
+import { getAudioUrl, getQuranSurahUrl } from "@/lib/api-base";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -248,7 +249,7 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/quran/surah/${surah.id}`)
+    fetch(getQuranSurahUrl(surah.id))
       .then(r => r.json())
       .then(data => {
         if (data.code === 200) {
@@ -272,7 +273,7 @@ function Player({ surah, reciterId, onBack }: { surah: Surah; reciterId: string;
     if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
     audio.pause();
-    audio.src = `/api/audio-proxy/quran/${reciterId}/${toGlobal(surah.id, ayah.numberInSurah)}.mp3`;
+    audio.src = getAudioUrl(reciterId, toGlobal(surah.id, ayah.numberInSurah));
     audio.load();
     audio.play().catch(() => {});
     setCurrentIdx(idx);

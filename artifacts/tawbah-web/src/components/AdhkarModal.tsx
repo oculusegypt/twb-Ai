@@ -4,6 +4,7 @@ import {
   X, ChevronRight, CheckCircle, Volume2, VolumeX, Sun, Moon,
   Star, Loader2, Award
 } from "lucide-react";
+import { getAudioUrl } from "@/lib/api-base";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -33,7 +34,7 @@ function toGlobalAyah(surah: number, ayah: number): number {
 }
 
 function ayahProxyUrl(surah: number, ayah: number): string {
-  return `/api/audio-proxy/quran/${RECITER}/${toGlobalAyah(surah, ayah)}.mp3`;
+  return getAudioUrl(RECITER, toGlobalAyah(surah, ayah));
 }
 
 // ─── Morning Adhkar Data ─────────────────────────────────────────────────────

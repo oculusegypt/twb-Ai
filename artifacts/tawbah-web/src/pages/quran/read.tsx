@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { getQuranSurahUrl } from "@/lib/api-base";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Search, Play, Pause, X, Loader2, Volume2, Check } from "lucide-react";
 import { Link } from "wouter";
@@ -192,7 +193,7 @@ function MushafReader({ surah, reciterId, onBack }: { surah: Surah; reciterId: s
     setAyahs([]);
     setPlayingIdx(null);
     setIsPlaying(false);
-    fetch(`/api/quran/surah/${surah.id}`)
+    fetch(getQuranSurahUrl(surah.id))
       .then(r => r.json())
       .then(data => {
         if (data.code === 200) {

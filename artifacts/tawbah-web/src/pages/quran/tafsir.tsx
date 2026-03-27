@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { getQuranSurahUrl } from "@/lib/api-base";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Search, Play, Pause, Loader2, BookOpen, X } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -89,8 +90,8 @@ function TafsirReader({ surah, reciterId, onBack }: { surah: Surah; reciterId: s
     setTafsirAyahs([]);
     setSelectedAyah(null);
     Promise.all([
-      fetch(`/api/quran/surah/${surah.id}`).then(r => r.json()),
-      fetch(`https://api.alquran.cloud/v1/surah/${surah.id}/ar.muyassar`).then(r => r.json()),
+      fetch(getQuranSurahUrl(surah.id)).then(r => r.json()),
+      fetch(getQuranSurahUrl(surah.id, "ar.muyassar")).then(r => r.json()),
     ]).then(([main, tafsir]) => {
       if (main.code === 200) {
         let list: Ayah[] = main.data.ayahs.filter((a: Ayah) => !isBismillah(a.text, surah.id, a.numberInSurah));

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { getQuranSurahUrl } from "@/lib/api-base";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, Search, Play, Pause, Eye, EyeOff, Check, X, RotateCcw, Loader2, Star } from "lucide-react";
 import { PageHeader } from "@/components/PageHeader";
@@ -64,7 +65,7 @@ function MemorizeSession({ surah, reciterId, onBack }: { surah: Surah; reciterId
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/quran/surah/${surah.id}`)
+    fetch(getQuranSurahUrl(surah.id))
       .then(r => r.json())
       .then(data => {
         if (data.code === 200) {
