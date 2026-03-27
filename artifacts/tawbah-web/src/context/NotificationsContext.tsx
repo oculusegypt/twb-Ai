@@ -15,8 +15,10 @@ import {
 import { hasFiredToday, markFiredToday, addToInboxApi } from "@/lib/app-notifications";
 import { playTakbeer, preloadTakbeer, playAzan, preloadAzan, playDuaPeak, preloadDuaPeak, playAzkarSabah, preloadAzkarSabah, playAzkarMasaa, preloadAzkarMasaa, stopAzkarSabah, stopAzkarMasaa } from "@/lib/takbeer";
 import { calcDuaPower, duaPeakCooledDown, markDuaPeakFired } from "@/lib/dua-power";
+import { isNativeApp, getApiBase } from "@/lib/api-base";
+import { initCapacitorPush, getCapacitorPermission } from "@/lib/capacitor-push";
 
-const API_BASE = "/api";
+const API_BASE = getApiBase();
 
 async function syncSettingsToApi(s: NotificationSettings): Promise<void> {
   try {
@@ -82,7 +84,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [duaPeakVisible, setDuaPeakVisible] = useState(false);
   const [adhkarVisible, setAdhkarVisible] = useState(false);
   const [adhkarType, setAdhkarType] = useState<AdhkarType>("morning");
-  const supported = "Notification" in window && "serviceWorker" in navigator;
+  const native = isNativeApp();
+  const supported = native || ("Notification" in window && "serviceWorker" in navigator);
 
   // ── On mount: check if opened from a notification click (?adhkar=morning/evening) ──
   useEffect(() => {
@@ -103,14 +106,31 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   // Register SW on mount and re-subscribe to push if already enabled
   useEffect(() => {
     if (!supported) return;
-    registerSW().then(() => {
-      setPermission(getPermission());
+    if (native) {
+      // Capacitor native: initialize FCM push notifications
       const s = loadSettings();
-      if (s.enabled && getPermission() === "granted") {
-        void subscribeToPush();
+      if (s.enabled) {
+        void initCapacitorPush({
+          onToken: () => {},
+          onNotification: (title, body) => {
+            void addToInboxApi({ type: "reminder", title, body, icon: "bell", color: "#4A90B8" });
+          },
+        }).then((ok) => {
+          if (ok) setPermission("granted");
+        });
       }
-    });
-  }, [supported]);
+      // Update permission state
+      void getCapacitorPermission().then((p) => setPermission(p));
+    } else {
+      registerSW().then(() => {
+        setPermission(getPermission());
+        const s = loadSettings();
+        if (s.enabled && getPermission() === "granted") {
+          void subscribeToPush();
+        }
+      });
+    }
+  }, [supported, native]);
 
   // Load settings from API on mount
   useEffect(() => {
@@ -312,15 +332,26 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const enableNotifications = useCallback(async (): Promise<boolean> => {
+    if (native) {
+      const ok = await initCapacitorPush({
+        onToken: () => {},
+        onNotification: (title, body) => {
+          void addToInboxApi({ type: "reminder", title, body, icon: "bell", color: "#4A90B8" });
+        },
+      });
+      if (!ok) return false;
+      setPermission("granted");
+      updateSettings({ enabled: true });
+      return true;
+    }
     const perm = await requestPermission();
     setPermission(perm);
     if (perm !== "granted") return false;
     await registerSW();
-    // Subscribe to server-side WebPush so notifications fire when app is closed
     void subscribeToPush();
     updateSettings({ enabled: true });
     return true;
-  }, [updateSettings]);
+  }, [updateSettings, native]);
 
   const disableNotifications = useCallback(() => {
     updateSettings({ enabled: false });

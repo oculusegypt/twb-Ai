@@ -1,40 +1,39 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  // Unique app identifier — change this to your own reverse-domain ID before publishing
-  appId: "com.tawbah.guide",
-  appName: "التوبة النصوح",
+  appId: "com.aiservx.tawbah",
+  appName: "دليل التوبة النصوح",
 
-  // Points to the built web assets (output of `pnpm build`)
   webDir: "dist/public",
 
   server: {
-    // Forces HTTPS scheme on Android WebView for secure cookie handling
     androidScheme: "https",
+    cleartext: false,
+    allowNavigation: [
+      "api.alquran.cloud",
+      "cdn.islamic.network",
+      "everyayah.com",
+      "api.aladhan.com",
+      "quran.com",
+      "*.replit.app",
+      "*.replit.dev",
+    ],
   },
 
   android: {
-    // Allow the app to use cleartext traffic only in development
     allowMixedContent: false,
-    // Keep the status bar visible (content flows under it via safe-area CSS)
     captureInput: false,
+    webContentsDebuggingEnabled: false,
+    backgroundColor: "#0d1117",
+    loggingBehavior: "none",
   },
 
   plugins: {
-    // ── Camera (for future use) ────────────────────────────────────────────────
-    // Usage: import { Camera } from '@capacitor/camera';
-    // See: https://capacitorjs.com/docs/apis/camera
-    Camera: {
-      // Android: request camera permissions automatically on first use
+    PushNotifications: {
+      presentationOptions: ["badge", "sound", "alert"],
     },
 
-    // ── Bluetooth LE (for future use) ──────────────────────────────────────────
-    // Usage: import { BleClient } from '@capacitor-community/bluetooth-le';
-    // See: https://github.com/capacitor-community/bluetooth-le
-    BluetoothLe: {
-      // Android: add bluetooth permissions to AndroidManifest.xml manually
-      // when ready to use. See the plugin docs for required permissions.
-    },
+    Camera: {},
   },
 };
 

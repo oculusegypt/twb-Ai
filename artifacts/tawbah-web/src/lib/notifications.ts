@@ -1,5 +1,7 @@
 // ── Notification Settings Types ───────────────────────────────────────────────
 
+import { getApiBase } from "./api-base";
+
 export interface PrayerNotifSettings {
   fajr: boolean;
   sunrise: boolean;
@@ -474,7 +476,7 @@ export async function buildScheduledNotifications(
 
 // ── Server-side WebPush subscription ─────────────────────────────────────────
 
-const API_BASE = "/api";
+const API_BASE = getApiBase();
 
 function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);

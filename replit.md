@@ -23,7 +23,13 @@
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 - **Web frontend**: React + Vite, Tailwind CSS, Framer Motion
-- **Mobile**: Expo React Native, Expo Router
+- **Mobile (Expo)**: Expo React Native, Expo Router (artifact: `tawbah-mobile`)
+- **Mobile (Android APK)**: Capacitor v7 wrapping the Vite web app (artifact: `tawbah-web/android/`)
+  - App ID: `com.aiservx.tawbah`
+  - Firebase project: `tawbah-3691`
+  - Push: FCM via `@capacitor/push-notifications` (native) + VAPID web push (browser)
+  - API routing: Fetch interceptor in `main.tsx` rewrites `/api/` → absolute URL on native
+  - Build script: `artifacts/tawbah-web/build-android.sh [API_BASE_URL]`
 
 ## App Features
 

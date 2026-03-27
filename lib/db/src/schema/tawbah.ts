@@ -217,3 +217,11 @@ export const pushJobsTable = pgTable("push_jobs", {
   sent: boolean("sent").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+export const fcmTokensTable = pgTable("fcm_tokens", {
+  id: serial("id").primaryKey(),
+  sessionId: text("session_id").notNull().unique(),
+  token: text("token").notNull(),
+  platform: text("platform").notNull().default("android"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});

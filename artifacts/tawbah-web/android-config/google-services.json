@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "311033068455",
+    "project_id": "tawbah-3691",
+    "storage_bucket": "tawbah-3691.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:311033068455:android:ac626d18c855136d3cd482",
+        "android_client_info": {
+          "package_name": "com.aiservx.tawbah"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkUYVfNXwLSG73wH4sv2l0oZ-Vi9xi48k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,7 @@
 // In-app notification system — backed by API with localStorage fallback
 
+import { getApiBase } from "./api-base";
+
 export interface AppNotification {
   id: string;          // notifId (string, unique)
   type: "reminder" | "achievement" | "community" | "spiritual" | "warning";
@@ -13,7 +15,7 @@ export interface AppNotification {
 }
 
 const STORAGE_KEY = "tawbah_web_inbox";
-const API_BASE = "/api";
+const API_BASE = getApiBase();
 
 function getSessionId(): string {
   return localStorage.getItem("tawbah_session") ?? "guest";

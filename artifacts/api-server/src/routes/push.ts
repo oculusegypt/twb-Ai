@@ -1,16 +1,20 @@
 import { Router } from "express";
 import webpush from "web-push";
 import { db } from "@workspace/db";
-import { pushSubscriptionsTable, pushJobsTable } from "@workspace/db/schema";
+import { pushSubscriptionsTable, pushJobsTable, fcmTokensTable } from "@workspace/db/schema";
 import { eq, lte, and } from "drizzle-orm";
 
 const router = Router();
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL || "mailto:admin@tawbah.app",
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+const VAPID_CONFIGURED = !!(process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
+
+if (VAPID_CONFIGURED) {
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL || "mailto:admin@tawbah.app",
+    process.env.VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
+}
 
 // GET /push/vapid-public-key
 router.get("/vapid-public-key", (_req, res) => {
@@ -60,6 +64,26 @@ router.post("/schedule", async (req, res) => {
   res.json({ ok: true, count: rows.length });
 });
 
+// POST /push/fcm-token — register FCM token for Android native push
+router.post("/fcm-token", async (req, res) => {
+  const { sessionId, token, platform } = req.body as { sessionId?: string; token?: string; platform?: string };
+  if (!sessionId || !token) {
+    return res.status(400).json({ error: "Missing sessionId or token" });
+  }
+  try {
+    await db
+      .insert(fcmTokensTable)
+      .values({ sessionId, token, platform: platform ?? "android" })
+      .onConflictDoUpdate({
+        target: fcmTokensTable.sessionId,
+        set: { token, platform: platform ?? "android", updatedAt: new Date() },
+      });
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: "DB error" });
+  }
+});
+
 // DELETE /push/jobs  — clear pending jobs for a session (before rescheduling)
 router.delete("/jobs", async (req, res) => {
   const { sessionId } = req.body;
@@ -72,6 +96,7 @@ router.delete("/jobs", async (req, res) => {
 
 // Internal: send due push notifications (called by scheduler)
 export async function sendDuePushJobs() {
+  if (!VAPID_CONFIGURED) return;
   const now = new Date();
   const dueJobs = await db.query.pushJobsTable.findMany({
     where: and(eq(pushJobsTable.sent, false), lte(pushJobsTable.fireAt, now)),
